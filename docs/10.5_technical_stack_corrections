@@ -1,0 +1,75 @@
+# Document #10.5: Technical Stack Corrections & Deployment Guide Addendum
+## AI Language Tutor App - Finalized Technical Specifications
+
+---
+
+### **Document Information**
+- **Project**: Personal AI Language Tutor App (Family Educational Tool)
+- **Document**: #10.5 of 12 - Technical Stack Corrections & Deployment Guide Addendum
+- **Version**: 2.0 (Finalized)
+- **Date**: June 11, 2025
+- **Author**: Development Team
+- **Status**: Finalized Technical Correction
+
+---
+
+## **1. Document Purpose & Error Acknowledgment**
+
+This addendum addresses critical technical inaccuracies identified in previous documentation (specifically Document #10: Deployment & Infrastructure Guide) and provides the **finalized and corrected specifications, configurations, and procedures** for the Personal AI Language Tutor App deployment. All information herein aligns with the "Finalized Stack Snapshot – Multimodal ChatBot App" and subsequent architectural decisions.
+
+### **CRITICAL ERRORS CORRECTED FROM PREVIOUS DOCUMENTS:**
+- ❌ Incorrect database references (e.g., Supabase)
+- ❌ Incorrect hosting references (e.g., Netlify/Vercel)
+- ❌ Incorrect speech services references (e.g., Google Cloud, AWS Polly)
+- ❌ Incorrect AI services references (e.g., OpenAI)
+- ❌ Incorrect development environment (e.g., Node.js + npm)
+- ❌ Outdated mentions of parental controls or age-appropriate filtering (addressed in Document #11.5).
+
+---
+
+## **2. Finalized Technical Stack Overview**
+
+The AI Language Tutor App is a Python-first, Python-driven hybrid multi-service platform, designed as a local-first, multimodal, LLM-agnostic tool.
+
+### **✅ Finalized Technical Stack Components:**
+
+* **Frontend UI**: FastHTML + MonsterUI
+* **Backend Framework**: FastAPI
+* **Document Upload + Chunking**: FastAPI + LangChain (or custom)
+* **Vector Search**: ChromaDB (vector store), MariaDB (metadata), DuckDB/SQLite (offline)
+* **Database (Hybrid)**: **MariaDB** for persistent session data, document references, and user metadata (server-side). **DuckDB/SQLite** for local/offline storage. Documents and their embedding metadata are modeled separately from vectors stored in ChromaDB.
+* **Hosting**: InMotion dedicated server with full administrative control.
+* **Development Environment**: macOS M3 environment with **Python 3.12.4 and pip 25.0.1** (managed via Anaconda 'base' environment), including **Ollama** for local model management.
+* **LLM Providers (Cloud)**: Anthropic Claude API, Mistral API, Alibaba Qwen API.
+* **LLM Providers (Offline)**: Ollama / LM Studio, with a model selection UI.
+* **Speech-to-Text / TTS**: IBM Watson Speech APIs (WebSocket + MP3 playback).
+* **Markdown + Diagrams**: MonsterUI (Markdown + MermaidJS), markmap-lib.
+* **Routing/Prompt Adapter**: LangChain LCEL or custom adapter.
+* **Background Processing**: FastAPI BackgroundTasks, Celery (optional).
+* **Permissions**: Read-only local model catalog (no install/delete from UI).
+
+### **✅ Key Implementation Features (Aligned with Finalized Brief):**
+
+* **Hybrid Database Sync**: Offline-first with efficient synchronization mechanisms for metadata (MariaDB) and vectors (ChromaDB), utilizing DuckDB/SQLite for local operations.
+* **Multi-AI Routing**: Intelligent routing layer and prompt adapters dynamically adjust prompts/responses based on LLM capabilities, context lengths, and formatting preferences.
+* **Budget Management**: Real-time cost tracking with automatic fallbacks to local Ollama/LM Studio models upon reaching predefined budget thresholds ($30/month total).
+* **User Autonomy**: The system is designed for full user autonomy, with no parental controls, age-appropriate content filtering, or time restrictions enforced by the application. All users have equal access and control over their learning.
+* **Offline Capability**: Robust offline mode enabled by local LLMs (Ollama/LM Studio), ensuring continuous learning even without internet connectivity.
+* **Security & Data Handling**: MIME validation and document sanitization for file uploads. Validation of markdown/diagram output from LLMs to prevent injection.
+
+### **✅ Expert Validation**
+All corrections and finalized specifications have been validated for technical accuracy, cost efficiency, and implementation feasibility within the family budget constraints.
+
+---
+
+## **Conclusion**
+
+This updated Document #10.5 serves as the **definitive reference for the technical stack and deployment strategy** of the AI Language Tutor App, fully aligned with the "Finalized Stack Snapshot" and the user autonomy principles. It corrects previous inaccuracies and provides a clear, consistent foundation for further development.
+
+---
+
+### **Document Completion Status**
+
+**Document #10.5: Technical Stack Corrections & Deployment Guide Addendum** - ✅ **COMPLETE**
+
+**Next Step**: Proceed with `appendix-i-architecture-reconciliation.md` to ensure it aligns with the finalized brief, Document #11.5, and this updated Document #10.5.
