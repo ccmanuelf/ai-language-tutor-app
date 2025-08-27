@@ -53,7 +53,9 @@ def create_frontend_app():
 # Create frontend app
 frontend_app = create_frontend_app()
 
-if __name__ == "__main__":
+
+def run_frontend_server():
+    """Run the FastHTML frontend server - extracted for testing"""
     settings = get_settings()
     uvicorn.run(
         "frontend_main:frontend_app",
@@ -62,3 +64,7 @@ if __name__ == "__main__":
         reload=settings.DEBUG,
         log_level="info" if settings.DEBUG else "warning",
     )
+
+
+if __name__ == "__main__":
+    run_frontend_server()

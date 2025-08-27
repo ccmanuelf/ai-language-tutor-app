@@ -55,6 +55,7 @@ sentence-transformers==2.2.2
 bcrypt==4.1.2
 PyJWT==2.8.0
 cryptography==41.0.8
+passlib[bcrypt]==1.7.4
 
 # Development Tools
 pytest==7.4.3

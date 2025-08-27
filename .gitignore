@@ -9,8 +9,62 @@ dev-debug.log
 # Dependency directories
 node_modules/
 
-# Environment variables
+# Environment variables and API keys
 .env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+.env.staging
+.envrc
+*.env
+*env.py
+
+# API Keys and Secrets (CRITICAL SECURITY)
+**/api_keys.py
+**/secrets.py
+**/credentials.py
+**/config/secrets/*
+**/config/api_keys/*
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+api_keys/
+secrets/
+credentials/
+
+# Cloud provider credentials
+.aws/
+.gcp/
+.azure/
+.ibm/
+*.json.key
+*service-account*.json
+
+# Backup files that might contain secrets
+*.backup
+*.bak
+*.old
+*.orig
+*.temp
+*.tmp
+
+# Database files that might contain sensitive data
+*.sqlite
+*.sqlite3
+*.db
+*.duckdb
+
+# Configuration files that might contain secrets
+config.ini
+config.cfg
+settings.ini
+settings.cfg
+.secrets
+.credentials
 
 # Editor directories and files
 .idea

@@ -61,7 +61,9 @@ def create_app() -> FastAPI:
 # Create app instance
 app = create_app()
 
-if __name__ == "__main__":
+
+def run_server():
+    """Run the FastAPI server - extracted for testing"""
     settings = get_settings()
     uvicorn.run(
         "main:app",
@@ -70,3 +72,7 @@ if __name__ == "__main__":
         reload=settings.DEBUG,
         log_level="info" if settings.DEBUG else "warning",
     )
+
+
+if __name__ == "__main__":
+    run_server()
