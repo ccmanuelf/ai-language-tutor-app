@@ -1,0 +1,11 @@
+# Task ID: 15
+# Title: Prepare Deployment & Infrastructure Guide
+# Status: pending
+# Dependencies: 1, 14
+# Priority: medium
+# Description: Document deployment and infrastructure setup for local and cloud phases.
+# Details:
+Write step-by-step guide for local desktop setup (Phase 1) and simple cloud deployment (Phase 2). Include instructions for environment variables, API keys, and security best practices.
+
+# Test Strategy:
+Follow guide to set up and deploy app locally and in the cloud. Verify all features work as expected in both environments.

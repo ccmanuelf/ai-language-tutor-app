@@ -1,0 +1,11 @@
+# Task ID: 11
+# Title: Implement Presentation Slides Processing
+# Status: pending
+# Dependencies: 1, 2
+# Priority: medium
+# Description: Enable processing of presentation slides (PPTX) for content-driven learning.
+# Details:
+Implement file upload UI for PPTX. Use libraries like pptxjs (pptxjs@latest) for parsing. Extract text and structure for conversation scenario generation.
+
+# Test Strategy:
+Test PPTX upload and parsing. Verify text extraction and scenario generation. Test with various slide formats.

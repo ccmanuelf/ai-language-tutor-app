@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Integrate Claude API for General Conversations
+# Status: pending
+# Dependencies: 1, 2
+# Priority: high
+# Description: Integrate Claude API to power general conversational interactions within the app.
+# Details:
+Register for Claude API. Implement API calls for conversation management. Add UI for user input and AI response display. Ensure context-aware dialogue management.
+
+# Test Strategy:
+Test conversation flow with Claude API. Verify context retention and response quality. Monitor API usage and costs.

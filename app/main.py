@@ -12,6 +12,8 @@ from pathlib import Path
 
 # Import core configuration
 from app.core.config import get_settings
+from app.api.auth import router as auth_router
+from app.api.conversations import router as conversations_router
 
 
 def create_app() -> FastAPI:
@@ -38,6 +40,10 @@ def create_app() -> FastAPI:
     # Mount static files
     static_dir = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+    # Include API routers
+    app.include_router(auth_router)
+    app.include_router(conversations_router)
 
     # Health check endpoint
     @app.get("/health")

@@ -1,92 +1,27 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-dev-debug.log
+# AI Language Tutor App - Git Ignore Configuration
 
-# Dependency directories
-node_modules/
-
-# Environment variables and API keys
+# ===== SECURITY - API KEYS AND SECRETS =====
 .env
 .env.local
-.env.*.local
 .env.development
-.env.production
 .env.test
-.env.staging
-.envrc
-*.env
-*env.py
-
-# API Keys and Secrets (CRITICAL SECURITY)
-**/api_keys.py
-**/secrets.py
-**/credentials.py
-**/config/secrets/*
-**/config/api_keys/*
+.env.production
 *.key
 *.pem
-*.p12
-*.pfx
-*.jks
-api_keys/
+config/secrets.json
 secrets/
-credentials/
+keys/
 
-# Cloud provider credentials
-.aws/
-.gcp/
-.azure/
-.ibm/
-*.json.key
-*service-account*.json
-
-# Backup files that might contain secrets
-*.backup
-*.bak
-*.old
-*.orig
-*.temp
-*.tmp
-
-# Database files that might contain sensitive data
-*.sqlite
-*.sqlite3
-*.db
-*.duckdb
-
-# Configuration files that might contain secrets
-config.ini
-config.cfg
-settings.ini
-settings.cfg
-.secrets
-.credentials
-
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# OS specific
-.DS_Store
-
-# Task files
-tasks.json
-tasks/
-
-# Python specific
+# ===== PYTHON =====
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -100,18 +35,10 @@ parts/
 sdist/
 var/
 wheels/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-PIPFILE.lock
-
-# Virtual environments
-ai-tutor-env/
-venv/
-ENV/
-env/
-.venv/
+MANIFEST
 
 # PyInstaller
 *.manifest
@@ -124,24 +51,207 @@ pip-delete-this-directory.txt
 # Unit test / coverage reports
 htmlcov/
 .tox/
-.nox/
 .coverage
 .coverage.*
 .cache
 nosetests.xml
 coverage.xml
 *.cover
-*.py,cover
 .hypothesis/
 .pytest_cache/
-cover/
 
-# Data directories
-data/chromadb/
-data/uploads/
+# Virtual environments
+ai-tutor-env/
+venv/
+ENV/
+env/
+.venv/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# ===== DATABASES AND DATA =====
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+data/ai_language_tutor.db
 data/local/*.db
 data/local/*.duckdb
 
-# IDE
-.cursor/
-.roo/ 
+# ChromaDB vector databases
+data/chromadb/
+chroma_data/
+chromadb/
+
+# Database backups
+*.sql
+*.backup
+db_backups/
+
+# User generated content
+uploads/
+user_data/
+audio_recordings/
+speech_samples/
+
+# ===== LOGS AND MONITORING =====
+logs/
+*.log
+log/
+*.log.*
+.logs/
+
+# ===== DEVELOPMENT TOOLS =====
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Testing
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+test_results/
+
+# Local development
+.local/
+tmp/
+temp/
+.tmp/
+
+# ===== AI AND ML SPECIFIC =====
+# Model files and embeddings
+models/
+*.model
+*.pkl
+*.joblib
+embeddings/
+vectors/
+
+# Watson Speech Services cache
+watson_cache/
+speech_cache/
+audio_cache/
+
+# AI service responses cache
+ai_responses/
+llm_cache/
+
+# ===== FASTAPI / WEB =====
+# Static files (generated)
+static/generated/
+static/compiled/
+
+# Session files
+sessions/
+.sessions/
+
+# FastAPI
+.fastapi/
+
+# ===== DOCKER =====
+.dockerignore
+docker-compose.override.yml
+.docker/
+
+# ===== DOCUMENTATION BACKUP =====
+# Keep generated docs but ignore backups
+docs/backup/
+docs/generated/
+*.backup.md
+
+# ===== SYSTEM FILES =====
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ===== PROJECT SPECIFIC =====
+# Audio files (too large for git)
+*.wav
+*.mp3
+*.flac
+*.ogg
+*.m4a
+audio_samples/
+test_audio/
+
+# Configuration backups
+config_backup/
+settings_backup/
+
+# Performance monitoring
+performance_logs/
+metrics/
+monitoring/
+
+# ===== ALLOW IMPORTANT FILES =====
+# Make sure important config templates are not ignored
+!.env.example
+!config/config.example.json
+!docker-compose.yml
+!requirements.txt
+!setup.py
+!pyproject.toml
+
+# Keep documentation structure
+!docs/
+!docs/**/*.md
+!docs/**/*.json
+
+# Keep test files
+!tests/
+!test_*.py
+!*_test.py
+
+# Keep important project files
+!README.md
+!LICENSE
+!CHANGELOG.md
+!CONTRIBUTING.md

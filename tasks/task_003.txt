@@ -1,0 +1,11 @@
+# Task ID: 3
+# Title: Integrate Web Speech API for Real-Time Speech Processing
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Integrate Web Speech API for speech recognition and synthesis to enable real-time pronunciation feedback.
+# Details:
+Implement Web Speech API (SpeechRecognition and SpeechSynthesis) for browser-based speech input/output. Add UI for microphone access and feedback display. Ensure cross-browser compatibility and graceful fallback for unsupported browsers.
+
+# Test Strategy:
+Test speech recognition and synthesis in supported browsers. Verify feedback accuracy and UI responsiveness. Test fallback behavior.

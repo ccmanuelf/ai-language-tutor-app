@@ -1,0 +1,11 @@
+# Task ID: 12
+# Title: Develop Context-Driven Practice Scenarios
+# Status: pending
+# Dependencies: 6, 9, 10, 11
+# Priority: medium
+# Description: Implement situational conversation setups (e.g., job interviews, travel) and real-world scenario practice.
+# Details:
+Design and implement UI for scenario selection. Integrate vocabulary tracking and context-aware dialogue management. Ensure scenarios are generated from uploaded content.
+
+# Test Strategy:
+Test scenario selection and dialogue flow. Verify vocabulary integration and context retention. Test with different content sources.

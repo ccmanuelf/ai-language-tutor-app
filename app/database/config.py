@@ -167,6 +167,23 @@ class DatabaseManager:
         
         return self._mariadb_engine
     
+    def get_primary_engine(self) -> Engine:
+        """Get primary database engine based on configuration"""
+        settings = get_settings()
+        
+        # Use SQLite if DATABASE_URL points to SQLite
+        if settings.DATABASE_URL.startswith('sqlite://'):
+            logger.info("Using SQLite as primary database")
+            return self.sqlite_engine
+        
+        # Try MariaDB only if explicitly configured and available
+        try:
+            logger.info("Attempting MariaDB connection")
+            return self.mariadb_engine
+        except Exception as e:
+            logger.warning(f"MariaDB unavailable, falling back to SQLite: {e}")
+            return self.sqlite_engine
+    
     @property
     def sqlite_engine(self) -> Engine:
         """Get or create SQLite engine"""
@@ -433,11 +450,10 @@ db_manager = DatabaseManager()
 # FastAPI Dependencies
 def get_db_session() -> Generator[Session, None, None]:
     """FastAPI dependency for primary database sessions"""
-    primary_db = db_manager.get_primary_database_type()
-    if primary_db == 'sqlite':
-        session = db_manager.get_sqlite_session()
-    else:
-        session = db_manager.get_mariadb_session()
+    # Use the primary engine which automatically selects SQLite or MariaDB
+    engine = db_manager.get_primary_engine()
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = SessionLocal()
     
     try:
         yield session
@@ -487,11 +503,9 @@ async def check_database_health():
 # Convenience functions for quick access
 def get_primary_db_session() -> Session:
     """Get a session for the primary database (SQLite in development, MariaDB in production)"""
-    primary_db = db_manager.get_primary_database_type()
-    if primary_db == 'sqlite':
-        return db_manager.get_sqlite_session()
-    else:
-        return db_manager.get_mariadb_session()
+    engine = db_manager.get_primary_engine()
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    return SessionLocal()
 
 def get_mariadb_session() -> Session:
     """Get a MariaDB session (only if MariaDB is configured)"""
