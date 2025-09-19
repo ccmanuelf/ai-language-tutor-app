@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Language Tutor - Learn Anything</title>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-dark: #4338ca;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --border-color: #e2e8f0;
+            --border-light: #f1f5f9;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius: 0.5rem;
+            --radius-lg: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Sidebar styles */
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-light);
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            border-radius: var(--radius);
+            margin: 0 1rem 0.5rem 1rem;
+            transition: all 0.2s;
+        }
+
+        .sidebar-nav a:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .spaces-section {
+            margin: 2rem 0;
+            padding: 0 1rem;
+        }
+
+        .spaces-section h3 {
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .space-item {
+            display: block;
+            padding: 0.75rem 1rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            border-radius: var(--radius);
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .space-item:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .help-section {
+            border-top: 1px solid var(--border-light);
+            padding-top: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* Main content styles */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            background: var(--bg-secondary);
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-primary);
+        }
+
+        .upgrade-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            margin-left: auto;
+        }
+
+        .upgrade-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .learning-area {
+            flex: 1;
+            padding: 3rem 2rem;
+            overflow-y: auto;
+        }
+
+        .main-heading {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 3rem;
+            letter-spacing: -0.02em;
+        }
+
+        .upload-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .upload-card {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .upload-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .upload-card.popular {
+            border-color: var(--primary-color);
+        }
+
+        .popular-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            position: absolute;
+            top: -0.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .card-description {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .search-container {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto 4rem auto;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 3rem;
+            font-size: 1rem;
+            background: var(--bg-primary);
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .search-submit {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--text-muted);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 50%;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .upload-options {
+                grid-template-columns: 1fr;
+            }
+
+            .main-heading {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Logo section -->
+        <div class="sidebar-logo">
+            <span style="font-size: 1.5rem; margin-right: 0.5rem;">🎯</span>
+            <span style="font-weight: 700; font-size: 1.1rem;">AI Language Tutor</span>
+        </div>
+
+        <!-- Main navigation -->
+        <nav class="sidebar-nav">
+            <a href="/chat">
+                <span style="margin-right: 0.75rem;">📤</span>
+                Add content
+            </a>
+            <a href="/profile">
+                <span style="margin-right: 0.75rem;">🔍</span>
+                Search
+            </a>
+            <a href="/progress">
+                <span style="margin-right: 0.75rem;">📚</span>
+                History
+            </a>
+        </nav>
+
+        <!-- Spaces section -->
+        <div class="spaces-section">
+            <h3>Spaces</h3>
+            <a href="/profile" class="space-item">
+                <div style="display: flex; align-items: center;">
+                    <span style="margin-right: 0.75rem;">👤</span>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 0.9rem;">Family Learning Space</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">3 contents</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Help section -->
+        <div class="help-section">
+            <nav class="sidebar-nav">
+                <a href="/test">
+                    <span style="margin-right: 0.75rem;">💬</span>
+                    Feedback
+                </a>
+                <a href="/health">
+                    <span style="margin-right: 0.75rem;">📖</span>
+                    Quick Guide
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="main-content">
+        <!-- Top bar -->
+        <div class="top-bar">
+            <div style="flex: 1;"></div>
+            <a href="/profile" class="upgrade-btn">Upgrade</a>
+        </div>
+
+        <!-- Learning interface -->
+        <div class="learning-area">
+            <!-- Main heading -->
+            <h1 class="main-heading">What do you want to learn?</h1>
+
+            <!-- Upload options -->
+            <div class="upload-options">
+                <!-- Upload card -->
+                <div class="upload-card" onclick="window.location.href='/chat'">
+                    <div>
+                        <span class="card-icon">📤</span>
+                        <h3 class="card-title">Upload</h3>
+                        <p class="card-description">File, audio, video</p>
+                    </div>
+                </div>
+
+                <!-- Paste card (popular) -->
+                <div class="upload-card popular" onclick="window.location.href='/chat'">
+                    <span class="popular-badge">Popular</span>
+                    <div>
+                        <span class="card-icon">🔗</span>
+                        <h3 class="card-title">Paste</h3>
+                        <p class="card-description">YouTube, website, text</p>
+                    </div>
+                </div>
+
+                <!-- Record card -->
+                <div class="upload-card" onclick="window.location.href='/chat'">
+                    <div>
+                        <span class="card-icon">🎤</span>
+                        <h3 class="card-title">Record</h3>
+                        <p class="card-description">Record class, video call</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search bar -->
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Learn anything">
+                <button class="search-submit">⬆️</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
