@@ -19,7 +19,7 @@ from sqlalchemy import func, and_, or_
 import json
 import asyncio
 
-from app.database.config import get_mariadb_session
+from app.database.config import get_primary_db_session
 from app.models.database import APIUsage, User
 from app.core.config import get_settings
 
@@ -105,7 +105,7 @@ class BudgetManager:
     
     def get_current_budget_status(self) -> BudgetStatus:
         """Get current budget status for the month"""
-        session = get_mariadb_session()
+        session = get_primary_db_session()
         try:
             # Get start of current month
             now = datetime.now()
@@ -306,7 +306,7 @@ class BudgetManager:
         Returns:
             Success status
         """
-        session = get_mariadb_session()
+        session = get_primary_db_session()
         try:
             # Get user database ID if user_id provided
             db_user_id = None
@@ -352,7 +352,7 @@ class BudgetManager:
         Returns:
             Cost breakdown data
         """
-        session = get_mariadb_session()
+        session = get_primary_db_session()
         try:
             cutoff_date = datetime.now() - timedelta(days=days)
             

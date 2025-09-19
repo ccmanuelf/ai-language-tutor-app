@@ -27,6 +27,9 @@ from dataclasses import dataclass
 from app.services.ai_service_base import BaseAIService, AIResponse, StreamingResponse
 from app.services.budget_manager import budget_manager, BudgetStatus, BudgetAlert
 from app.services.ollama_service import ollama_service
+from app.services.claude_service import claude_service
+from app.services.mistral_service import mistral_service
+from app.services.qwen_service import qwen_service
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -480,8 +483,11 @@ class EnhancedAIRouter:
 # Global router instance
 ai_router = EnhancedAIRouter()
 
-# Register Ollama as fallback provider
-ai_router.register_provider("ollama", ollama_service)
+# Register all AI providers
+ai_router.register_provider("claude", claude_service)
+ai_router.register_provider("mistral", mistral_service)
+ai_router.register_provider("qwen", qwen_service)
+ai_router.register_provider("ollama", ollama_service)  # Fallback provider
 
 
 # Convenience functions

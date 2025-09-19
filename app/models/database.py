@@ -68,7 +68,7 @@ user_languages = Table(
     'user_languages',
     Base.metadata,
     Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
-    Column('language', String(10), primary_key=True),
+    Column('language_id', Integer, ForeignKey('languages.id'), primary_key=True),
     Column('proficiency_level', Integer, default=1),  # 1-10 scale
     Column('is_primary', Boolean, default=False),
     Column('created_at', DateTime, default=func.now())
@@ -112,11 +112,11 @@ class User(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
     
     # Relationships
-    languages = relationship("Language", secondary=user_languages, back_populates="users")
+    languages = relationship("Language", secondary=user_languages, back_populates="users")  # Temporarily disabled
     conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
-    documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
-    learning_progress = relationship("LearningProgress", back_populates="user", cascade="all, delete-orphan")
-    vocabulary_lists = relationship("VocabularyItem", back_populates="user", cascade="all, delete-orphan")
+    documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")  # Temporarily disabled
+    learning_progress = relationship("LearningProgress", back_populates="user", cascade="all, delete-orphan")  # Temporarily disabled
+    vocabulary_lists = relationship("VocabularyItem", back_populates="user", cascade="all, delete-orphan")  # Temporarily disabled
     
     # Indexes
     __table_args__ = (
@@ -179,7 +179,7 @@ class Language(Base):
     speech_api_config = Column(JSON, default=dict)
     
     # Relationships
-    users = relationship("User", secondary=user_languages, back_populates="languages")
+    # users = relationship("User", secondary=user_languages, back_populates="languages")  # Temporarily disabled
     
     def to_dict(self):
         return {
@@ -359,7 +359,8 @@ class Document(Base):
     processed_at = Column(DateTime, nullable=True)
     
     # Relationships
-    user = relationship("User", back_populates="documents")
+    # user = relationship("User", back_populates="documents")  # Temporarily disabled to match User model
+    user = relationship("User")
     
     # Indexes
     __table_args__ = (

@@ -3,7 +3,7 @@ Speech Processing Pipeline & Pronunciation Analysis for AI Language Tutor App
 
 This module provides comprehensive speech processing capabilities including:
 - Speech-to-text conversion
-- Text-to-speech synthesis  
+- Text-to-speech synthesis
 - Pronunciation analysis and feedback
 - Audio processing and enhancement
 - Language-specific phonetic analysis
@@ -30,20 +30,22 @@ from dataclasses import dataclass
 from enum import Enum
 import tempfile
 import os
+from functools import lru_cache
 
 # Audio processing libraries
 try:
     import pyaudio
-    import webrtcvad
+    import numpy as np
     AUDIO_LIBS_AVAILABLE = True
 except ImportError:
     AUDIO_LIBS_AVAILABLE = False
-    logging.warning("Audio processing libraries not available. Install pyaudio and webrtcvad for full functionality.")
+    logging.warning("Audio processing libraries not available. Install pyaudio and numpy for full functionality.")
 
 # IBM Watson Speech Services
 try:
     from ibm_watson import SpeechToTextV1, TextToSpeechV1
     from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+    from ibm_cloud_sdk_core import ApiException
     from ibm_watson.websocket import RecognizeCallback, AudioSource
     WATSON_SDK_AVAILABLE = True
 except ImportError:
@@ -54,6 +56,44 @@ from app.services.ai_router import ai_router
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+
+class WatsonConfig:
+    """Enhanced configuration management for Watson services following IBM best practices"""
+    
+    def __init__(self):
+        # Primary: Environment variables (following IBM best practices)
+        self.stt_apikey = os.getenv('SPEECH_TO_TEXT_APIKEY') or os.getenv('IBM_WATSON_STT_API_KEY')
+        self.stt_url = os.getenv('SPEECH_TO_TEXT_URL') or os.getenv('IBM_WATSON_STT_URL')
+        self.tts_apikey = os.getenv('TEXT_TO_SPEECH_APIKEY') or os.getenv('IBM_WATSON_TTS_API_KEY')
+        self.tts_url = os.getenv('TEXT_TO_SPEECH_URL') or os.getenv('IBM_WATSON_TTS_URL')
+        
+        # Fallback: Settings from config file
+        if not self.stt_apikey:
+            settings = get_settings()
+            self.stt_apikey = getattr(settings, 'IBM_WATSON_STT_API_KEY', None)
+        if not self.stt_url:
+            settings = get_settings()
+            self.stt_url = getattr(settings, 'IBM_WATSON_STT_URL', None)
+        if not self.tts_apikey:
+            settings = get_settings()
+            self.tts_apikey = getattr(settings, 'IBM_WATSON_TTS_API_KEY', None)
+        if not self.tts_url:
+            settings = get_settings()
+            self.tts_url = getattr(settings, 'IBM_WATSON_TTS_URL', None)
+            
+    def validate(self):
+        """Validate configuration and return status"""
+        issues = []
+        if not self.stt_apikey:
+            issues.append("Speech to Text API key not configured")
+        if not self.stt_url:
+            issues.append("Speech to Text URL not configured")
+        if not self.tts_apikey:
+            issues.append("Text to Speech API key not configured")
+        if not self.tts_url:
+            issues.append("Text to Speech URL not configured")
+        return len(issues) == 0, issues
 
 
 class AudioFormat(Enum):
@@ -124,9 +164,13 @@ class SpeechProcessor:
     """Main speech processing pipeline"""
     
     def __init__(self):
-        self.settings = get_settings()
-        self.watson_stt_available = bool(self.settings.IBM_WATSON_STT_API_KEY)
-        self.watson_tts_available = bool(self.settings.IBM_WATSON_TTS_API_KEY)
+        # Initialize Watson configuration
+        self.config = WatsonConfig()
+        self.config_valid, self.config_issues = self.config.validate()
+        
+        # Set availability based on configuration
+        self.watson_stt_available = bool(self.config.stt_apikey and self.config.stt_url)
+        self.watson_tts_available = bool(self.config.tts_apikey and self.config.tts_url)
         self.audio_libs_available = AUDIO_LIBS_AVAILABLE
         self.watson_sdk_available = WATSON_SDK_AVAILABLE
         
@@ -138,11 +182,80 @@ class SpeechProcessor:
         self.default_channels = 1
         self.chunk_size = 1024
         
+        # Voice Activity Detection settings
+        self.vad_threshold = 0.01  # Energy threshold for voice detection
+        self.vad_frame_size = 480  # 30ms at 16kHz
+        
         # Pronunciation analysis settings
         self.pronunciation_models = self._load_pronunciation_models()
         
+        # Log configuration status
+        if not self.config_valid:
+            logger.warning(f"Watson configuration issues: {', '.join(self.config_issues)}")
+        else:
+            logger.info("Watson configuration validated successfully")
+            
+    def detect_voice_activity(self, audio_data: bytes, sample_rate: int = 16000) -> bool:
+        """Modern energy-based voice activity detection"""
+        try:
+            if not AUDIO_LIBS_AVAILABLE:
+                return True  # Assume voice present if no analysis available
+            
+            if not audio_data or len(audio_data) < 2:
+                return False  # No audio or insufficient data
+            
+            # Convert bytes to numpy array
+            try:
+                audio_array = np.frombuffer(audio_data, dtype=np.int16)
+            except ValueError:
+                # Handle invalid audio format
+                return False
+            
+            # Normalize audio
+            if len(audio_array) > 0:
+                normalized = audio_array.astype(np.float32) / 32767.0
+                
+                # Calculate energy (RMS)
+                energy = np.sqrt(np.mean(normalized ** 2))
+                
+                # Simple threshold-based VAD with minimum energy check
+                return energy > self.vad_threshold and energy > 1e-6  # Avoid detecting pure zeros as voice
+            
+            return False
+            
+        except Exception as e:
+            logger.warning(f"Voice activity detection failed: {e}")
+            return False  # Default to no voice on error for safety
+    
+    def remove_silence(self, audio_data: bytes, sample_rate: int = 16000) -> bytes:
+        """Remove silence from audio using energy-based detection"""
+        try:
+            if not AUDIO_LIBS_AVAILABLE:
+                return audio_data  # Return original if no processing available
+            
+            audio_array = np.frombuffer(audio_data, dtype=np.int16)
+            frame_size = self.vad_frame_size
+            
+            # Process audio in frames
+            voice_frames = []
+            for i in range(0, len(audio_array), frame_size):
+                frame = audio_array[i:i + frame_size]
+                if len(frame) == frame_size:
+                    frame_bytes = frame.tobytes()
+                    if self.detect_voice_activity(frame_bytes, sample_rate):
+                        voice_frames.extend(frame)
+            
+            if voice_frames:
+                return np.array(voice_frames, dtype=np.int16).tobytes()
+            else:
+                return audio_data  # Return original if no voice detected
+                
+        except Exception as e:
+            logger.warning(f"Silence removal failed: {e}")
+            return audio_data
+        
     def _init_watson_clients(self):
-        """Initialize IBM Watson Speech-to-Text and Text-to-Speech clients"""
+        """Initialize IBM Watson Speech-to-Text and Text-to-Speech clients with proper HTTP configuration"""
         self.watson_stt_client = None
         self.watson_tts_client = None
         
@@ -153,16 +266,30 @@ class SpeechProcessor:
         try:
             # Initialize Speech-to-Text client
             if self.watson_stt_available:
-                stt_authenticator = IAMAuthenticator(self.settings.IBM_WATSON_STT_API_KEY)
+                stt_authenticator = IAMAuthenticator(self.config.stt_apikey)
                 self.watson_stt_client = SpeechToTextV1(authenticator=stt_authenticator)
-                self.watson_stt_client.set_service_url(self.settings.IBM_WATSON_STT_URL)
+                self.watson_stt_client.set_service_url(self.config.stt_url)
+                
+                # Configure HTTP client for better performance and reliability
+                # Note: Removed retry_attempts and max_retry_interval as they're not supported
+                self.watson_stt_client.set_http_config({
+                    'timeout': 30  # 30 second timeout
+                })
+                
                 logger.info("Watson Speech-to-Text client initialized successfully")
             
             # Initialize Text-to-Speech client  
             if self.watson_tts_available:
-                tts_authenticator = IAMAuthenticator(self.settings.IBM_WATSON_TTS_API_KEY)
+                tts_authenticator = IAMAuthenticator(self.config.tts_apikey)
                 self.watson_tts_client = TextToSpeechV1(authenticator=tts_authenticator)
-                self.watson_tts_client.set_service_url(self.settings.IBM_WATSON_TTS_URL)
+                self.watson_tts_client.set_service_url(self.config.tts_url)
+                
+                # Configure HTTP client for better performance and reliability
+                # Note: Removed retry_attempts and max_retry_interval as they're not supported
+                self.watson_tts_client.set_http_config({
+                    'timeout': 30  # 30 second timeout
+                })
+                
                 logger.info("Watson Text-to-Speech client initialized successfully")
                 
         except Exception as e:
@@ -172,8 +299,13 @@ class SpeechProcessor:
             self.watson_stt_available = False
             self.watson_tts_available = False
     
-    async def check_available_voices(self) -> Dict[str, List[str]]:
-        """Check available voices in Watson TTS service"""
+    @lru_cache(maxsize=1)
+    def _get_cached_voices(self):
+        """Cache available voices to reduce API calls"""
+        return self._fetch_available_voices()
+    
+    def _fetch_available_voices(self):
+        """Fetch available voices from Watson TTS service"""
         if not self.watson_tts_client:
             return {"error": "Watson TTS client not available"}
         
@@ -205,9 +337,14 @@ class SpeechProcessor:
             }
             
         except Exception as e:
-            logger.error(f"Failed to check available voices: {e}")
+            logger.error(f"Failed to fetch available voices: {e}")
             return {"error": str(e)}
-        
+    
+    async def check_available_voices(self) -> Dict[str, List[str]]:
+        """Check available voices in Watson TTS service"""
+        # Use cached version to reduce API calls
+        return self._get_cached_voices()
+    
     def _load_pronunciation_models(self) -> Dict[str, Any]:
         """Load language-specific pronunciation models"""
         # This would load actual pronunciation models in a full implementation
@@ -415,6 +552,9 @@ class SpeechProcessor:
             raise Exception("Watson Speech-to-Text not configured or client not initialized")
         
         try:
+            # Preprocess audio for better quality
+            processed_audio = await self._preprocess_audio(audio_data, audio_format)
+            
             # Language mapping for Watson STT (updated with verified available models)
             watson_language_map = {
                 "en": "en-US_BroadbandModel",
@@ -432,71 +572,132 @@ class SpeechProcessor:
             watson_model = watson_language_map.get(language, "en-US_BroadbandModel")
             
             # Prepare audio file-like object for Watson API
-            audio_file = io.BytesIO(audio_data)
+            audio_file = io.BytesIO(processed_audio)
             
             # Watson STT API call with optimized parameters for language learning
+            # Fixed parameter compatibility issues - removed unsupported parameters
             response = self.watson_stt_client.recognize(
                 audio=audio_file,
                 content_type=f'audio/{audio_format.value}',
                 model=watson_model,
-                continuous=True,
                 word_alternatives_threshold=0.7,
                 word_confidence=True,
                 timestamps=True,
                 max_alternatives=3,
-                interim_results=False,
-                end_of_phrase_silence_time=1.0,
-                split_transcript_at_phrase_end=True
+                inactivity_timeout=30,  # Add timeout for better control
+                smart_formatting=True,   # Enable smart formatting for better output
+                speaker_labels=False     # Disable unless needed for performance
             ).get_result()
             
-            # Process Watson response
-            if not response['results'] or not response['results'][0]['alternatives']:
-                raise Exception("No speech detected in audio")
+            # Process Watson response with enhanced processing
+            return self._process_watson_response(response, language)
             
-            primary_result = response['results'][0]['alternatives'][0]
-            alternative_transcripts = response['results'][0]['alternatives'][1:] if len(response['results'][0]['alternatives']) > 1 else []
-            
-            # Extract word-level confidence and timestamps for pronunciation analysis
-            word_info = []
-            if 'word_confidence' in primary_result:
-                word_info = primary_result['word_confidence']
-            
-            timestamps = []
-            if 'timestamps' in primary_result:
-                timestamps = primary_result['timestamps']
-            
+        except ValueError as ve:
+            logger.warning(f"Watson STT processing warning: {ve}")
+            # Handle specific validation errors
             return SpeechRecognitionResult(
-                transcript=primary_result['transcript'].strip(),
-                confidence=primary_result['confidence'],
-                language=language,
-                processing_time=0.0,  # Will be set by caller
-                alternative_transcripts=alternative_transcripts,
-                metadata={
-                    "watson_model": watson_model,
-                    "audio_format": audio_format.value,
-                    "service": "watson_stt",
-                    "word_confidence": word_info,
-                    "timestamps": timestamps,
-                    "speaker_labels": response.get('speaker_labels', []),
-                    "processing_metrics": response.get('processing_metrics', {})
-                }
-            )
-            
-        except Exception as e:
-            logger.error(f"Watson STT API call failed: {e}")
-            # Fall back to mock response if API fails
-            return SpeechRecognitionResult(
-                transcript="[Watson STT unavailable - please check configuration]",
+                transcript="",
                 confidence=0.0,
                 language=language,
                 processing_time=0.0,
                 alternative_transcripts=[],
+                metadata={"info": str(ve)}
+            )
+            
+        except ApiException as api_error:
+            logger.error(f"Watson STT API error {api_error.code}: {api_error.message}")
+            # Handle API-specific errors
+            return SpeechRecognitionResult(
+                transcript="[API Error]",
+                confidence=0.0,
+                language=language,
+                processing_time=0.0,
+                alternative_transcripts=[],
+                metadata={"error": f"API Error: {api_error.message}"}
+            )
+            
+        except Exception as e:
+            logger.error(f"Watson STT unexpected error: {e}", exc_info=True)
+            # Handle unexpected errors
+            return SpeechRecognitionResult(
+                transcript="[Processing Error]",
+                confidence=0.0,
+                language=language,
+                processing_time=0.0,
+                alternative_transcripts=[],
+                metadata={"error": f"Service unavailable: {str(e)}"}
+            )
+    
+    def _process_watson_response(self, response: dict, language: str) -> SpeechRecognitionResult:
+        """Process Watson STT response with enhanced error handling"""
+        
+        try:
+            # Validate response structure
+            if not isinstance(response, dict):
+                raise ValueError("Invalid response format")
+                
+            if 'results' not in response:
+                raise ValueError("Missing results in response")
+                
+            results = response['results']
+            if not results:
+                return SpeechRecognitionResult(
+                    transcript="",
+                    confidence=0.0,
+                    language=language,
+                    processing_time=0.0,
+                    alternative_transcripts=[],
+                    metadata={"info": "No speech detected"}
+                )
+            
+            # Extract primary result
+            primary_result = results[0]
+            if 'alternatives' not in primary_result or not primary_result['alternatives']:
+                raise ValueError("No alternatives in primary result")
+                
+            best_alternative = primary_result['alternatives'][0]
+            
+            # Extract confidence with fallback
+            confidence = best_alternative.get('confidence', 0.0)
+            if not isinstance(confidence, (int, float)):
+                confidence = 0.0
+                
+            # Extract transcript with fallback
+            transcript = best_alternative.get('transcript', '').strip()
+            
+            # Extract alternatives
+            alternatives = []
+            if len(primary_result['alternatives']) > 1:
+                alternatives = primary_result['alternatives'][1:3]  # Top 2 alternatives
+                
+            # Extract word confidence and timestamps if available
+            word_info = best_alternative.get('word_confidence', [])
+            timestamps = best_alternative.get('timestamps', [])
+            
+            return SpeechRecognitionResult(
+                transcript=transcript,
+                confidence=float(confidence),
+                language=language,
+                processing_time=0.0,  # Will be set by caller
+                alternative_transcripts=alternatives,
                 metadata={
-                    "watson_model": watson_language_map.get(language, "en-US_BroadbandModel"),
-                    "audio_format": audio_format.value,
-                    "service": "watson_stt",
-                    "error": str(e)
+                    "watson_model": response.get('result_index', 0),
+                    "word_count": len(word_info),
+                    "timestamp_count": len(timestamps),
+                    "processing_metrics": response.get('processing_metrics', {}),
+                    "speaker_labels": response.get('speaker_labels', [])
                 }
+            )
+            
+        except Exception as e:
+            logger.error(f"Error processing Watson response: {e}")
+            return SpeechRecognitionResult(
+                transcript="[Processing Error]",
+                confidence=0.0,
+                language=language,
+                processing_time=0.0,
+                alternative_transcripts=[],
+                metadata={"error": str(e)}
             )
     
     async def _text_to_speech_watson(
@@ -619,6 +820,30 @@ class SpeechProcessor:
             
             quality_score = (size_quality + duration_quality) / 2
             
+            # Additional quality checks if audio libraries are available
+            if AUDIO_LIBS_AVAILABLE and len(audio_data) > 0:
+                try:
+                    # Convert bytes to numpy array for analysis
+                    audio_array = np.frombuffer(audio_data, dtype=np.int16)
+                    
+                    # Check for silence (all zeros)
+                    if np.all(audio_array == 0):
+                        quality_score = 0.1  # Very low quality for silence
+                        logger.warning("Audio quality analysis: Audio appears to be silence")
+                    else:
+                        # Calculate signal-to-noise ratio approximation
+                        signal_power = np.mean(audio_array.astype(np.float32) ** 2)
+                        noise_floor = np.mean(np.abs(audio_array[audio_array != 0]).astype(np.float32)) * 0.1
+                        if signal_power > 0 and noise_floor > 0:
+                            snr_approx = 10 * np.log10(signal_power / (noise_floor ** 2))
+                            # Normalize SNR to 0-1 scale (assuming 0-30 dB range)
+                            snr_quality = min(max(snr_approx / 30.0, 0.0), 1.0)
+                            # Blend with existing quality score
+                            quality_score = (quality_score + snr_quality) / 2
+                    
+                except Exception as e:
+                    logger.warning(f"Advanced audio quality analysis failed: {e}")
+            
             return AudioMetadata(
                 format=audio_format,
                 sample_rate=self.default_sample_rate,
@@ -648,11 +873,71 @@ class SpeechProcessor:
     ) -> bytes:
         """Enhance audio quality for better speech recognition"""
         
-        # In a full implementation, this would apply noise reduction,
-        # normalization, and other audio enhancement techniques
-        
-        logger.info("Audio enhancement applied")
-        return audio_data  # Return original for now
+        try:
+            if not AUDIO_LIBS_AVAILABLE:
+                logger.info("Audio enhancement skipped - audio libraries not available")
+                return audio_data
+            
+            # Apply noise reduction
+            enhanced_audio = self._reduce_noise(audio_data)
+            
+            # Apply normalization
+            enhanced_audio = self._normalize_audio(enhanced_audio)
+            
+            # Apply additional enhancement techniques
+            enhanced_audio = self._apply_speech_enhancement(enhanced_audio)
+            
+            logger.info("Audio enhancement completed successfully")
+            return enhanced_audio
+            
+        except Exception as e:
+            logger.warning(f"Audio enhancement failed: {e}")
+            return audio_data  # Return original if enhancement fails
+    
+    def _apply_speech_enhancement(self, audio_data: bytes) -> bytes:
+        """Apply speech-specific enhancement techniques"""
+        try:
+            if not AUDIO_LIBS_AVAILABLE:
+                return audio_data
+            
+            # Convert bytes to numpy array
+            audio_array = np.frombuffer(audio_data, dtype=np.int16)
+            
+            # Check if array is empty
+            if len(audio_array) == 0:
+                logger.warning("Speech enhancement skipped - empty audio array")
+                return audio_data
+            
+            audio_array = np.copy(audio_array)  # Ensure we can modify it
+            
+            # Apply pre-emphasis filter to enhance high frequencies (speech clarity)
+            if len(audio_array) > 1:
+                # Simple first-order high-pass filter
+                pre_emphasis = 0.97
+                emphasized = np.copy(audio_array)
+                emphasized[1:] = audio_array[1:] - pre_emphasis * audio_array[:-1]
+                audio_array = emphasized
+            
+            # Apply dynamic range compression for better speech intelligibility
+            if len(audio_array) > 0:
+                # Convert to float for processing
+                float_audio = audio_array.astype(np.float32)
+                
+                # Apply simple compression (reduce peaks, boost quiet parts)
+                max_val = np.max(np.abs(float_audio))
+                if max_val > 0:
+                    # Normalize and apply compression
+                    normalized = float_audio / max_val
+                    compressed = np.sign(normalized) * np.power(np.abs(normalized), 0.8)
+                    # Scale back to 16-bit range
+                    audio_array = (compressed * 32767).astype(np.int16)
+            
+            # Convert back to bytes
+            return audio_array.tobytes()
+            
+        except Exception as e:
+            logger.warning(f"Speech enhancement failed: {e}")
+            return audio_data
     
     async def _analyze_pronunciation(
         self,
@@ -776,6 +1061,129 @@ class SpeechProcessor:
             )
         )
     
+    async def _preprocess_audio(self, audio_data: bytes, audio_format: AudioFormat) -> bytes:
+        """Preprocess audio for better recognition quality"""
+        try:
+            # Validate minimum size requirements
+            if len(audio_data) < 100:
+                logger.warning(f"Audio data too small: {len(audio_data)} bytes")
+                # Pad with silence if needed
+                audio_data = self._pad_audio(audio_data)
+            
+            # Apply noise reduction if available
+            if self.audio_libs_available:
+                audio_data = self._reduce_noise(audio_data)
+                
+            # Normalize audio levels
+            audio_data = self._normalize_audio(audio_data)
+            
+            # Ensure proper WAV format for Watson STT
+            if audio_format == AudioFormat.WAV:
+                audio_data = await self._ensure_proper_wav_format(audio_data)
+            
+            return audio_data
+            
+        except Exception as e:
+            logger.error(f"Audio preprocessing failed: {e}")
+            return audio_data  # Return original if preprocessing fails
+    
+    async def _ensure_proper_wav_format(self, audio_data: bytes) -> bytes:
+        """Ensure audio data is in proper WAV format for Watson STT"""
+        try:
+            if not AUDIO_LIBS_AVAILABLE:
+                return audio_data
+            
+            # If it's already a valid WAV file, return as is
+            if audio_data.startswith(b'RIFF') and b'WAVE' in audio_data[:12]:
+                return audio_data
+            
+            # Convert raw audio data to proper WAV format
+            import wave
+            import io
+            
+            # Create a proper WAV file in memory
+            wav_buffer = io.BytesIO()
+            with wave.open(wav_buffer, 'wb') as wav_file:
+                wav_file.setnchannels(self.default_channels)  # Mono
+                wav_file.setsampwidth(2)  # 16-bit
+                wav_file.setframerate(self.default_sample_rate)  # 16kHz
+                wav_file.writeframes(audio_data)
+            
+            wav_buffer.seek(0)
+            return wav_buffer.read()
+            
+        except Exception as e:
+            logger.warning(f"WAV format conversion failed: {e}")
+            return audio_data
+    
+    def _pad_audio(self, audio_data: bytes) -> bytes:
+        """Pad audio data with silence if too small"""
+        # Add 100 bytes of silence (zeros) to meet minimum requirements
+        padding = b'\x00' * max(0, 100 - len(audio_data))
+        return audio_data + padding
+    
+    def _reduce_noise(self, audio_data: bytes) -> bytes:
+        """Apply basic noise reduction to audio data"""
+        # Simple noise reduction - in a full implementation, this would use more sophisticated techniques
+        try:
+            if not AUDIO_LIBS_AVAILABLE:
+                return audio_data
+            
+            # Convert bytes to numpy array
+            audio_array = np.frombuffer(audio_data, dtype=np.int16)
+            
+            # Check if array is empty
+            if len(audio_array) == 0:
+                logger.warning("Noise reduction skipped - empty audio array")
+                return audio_data
+            
+            # Create a copy to ensure we can modify it (fixes read-only array issue)
+            audio_array = np.copy(audio_array)
+            
+            # Simple noise gate - mute samples below threshold
+            max_val = np.max(np.abs(audio_array))
+            if max_val > 0:  # Avoid division by zero
+                threshold = max_val * 0.1  # 10% of max amplitude
+                audio_array[np.abs(audio_array) < threshold] = 0
+            
+            # Convert back to bytes
+            return audio_array.tobytes()
+            
+        except Exception as e:
+            logger.warning(f"Noise reduction failed: {e}")
+            return audio_data
+    
+    def _normalize_audio(self, audio_data: bytes) -> bytes:
+        """Normalize audio levels for better recognition"""
+        try:
+            if not AUDIO_LIBS_AVAILABLE:
+                return audio_data
+            
+            # Convert bytes to numpy array
+            audio_array = np.frombuffer(audio_data, dtype=np.int16)
+            
+            # Check if array is empty
+            if len(audio_array) == 0:
+                logger.warning("Audio normalization skipped - empty audio array")
+                return audio_data
+            
+            # Create a copy to ensure we can modify it (fixes read-only array issue)
+            audio_array = np.copy(audio_array)
+            
+            # Normalize to use full 16-bit range
+            if len(audio_array) > 0:
+                max_val = np.max(np.abs(audio_array))
+                if max_val > 0:
+                    normalized = audio_array.astype(np.float32) * (32767.0 / max_val)
+                    audio_array = normalized.astype(np.int16)
+            
+            # Convert back to bytes
+            return audio_array.tobytes()
+            
+        except Exception as e:
+            logger.warning(f"Audio normalization failed: {e}")
+            return audio_data
+    
     async def _prepare_text_for_synthesis(
         self,
         text: str,
@@ -859,6 +1267,12 @@ class SpeechProcessor:
         watson_stt_functional = bool(self.watson_stt_client and self.watson_stt_available)
         watson_tts_functional = bool(self.watson_tts_client and self.watson_tts_available)
         
+        # Get settings for API key checks
+        try:
+            settings = get_settings()
+        except:
+            settings = None
+        
         return {
             "status": "operational" if (watson_stt_functional or watson_tts_functional) else "limited",
             "watson_sdk_available": self.watson_sdk_available,
@@ -866,15 +1280,15 @@ class SpeechProcessor:
                 "status": "operational" if watson_stt_functional else "unavailable",
                 "configured": self.watson_stt_available,
                 "client_initialized": bool(self.watson_stt_client),
-                "api_key_configured": bool(self.settings.IBM_WATSON_STT_API_KEY),
-                "service_url": self.settings.IBM_WATSON_STT_URL if hasattr(self.settings, 'IBM_WATSON_STT_URL') else "not_configured"
+                "api_key_configured": bool(getattr(settings, 'IBM_WATSON_STT_API_KEY', None)) if settings else False,
+                "service_url": getattr(settings, 'IBM_WATSON_STT_URL', "not_configured") if settings else "not_configured"
             },
             "watson_tts": {
                 "status": "operational" if watson_tts_functional else "unavailable", 
                 "configured": self.watson_tts_available,
                 "client_initialized": bool(self.watson_tts_client),
-                "api_key_configured": bool(self.settings.IBM_WATSON_TTS_API_KEY),
-                "service_url": self.settings.IBM_WATSON_TTS_URL if hasattr(self.settings, 'IBM_WATSON_TTS_URL') else "not_configured"
+                "api_key_configured": bool(getattr(settings, 'IBM_WATSON_TTS_API_KEY', None)) if settings else False,
+                "service_url": getattr(settings, 'IBM_WATSON_TTS_URL', "not_configured") if settings else "not_configured"
             },
             "watson_stt_available": watson_stt_functional,
             "watson_tts_available": watson_tts_functional,
@@ -916,7 +1330,41 @@ class SpeechProcessor:
                 "note": "Using Mexican Spanish STT and Latin American Spanish TTS (closest to es-MX preference)"
             }
         }
-
+    
+    async def check_watson_health(self) -> Dict[str, Any]:
+        """Check Watson service health"""
+        health_status = {
+            "stt_available": False,
+            "tts_available": False,
+            "stt_response_time": None,
+            "tts_response_time": None
+        }
+        
+        # Check STT health
+        if self.watson_stt_client:
+            try:
+                import time
+                start_time = time.time()
+                # Simple health check - list models
+                self.watson_stt_client.list_models()
+                health_status["stt_available"] = True
+                health_status["stt_response_time"] = time.time() - start_time
+            except Exception:
+                health_status["stt_available"] = False
+        
+        # Check TTS health
+        if self.watson_tts_client:
+            try:
+                import time
+                start_time = time.time()
+                # Simple health check - list voices
+                self.watson_tts_client.list_voices()
+                health_status["tts_available"] = True
+                health_status["tts_response_time"] = time.time() - start_time
+            except Exception:
+                health_status["tts_available"] = False
+                
+        return health_status
 
 # Global speech processor instance
 speech_processor = SpeechProcessor()
