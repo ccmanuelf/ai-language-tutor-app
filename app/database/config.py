@@ -2,9 +2,9 @@
 Database Configuration for AI Language Tutor App
 
 This module provides database connection configurations for:
-- MariaDB (persistent server-side storage)
+- SQLite (primary persistent storage)
 - ChromaDB (vector storage for RAG)
-- DuckDB/SQLite (local/offline storage)
+- DuckDB (local analytics storage)
 
 Features:
 - Connection pooling and management
@@ -19,7 +19,7 @@ import time
 import logging
 from typing import Optional, Dict, Any, Generator
 from contextlib import contextmanager
-from urllib.parse import quote_plus
+
 from sqlalchemy import create_engine, Engine, text, event
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool, QueuePool
@@ -38,55 +38,34 @@ logger = logging.getLogger(__name__)
 
 class DatabaseConfig(BaseSettings):
     """Database configuration settings"""
-    
-    # MariaDB Configuration
-    MARIADB_HOST: str = "localhost"
-    MARIADB_PORT: int = 3306
-    MARIADB_USER: str = "ai_tutor"
-    MARIADB_PASSWORD: str = "ai_tutor_password"
-    MARIADB_DATABASE: str = "ai_language_tutor"
-    
+
     # ChromaDB Configuration
     CHROMADB_HOST: str = "localhost"
     CHROMADB_PORT: int = 8000
     CHROMADB_PERSIST_DIRECTORY: str = "./data/chromadb"
-    
+
     # DuckDB/SQLite Configuration
     DUCKDB_PATH: str = "./data/local.duckdb"
     SQLITE_PATH: str = "./data/local.sqlite"
-    
+
     # Connection Pool Settings
     POOL_SIZE: int = 10
     MAX_OVERFLOW: int = 20
     POOL_TIMEOUT: int = 30
-    
+
     class Config:
         env_file = ".env"
         case_sensitive = True
         extra = "ignore"
-    
-    @validator("MARIADB_PASSWORD")
-    def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError("MariaDB password must be at least 8 characters")
-        return v
-    
-    @property
-    def mariadb_url(self) -> str:
-        """Generate MariaDB connection URL"""
-        password = quote_plus(self.MARIADB_PASSWORD)
-        return (
-            f"mysql+pymysql://{self.MARIADB_USER}:{password}"
-            f"@{self.MARIADB_HOST}:{self.MARIADB_PORT}/{self.MARIADB_DATABASE}"
-        )
-    
+
     @property
     def sqlite_url(self) -> str:
         """Generate SQLite connection URL"""
         # Use the same database file as specified in .env
         from app.core.config import get_settings
+
         settings = get_settings()
-        if settings.DATABASE_URL.startswith('sqlite://'):
+        if settings.DATABASE_URL.startswith("sqlite://"):
             return settings.DATABASE_URL
         else:
             return f"sqlite:///{self.SQLITE_PATH}"
@@ -94,96 +73,49 @@ class DatabaseConfig(BaseSettings):
 
 class DatabaseManager:
     """Centralized database connection manager with enhanced features"""
-    
+
     def __init__(self):
         self.config = DatabaseConfig()
-        self._mariadb_engine: Optional[Engine] = None
         self._sqlite_engine: Optional[Engine] = None
         self._chromadb_client = None
         self._duckdb_connection = None
         self._session_factories = {}
         self._connection_stats = {
-            'mariadb': {'connects': 0, 'errors': 0, 'last_check': None},
-            'chromadb': {'connects': 0, 'errors': 0, 'last_check': None},
-            'duckdb': {'connects': 0, 'errors': 0, 'last_check': None}
+            "sqlite": {"connects": 0, "errors": 0, "last_check": None},
+            "chromadb": {"connects": 0, "errors": 0, "last_check": None},
+            "duckdb": {"connects": 0, "errors": 0, "last_check": None},
         }
         self._ensure_data_directories()
         self._setup_event_listeners()
-    
+
     def _ensure_data_directories(self):
         """Create necessary data directories"""
         os.makedirs("./data", exist_ok=True)
         os.makedirs(self.config.CHROMADB_PERSIST_DIRECTORY, exist_ok=True)
-    
+
     def _setup_event_listeners(self):
         """Setup SQLAlchemy event listeners for connection monitoring"""
+
         @event.listens_for(Engine, "connect")
         def receive_connect(dbapi_connection, connection_record):
             """Log database connections"""
             logger.debug("Database connection established")
-        
+
         @event.listens_for(Engine, "checkout")
         def receive_checkout(dbapi_connection, connection_record, connection_proxy):
             """Track connection checkouts"""
             pass  # Could add connection tracking here
-        
+
         @event.listens_for(Engine, "checkin")
         def receive_checkin(dbapi_connection, connection_record):
             """Track connection checkins"""
             pass  # Could add connection tracking here
-    
-    @property
-    def mariadb_engine(self) -> Engine:
-        """Get or create MariaDB engine with enhanced connection management"""
-        if self._mariadb_engine is None:
-            try:
-                self._mariadb_engine = create_engine(
-                    self.config.mariadb_url,
-                    poolclass=QueuePool,
-                    pool_size=self.config.POOL_SIZE,
-                    max_overflow=self.config.MAX_OVERFLOW,
-                    pool_timeout=self.config.POOL_TIMEOUT,
-                    pool_pre_ping=True,
-                    pool_recycle=3600,  # Recycle connections after 1 hour
-                    echo=get_settings().DEBUG,
-                    connect_args={
-                        'charset': 'utf8mb4',
-                        'autocommit': False,
-                    }
-                )
-                
-                # Test connection
-                with self._mariadb_engine.connect() as conn:
-                    conn.execute(text("SELECT 1"))
-                
-                self._connection_stats['mariadb']['connects'] += 1
-                self._connection_stats['mariadb']['last_check'] = time.time()
-                logger.info("MariaDB engine created successfully")
-                
-            except Exception as e:
-                self._connection_stats['mariadb']['errors'] += 1
-                logger.error(f"Failed to create MariaDB engine: {e}")
-                raise
-        
-        return self._mariadb_engine
-    
+
     def get_primary_engine(self) -> Engine:
-        """Get primary database engine based on configuration"""
-        settings = get_settings()
-        
-        # Use SQLite if DATABASE_URL points to SQLite
-        if settings.DATABASE_URL.startswith('sqlite://'):
-            logger.info("Using SQLite as primary database")
-            return self.sqlite_engine
-        
-        # Try MariaDB only if explicitly configured and available
-        try:
-            logger.info("Attempting MariaDB connection")
-            return self.mariadb_engine
-        except Exception as e:
-            logger.warning(f"MariaDB unavailable, falling back to SQLite: {e}")
-            return self.sqlite_engine
-    
+        """Get primary database engine (SQLite)"""
+        logger.info("Using SQLite as primary database")
+        return self.sqlite_engine
+
     @property
     def sqlite_engine(self) -> Engine:
         """Get or create SQLite engine"""
@@ -198,7 +130,7 @@ class DatabaseManager:
                 echo=get_settings().DEBUG,
             )
         return self._sqlite_engine
-    
+
     @property
     def chromadb_client(self):
         """Get or create ChromaDB client"""
@@ -208,92 +140,32 @@ class DatabaseManager:
                 settings=ChromaSettings(
                     anonymized_telemetry=False,
                     allow_reset=True,
-                )
+                ),
             )
         return self._chromadb_client
-    
+
     @property
     def duckdb_connection(self):
         """Get or create DuckDB connection"""
         if self._duckdb_connection is None:
             self._duckdb_connection = duckdb.connect(self.config.DUCKDB_PATH)
         return self._duckdb_connection
-    
-    def get_mariadb_session(self) -> Session:
-        """Create a new MariaDB session with enhanced error handling"""
-        if 'mariadb' not in self._session_factories:
-            self._session_factories['mariadb'] = sessionmaker(
-                autocommit=False,
-                autoflush=False,
-                bind=self.mariadb_engine
-            )
-        
-        try:
-            session = self._session_factories['mariadb']()
-            return session
-        except Exception as e:
-            logger.error(f"Failed to create MariaDB session: {e}")
-            raise
-    
-    @contextmanager
-    def mariadb_session_scope(self) -> Generator[Session, None, None]:
-        """Context manager for MariaDB sessions with automatic cleanup"""
-        session = self.get_mariadb_session()
-        try:
-            yield session
-            session.commit()
-        except Exception:
-            session.rollback()
-            raise
-        finally:
-            session.close()
-    
+
     def get_sqlite_session(self) -> Session:
         """Create a new SQLite session"""
         SessionLocal = sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=self.sqlite_engine
+            autocommit=False, autoflush=False, bind=self.sqlite_engine
         )
         return SessionLocal()
-    
-    def test_mariadb_connection(self) -> Dict[str, Any]:
-        """Test MariaDB connection with detailed health check"""
-        start_time = time.time()
-        try:
-            with self.mariadb_engine.connect() as conn:
-                result = conn.execute(text("SELECT 1 as test, NOW() as timestamp"))
-                row = result.fetchone()
-                
-            response_time = time.time() - start_time
-            self._connection_stats['mariadb']['last_check'] = time.time()
-            
-            return {
-                "status": "healthy",
-                "response_time_ms": round(response_time * 1000, 2),
-                "timestamp": row[1].isoformat() if row else None,
-                "pool_size": self.mariadb_engine.pool.size(),
-                "checked_out": self.mariadb_engine.pool.checkedout(),
-                "checked_in": self.mariadb_engine.pool.checkedin(),
-            }
-        except Exception as e:
-            self._connection_stats['mariadb']['errors'] += 1
-            response_time = time.time() - start_time
-            logger.error(f"MariaDB health check failed: {e}")
-            return {
-                "status": "unhealthy",
-                "error": str(e),
-                "response_time_ms": round(response_time * 1000, 2),
-            }
-    
+
     def test_chromadb_connection(self) -> Dict[str, Any]:
         """Test ChromaDB connection with health details"""
         start_time = time.time()
         try:
             heartbeat = self.chromadb_client.heartbeat()
             response_time = time.time() - start_time
-            self._connection_stats['chromadb']['last_check'] = time.time()
-            
+            self._connection_stats["chromadb"]["last_check"] = time.time()
+
             return {
                 "status": "healthy",
                 "response_time_ms": round(response_time * 1000, 2),
@@ -301,7 +173,7 @@ class DatabaseManager:
                 "collections_count": len(self.chromadb_client.list_collections()),
             }
         except Exception as e:
-            self._connection_stats['chromadb']['errors'] += 1
+            self._connection_stats["chromadb"]["errors"] += 1
             response_time = time.time() - start_time
             logger.error(f"ChromaDB health check failed: {e}")
             return {
@@ -309,17 +181,19 @@ class DatabaseManager:
                 "error": str(e),
                 "response_time_ms": round(response_time * 1000, 2),
             }
-    
+
     def test_sqlite_connection(self) -> Dict[str, Any]:
         """Test SQLite connection with health details"""
         start_time = time.time()
         try:
             with self.sqlite_engine.connect() as conn:
-                result = conn.execute(text("SELECT 1 as test, datetime('now') as timestamp"))
+                result = conn.execute(
+                    text("SELECT 1 as test, datetime('now') as timestamp")
+                )
                 row = result.fetchone()
-                
+
             response_time = time.time() - start_time
-            
+
             return {
                 "status": "healthy",
                 "response_time_ms": round(response_time * 1000, 2),
@@ -339,10 +213,12 @@ class DatabaseManager:
         """Test DuckDB connection with health details"""
         start_time = time.time()
         try:
-            result = self.duckdb_connection.execute("SELECT 1 as test, current_timestamp as timestamp").fetchone()
+            result = self.duckdb_connection.execute(
+                "SELECT 1 as test, current_timestamp as timestamp"
+            ).fetchone()
             response_time = time.time() - start_time
-            self._connection_stats['duckdb']['last_check'] = time.time()
-            
+            self._connection_stats["duckdb"]["last_check"] = time.time()
+
             return {
                 "status": "healthy",
                 "response_time_ms": round(response_time * 1000, 2),
@@ -350,7 +226,7 @@ class DatabaseManager:
                 "database_path": str(self.config.DUCKDB_PATH),
             }
         except Exception as e:
-            self._connection_stats['duckdb']['errors'] += 1
+            self._connection_stats["duckdb"]["errors"] += 1
             response_time = time.time() - start_time
             logger.error(f"DuckDB health check failed: {e}")
             return {
@@ -358,94 +234,87 @@ class DatabaseManager:
                 "error": str(e),
                 "response_time_ms": round(response_time * 1000, 2),
             }
-    
+
     def get_primary_database_type(self) -> str:
-        """Determine the primary database type from settings"""
-        settings = get_settings()
-        if settings.DATABASE_URL.startswith('sqlite'):
-            return 'sqlite'
-        elif settings.DATABASE_URL.startswith('mysql'):
-            return 'mariadb'
-        else:
-            return 'sqlite'  # Default fallback
-    
+        """Determine the primary database type (always SQLite)"""
+        return "sqlite"
+
     def test_all_connections(self) -> Dict[str, Dict[str, Any]]:
         """Test all database connections with comprehensive health data"""
         results = {}
-        
+
         # Always test ChromaDB and DuckDB
         results["chromadb"] = self.test_chromadb_connection()
         results["duckdb"] = self.test_duckdb_connection()
-        
-        # Test primary database based on configuration
-        primary_db = self.get_primary_database_type()
-        if primary_db == 'sqlite':
-            results["sqlite"] = self.test_sqlite_connection()
-            logger.info("Using SQLite as primary database")
-        elif primary_db == 'mariadb':
-            # Only test MariaDB if it's configured as primary
-            results["mariadb"] = self.test_mariadb_connection()
-            logger.info("Using MariaDB as primary database")
-        
+
+        # Test SQLite (primary database)
+        results["sqlite"] = self.test_sqlite_connection()
+        logger.info("Using SQLite as primary database")
+
         return results
-    
+
     def get_connection_stats(self) -> Dict[str, Any]:
         """Get connection statistics and monitoring data"""
         return {
             "connection_stats": self._connection_stats.copy(),
             "pool_status": {
-                "mariadb": {
-                    "size": self.mariadb_engine.pool.size() if self._mariadb_engine else 0,
-                    "checked_out": self.mariadb_engine.pool.checkedout() if self._mariadb_engine else 0,
-                    "checked_in": self.mariadb_engine.pool.checkedin() if self._mariadb_engine else 0,
-                } if self._mariadb_engine else None
+                "sqlite": {
+                    "size": self.sqlite_engine.pool.size()
+                    if self._sqlite_engine
+                    else 0,
+                    "checked_out": self.sqlite_engine.pool.checkedout()
+                    if self._sqlite_engine
+                    else 0,
+                    "checked_in": self.sqlite_engine.pool.checkedin()
+                    if self._sqlite_engine
+                    else 0,
+                }
+                if self._sqlite_engine
+                else None
             },
-            "health_summary": self.get_health_summary()
+            "health_summary": self.get_health_summary(),
         }
-    
+
     def get_health_summary(self) -> Dict[str, str]:
         """Get overall health summary"""
         health_checks = self.test_all_connections()
         summary = {}
-        
+
         for db_name, check_result in health_checks.items():
             summary[db_name] = check_result.get("status", "unknown")
-        
+
         # Overall status
         all_healthy = all(status == "healthy" for status in summary.values())
         summary["overall"] = "healthy" if all_healthy else "degraded"
-        
+
         return summary
-    
+
     def reset_connection_stats(self):
         """Reset connection statistics"""
         for db_name in self._connection_stats:
             self._connection_stats[db_name] = {
-                'connects': 0, 
-                'errors': 0, 
-                'last_check': None
+                "connects": 0,
+                "errors": 0,
+                "last_check": None,
             }
         logger.info("Connection statistics reset")
-    
+
     def close_all_connections(self):
         """Close all database connections"""
-        if self._mariadb_engine:
-            self._mariadb_engine.dispose()
-            self._mariadb_engine = None
-        
         if self._sqlite_engine:
             self._sqlite_engine.dispose()
             self._sqlite_engine = None
-        
+
         if self._duckdb_connection:
             self._duckdb_connection.close()
             self._duckdb_connection = None
-        
+
         # ChromaDB client doesn't need explicit closing
 
 
 # Global database manager instance
 db_manager = DatabaseManager()
+
 
 # FastAPI Dependencies
 def get_db_session() -> Generator[Session, None, None]:
@@ -454,27 +323,44 @@ def get_db_session() -> Generator[Session, None, None]:
     engine = db_manager.get_primary_engine()
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     session = SessionLocal()
-    
+
     try:
         yield session
     finally:
         session.close()
 
+
+@contextmanager
 def get_db_session_context():
-    """FastAPI dependency for MariaDB sessions with context management"""
-    return db_manager.mariadb_session_scope()
+    """FastAPI dependency for SQLite sessions with context management"""
+    SessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=db_manager.sqlite_engine
+    )
+    session = SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
 
 def get_chromadb_client():
     """FastAPI dependency for ChromaDB client"""
     return db_manager.chromadb_client
 
+
 def get_duckdb_connection():
     """FastAPI dependency for DuckDB connection"""
     return db_manager.duckdb_connection
 
+
 def get_database_health():
     """FastAPI dependency for database health status"""
     return db_manager.get_health_summary()
+
 
 # Health check endpoint helper
 async def check_database_health():
@@ -482,42 +368,44 @@ async def check_database_health():
     try:
         health_data = db_manager.test_all_connections()
         overall_healthy = all(
-            check.get("status") == "healthy" 
-            for check in health_data.values()
+            check.get("status") == "healthy" for check in health_data.values()
         )
-        
+
         if not overall_healthy:
             raise HTTPException(
                 status_code=503,
-                detail={"message": "Database health check failed", "details": health_data}
+                detail={
+                    "message": "Database health check failed",
+                    "details": health_data,
+                },
             )
-        
+
         return {"status": "healthy", "databases": health_data}
     except Exception as e:
         logger.error(f"Database health check error: {e}")
         raise HTTPException(
             status_code=503,
-            detail={"message": "Database health check failed", "error": str(e)}
+            detail={"message": "Database health check failed", "error": str(e)},
         )
+
 
 # Convenience functions for quick access
 def get_primary_db_session() -> Session:
-    """Get a session for the primary database (SQLite in development, MariaDB in production)"""
+    """Get a session for the primary database (SQLite)"""
     engine = db_manager.get_primary_engine()
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     return SessionLocal()
 
-def get_mariadb_session() -> Session:
-    """Get a MariaDB session (only if MariaDB is configured)"""
-    return db_manager.get_mariadb_session()
 
 def get_sqlite_session() -> Session:
     """Get a SQLite session"""
     return db_manager.get_sqlite_session()
 
+
 def get_chromadb_client():
     """Get ChromaDB client"""
     return db_manager.chromadb_client
+
 
 def get_duckdb_connection():
     """Get DuckDB connection"""
