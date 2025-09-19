@@ -119,24 +119,53 @@ def create_youlearn_sidebar():
 def create_main_content():
     """Create YouLearn-style main content area"""
     return Div(
-        # Top bar with upgrade button
+        # Top bar with language selector and sign in
         Div(
+            # Language selector (left side)
+            Div(
+                Span("🇺🇸", style="margin-right: 0.25rem;"),
+                Span("🇬🇧", style="margin-right: 0.5rem;"),
+                Span(
+                    "english", style="color: var(--text-secondary); font-size: 0.9rem;"
+                ),
+                style="display: flex; align-items: center;",
+            ),
             Div(style="flex: 1;"),  # Spacer
-            A(
-                "Upgrade",
-                href="/profile",
-                style="""
-                    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-                    color: white;
-                    padding: 0.5rem 1.5rem;
-                    border-radius: 2rem;
-                    text-decoration: none;
-                    font-weight: 600;
-                    font-size: 0.9rem;
-                    transition: all 0.2s;
-                """,
-                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='var(--shadow-md)'",
-                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'",
+            # Sign in and upgrade buttons
+            Div(
+                A(
+                    "Sign in",
+                    href="/profile",
+                    style="""
+                        color: var(--text-primary);
+                        text-decoration: none;
+                        font-weight: 500;
+                        font-size: 0.9rem;
+                        margin-right: 1rem;
+                        padding: 0.5rem 1rem;
+                        border-radius: var(--radius);
+                        transition: all 0.2s;
+                    """,
+                    onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                    onmouseout="this.style.backgroundColor='transparent'",
+                ),
+                A(
+                    "Upgrade",
+                    href="/profile",
+                    style="""
+                        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+                        color: white;
+                        padding: 0.5rem 1.5rem;
+                        border-radius: 2rem;
+                        text-decoration: none;
+                        font-weight: 600;
+                        font-size: 0.9rem;
+                        transition: all 0.2s;
+                    """,
+                    onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='var(--shadow-md)'",
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'",
+                ),
+                style="display: flex; align-items: center;",
             ),
             style="display: flex; align-items: center; padding: 1rem 2rem; border-bottom: 1px solid var(--border-light);",
         ),
@@ -307,7 +336,248 @@ def create_main_content():
                     cursor: pointer;
                 """,
                 ),
-                style="position: relative; max-width: 600px; margin: 0 auto 4rem auto;",
+                style="position: relative; max-width: 600px; margin: 0 auto 3rem auto;",
+            ),
+            # Learn+ feature
+            Div(
+                A(
+                    "Learn+",
+                    href="/chat",
+                    style="""
+                        background: var(--bg-primary);
+                        border: 2px solid var(--primary-color);
+                        border-radius: var(--radius-lg);
+                        padding: 1rem 2rem;
+                        text-decoration: none;
+                        color: var(--primary-color);
+                        font-weight: 600;
+                        font-size: 1rem;
+                        transition: all 0.3s ease;
+                        display: inline-block;
+                        margin-bottom: 3rem;
+                    """,
+                    onmouseover="this.style.background='var(--primary-color)'; this.style.color='white'; this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)'",
+                    onmouseout="this.style.background='var(--bg-primary)'; this.style.color='var(--primary-color)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'",
+                ),
+                style="text-align: center;",
+            ),
+            # Explore section
+            Div(
+                Div(
+                    H2(
+                        "Explore",
+                        style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);",
+                    ),
+                    A(
+                        "View all",
+                        href="/progress",
+                        style="""
+                            color: var(--primary-color);
+                            text-decoration: none;
+                            font-weight: 500;
+                            font-size: 0.9rem;
+                            transition: all 0.2s;
+                        """,
+                        onmouseover="this.style.textDecoration='underline'",
+                        onmouseout="this.style.textDecoration='none'",
+                    ),
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;",
+                ),
+                # Content grid with sample items
+                Div(
+                    A(
+                        Div(
+                            Div(
+                                "🧠",
+                                style="""
+                                    width: 100%;
+                                    height: 120px;
+                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                    border-radius: var(--radius);
+                                    margin-bottom: 0.75rem;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    color: white;
+                                    font-size: 3rem;
+                                """,
+                            ),
+                            Div(
+                                Div(
+                                    "Optimal Protocols for Studying and Learning",
+                                    style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; line-height: 1.3;",
+                                ),
+                                Div(
+                                    "6 months ago",
+                                    style="font-size: 0.8rem; color: var(--text-muted);",
+                                ),
+                                style="padding: 0.5rem 0;",
+                            ),
+                        ),
+                        href="/chat",
+                        style="""
+                            display: block;
+                            text-decoration: none;
+                            color: var(--text-primary);
+                            background: var(--bg-primary);
+                            border-radius: var(--radius-lg);
+                            overflow: hidden;
+                            transition: all 0.3s ease;
+                            border: 1px solid var(--border-light);
+                        """,
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)'; this.style.borderColor='var(--border-color)'",
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.borderColor='var(--border-light)'",
+                    ),
+                    A(
+                        Div(
+                            Div(
+                                "🤖",
+                                style="""
+                                    width: 100%;
+                                    height: 120px;
+                                    background: var(--bg-tertiary);
+                                    border-radius: var(--radius);
+                                    margin-bottom: 0.75rem;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 3rem;
+                                """,
+                            ),
+                            Div(
+                                Div(
+                                    "Introduction To Advanced Algorithms",
+                                    style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; line-height: 1.3;",
+                                ),
+                                Div(
+                                    "6 months ago",
+                                    style="font-size: 0.8rem; color: var(--text-muted);",
+                                ),
+                                style="padding: 0.5rem 0;",
+                            ),
+                        ),
+                        href="/chat",
+                        style="""
+                            display: block;
+                            text-decoration: none;
+                            color: var(--text-primary);
+                            background: var(--bg-primary);
+                            border-radius: var(--radius-lg);
+                            overflow: hidden;
+                            transition: all 0.3s ease;
+                            border: 1px solid var(--border-light);
+                        """,
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)'; this.style.borderColor='var(--border-color)'",
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.borderColor='var(--border-light)'",
+                    ),
+                    A(
+                        Div(
+                            Div(
+                                "💬",
+                                style="""
+                                    width: 100%;
+                                    height: 120px;
+                                    background: var(--bg-tertiary);
+                                    border-radius: var(--radius);
+                                    margin-bottom: 0.75rem;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 3rem;
+                                """,
+                            ),
+                            Div(
+                                Div(
+                                    "Think Fast, Talk Smart: Communication",
+                                    style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; line-height: 1.3;",
+                                ),
+                                Div(
+                                    "6 months ago",
+                                    style="font-size: 0.8rem; color: var(--text-muted);",
+                                ),
+                                style="padding: 0.5rem 0;",
+                            ),
+                        ),
+                        href="/chat",
+                        style="""
+                            display: block;
+                            text-decoration: none;
+                            color: var(--text-primary);
+                            background: var(--bg-primary);
+                            border-radius: var(--radius-lg);
+                            overflow: hidden;
+                            transition: all 0.3s ease;
+                            border: 1px solid var(--border-light);
+                        """,
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)'; this.style.borderColor='var(--border-color)'",
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.borderColor='var(--border-light)'",
+                    ),
+                    A(
+                        Div(
+                            Div(
+                                "🧬",
+                                style="""
+                                    width: 100%;
+                                    height: 120px;
+                                    background: var(--bg-tertiary);
+                                    border-radius: var(--radius);
+                                    margin-bottom: 0.75rem;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 3rem;
+                                """,
+                            ),
+                            Div(
+                                Div(
+                                    "Introduction to Cell Biology",
+                                    style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; line-height: 1.3;",
+                                ),
+                                Div(
+                                    "6 months ago",
+                                    style="font-size: 0.8rem; color: var(--text-muted);",
+                                ),
+                                style="padding: 0.5rem 0;",
+                            ),
+                        ),
+                        href="/chat",
+                        style="""
+                            display: block;
+                            text-decoration: none;
+                            color: var(--text-primary);
+                            background: var(--bg-primary);
+                            border-radius: var(--radius-lg);
+                            overflow: hidden;
+                            transition: all 0.3s ease;
+                            border: 1px solid var(--border-light);
+                        """,
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)'; this.style.borderColor='var(--border-color)'",
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.borderColor='var(--border-light)'",
+                    ),
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;",
+                ),
+                # Show more button
+                Div(
+                    A(
+                        "Show more",
+                        href="/progress",
+                        style="""
+                            color: var(--primary-color);
+                            text-decoration: none;
+                            font-weight: 500;
+                            font-size: 0.9rem;
+                            padding: 0.75rem 1.5rem;
+                            border: 1px solid var(--border-color);
+                            border-radius: var(--radius);
+                            transition: all 0.2s;
+                            display: inline-block;
+                        """,
+                        onmouseover="this.style.backgroundColor='var(--bg-tertiary)'; this.style.borderColor='var(--primary-color)'",
+                        onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='var(--border-color)'",
+                    ),
+                    style="text-align: center;",
+                ),
+                style="max-width: 1000px; margin: 0 auto;",
             ),
             style="flex: 1; padding: 3rem 2rem; overflow-y: auto;",
         ),
