@@ -5,7 +5,7 @@ Simple Test Script for AI Language Tutor App
 
 This script helps verify that the basic functionality is working:
 1. Frontend server is running
-2. Backend server is running  
+2. Backend server is running
 3. API calls work with proper authentication
 4. Basic text messaging works
 
@@ -18,6 +18,7 @@ Expected Output:
 
 import requests
 import time
+
 
 def test_frontend_server():
     """Test if frontend server is running"""
@@ -33,6 +34,7 @@ def test_frontend_server():
         print(f"❌ Frontend server: Not running ({e})")
         return False
 
+
 def test_backend_server():
     """Test if backend server is running"""
     try:
@@ -47,25 +49,23 @@ def test_backend_server():
         print(f"❌ Backend server: Not running ({e})")
         return False
 
+
 def test_api_call():
     """Test if API calls work with proper authentication"""
     try:
         # Proper JWT token for demo user (expires in 1 hour)
-        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vLXVzZXIiLCJleHAiOjE3NTY2NzEzNzh9.THu3Ij-GoUzUa8lAChkQGFALLjSgqbtIrgrQ9RrI-eQ"
-        
+        token = "test_token_placeholder"
+
         response = requests.post(
             "http://localhost:8000/api/v1/conversations/chat",
             headers={
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {token}"
+                "Authorization": "Bearer test_token_placeholder",
             },
-            json={
-                "message": "Hello test",
-                "language": "en-claude"
-            },
-            timeout=10
+            json={"message": "Hello test", "language": "en-claude"},
+            timeout=10,
         )
-        
+
         if response.status_code == 200:
             data = response.json()
             if "response" in data:
@@ -78,19 +78,16 @@ def test_api_call():
         else:
             print(f"❌ API call: Error (HTTP {response.status_code})")
             return False
-            
+
     except Exception as e:
         print(f"❌ API call: Failed ({e})")
         return False
 
+
 def test_frontend_pages():
     """Test if frontend pages are accessible"""
-    pages = [
-        ("/", "Home page"),
-        ("/chat", "Chat page"), 
-        ("/test", "Diagnostic page")
-    ]
-    
+    pages = [("/", "Home page"), ("/chat", "Chat page"), ("/test", "Diagnostic page")]
+
     all_passed = True
     for path, name in pages:
         try:
@@ -103,25 +100,26 @@ def test_frontend_pages():
         except Exception as e:
             print(f"❌ {name}: Not accessible ({e})")
             all_passed = False
-    
+
     return all_passed
+
 
 def main():
     """Run all tests"""
     print("🧪 AI Language Tutor - Basic Functionality Test")
     print("=" * 50)
-    
+
     # Wait a moment for servers to fully start
     time.sleep(2)
-    
+
     # Run tests
     tests = [
         ("Frontend Server", test_frontend_server),
         ("Backend Server", test_backend_server),
         ("Frontend Pages", test_frontend_pages),
-        ("API Call", test_api_call)
+        ("API Call", test_api_call),
     ]
-    
+
     results = []
     for test_name, test_func in tests:
         print(f"\n🔍 Testing {test_name}...")
@@ -131,15 +129,15 @@ def main():
         except Exception as e:
             print(f"❌ {test_name}: Test failed with exception ({e})")
             results.append(False)
-    
+
     # Summary
     print("\n" + "=" * 50)
     print("📋 TEST SUMMARY")
     print("=" * 50)
-    
+
     passed = sum(results)
     total = len(results)
-    
+
     if passed == total:
         print(f"🎉 All tests passed! ({passed}/{total})")
         print("\n🚀 You can now test the application:")
@@ -154,6 +152,7 @@ def main():
         print("      - Frontend: python run_frontend.py")
         print("   2. Check if ports 8000 and 3000 are available")
         print("   3. Verify the demo user was created correctly")
+
 
 if __name__ == "__main__":
     main()

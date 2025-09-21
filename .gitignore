@@ -12,6 +12,23 @@ config/secrets.json
 secrets/
 keys/
 
+# Prevent credential leaks in documentation and config files
+**/credentials.md
+**/secrets.md
+**/api_keys.md
+**/tokens.md
+**/*_fixes_explained.md
+**/*_config_*.md
+
+# Test files with hardcoded tokens
+test_*_integration.py
+**/test_*_functionality.py
+**/comprehensive_*_test.py
+
+# Frontend files with embedded credentials
+**/frontend_main_corrupted.py
+**/frontend_main_backup.py
+
 # ===== PYTHON =====
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -13,13 +13,44 @@ from datetime import datetime
 from fasthtml.common import *
 
 
+def create_heroicon_svg(icon_name, size="20", stroke_width="1.5"):
+    """Create HeroIcons SVG elements"""
+    icons = {
+        "plus": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
+        "search": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>',
+        "history": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg>',
+        "user": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+        "chat": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>',
+        "book": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>',
+        "target": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>',
+        "folder": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>',
+        "help": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><point cx="12" cy="17" r="1"></point></svg>',
+        "globe": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>',
+        "gift": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,12 20,22 4,22 4,12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>',
+        "star": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon></svg>',
+        "cards": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>',
+        "quiz": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11H5a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h4l3 3v-8l-3-3z"></path><path d="M14 15V9a2 2 0 0 0-2-2H5"></path></svg>',
+        "microphone": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>',
+        "note": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10,9 9,9 8,9"></polyline></svg>',
+        "summary": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>',
+        "upload": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7,10 12,5 17,10"></polyline><line x1="12" y1="5" x2="12" y2="15"></line></svg>',
+        "link": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>',
+        "record": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>',
+        "arrow-up": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5,12 12,5 19,12"></polyline></svg>',
+    }
+    return icons.get(icon_name, icons["help"])
+
+
 def create_youlearn_sidebar():
-    """Create YouLearn-style sidebar navigation"""
+    """Create YouLearn-style sidebar navigation with HeroIcons"""
     return Div(
         # Logo section
         Div(
             Div(
-                Span("🎯", style="font-size: 1.5rem; margin-right: 0.5rem;"),
+                Span(
+                    create_heroicon_svg("target", "24"),
+                    style="margin-right: 0.5rem; color: var(--primary-color);",
+                ),
                 Span("AI Language Tutor", style="font-weight: 700; font-size: 1.1rem;"),
                 style="display: flex; align-items: center; margin-bottom: 2rem; padding: 1rem 0;",
             ),
@@ -28,7 +59,7 @@ def create_youlearn_sidebar():
         # Main navigation
         Div(
             A(
-                Span("📤", style="margin-right: 0.75rem;"),
+                Span(create_heroicon_svg("plus", "20"), style="margin-right: 0.75rem;"),
                 "Add content",
                 href="/chat",
                 style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
@@ -36,7 +67,9 @@ def create_youlearn_sidebar():
                 onmouseout="this.style.backgroundColor='transparent'",
             ),
             A(
-                Span("🔍", style="margin-right: 0.75rem;"),
+                Span(
+                    create_heroicon_svg("search", "20"), style="margin-right: 0.75rem;"
+                ),
                 "Search",
                 href="/profile",
                 style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
@@ -44,7 +77,9 @@ def create_youlearn_sidebar():
                 onmouseout="this.style.backgroundColor='transparent'",
             ),
             A(
-                Span("📚", style="margin-right: 0.75rem;"),
+                Span(
+                    create_heroicon_svg("history", "20"), style="margin-right: 0.75rem;"
+                ),
                 "History",
                 href="/progress",
                 style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 2rem; transition: all 0.2s;",
@@ -55,13 +90,30 @@ def create_youlearn_sidebar():
         ),
         # Spaces section
         Div(
-            H3(
-                "Spaces",
-                style="color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem; padding: 0 1rem;",
+            Div(
+                H3(
+                    "Spaces",
+                    style="color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem; padding: 0 1rem;",
+                ),
+                A(
+                    Span(
+                        create_heroicon_svg("plus", "16"),
+                        style="color: var(--text-muted);",
+                    ),
+                    href="/chat",
+                    style="text-decoration: none; padding: 0.25rem; border-radius: var(--radius); transition: all 0.2s;",
+                    onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                    onmouseout="this.style.backgroundColor='transparent'",
+                    title="Create Space",
+                ),
+                style="display: flex; justify-content: space-between; align-items: center; padding: 0 1rem; margin-bottom: 1rem;",
             ),
             A(
                 Div(
-                    Span("👤", style="margin-right: 0.75rem;"),
+                    Span(
+                        create_heroicon_svg("user", "20"),
+                        style="margin-right: 0.75rem; color: var(--text-muted);",
+                    ),
                     Div(
                         Div(
                             "Family Learning Space",
@@ -82,10 +134,61 @@ def create_youlearn_sidebar():
             ),
             style="margin-bottom: 2rem;",
         ),
-        # Help section
+        # Help & Tools section
         Div(
+            H3(
+                "Help & Tools",
+                style="color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem; padding: 0 1rem;",
+            ),
             A(
-                Span("💬", style="margin-right: 0.75rem;"),
+                Span(
+                    create_heroicon_svg("globe", "20"),
+                    style="margin-right: 0.75rem; color: var(--text-muted);",
+                ),
+                "Chrome Extension",
+                href="/test",
+                style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
+                onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                onmouseout="this.style.backgroundColor='transparent'",
+            ),
+            A(
+                Span(
+                    create_heroicon_svg("chat", "20"),
+                    style="margin-right: 0.75rem; color: var(--text-muted);",
+                ),
+                "Discord Server",
+                href="/test",
+                style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
+                onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                onmouseout="this.style.backgroundColor='transparent'",
+            ),
+            A(
+                Span(
+                    create_heroicon_svg("gift", "20"),
+                    style="margin-right: 0.75rem; color: var(--text-muted);",
+                ),
+                "Invite & Earn",
+                href="/test",
+                style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
+                onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                onmouseout="this.style.backgroundColor='transparent'",
+            ),
+            A(
+                Span(
+                    create_heroicon_svg("star", "20"),
+                    style="margin-right: 0.75rem; color: var(--text-muted);",
+                ),
+                "New Features",
+                href="/test",
+                style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
+                onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                onmouseout="this.style.backgroundColor='transparent'",
+            ),
+            A(
+                Span(
+                    create_heroicon_svg("help", "20"),
+                    style="margin-right: 0.75rem; color: var(--text-muted);",
+                ),
                 "Feedback",
                 href="/test",
                 style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
@@ -93,14 +196,45 @@ def create_youlearn_sidebar():
                 onmouseout="this.style.backgroundColor='transparent'",
             ),
             A(
-                Span("📖", style="margin-right: 0.75rem;"),
+                Span(
+                    create_heroicon_svg("book", "20"),
+                    style="margin-right: 0.75rem; color: var(--text-muted);",
+                ),
                 "Quick Guide",
                 href="/health",
-                style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
+                style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 2rem; transition: all 0.2s;",
                 onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
                 onmouseout="this.style.backgroundColor='transparent'",
             ),
-            style="border-top: 1px solid var(--border-light); padding-top: 1rem;",
+            style="border-top: 1px solid var(--border-light); padding-top: 1rem; margin-bottom: 2rem;",
+        ),
+        # User profile section at bottom
+        Div(
+            A(
+                Div(
+                    Span(
+                        create_heroicon_svg("user", "20"),
+                        style="margin-right: 0.75rem; color: var(--text-muted);",
+                    ),
+                    Div(
+                        Div(
+                            "User Profile",
+                            style="font-weight: 600; font-size: 0.9rem;",
+                        ),
+                        Div(
+                            "Free Plan",
+                            style="font-size: 0.8rem; color: var(--text-muted);",
+                        ),
+                        style="flex: 1;",
+                    ),
+                    style="display: flex; align-items: center;",
+                ),
+                href="/profile",
+                style="display: block; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); transition: all 0.2s; border-top: 1px solid var(--border-light);",
+                onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                onmouseout="this.style.backgroundColor='transparent'",
+            ),
+            style="position: absolute; bottom: 1rem; left: 0; right: 0; padding: 0 1rem;",
         ),
         style="""
             width: 280px;
@@ -119,7 +253,7 @@ def create_youlearn_sidebar():
 def create_main_content():
     """Create YouLearn-style main content area"""
     return Div(
-        # Top bar with language selector and sign in
+        # Top bar with language selector and toolbar
         Div(
             # Language selector (left side)
             Div(
@@ -130,7 +264,132 @@ def create_main_content():
                 ),
                 style="display: flex; align-items: center;",
             ),
-            Div(style="flex: 1;"),  # Spacer
+            # Center toolbar with YouLearn features
+            Div(
+                A(
+                    Span(
+                        create_heroicon_svg("chat", "18"), style="margin-right: 0.5rem;"
+                    ),
+                    "Chat",
+                    href="/chat",
+                    style="""
+                        display: flex; align-items: center;
+                        color: var(--text-primary);
+                        text-decoration: none;
+                        font-weight: 500;
+                        font-size: 0.9rem;
+                        padding: 0.5rem 1rem;
+                        border-radius: var(--radius);
+                        transition: all 0.2s;
+                        margin-right: 0.5rem;
+                    """,
+                    onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                    onmouseout="this.style.backgroundColor='transparent'",
+                ),
+                A(
+                    Span(
+                        create_heroicon_svg("cards", "18"),
+                        style="margin-right: 0.5rem;",
+                    ),
+                    "Flashcards",
+                    href="/test",
+                    style="""
+                        display: flex; align-items: center;
+                        color: var(--text-primary);
+                        text-decoration: none;
+                        font-weight: 500;
+                        font-size: 0.9rem;
+                        padding: 0.5rem 1rem;
+                        border-radius: var(--radius);
+                        transition: all 0.2s;
+                        margin-right: 0.5rem;
+                    """,
+                    onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                    onmouseout="this.style.backgroundColor='transparent'",
+                ),
+                A(
+                    Span(
+                        create_heroicon_svg("quiz", "18"), style="margin-right: 0.5rem;"
+                    ),
+                    "Quizzes",
+                    href="/test",
+                    style="""
+                        display: flex; align-items: center;
+                        color: var(--text-primary);
+                        text-decoration: none;
+                        font-weight: 500;
+                        font-size: 0.9rem;
+                        padding: 0.5rem 1rem;
+                        border-radius: var(--radius);
+                        transition: all 0.2s;
+                        margin-right: 0.5rem;
+                    """,
+                    onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                    onmouseout="this.style.backgroundColor='transparent'",
+                ),
+                A(
+                    Span(
+                        create_heroicon_svg("microphone", "18"),
+                        style="margin-right: 0.5rem;",
+                    ),
+                    "Podcast",
+                    href="/test",
+                    style="""
+                        display: flex; align-items: center;
+                        color: var(--text-primary);
+                        text-decoration: none;
+                        font-weight: 500;
+                        font-size: 0.9rem;
+                        padding: 0.5rem 1rem;
+                        border-radius: var(--radius);
+                        transition: all 0.2s;
+                        margin-right: 0.5rem;
+                    """,
+                    onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                    onmouseout="this.style.backgroundColor='transparent'",
+                ),
+                A(
+                    Span(
+                        create_heroicon_svg("summary", "18"),
+                        style="margin-right: 0.5rem;",
+                    ),
+                    "Summary",
+                    href="/test",
+                    style="""
+                        display: flex; align-items: center;
+                        color: var(--text-primary);
+                        text-decoration: none;
+                        font-weight: 500;
+                        font-size: 0.9rem;
+                        padding: 0.5rem 1rem;
+                        border-radius: var(--radius);
+                        transition: all 0.2s;
+                        margin-right: 0.5rem;
+                    """,
+                    onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                    onmouseout="this.style.backgroundColor='transparent'",
+                ),
+                A(
+                    Span(
+                        create_heroicon_svg("note", "18"), style="margin-right: 0.5rem;"
+                    ),
+                    "Notes",
+                    href="/test",
+                    style="""
+                        display: flex; align-items: center;
+                        color: var(--text-primary);
+                        text-decoration: none;
+                        font-weight: 500;
+                        font-size: 0.9rem;
+                        padding: 0.5rem 1rem;
+                        border-radius: var(--radius);
+                        transition: all 0.2s;
+                    """,
+                    onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                    onmouseout="this.style.backgroundColor='transparent'",
+                ),
+                style="display: flex; align-items: center;",
+            ),
             # Sign in and upgrade buttons
             Div(
                 A(
@@ -167,7 +426,7 @@ def create_main_content():
                 ),
                 style="display: flex; align-items: center;",
             ),
-            style="display: flex; align-items: center; padding: 1rem 2rem; border-bottom: 1px solid var(--border-light);",
+            style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; border-bottom: 1px solid var(--border-light);",
         ),
         # Main learning interface
         Div(
@@ -189,8 +448,8 @@ def create_main_content():
                 Div(
                     Div(
                         Span(
-                            "📤",
-                            style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;",
+                            create_heroicon_svg("upload", "32"),
+                            style="margin-bottom: 0.5rem; display: block; color: var(--primary-color);",
                         ),
                         H3(
                             "Upload",
@@ -240,8 +499,8 @@ def create_main_content():
                     ),
                     Div(
                         Span(
-                            "🔗",
-                            style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;",
+                            create_heroicon_svg("link", "32"),
+                            style="margin-bottom: 0.5rem; display: block; color: var(--primary-color);",
                         ),
                         H3(
                             "Paste",
@@ -274,8 +533,8 @@ def create_main_content():
                 Div(
                     Div(
                         Span(
-                            "🎤",
-                            style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;",
+                            create_heroicon_svg("record", "32"),
+                            style="margin-bottom: 0.5rem; display: block; color: var(--primary-color);",
                         ),
                         H3(
                             "Record",
@@ -322,18 +581,20 @@ def create_main_content():
                     onblur="this.style.borderColor='var(--border-color)'; this.style.boxShadow='none'",
                 ),
                 Span(
-                    "⬆️",
+                    create_heroicon_svg("arrow-up", "16"),
                     style="""
                     position: absolute;
                     right: 1rem;
                     top: 50%;
                     transform: translateY(-50%);
-                    background: var(--text-muted);
+                    background: var(--primary-color);
                     color: white;
                     padding: 0.5rem;
                     border-radius: 50%;
-                    font-size: 0.8rem;
                     cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 """,
                 ),
                 style="position: relative; max-width: 600px; margin: 0 auto 3rem auto;",
