@@ -20,7 +20,8 @@ keys/
 **/*_fixes_explained.md
 **/*_config_*.md
 SECURITY_INCIDENT_REPORT.md
-**/SECURITY_*.md
+**/SECURITY_INCIDENT*.md
+**/SECURITY_BREACH*.md
 
 # Test files with hardcoded tokens
 test_*_integration.py
