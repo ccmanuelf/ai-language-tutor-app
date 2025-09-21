@@ -19,6 +19,8 @@ keys/
 **/tokens.md
 **/*_fixes_explained.md
 **/*_config_*.md
+SECURITY_INCIDENT_REPORT.md
+**/SECURITY_*.md
 
 # Test files with hardcoded tokens
 test_*_integration.py
