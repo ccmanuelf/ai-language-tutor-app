@@ -11,9 +11,9 @@ import os
 from pathlib import Path
 
 # Import core configuration
-from app.core.config import get_settings
-from app.api.auth import router as auth_router
-from app.api.conversations import router as conversations_router
+from core.config import get_settings
+from api.auth import router as auth_router
+from api.conversations import router as conversations_router
 
 
 def create_app() -> FastAPI:

@@ -75,12 +75,12 @@ The `.env` file is correctly configured:
 # Database Configuration - Using SQLite for development
 DATABASE_URL=sqlite:///./data/ai_language_tutor.db
 
-# API Keys - All properly configured
-ANTHROPIC_API_KEY=sk-ant-api03-...
-MISTRAL_API_KEY=***REMOVED***
-QWEN_API_KEY=***REMOVED***
-IBM_WATSON_STT_API_KEY=***REMOVED***
-IBM_WATSON_TTS_API_KEY=***REMOVED***
+# API Keys - All properly configured (REDACTED FOR SECURITY)
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+MISTRAL_API_KEY=your_mistral_api_key_here
+QWEN_API_KEY=your_qwen_api_key_here
+IBM_WATSON_STT_API_KEY=your_watson_stt_api_key_here
+IBM_WATSON_TTS_API_KEY=your_watson_tts_api_key_here
 ```
 
 ## **What Each Fix Does**
