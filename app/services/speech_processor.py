@@ -36,10 +36,13 @@ from functools import lru_cache
 try:
     import pyaudio
     import numpy as np
+
     AUDIO_LIBS_AVAILABLE = True
 except ImportError:
     AUDIO_LIBS_AVAILABLE = False
-    logging.warning("Audio processing libraries not available. Install pyaudio and numpy for full functionality.")
+    logging.warning(
+        "Audio processing libraries not available. Install pyaudio and numpy for full functionality."
+    )
 
 # IBM Watson Speech Services
 try:
@@ -47,10 +50,34 @@ try:
     from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
     from ibm_cloud_sdk_core import ApiException
     from ibm_watson.websocket import RecognizeCallback, AudioSource
+
     WATSON_SDK_AVAILABLE = True
 except ImportError:
     WATSON_SDK_AVAILABLE = False
-    logging.warning("IBM Watson SDK not available. Install ibm-watson for full functionality.")
+    logging.warning(
+        "IBM Watson SDK not available. Install ibm-watson for full functionality."
+    )
+
+# Mistral Speech Services
+try:
+    from app.services.mistral_stt_service import (
+        MistralSTTService,
+        mistral_speech_to_text,
+    )
+
+    MISTRAL_STT_AVAILABLE = True
+except ImportError:
+    MISTRAL_STT_AVAILABLE = False
+    logging.warning("Mistral STT service not available.")
+
+# Piper TTS Services
+try:
+    from app.services.piper_tts_service import PiperTTSService
+
+    PIPER_TTS_AVAILABLE = True
+except ImportError:
+    PIPER_TTS_AVAILABLE = False
+    logging.warning("Piper TTS service not available.")
 
 from app.services.ai_router import ai_router
 from app.core.config import get_settings
@@ -60,28 +87,36 @@ logger = logging.getLogger(__name__)
 
 class WatsonConfig:
     """Enhanced configuration management for Watson services following IBM best practices"""
-    
+
     def __init__(self):
         # Primary: Environment variables (following IBM best practices)
-        self.stt_apikey = os.getenv('SPEECH_TO_TEXT_APIKEY') or os.getenv('IBM_WATSON_STT_API_KEY')
-        self.stt_url = os.getenv('SPEECH_TO_TEXT_URL') or os.getenv('IBM_WATSON_STT_URL')
-        self.tts_apikey = os.getenv('TEXT_TO_SPEECH_APIKEY') or os.getenv('IBM_WATSON_TTS_API_KEY')
-        self.tts_url = os.getenv('TEXT_TO_SPEECH_URL') or os.getenv('IBM_WATSON_TTS_URL')
-        
+        self.stt_apikey = os.getenv("SPEECH_TO_TEXT_APIKEY") or os.getenv(
+            "IBM_WATSON_STT_API_KEY"
+        )
+        self.stt_url = os.getenv("SPEECH_TO_TEXT_URL") or os.getenv(
+            "IBM_WATSON_STT_URL"
+        )
+        self.tts_apikey = os.getenv("TEXT_TO_SPEECH_APIKEY") or os.getenv(
+            "IBM_WATSON_TTS_API_KEY"
+        )
+        self.tts_url = os.getenv("TEXT_TO_SPEECH_URL") or os.getenv(
+            "IBM_WATSON_TTS_URL"
+        )
+
         # Fallback: Settings from config file
         if not self.stt_apikey:
             settings = get_settings()
-            self.stt_apikey = getattr(settings, 'IBM_WATSON_STT_API_KEY', None)
+            self.stt_apikey = getattr(settings, "IBM_WATSON_STT_API_KEY", None)
         if not self.stt_url:
             settings = get_settings()
-            self.stt_url = getattr(settings, 'IBM_WATSON_STT_URL', None)
+            self.stt_url = getattr(settings, "IBM_WATSON_STT_URL", None)
         if not self.tts_apikey:
             settings = get_settings()
-            self.tts_apikey = getattr(settings, 'IBM_WATSON_TTS_API_KEY', None)
+            self.tts_apikey = getattr(settings, "IBM_WATSON_TTS_API_KEY", None)
         if not self.tts_url:
             settings = get_settings()
-            self.tts_url = getattr(settings, 'IBM_WATSON_TTS_URL', None)
-            
+            self.tts_url = getattr(settings, "IBM_WATSON_TTS_URL", None)
+
     def validate(self):
         """Validate configuration and return status"""
         issues = []
@@ -98,6 +133,7 @@ class WatsonConfig:
 
 class AudioFormat(Enum):
     """Supported audio formats"""
+
     WAV = "wav"
     MP3 = "mp3"
     FLAC = "flac"
@@ -106,6 +142,7 @@ class AudioFormat(Enum):
 
 class PronunciationLevel(Enum):
     """Pronunciation quality levels"""
+
     EXCELLENT = "excellent"
     GOOD = "good"
     FAIR = "fair"
@@ -116,6 +153,7 @@ class PronunciationLevel(Enum):
 @dataclass
 class AudioMetadata:
     """Audio file metadata"""
+
     format: AudioFormat
     sample_rate: int
     channels: int
@@ -127,6 +165,7 @@ class AudioMetadata:
 @dataclass
 class SpeechRecognitionResult:
     """Speech recognition result"""
+
     transcript: str
     confidence: float
     language: str
@@ -138,6 +177,7 @@ class SpeechRecognitionResult:
 @dataclass
 class PronunciationAnalysis:
     """Pronunciation analysis result"""
+
     overall_score: float
     pronunciation_level: PronunciationLevel
     phonetic_accuracy: float
@@ -152,6 +192,7 @@ class PronunciationAnalysis:
 @dataclass
 class SpeechSynthesisResult:
     """Speech synthesis result"""
+
     audio_data: bytes
     audio_format: AudioFormat
     sample_rate: int
@@ -162,189 +203,271 @@ class SpeechSynthesisResult:
 
 class SpeechProcessor:
     """Main speech processing pipeline"""
-    
+
     def __init__(self):
         # Initialize Watson configuration
         self.config = WatsonConfig()
         self.config_valid, self.config_issues = self.config.validate()
-        
+
         # Set availability based on configuration
         self.watson_stt_available = bool(self.config.stt_apikey and self.config.stt_url)
         self.watson_tts_available = bool(self.config.tts_apikey and self.config.tts_url)
         self.audio_libs_available = AUDIO_LIBS_AVAILABLE
         self.watson_sdk_available = WATSON_SDK_AVAILABLE
-        
+
+        # Initialize Mistral STT service
+        self.mistral_stt_available = MISTRAL_STT_AVAILABLE
+        self.mistral_stt_service = None
+        self._init_mistral_stt()
+
+        # Initialize Piper TTS service
+        self.piper_tts_available = PIPER_TTS_AVAILABLE
+        self.piper_tts_service = None
+        self._init_piper_tts()
+
         # Initialize Watson SDK clients
         self._init_watson_clients()
-        
+
         # Audio processing settings
         self.default_sample_rate = 16000
         self.default_channels = 1
         self.chunk_size = 1024
-        
+
         # Voice Activity Detection settings
         self.vad_threshold = 0.01  # Energy threshold for voice detection
         self.vad_frame_size = 480  # 30ms at 16kHz
-        
+
         # Pronunciation analysis settings
         self.pronunciation_models = self._load_pronunciation_models()
-        
+
         # Log configuration status
         if not self.config_valid:
-            logger.warning(f"Watson configuration issues: {', '.join(self.config_issues)}")
+            logger.warning(
+                f"Watson configuration issues: {', '.join(self.config_issues)}"
+            )
         else:
             logger.info("Watson configuration validated successfully")
-            
-    def detect_voice_activity(self, audio_data: bytes, sample_rate: int = 16000) -> bool:
+
+    def detect_voice_activity(
+        self, audio_data: bytes, sample_rate: int = 16000
+    ) -> bool:
         """Modern energy-based voice activity detection"""
         try:
             if not AUDIO_LIBS_AVAILABLE:
                 return True  # Assume voice present if no analysis available
-            
+
             if not audio_data or len(audio_data) < 2:
                 return False  # No audio or insufficient data
-            
+
             # Convert bytes to numpy array
             try:
                 audio_array = np.frombuffer(audio_data, dtype=np.int16)
             except ValueError:
                 # Handle invalid audio format
                 return False
-            
+
             # Normalize audio
             if len(audio_array) > 0:
                 normalized = audio_array.astype(np.float32) / 32767.0
-                
+
                 # Calculate energy (RMS)
-                energy = np.sqrt(np.mean(normalized ** 2))
-                
+                energy = np.sqrt(np.mean(normalized**2))
+
                 # Simple threshold-based VAD with minimum energy check
-                return energy > self.vad_threshold and energy > 1e-6  # Avoid detecting pure zeros as voice
-            
+                return (
+                    energy > self.vad_threshold and energy > 1e-6
+                )  # Avoid detecting pure zeros as voice
+
             return False
-            
+
         except Exception as e:
             logger.warning(f"Voice activity detection failed: {e}")
             return False  # Default to no voice on error for safety
-    
+
     def remove_silence(self, audio_data: bytes, sample_rate: int = 16000) -> bytes:
         """Remove silence from audio using energy-based detection"""
         try:
             if not AUDIO_LIBS_AVAILABLE:
                 return audio_data  # Return original if no processing available
-            
+
             audio_array = np.frombuffer(audio_data, dtype=np.int16)
             frame_size = self.vad_frame_size
-            
+
             # Process audio in frames
             voice_frames = []
             for i in range(0, len(audio_array), frame_size):
-                frame = audio_array[i:i + frame_size]
+                frame = audio_array[i : i + frame_size]
                 if len(frame) == frame_size:
                     frame_bytes = frame.tobytes()
                     if self.detect_voice_activity(frame_bytes, sample_rate):
                         voice_frames.extend(frame)
-            
+
             if voice_frames:
                 return np.array(voice_frames, dtype=np.int16).tobytes()
             else:
                 return audio_data  # Return original if no voice detected
-                
+
         except Exception as e:
             logger.warning(f"Silence removal failed: {e}")
             return audio_data
-        
+
     def _init_watson_clients(self):
         """Initialize IBM Watson Speech-to-Text and Text-to-Speech clients with proper HTTP configuration"""
         self.watson_stt_client = None
         self.watson_tts_client = None
-        
+
         if not self.watson_sdk_available:
-            logger.warning("IBM Watson SDK not available. Speech services will be limited.")
+            logger.warning(
+                "IBM Watson SDK not available. Speech services will be limited."
+            )
             return
-            
+
         try:
             # Initialize Speech-to-Text client
             if self.watson_stt_available:
                 stt_authenticator = IAMAuthenticator(self.config.stt_apikey)
                 self.watson_stt_client = SpeechToTextV1(authenticator=stt_authenticator)
                 self.watson_stt_client.set_service_url(self.config.stt_url)
-                
+
                 # Configure HTTP client for better performance and reliability
                 # Note: Removed retry_attempts and max_retry_interval as they're not supported
-                self.watson_stt_client.set_http_config({
-                    'timeout': 30  # 30 second timeout
-                })
-                
+                self.watson_stt_client.set_http_config(
+                    {
+                        "timeout": 30  # 30 second timeout
+                    }
+                )
+
                 logger.info("Watson Speech-to-Text client initialized successfully")
-            
-            # Initialize Text-to-Speech client  
+
+            # Initialize Text-to-Speech client
             if self.watson_tts_available:
                 tts_authenticator = IAMAuthenticator(self.config.tts_apikey)
                 self.watson_tts_client = TextToSpeechV1(authenticator=tts_authenticator)
                 self.watson_tts_client.set_service_url(self.config.tts_url)
-                
+
                 # Configure HTTP client for better performance and reliability
                 # Note: Removed retry_attempts and max_retry_interval as they're not supported
-                self.watson_tts_client.set_http_config({
-                    'timeout': 30  # 30 second timeout
-                })
-                
+                self.watson_tts_client.set_http_config(
+                    {
+                        "timeout": 30  # 30 second timeout
+                    }
+                )
+
                 logger.info("Watson Text-to-Speech client initialized successfully")
-                
+
         except Exception as e:
             logger.error(f"Failed to initialize Watson clients: {e}")
             self.watson_stt_client = None
             self.watson_tts_client = None
             self.watson_stt_available = False
             self.watson_tts_available = False
-    
+
+    def _init_mistral_stt(self):
+        """Initialize Mistral STT service"""
+        self.mistral_stt_service = None
+
+        if not self.mistral_stt_available:
+            logger.warning(
+                "Mistral STT service not available. Install required dependencies."
+            )
+            return
+
+        try:
+            # Import here to avoid circular imports
+            from app.services.mistral_stt_service import MistralSTTService
+
+            # Create Mistral STT service instance
+            self.mistral_stt_service = MistralSTTService()
+
+            if self.mistral_stt_service.available:
+                logger.info("Mistral STT service initialized successfully")
+                self.mistral_stt_available = True
+            else:
+                logger.warning("Mistral STT service configuration invalid")
+                self.mistral_stt_available = False
+
+        except Exception as e:
+            logger.error(f"Failed to initialize Mistral STT service: {e}")
+            self.mistral_stt_service = None
+            self.mistral_stt_available = False
+
+    def _init_piper_tts(self):
+        """Initialize Piper TTS service"""
+        self.piper_tts_service = None
+
+        if not self.piper_tts_available:
+            logger.warning(
+                "Piper TTS service not available. Install required dependencies."
+            )
+            return
+
+        try:
+            # Import here to avoid circular imports
+            from app.services.piper_tts_service import PiperTTSService
+
+            # Create Piper TTS service instance
+            self.piper_tts_service = PiperTTSService()
+
+            if self.piper_tts_service.voices:
+                logger.info("Piper TTS service initialized successfully")
+                self.piper_tts_available = True
+            else:
+                logger.warning("Piper TTS service has no available voices")
+                self.piper_tts_available = False
+
+        except Exception as e:
+            logger.error(f"Failed to initialize Piper TTS service: {e}")
+            self.piper_tts_service = None
+            self.piper_tts_available = False
+
     @lru_cache(maxsize=1)
     def _get_cached_voices(self):
         """Cache available voices to reduce API calls"""
         return self._fetch_available_voices()
-    
+
     def _fetch_available_voices(self):
         """Fetch available voices from Watson TTS service"""
         if not self.watson_tts_client:
             return {"error": "Watson TTS client not available"}
-        
+
         try:
             voices_result = self.watson_tts_client.list_voices().get_result()
-            
+
             available_voices = {}
             language_support = {}
-            
-            for voice in voices_result['voices']:
-                language = voice['language']
-                voice_name = voice['name']
-                
+
+            for voice in voices_result["voices"]:
+                language = voice["language"]
+                voice_name = voice["name"]
+
                 if language not in available_voices:
                     available_voices[language] = []
                 available_voices[language].append(voice_name)
-                
+
                 # Map to our simplified language codes
-                lang_code = language.split('-')[0]
+                lang_code = language.split("-")[0]
                 if lang_code not in language_support:
                     language_support[lang_code] = []
                 language_support[lang_code].append(voice_name)
-            
+
             return {
                 "available_voices": available_voices,
                 "language_support": language_support,
-                "chinese_supported": any('zh' in lang for lang in available_voices.keys()),
-                "total_languages": len(available_voices)
+                "chinese_supported": any(
+                    "zh" in lang for lang in available_voices.keys()
+                ),
+                "total_languages": len(available_voices),
             }
-            
+
         except Exception as e:
             logger.error(f"Failed to fetch available voices: {e}")
             return {"error": str(e)}
-    
+
     async def check_available_voices(self) -> Dict[str, List[str]]:
         """Check available voices in Watson TTS service"""
         # Use cached version to reduce API calls
         return self._get_cached_voices()
-    
+
     def _load_pronunciation_models(self) -> Dict[str, Any]:
         """Load language-specific pronunciation models"""
         # This would load actual pronunciation models in a full implementation
@@ -353,79 +476,109 @@ class SpeechProcessor:
             "en": {
                 "phoneme_weights": {"vowels": 0.4, "consonants": 0.4, "stress": 0.2},
                 "common_issues": ["th_sounds", "r_sounds", "vowel_length"],
-                "difficulty_words": ["through", "thoroughly", "rhythm", "worcestershire"]
+                "difficulty_words": [
+                    "through",
+                    "thoroughly",
+                    "rhythm",
+                    "worcestershire",
+                ],
             },
             "fr": {
-                "phoneme_weights": {"nasal_vowels": 0.3, "r_sounds": 0.3, "liaison": 0.2, "accent": 0.2},
+                "phoneme_weights": {
+                    "nasal_vowels": 0.3,
+                    "r_sounds": 0.3,
+                    "liaison": 0.2,
+                    "accent": 0.2,
+                },
                 "common_issues": ["nasal_vowels", "french_r", "silent_letters"],
-                "difficulty_words": ["grenouille", "écureuil", "serrurerie", "anticonstitutionnellement"]
+                "difficulty_words": [
+                    "grenouille",
+                    "écureuil",
+                    "serrurerie",
+                    "anticonstitutionnellement",
+                ],
             },
             "es": {
-                "phoneme_weights": {"rolled_r": 0.3, "vowels": 0.3, "stress": 0.2, "consonants": 0.2},
+                "phoneme_weights": {
+                    "rolled_r": 0.3,
+                    "vowels": 0.3,
+                    "stress": 0.2,
+                    "consonants": 0.2,
+                },
                 "common_issues": ["rr_trill", "stress_patterns", "vowel_clarity"],
-                "difficulty_words": ["rápidamente", "ferrocarril", "trabajar", "desarrollar"]
+                "difficulty_words": [
+                    "rápidamente",
+                    "ferrocarril",
+                    "trabajar",
+                    "desarrollar",
+                ],
             },
             "zh": {
                 "phoneme_weights": {"tones": 0.5, "consonants": 0.25, "vowels": 0.25},
                 "common_issues": ["tone_accuracy", "retroflex_sounds", "aspiration"],
-                "difficulty_words": ["是", "知道", "中国", "学习"]
-            }
+                "difficulty_words": ["是", "知道", "中国", "学习"],
+            },
         }
-    
+
     async def process_speech_to_text(
         self,
         audio_data: bytes,
         language: str = "en",
         audio_format: AudioFormat = AudioFormat.WAV,
-        enable_pronunciation_analysis: bool = True
+        enable_pronunciation_analysis: bool = True,
+        provider: str = "auto",
     ) -> Tuple[SpeechRecognitionResult, Optional[PronunciationAnalysis]]:
         """
         Process speech to text with optional pronunciation analysis
-        
+
         Args:
             audio_data: Raw audio data
             language: Target language for recognition
             audio_format: Audio format
             enable_pronunciation_analysis: Whether to analyze pronunciation
-            
+            provider: STT provider - "auto", "mistral", "watson", "mistral_fallback"
+
         Returns:
             Speech recognition result and optional pronunciation analysis
         """
         start_time = datetime.now()
-        
+
         try:
             # Validate and preprocess audio
             audio_metadata = await self._analyze_audio_quality(audio_data, audio_format)
-            
+
             if audio_metadata.quality_score < 0.5:
-                logger.warning(f"Low audio quality detected: {audio_metadata.quality_score}")
+                logger.warning(
+                    f"Low audio quality detected: {audio_metadata.quality_score}"
+                )
                 # Attempt audio enhancement
                 audio_data = await self._enhance_audio_quality(audio_data, audio_format)
-            
-            # Perform speech recognition
-            recognition_result = await self._speech_to_text_watson(
+
+            # Perform speech recognition with provider selection
+            recognition_result = await self._select_stt_provider_and_process(
                 audio_data=audio_data,
                 language=language,
-                audio_format=audio_format
+                audio_format=audio_format,
+                provider=provider,
             )
-            
+
             pronunciation_analysis = None
             if enable_pronunciation_analysis and recognition_result.confidence > 0.5:
                 pronunciation_analysis = await self._analyze_pronunciation(
                     audio_data=audio_data,
                     transcript=recognition_result.transcript,
                     language=language,
-                    audio_metadata=audio_metadata
+                    audio_metadata=audio_metadata,
                 )
-            
+
             processing_time = (datetime.now() - start_time).total_seconds()
             recognition_result.processing_time = processing_time
-            
+
             return recognition_result, pronunciation_analysis
-            
+
         except Exception as e:
             logger.error(f"Speech processing failed: {e}")
-            
+
             # Return fallback result
             fallback_result = SpeechRecognitionResult(
                 transcript="[Speech recognition failed]",
@@ -433,98 +586,204 @@ class SpeechProcessor:
                 language=language,
                 processing_time=(datetime.now() - start_time).total_seconds(),
                 alternative_transcripts=[],
-                metadata={"error": str(e), "fallback": True}
+                metadata={"error": str(e), "fallback": True},
             )
-            
+
             return fallback_result, None
-    
+
     async def process_text_to_speech(
         self,
         text: str,
         language: str = "en",
         voice_type: str = "neural",
         speaking_rate: float = 1.0,
-        emphasis_words: Optional[List[str]] = None
+        emphasis_words: Optional[List[str]] = None,
+        provider: str = "auto",
     ) -> SpeechSynthesisResult:
         """
         Convert text to speech with language learning optimizations
-        
+
         Args:
             text: Text to synthesize
             language: Target language
             voice_type: Voice type (neural, standard)
             speaking_rate: Speaking speed (0.5-2.0)
             emphasis_words: Words to emphasize for learning
-            
+            provider: TTS provider ("auto", "piper", "watson", "piper_fallback")
+
         Returns:
             Speech synthesis result
         """
         start_time = datetime.now()
-        
+
         try:
             # Prepare text for optimal pronunciation learning
             optimized_text = await self._prepare_text_for_synthesis(
                 text=text,
                 language=language,
                 emphasis_words=emphasis_words,
-                speaking_rate=speaking_rate
+                speaking_rate=speaking_rate,
             )
-            
-            # Synthesize speech using Watson TTS
-            synthesis_result = await self._text_to_speech_watson(
+
+            # Use provider selection logic
+            synthesis_result = await self._select_tts_provider_and_process(
                 text=optimized_text,
                 language=language,
                 voice_type=voice_type,
-                speaking_rate=speaking_rate
+                speaking_rate=speaking_rate,
+                provider=provider,
+                original_text=text,  # Pass original text for Piper TTS
             )
-            
-            synthesis_result.processing_time = (datetime.now() - start_time).total_seconds()
-            
+
+            synthesis_result.processing_time = (
+                datetime.now() - start_time
+            ).total_seconds()
+
             return synthesis_result
-            
+
         except Exception as e:
             logger.error(f"Speech synthesis failed: {e}")
             raise Exception(f"Speech synthesis failed: {str(e)}")
-    
-    async def analyze_pronunciation_quality(
+
+    async def _select_tts_provider_and_process(
         self,
-        user_audio: bytes,
-        reference_text: str,
-        language: str = "en"
+        text: str,
+        language: str,
+        voice_type: str,
+        speaking_rate: float,
+        provider: str = "auto",
+        original_text: str = None,
+    ) -> SpeechSynthesisResult:
+        """Select TTS provider and process text-to-speech with fallback logic"""
+
+        # Auto provider selection: Piper TTS only (Watson TTS deprecated)
+        if provider == "auto":
+            if self.piper_tts_available:
+                try:
+                    # Use original plain text for Piper (no SSML markup)
+                    piper_text = original_text if original_text else text
+                    result = await self._text_to_speech_piper(
+                        text=piper_text,
+                        language=language,
+                        voice_type=voice_type,
+                        speaking_rate=speaking_rate,
+                    )
+                    logger.info(f"TTS synthesis successful using Piper (cost: $0.00)")
+                    return result
+                except Exception as e:
+                    logger.error(f"Piper TTS failed: {e}")
+                    raise Exception(f"TTS synthesis failed: {e}")
+            else:
+                raise Exception(
+                    "Piper TTS not available. Watson TTS has been deprecated."
+                )
+
+        # Legacy fallback mode (with Watson TTS deprecated warning)
+        elif provider == "piper_fallback":
+            if self.piper_tts_available:
+                try:
+                    # Use original plain text for Piper (no SSML markup)
+                    piper_text = original_text if original_text else text
+                    result = await self._text_to_speech_piper(
+                        text=piper_text,
+                        language=language,
+                        voice_type=voice_type,
+                        speaking_rate=speaking_rate,
+                    )
+                    logger.info(f"TTS synthesis successful using Piper (cost: $0.00)")
+                    return result
+                except Exception as e:
+                    logger.warning(
+                        f"Piper TTS failed, attempting deprecated Watson fallback: {e}"
+                    )
+                    # Continue to Watson fallback
+
+            # DEPRECATED: Watson TTS fallback
+            if self.watson_tts_available:
+                logger.warning(
+                    "⚠️ DEPRECATED: Using Watson TTS fallback. Please migrate to Piper TTS."
+                )
+                try:
+                    result = await self._text_to_speech_watson(
+                        text=text,
+                        language=language,
+                        voice_type=voice_type,
+                        speaking_rate=speaking_rate,
+                    )
+                    logger.info(
+                        f"TTS synthesis successful using deprecated Watson fallback"
+                    )
+                    return result
+                except Exception as e:
+                    logger.error(f"Watson TTS fallback also failed: {e}")
+                    raise Exception(
+                        f"All TTS providers failed. Piper: unavailable/failed, Watson: {e}"
+                    )
+            else:
+                raise Exception("Piper TTS failed and Watson TTS not available")
+
+        # Specific provider selection
+        elif provider == "piper":
+            if not self.piper_tts_available:
+                raise Exception("Piper TTS provider requested but not available")
+            # Use original plain text for Piper (no SSML markup)
+            piper_text = original_text if original_text else text
+            return await self._text_to_speech_piper(
+                text=piper_text,
+                language=language,
+                voice_type=voice_type,
+                speaking_rate=speaking_rate,
+            )
+
+        elif provider == "watson":
+            if not self.watson_tts_available:
+                raise Exception("Watson TTS provider requested but not available")
+            return await self._text_to_speech_watson(
+                text=text,
+                language=language,
+                voice_type=voice_type,
+                speaking_rate=speaking_rate,
+            )
+
+        else:
+            raise Exception(f"Unknown TTS provider: {provider}")
+
+    async def analyze_pronunciation_quality(
+        self, user_audio: bytes, reference_text: str, language: str = "en"
     ) -> PronunciationAnalysis:
         """
         Analyze pronunciation quality against reference text
-        
+
         Args:
             user_audio: User's pronunciation audio
             reference_text: Expected text
             language: Target language
-            
+
         Returns:
             Detailed pronunciation analysis
         """
-        
+
         try:
             # First get speech recognition of user audio
             recognition_result, _ = await self.process_speech_to_text(
                 audio_data=user_audio,
                 language=language,
-                enable_pronunciation_analysis=False
+                enable_pronunciation_analysis=False,
             )
-            
+
             # Compare with reference text
             pronunciation_analysis = await self._compare_pronunciation(
                 recognized_text=recognition_result.transcript,
                 reference_text=reference_text,
                 language=language,
-                confidence=recognition_result.confidence
+                confidence=recognition_result.confidence,
             )
-            
+
             return pronunciation_analysis
-            
+
         except Exception as e:
             logger.error(f"Pronunciation analysis failed: {e}")
-            
+
             # Return fallback analysis
             return PronunciationAnalysis(
                 overall_score=0.0,
@@ -535,30 +794,109 @@ class SpeechProcessor:
                 detected_issues=["analysis_failed"],
                 improvement_suggestions=["Please try again with clearer audio"],
                 phonetic_transcription="",
-                target_phonetics=""
+                target_phonetics="",
             )
-    
+
     # Private implementation methods
-    
-    async def _speech_to_text_watson(
+
+    async def _select_stt_provider_and_process(
         self,
         audio_data: bytes,
         language: str,
-        audio_format: AudioFormat
+        audio_format: AudioFormat,
+        provider: str = "auto",
+    ) -> SpeechRecognitionResult:
+        """
+        Select STT provider and process audio
+
+        Provider options:
+        - "auto": Default to Mistral for cost savings, fallback to Watson
+        - "mistral": Use Mistral only
+        - "watson": Use Watson only
+        - "mistral_fallback": Try Mistral first, fallback to Watson on error
+        """
+
+        # Provider selection logic
+        if provider == "watson":
+            # Explicit Watson request
+            if not self.watson_stt_available:
+                raise Exception("Watson STT not available but explicitly requested")
+            return await self._speech_to_text_watson(audio_data, language, audio_format)
+
+        elif provider == "mistral":
+            # Explicit Mistral request
+            if not self.mistral_stt_available:
+                raise Exception("Mistral STT not available but explicitly requested")
+            return await self._speech_to_text_mistral(
+                audio_data, language, audio_format
+            )
+
+        elif provider in ["auto", "mistral_fallback"]:
+            # Auto or fallback mode - prefer Mistral for cost savings
+
+            # Try Mistral first if available
+            if self.mistral_stt_available:
+                try:
+                    logger.info(
+                        f"Using Mistral STT for cost optimization (provider: {provider})"
+                    )
+                    result = await self._speech_to_text_mistral(
+                        audio_data, language, audio_format
+                    )
+
+                    # Check if result is acceptable
+                    if result.confidence > 0.1 and result.transcript.strip():
+                        return result
+                    else:
+                        logger.warning(
+                            f"Mistral STT low quality result (confidence: {result.confidence})"
+                        )
+                        if provider == "auto":
+                            # Auto mode: accept even low quality to save costs
+                            return result
+                        # mistral_fallback: continue to Watson fallback
+
+                except Exception as e:
+                    logger.warning(
+                        f"Mistral STT failed, attempting Watson fallback: {e}"
+                    )
+                    # Continue to Watson fallback
+
+            # Fallback to Watson if Mistral failed or not available
+            if self.watson_stt_available:
+                logger.info("Using Watson STT as fallback")
+                return await self._speech_to_text_watson(
+                    audio_data, language, audio_format
+                )
+
+            # Neither provider available
+            raise Exception(
+                "No STT providers available (Mistral and Watson both unavailable)"
+            )
+
+        else:
+            raise ValueError(
+                f"Unknown STT provider: {provider}. Use 'auto', 'mistral', 'watson', or 'mistral_fallback'"
+            )
+
+    async def _speech_to_text_watson(
+        self, audio_data: bytes, language: str, audio_format: AudioFormat
     ) -> SpeechRecognitionResult:
         """Watson Speech-to-Text implementation with real API calls"""
-        
+
         if not self.watson_stt_available or not self.watson_stt_client:
-            raise Exception("Watson Speech-to-Text not configured or client not initialized")
-        
+            raise Exception(
+                "Watson Speech-to-Text not configured or client not initialized"
+            )
+
         try:
             # Preprocess audio for better quality
             processed_audio = await self._preprocess_audio(audio_data, audio_format)
-            
+
             # Language mapping for Watson STT (updated with verified available models)
             watson_language_map = {
                 "en": "en-US_BroadbandModel",
-                "fr": "fr-FR_BroadbandModel", 
+                "fr": "fr-FR_BroadbandModel",
                 "es": "es-MX_BroadbandModel",  # Mexican Spanish for user preference
                 "de": "de-DE_BroadbandModel",
                 "zh": "zh-CN_BroadbandModel",  # Chinese STT is available
@@ -566,32 +904,32 @@ class SpeechProcessor:
                 "ko": "ko-KR_BroadbandModel",
                 "it": "it-IT_BroadbandModel",
                 "pt": "pt-BR_BroadbandModel",
-                "nl": "nl-NL_BroadbandModel"
+                "nl": "nl-NL_BroadbandModel",
             }
-            
+
             watson_model = watson_language_map.get(language, "en-US_BroadbandModel")
-            
+
             # Prepare audio file-like object for Watson API
             audio_file = io.BytesIO(processed_audio)
-            
+
             # Watson STT API call with optimized parameters for language learning
             # Fixed parameter compatibility issues - removed unsupported parameters
             response = self.watson_stt_client.recognize(
                 audio=audio_file,
-                content_type=f'audio/{audio_format.value}',
+                content_type=f"audio/{audio_format.value}",
                 model=watson_model,
                 word_alternatives_threshold=0.7,
                 word_confidence=True,
                 timestamps=True,
                 max_alternatives=3,
                 inactivity_timeout=30,  # Add timeout for better control
-                smart_formatting=True,   # Enable smart formatting for better output
-                speaker_labels=False     # Disable unless needed for performance
+                smart_formatting=True,  # Enable smart formatting for better output
+                speaker_labels=False,  # Disable unless needed for performance
             ).get_result()
-            
+
             # Process Watson response with enhanced processing
             return self._process_watson_response(response, language)
-            
+
         except ValueError as ve:
             logger.warning(f"Watson STT processing warning: {ve}")
             # Handle specific validation errors
@@ -601,9 +939,9 @@ class SpeechProcessor:
                 language=language,
                 processing_time=0.0,
                 alternative_transcripts=[],
-                metadata={"info": str(ve)}
+                metadata={"info": str(ve)},
             )
-            
+
         except ApiException as api_error:
             logger.error(f"Watson STT API error {api_error.code}: {api_error.message}")
             # Handle API-specific errors
@@ -613,9 +951,9 @@ class SpeechProcessor:
                 language=language,
                 processing_time=0.0,
                 alternative_transcripts=[],
-                metadata={"error": f"API Error: {api_error.message}"}
+                metadata={"error": f"API Error: {api_error.message}"},
             )
-            
+
         except Exception as e:
             logger.error(f"Watson STT unexpected error: {e}", exc_info=True)
             # Handle unexpected errors
@@ -625,21 +963,23 @@ class SpeechProcessor:
                 language=language,
                 processing_time=0.0,
                 alternative_transcripts=[],
-                metadata={"error": f"Service unavailable: {str(e)}"}
+                metadata={"error": f"Service unavailable: {str(e)}"},
             )
-    
-    def _process_watson_response(self, response: dict, language: str) -> SpeechRecognitionResult:
+
+    def _process_watson_response(
+        self, response: dict, language: str
+    ) -> SpeechRecognitionResult:
         """Process Watson STT response with enhanced error handling"""
-        
+
         try:
             # Validate response structure
             if not isinstance(response, dict):
                 raise ValueError("Invalid response format")
-                
-            if 'results' not in response:
+
+            if "results" not in response:
                 raise ValueError("Missing results in response")
-                
-            results = response['results']
+
+            results = response["results"]
             if not results:
                 return SpeechRecognitionResult(
                     transcript="",
@@ -647,33 +987,36 @@ class SpeechProcessor:
                     language=language,
                     processing_time=0.0,
                     alternative_transcripts=[],
-                    metadata={"info": "No speech detected"}
+                    metadata={"info": "No speech detected"},
                 )
-            
+
             # Extract primary result
             primary_result = results[0]
-            if 'alternatives' not in primary_result or not primary_result['alternatives']:
+            if (
+                "alternatives" not in primary_result
+                or not primary_result["alternatives"]
+            ):
                 raise ValueError("No alternatives in primary result")
-                
-            best_alternative = primary_result['alternatives'][0]
-            
+
+            best_alternative = primary_result["alternatives"][0]
+
             # Extract confidence with fallback
-            confidence = best_alternative.get('confidence', 0.0)
+            confidence = best_alternative.get("confidence", 0.0)
             if not isinstance(confidence, (int, float)):
                 confidence = 0.0
-                
+
             # Extract transcript with fallback
-            transcript = best_alternative.get('transcript', '').strip()
-            
+            transcript = best_alternative.get("transcript", "").strip()
+
             # Extract alternatives
             alternatives = []
-            if len(primary_result['alternatives']) > 1:
-                alternatives = primary_result['alternatives'][1:3]  # Top 2 alternatives
-                
+            if len(primary_result["alternatives"]) > 1:
+                alternatives = primary_result["alternatives"][1:3]  # Top 2 alternatives
+
             # Extract word confidence and timestamps if available
-            word_info = best_alternative.get('word_confidence', [])
-            timestamps = best_alternative.get('timestamps', [])
-            
+            word_info = best_alternative.get("word_confidence", [])
+            timestamps = best_alternative.get("timestamps", [])
+
             return SpeechRecognitionResult(
                 transcript=transcript,
                 confidence=float(confidence),
@@ -681,14 +1024,14 @@ class SpeechProcessor:
                 processing_time=0.0,  # Will be set by caller
                 alternative_transcripts=alternatives,
                 metadata={
-                    "watson_model": response.get('result_index', 0),
+                    "watson_model": response.get("result_index", 0),
                     "word_count": len(word_info),
                     "timestamp_count": len(timestamps),
-                    "processing_metrics": response.get('processing_metrics', {}),
-                    "speaker_labels": response.get('speaker_labels', [])
-                }
+                    "processing_metrics": response.get("processing_metrics", {}),
+                    "speaker_labels": response.get("speaker_labels", []),
+                },
             )
-            
+
         except Exception as e:
             logger.error(f"Error processing Watson response: {e}")
             return SpeechRecognitionResult(
@@ -697,69 +1040,142 @@ class SpeechProcessor:
                 language=language,
                 processing_time=0.0,
                 alternative_transcripts=[],
-                metadata={"error": str(e)}
+                metadata={"error": str(e)},
             )
-    
+
+    async def _speech_to_text_mistral(
+        self, audio_data: bytes, language: str, audio_format: AudioFormat
+    ) -> SpeechRecognitionResult:
+        """Mistral Speech-to-Text implementation using Voxtral API"""
+
+        if not self.mistral_stt_available or not self.mistral_stt_service:
+            raise Exception("Mistral STT service not configured or not available")
+
+        start_time = time.time()
+
+        try:
+            # Use the Mistral STT service
+            result = await self.mistral_stt_service.transcribe_audio(
+                audio_data=audio_data,
+                language=language,
+                audio_format=audio_format.value,
+            )
+
+            processing_time = time.time() - start_time
+
+            # Convert Mistral result to SpeechRecognitionResult format
+            return SpeechRecognitionResult(
+                transcript=result.transcript,
+                confidence=result.confidence,
+                language=result.language,
+                processing_time=processing_time,
+                alternative_transcripts=[
+                    {"transcript": alt, "confidence": result.confidence * 0.9}
+                    for alt in result.alternative_transcripts
+                ],
+                metadata={
+                    **result.metadata,
+                    "provider": "mistral_voxtral",
+                    "cost_usd": result.cost_usd,
+                    "audio_duration_minutes": result.audio_duration_minutes,
+                    "cost_per_minute": 0.001,
+                },
+            )
+
+        except Exception as e:
+            processing_time = time.time() - start_time
+            logger.error(f"Mistral STT processing error: {e}")
+
+            # Return error result in consistent format
+            return SpeechRecognitionResult(
+                transcript="[Mistral STT Error]",
+                confidence=0.0,
+                language=language,
+                processing_time=processing_time,
+                alternative_transcripts=[],
+                metadata={
+                    "provider": "mistral_voxtral",
+                    "error": str(e),
+                    "cost_usd": 0.0,
+                },
+            )
+
     async def _text_to_speech_watson(
-        self,
-        text: str,
-        language: str,
-        voice_type: str,
-        speaking_rate: float
+        self, text: str, language: str, voice_type: str, speaking_rate: float
     ) -> SpeechSynthesisResult:
         """Watson Text-to-Speech implementation with real API calls"""
-        
+
         if not self.watson_tts_available or not self.watson_tts_client:
-            raise Exception("Watson Text-to-Speech not configured or client not initialized")
-        
+            raise Exception(
+                "Watson Text-to-Speech not configured or client not initialized"
+            )
+
         try:
             # Language and voice mapping for Watson TTS (updated with verified available voices)
             watson_voices = {
-                "en": "en-US_AllisonV3Voice" if voice_type == "neural" else "en-US_AllisonVoice",
-                "fr": "fr-FR_ReneeV3Voice" if voice_type == "neural" else "fr-FR_ReneeVoice",
-                "es": "es-LA_SofiaV3Voice" if voice_type == "neural" else "es-LA_SofiaVoice",  # Latin American Spanish (closest to es-MX)
-                "de": "de-DE_BirgitV3Voice" if voice_type == "neural" else "de-DE_BirgitVoice",
+                "en": "en-US_AllisonV3Voice"
+                if voice_type == "neural"
+                else "en-US_AllisonVoice",
+                "fr": "fr-FR_ReneeV3Voice"
+                if voice_type == "neural"
+                else "fr-FR_ReneeVoice",
+                "es": "es-LA_SofiaV3Voice"
+                if voice_type == "neural"
+                else "es-LA_SofiaVoice",  # Latin American Spanish (closest to es-MX)
+                "de": "de-DE_BirgitV3Voice"
+                if voice_type == "neural"
+                else "de-DE_BirgitVoice",
                 "zh": "en-US_AllisonV3Voice",  # Fallback to English (no Chinese voices available in plan)
-                "ja": "ja-JP_EmiV3Voice" if voice_type == "neural" else "ja-JP_EmiVoice",
+                "ja": "ja-JP_EmiV3Voice"
+                if voice_type == "neural"
+                else "ja-JP_EmiVoice",
                 "ko": "ko-KR_JinV3Voice",  # Korean support
-                "it": "it-IT_FrancescaV3Voice" if voice_type == "neural" else "it-IT_FrancescaVoice",
-                "pt": "pt-BR_IsabelaV3Voice" if voice_type == "neural" else "pt-BR_IsabelaVoice",
-                "nl": "nl-NL_MerelV3Voice"
+                "it": "it-IT_FrancescaV3Voice"
+                if voice_type == "neural"
+                else "it-IT_FrancescaVoice",
+                "pt": "pt-BR_IsabelaV3Voice"
+                if voice_type == "neural"
+                else "pt-BR_IsabelaVoice",
+                "nl": "nl-NL_MerelV3Voice",
             }
-            
+
             watson_voice = watson_voices.get(language, "en-US_AllisonV3Voice")
-            
+
             # In real implementation, this would call Watson TTS API
             # Enhance text with SSML for better pronunciation learning
             enhanced_text = await self._prepare_text_for_synthesis(
                 text=text,
                 language=language,
                 emphasis_words=None,
-                speaking_rate=speaking_rate
+                speaking_rate=speaking_rate,
             )
-            
+
             # Add Chinese language support info
             if language == "zh" and watson_voice.startswith("en-"):
-                logger.info(f"Chinese STT available, but TTS uses English voice fallback (no Chinese TTS voices in current Watson plan).")
+                logger.info(
+                    f"Chinese STT available, but TTS uses English voice fallback (no Chinese TTS voices in current Watson plan)."
+                )
                 # Use simpler SSML markup for English voice compatibility
                 enhanced_text = f"<prosody rate='-20%'>{enhanced_text}</prosody>"
-            
+
             # Watson TTS API call with optimized parameters
             response = self.watson_tts_client.synthesize(
                 text=enhanced_text,
                 voice=watson_voice,
-                accept='audio/wav',  # High quality WAV format
-                rate_percentage=int((speaking_rate - 1.0) * 50),  # Convert to Watson rate
+                accept="audio/wav",  # High quality WAV format
+                rate_percentage=int(
+                    (speaking_rate - 1.0) * 50
+                ),  # Convert to Watson rate
             ).get_result()
-            
+
             # Extract audio data from response
             audio_data = response.content
-            
+
             # Estimate duration (rough calculation)
             # Average speaking rate is ~150 words per minute for normal speech
             word_count = len(text.split())
             estimated_duration = (word_count / 150) * 60 / speaking_rate
-            
+
             return SpeechSynthesisResult(
                 audio_data=audio_data,
                 audio_format=AudioFormat.WAV,
@@ -773,15 +1189,15 @@ class SpeechProcessor:
                     "service": "watson_tts",
                     "text_length": len(text),
                     "word_count": word_count,
-                    "enhanced_text": enhanced_text != text
-                }
+                    "enhanced_text": enhanced_text != text,
+                },
             )
-            
+
         except Exception as e:
             logger.error(f"Watson TTS API call failed: {e}")
             # Fall back to mock response if API fails
-            mock_audio_data = f"[Watson TTS unavailable: {str(e)}]".encode('utf-8')
-            
+            mock_audio_data = f"[Watson TTS unavailable: {str(e)}]".encode("utf-8")
+
             return SpeechSynthesisResult(
                 audio_data=mock_audio_data,
                 audio_format=AudioFormat.WAV,
@@ -793,69 +1209,141 @@ class SpeechProcessor:
                     "voice_type": voice_type,
                     "speaking_rate": speaking_rate,
                     "service": "watson_tts",
-                    "error": str(e)
-                }
+                    "error": str(e),
+                },
             )
-    
+
+    async def _text_to_speech_piper(
+        self, text: str, language: str, voice_type: str, speaking_rate: float
+    ) -> SpeechSynthesisResult:
+        """Piper Text-to-Speech implementation with local processing"""
+
+        if not self.piper_tts_available or not self.piper_tts_service:
+            raise Exception(
+                "Piper Text-to-Speech not configured or service not initialized"
+            )
+
+        try:
+            start_time = asyncio.get_event_loop().time()
+
+            # Use Piper TTS service
+            audio_data, metadata = await self.piper_tts_service.synthesize_speech(
+                text=text, language=language, audio_format="wav"
+            )
+
+            processing_time = asyncio.get_event_loop().time() - start_time
+
+            # Estimate duration from metadata or audio size
+            estimated_duration = metadata.get("duration_estimate", len(text) * 0.1)
+
+            return SpeechSynthesisResult(
+                audio_data=audio_data,
+                audio_format=AudioFormat.WAV,
+                sample_rate=metadata.get("sample_rate", 22050),
+                duration_seconds=estimated_duration,
+                processing_time=processing_time,
+                metadata={
+                    "piper_voice": metadata.get("voice", "unknown"),
+                    "voice_type": voice_type,
+                    "speaking_rate": speaking_rate,
+                    "service": "piper_tts",
+                    "text_length": len(text),
+                    "word_count": len(text.split()),
+                    "cost": 0.0,  # Local processing = zero cost
+                    "provider": "piper",
+                },
+            )
+
+        except Exception as e:
+            logger.error(f"Piper TTS synthesis failed: {e}")
+            # Fall back to mock response if synthesis fails
+            mock_audio_data = f"[Piper TTS unavailable: {str(e)}]".encode("utf-8")
+
+            return SpeechSynthesisResult(
+                audio_data=mock_audio_data,
+                audio_format=AudioFormat.WAV,
+                sample_rate=22050,
+                duration_seconds=len(text) * 0.1,  # Rough estimate
+                processing_time=0.0,
+                metadata={
+                    "piper_voice": "unavailable",
+                    "voice_type": voice_type,
+                    "speaking_rate": speaking_rate,
+                    "service": "piper_tts",
+                    "error": str(e),
+                },
+            )
+
     async def _analyze_audio_quality(
-        self,
-        audio_data: bytes,
-        audio_format: AudioFormat
+        self, audio_data: bytes, audio_format: AudioFormat
     ) -> AudioMetadata:
         """Analyze audio quality for speech processing"""
-        
+
         try:
             # Basic audio analysis
             # In a full implementation, this would use audio processing libraries
-            
+
             file_size = len(audio_data)
-            
+
             # Estimate duration based on format and size
             # This is a rough estimation - real implementation would decode audio
-            estimated_duration = file_size / (self.default_sample_rate * 2)  # 16-bit samples
-            
+            estimated_duration = file_size / (
+                self.default_sample_rate * 2
+            )  # 16-bit samples
+
             # Simple quality scoring based on file size and estimated duration
-            size_quality = min(file_size / (self.default_sample_rate * 10), 1.0)  # Expect ~10 seconds max
-            duration_quality = min(estimated_duration / 30.0, 1.0)  # Prefer shorter clips
-            
+            size_quality = min(
+                file_size / (self.default_sample_rate * 10), 1.0
+            )  # Expect ~10 seconds max
+            duration_quality = min(
+                estimated_duration / 30.0, 1.0
+            )  # Prefer shorter clips
+
             quality_score = (size_quality + duration_quality) / 2
-            
+
             # Additional quality checks if audio libraries are available
             if AUDIO_LIBS_AVAILABLE and len(audio_data) > 0:
                 try:
                     # Convert bytes to numpy array for analysis
                     audio_array = np.frombuffer(audio_data, dtype=np.int16)
-                    
+
                     # Check for silence (all zeros)
                     if np.all(audio_array == 0):
                         quality_score = 0.1  # Very low quality for silence
-                        logger.warning("Audio quality analysis: Audio appears to be silence")
+                        logger.warning(
+                            "Audio quality analysis: Audio appears to be silence"
+                        )
                     else:
                         # Calculate signal-to-noise ratio approximation
                         signal_power = np.mean(audio_array.astype(np.float32) ** 2)
-                        noise_floor = np.mean(np.abs(audio_array[audio_array != 0]).astype(np.float32)) * 0.1
+                        noise_floor = (
+                            np.mean(
+                                np.abs(audio_array[audio_array != 0]).astype(np.float32)
+                            )
+                            * 0.1
+                        )
                         if signal_power > 0 and noise_floor > 0:
-                            snr_approx = 10 * np.log10(signal_power / (noise_floor ** 2))
+                            snr_approx = 10 * np.log10(signal_power / (noise_floor**2))
                             # Normalize SNR to 0-1 scale (assuming 0-30 dB range)
                             snr_quality = min(max(snr_approx / 30.0, 0.0), 1.0)
                             # Blend with existing quality score
                             quality_score = (quality_score + snr_quality) / 2
-                    
+
                 except Exception as e:
                     logger.warning(f"Advanced audio quality analysis failed: {e}")
-            
+
             return AudioMetadata(
                 format=audio_format,
                 sample_rate=self.default_sample_rate,
                 channels=self.default_channels,
                 duration_seconds=estimated_duration,
                 file_size_bytes=file_size,
-                quality_score=quality_score
+                quality_score=quality_score,
             )
-            
+
         except Exception as e:
             logger.error(f"Audio quality analysis failed: {e}")
-            
+
             # Return fallback metadata
             return AudioMetadata(
                 format=audio_format,
@@ -863,53 +1351,51 @@ class SpeechProcessor:
                 channels=self.default_channels,
                 duration_seconds=1.0,
                 file_size_bytes=len(audio_data),
-                quality_score=0.5
+                quality_score=0.5,
             )
-    
+
     async def _enhance_audio_quality(
-        self,
-        audio_data: bytes,
-        audio_format: AudioFormat
+        self, audio_data: bytes, audio_format: AudioFormat
     ) -> bytes:
         """Enhance audio quality for better speech recognition"""
-        
+
         try:
             if not AUDIO_LIBS_AVAILABLE:
                 logger.info("Audio enhancement skipped - audio libraries not available")
                 return audio_data
-            
+
             # Apply noise reduction
             enhanced_audio = self._reduce_noise(audio_data)
-            
+
             # Apply normalization
             enhanced_audio = self._normalize_audio(enhanced_audio)
-            
+
             # Apply additional enhancement techniques
             enhanced_audio = self._apply_speech_enhancement(enhanced_audio)
-            
+
             logger.info("Audio enhancement completed successfully")
             return enhanced_audio
-            
+
         except Exception as e:
             logger.warning(f"Audio enhancement failed: {e}")
             return audio_data  # Return original if enhancement fails
-    
+
     def _apply_speech_enhancement(self, audio_data: bytes) -> bytes:
         """Apply speech-specific enhancement techniques"""
         try:
             if not AUDIO_LIBS_AVAILABLE:
                 return audio_data
-            
+
             # Convert bytes to numpy array
             audio_array = np.frombuffer(audio_data, dtype=np.int16)
-            
+
             # Check if array is empty
             if len(audio_array) == 0:
                 logger.warning("Speech enhancement skipped - empty audio array")
                 return audio_data
-            
+
             audio_array = np.copy(audio_array)  # Ensure we can modify it
-            
+
             # Apply pre-emphasis filter to enhance high frequencies (speech clarity)
             if len(audio_array) > 1:
                 # Simple first-order high-pass filter
@@ -917,12 +1403,12 @@ class SpeechProcessor:
                 emphasized = np.copy(audio_array)
                 emphasized[1:] = audio_array[1:] - pre_emphasis * audio_array[:-1]
                 audio_array = emphasized
-            
+
             # Apply dynamic range compression for better speech intelligibility
             if len(audio_array) > 0:
                 # Convert to float for processing
                 float_audio = audio_array.astype(np.float32)
-                
+
                 # Apply simple compression (reduce peaks, boost quiet parts)
                 max_val = np.max(np.abs(float_audio))
                 if max_val > 0:
@@ -931,37 +1417,41 @@ class SpeechProcessor:
                     compressed = np.sign(normalized) * np.power(np.abs(normalized), 0.8)
                     # Scale back to 16-bit range
                     audio_array = (compressed * 32767).astype(np.int16)
-            
+
             # Convert back to bytes
             return audio_array.tobytes()
-            
+
         except Exception as e:
             logger.warning(f"Speech enhancement failed: {e}")
             return audio_data
-    
+
     async def _analyze_pronunciation(
         self,
         audio_data: bytes,
         transcript: str,
         language: str,
-        audio_metadata: AudioMetadata
+        audio_metadata: AudioMetadata,
     ) -> PronunciationAnalysis:
         """Analyze pronunciation quality from audio and transcript"""
-        
+
         try:
-            language_model = self.pronunciation_models.get(language, self.pronunciation_models["en"])
-            
+            language_model = self.pronunciation_models.get(
+                language, self.pronunciation_models["en"]
+            )
+
             # Simple pronunciation analysis based on transcript and language
             words = transcript.lower().split()
             word_count = len(words)
-            
+
             # Calculate basic scores
             phonetic_accuracy = min(audio_metadata.quality_score + 0.2, 1.0)
-            fluency_score = min(word_count / audio_metadata.duration_seconds / 3.0, 1.0)  # ~3 words per second
-            
+            fluency_score = min(
+                word_count / audio_metadata.duration_seconds / 3.0, 1.0
+            )  # ~3 words per second
+
             # Overall score combining factors
-            overall_score = (phonetic_accuracy * 0.6 + fluency_score * 0.4)
-            
+            overall_score = phonetic_accuracy * 0.6 + fluency_score * 0.4
+
             # Determine pronunciation level
             if overall_score >= 0.9:
                 level = PronunciationLevel.EXCELLENT
@@ -973,37 +1463,43 @@ class SpeechProcessor:
                 level = PronunciationLevel.NEEDS_IMPROVEMENT
             else:
                 level = PronunciationLevel.UNCLEAR
-            
+
             # Generate word-level scores
             word_scores = []
             for word in words:
-                word_score = overall_score + (hash(word) % 20 - 10) / 100  # Add some variation
+                word_score = (
+                    overall_score + (hash(word) % 20 - 10) / 100
+                )  # Add some variation
                 word_score = max(0.0, min(1.0, word_score))
-                word_scores.append({
-                    "word": word,
-                    "score": word_score,
-                    "phonetic": f"/{word}/",  # Simplified phonetic
-                    "issues": []
-                })
-            
+                word_scores.append(
+                    {
+                        "word": word,
+                        "score": word_score,
+                        "phonetic": f"/{word}/",  # Simplified phonetic
+                        "issues": [],
+                    }
+                )
+
             # Generate improvement suggestions
             suggestions = []
             if overall_score < 0.7:
-                suggestions.extend([
-                    f"Focus on clear pronunciation of {language} sounds",
-                    "Speak more slowly for better clarity",
-                    "Practice tongue twisters for better articulation"
-                ])
-            
+                suggestions.extend(
+                    [
+                        f"Focus on clear pronunciation of {language} sounds",
+                        "Speak more slowly for better clarity",
+                        "Practice tongue twisters for better articulation",
+                    ]
+                )
+
             if fluency_score < 0.6:
                 suggestions.append("Work on speaking rhythm and pacing")
-            
+
             # Check for language-specific issues
             detected_issues = []
             for issue in language_model["common_issues"]:
                 if any(word in language_model["difficulty_words"] for word in words):
                     detected_issues.append(issue)
-            
+
             return PronunciationAnalysis(
                 overall_score=overall_score,
                 pronunciation_level=level,
@@ -1013,39 +1509,39 @@ class SpeechProcessor:
                 detected_issues=detected_issues,
                 improvement_suggestions=suggestions,
                 phonetic_transcription=f"/{' '.join(words)}/",
-                target_phonetics=f"/{' '.join(words)}/"
+                target_phonetics=f"/{' '.join(words)}/",
             )
-            
+
         except Exception as e:
             logger.error(f"Pronunciation analysis failed: {e}")
             raise Exception(f"Pronunciation analysis failed: {str(e)}")
-    
+
     async def _compare_pronunciation(
         self,
         recognized_text: str,
         reference_text: str,
         language: str,
-        confidence: float
+        confidence: float,
     ) -> PronunciationAnalysis:
         """Compare recognized speech with reference text"""
-        
+
         # Simple text comparison for pronunciation scoring
         # Real implementation would use phonetic comparison
-        
+
         recognized_words = recognized_text.lower().split()
         reference_words = reference_text.lower().split()
-        
+
         # Calculate word accuracy
         correct_words = 0
         for i, ref_word in enumerate(reference_words):
             if i < len(recognized_words) and recognized_words[i] == ref_word:
                 correct_words += 1
-        
+
         word_accuracy = correct_words / len(reference_words) if reference_words else 0.0
-        
+
         # Combine with recognition confidence
-        overall_score = (word_accuracy * 0.7 + confidence * 0.3)
-        
+        overall_score = word_accuracy * 0.7 + confidence * 0.3
+
         # Generate analysis similar to _analyze_pronunciation
         return await self._analyze_pronunciation(
             audio_data=b"",  # Not used in this comparison mode
@@ -1057,11 +1553,13 @@ class SpeechProcessor:
                 channels=1,
                 duration_seconds=1.0,
                 file_size_bytes=1000,
-                quality_score=confidence
-            )
+                quality_score=confidence,
+            ),
         )
-    
-    async def _preprocess_audio(self, audio_data: bytes, audio_format: AudioFormat) -> bytes:
+
+    async def _preprocess_audio(
+        self, audio_data: bytes, audio_format: AudioFormat
+    ) -> bytes:
         """Preprocess audio for better recognition quality"""
         try:
             # Validate minimum size requirements
@@ -1069,226 +1567,286 @@ class SpeechProcessor:
                 logger.warning(f"Audio data too small: {len(audio_data)} bytes")
                 # Pad with silence if needed
                 audio_data = self._pad_audio(audio_data)
-            
+
             # Apply noise reduction if available
             if self.audio_libs_available:
                 audio_data = self._reduce_noise(audio_data)
-                
+
             # Normalize audio levels
             audio_data = self._normalize_audio(audio_data)
-            
+
             # Ensure proper WAV format for Watson STT
             if audio_format == AudioFormat.WAV:
                 audio_data = await self._ensure_proper_wav_format(audio_data)
-            
+
             return audio_data
-            
+
         except Exception as e:
             logger.error(f"Audio preprocessing failed: {e}")
             return audio_data  # Return original if preprocessing fails
-    
+
     async def _ensure_proper_wav_format(self, audio_data: bytes) -> bytes:
         """Ensure audio data is in proper WAV format for Watson STT"""
         try:
             if not AUDIO_LIBS_AVAILABLE:
                 return audio_data
-            
+
             # If it's already a valid WAV file, return as is
-            if audio_data.startswith(b'RIFF') and b'WAVE' in audio_data[:12]:
+            if audio_data.startswith(b"RIFF") and b"WAVE" in audio_data[:12]:
                 return audio_data
-            
+
             # Convert raw audio data to proper WAV format
             import wave
             import io
-            
+
             # Create a proper WAV file in memory
             wav_buffer = io.BytesIO()
-            with wave.open(wav_buffer, 'wb') as wav_file:
+            with wave.open(wav_buffer, "wb") as wav_file:
                 wav_file.setnchannels(self.default_channels)  # Mono
                 wav_file.setsampwidth(2)  # 16-bit
                 wav_file.setframerate(self.default_sample_rate)  # 16kHz
                 wav_file.writeframes(audio_data)
-            
+
             wav_buffer.seek(0)
             return wav_buffer.read()
-            
+
         except Exception as e:
             logger.warning(f"WAV format conversion failed: {e}")
             return audio_data
-    
+
     def _pad_audio(self, audio_data: bytes) -> bytes:
         """Pad audio data with silence if too small"""
         # Add 100 bytes of silence (zeros) to meet minimum requirements
-        padding = b'\x00' * max(0, 100 - len(audio_data))
+        padding = b"\x00" * max(0, 100 - len(audio_data))
         return audio_data + padding
-    
+
     def _reduce_noise(self, audio_data: bytes) -> bytes:
         """Apply basic noise reduction to audio data"""
         # Simple noise reduction - in a full implementation, this would use more sophisticated techniques
         try:
             if not AUDIO_LIBS_AVAILABLE:
                 return audio_data
-            
+
             # Convert bytes to numpy array
             audio_array = np.frombuffer(audio_data, dtype=np.int16)
-            
+
             # Check if array is empty
             if len(audio_array) == 0:
                 logger.warning("Noise reduction skipped - empty audio array")
                 return audio_data
-            
+
             # Create a copy to ensure we can modify it (fixes read-only array issue)
             audio_array = np.copy(audio_array)
-            
+
             # Simple noise gate - mute samples below threshold
             max_val = np.max(np.abs(audio_array))
             if max_val > 0:  # Avoid division by zero
                 threshold = max_val * 0.1  # 10% of max amplitude
                 audio_array[np.abs(audio_array) < threshold] = 0
-            
+
             # Convert back to bytes
             return audio_array.tobytes()
-            
+
         except Exception as e:
             logger.warning(f"Noise reduction failed: {e}")
             return audio_data
-    
+
     def _normalize_audio(self, audio_data: bytes) -> bytes:
         """Normalize audio levels for better recognition"""
         try:
             if not AUDIO_LIBS_AVAILABLE:
                 return audio_data
-            
+
             # Convert bytes to numpy array
             audio_array = np.frombuffer(audio_data, dtype=np.int16)
-            
+
             # Check if array is empty
             if len(audio_array) == 0:
                 logger.warning("Audio normalization skipped - empty audio array")
                 return audio_data
-            
+
             # Create a copy to ensure we can modify it (fixes read-only array issue)
             audio_array = np.copy(audio_array)
-            
+
             # Normalize to use full 16-bit range
             if len(audio_array) > 0:
                 max_val = np.max(np.abs(audio_array))
                 if max_val > 0:
                     normalized = audio_array.astype(np.float32) * (32767.0 / max_val)
                     audio_array = normalized.astype(np.int16)
-            
+
             # Convert back to bytes
             return audio_array.tobytes()
-            
+
         except Exception as e:
             logger.warning(f"Audio normalization failed: {e}")
             return audio_data
-    
+
     async def _prepare_text_for_synthesis(
         self,
         text: str,
         language: str,
         emphasis_words: Optional[List[str]],
-        speaking_rate: float
+        speaking_rate: float,
     ) -> str:
         """Prepare text for optimal speech synthesis with SSML markup"""
-        
+
         # Start with basic text cleaning
         enhanced_text = text.strip()
-        
+
         # Build SSML structure for Watson TTS
         ssml_elements = []
-        
+
         # Add speaking rate adjustment if different from default
         if speaking_rate != 1.0:
             # Watson accepts rate as percentage (-50% to +100%)
             rate_percentage = int((speaking_rate - 1.0) * 50)
-            rate_percentage = max(-50, min(100, rate_percentage))  # Clamp to Watson limits
-            enhanced_text = f'<prosody rate="{rate_percentage:+d}%">{enhanced_text}</prosody>'
-        
+            rate_percentage = max(
+                -50, min(100, rate_percentage)
+            )  # Clamp to Watson limits
+            enhanced_text = (
+                f'<prosody rate="{rate_percentage:+d}%">{enhanced_text}</prosody>'
+            )
+
         # Add emphasis to specific words if provided
         if emphasis_words:
             for word in emphasis_words:
                 if word.lower() in enhanced_text.lower():
                     # Use case-insensitive replacement with emphasis
                     import re
+
                     pattern = re.compile(re.escape(word), re.IGNORECASE)
                     enhanced_text = pattern.sub(
-                        f'<emphasis level="strong">{word}</emphasis>', 
-                        enhanced_text, 
-                        count=1
+                        f'<emphasis level="strong">{word}</emphasis>',
+                        enhanced_text,
+                        count=1,
                     )
-        
+
         # Language-specific SSML enhancements for pronunciation learning
         if language == "zh":
             # For Chinese, optimize for pronunciation learning with English voice compatibility
             # Since native Chinese voices may not be available, use compatible SSML
             # Add pauses between characters for learning and slow down speech
-            chinese_chars = ['你', '好', '世', '界', '是', '这', '一', '个', '测', '试', '谢', '叫', '小', '明', '今', '天', '天', '气', '很', '在', '学', '习', '中', '文']
+            chinese_chars = [
+                "你",
+                "好",
+                "世",
+                "界",
+                "是",
+                "这",
+                "一",
+                "个",
+                "测",
+                "试",
+                "谢",
+                "叫",
+                "小",
+                "明",
+                "今",
+                "天",
+                "天",
+                "气",
+                "很",
+                "在",
+                "学",
+                "习",
+                "中",
+                "文",
+            ]
             if any(char in enhanced_text for char in chinese_chars):
                 # Slow down speech for Chinese pronunciation learning
-                if '<prosody rate=' not in enhanced_text:
+                if "<prosody rate=" not in enhanced_text:
                     enhanced_text = f'<prosody rate="-30%">{enhanced_text}</prosody>'
                 # Add pauses between characters for learning (but not too many to avoid errors)
-                for i, char in enumerate(chinese_chars[:10]):  # Limit to prevent too much markup
+                for i, char in enumerate(
+                    chinese_chars[:10]
+                ):  # Limit to prevent too much markup
                     if char in enhanced_text and i < 5:  # Limit replacements
-                        enhanced_text = enhanced_text.replace(char, f'{char}<break time="150ms"/>', 1)
-            
+                        enhanced_text = enhanced_text.replace(
+                            char, f'{char}<break time="150ms"/>', 1
+                        )
+
         elif language == "fr":
             # For French, enhance liaison and nasal sounds with emphasis
-            enhanced_text = enhanced_text.replace('les ', '<emphasis level="moderate">les</emphasis> ')
-            enhanced_text = enhanced_text.replace('un ', '<emphasis level="moderate">un</emphasis> ')
-            
+            enhanced_text = enhanced_text.replace(
+                "les ", '<emphasis level="moderate">les</emphasis> '
+            )
+            enhanced_text = enhanced_text.replace(
+                "un ", '<emphasis level="moderate">un</emphasis> '
+            )
+
         elif language == "es":
             # For Spanish, emphasize rolled R sounds and stress patterns
-            enhanced_text = enhanced_text.replace('rr', '<emphasis level="strong">rr</emphasis>')
-            
+            enhanced_text = enhanced_text.replace(
+                "rr", '<emphasis level="strong">rr</emphasis>'
+            )
+
         elif language == "en":
             # For English, help with common pronunciation challenges using emphasis
             # Use emphasis instead of complex phonemes to avoid API errors
-            enhanced_text = enhanced_text.replace(' th', ' <emphasis level="moderate">th</emphasis>')
-            
+            enhanced_text = enhanced_text.replace(
+                " th", ' <emphasis level="moderate">th</emphasis>'
+            )
+
         # Add pauses for better comprehension in language learning
-        if '.' in enhanced_text:
-            enhanced_text = enhanced_text.replace('. ', '.<break time="500ms"/> ')
-        if ',' in enhanced_text:
-            enhanced_text = enhanced_text.replace(', ', ',<break time="200ms"/> ')
-            
+        if "." in enhanced_text:
+            enhanced_text = enhanced_text.replace(". ", '.<break time="500ms"/> ')
+        if "," in enhanced_text:
+            enhanced_text = enhanced_text.replace(", ", ',<break time="200ms"/> ')
+
         # Wrap in SSML speak tag if we added any SSML markup
-        if '<' in enhanced_text and '>' in enhanced_text:
+        if "<" in enhanced_text and ">" in enhanced_text:
             enhanced_text = f'<speak version="1.0">{enhanced_text}</speak>'
-            
+
         return enhanced_text
-    
+
     async def get_speech_pipeline_status(self) -> Dict[str, Any]:
         """Get status of speech processing pipeline"""
-        
+
         # Check if Watson clients are actually working
-        watson_stt_functional = bool(self.watson_stt_client and self.watson_stt_available)
-        watson_tts_functional = bool(self.watson_tts_client and self.watson_tts_available)
-        
+        watson_stt_functional = bool(
+            self.watson_stt_client and self.watson_stt_available
+        )
+        watson_tts_functional = bool(
+            self.watson_tts_client and self.watson_tts_available
+        )
+
         # Get settings for API key checks
         try:
             settings = get_settings()
         except:
             settings = None
-        
+
         return {
-            "status": "operational" if (watson_stt_functional or watson_tts_functional) else "limited",
+            "status": "operational"
+            if (watson_stt_functional or watson_tts_functional)
+            else "limited",
             "watson_sdk_available": self.watson_sdk_available,
             "watson_stt": {
                 "status": "operational" if watson_stt_functional else "unavailable",
                 "configured": self.watson_stt_available,
                 "client_initialized": bool(self.watson_stt_client),
-                "api_key_configured": bool(getattr(settings, 'IBM_WATSON_STT_API_KEY', None)) if settings else False,
-                "service_url": getattr(settings, 'IBM_WATSON_STT_URL', "not_configured") if settings else "not_configured"
+                "api_key_configured": bool(
+                    getattr(settings, "IBM_WATSON_STT_API_KEY", None)
+                )
+                if settings
+                else False,
+                "service_url": getattr(settings, "IBM_WATSON_STT_URL", "not_configured")
+                if settings
+                else "not_configured",
             },
             "watson_tts": {
-                "status": "operational" if watson_tts_functional else "unavailable", 
+                "status": "operational" if watson_tts_functional else "unavailable",
                 "configured": self.watson_tts_available,
                 "client_initialized": bool(self.watson_tts_client),
-                "api_key_configured": bool(getattr(settings, 'IBM_WATSON_TTS_API_KEY', None)) if settings else False,
-                "service_url": getattr(settings, 'IBM_WATSON_TTS_URL', "not_configured") if settings else "not_configured"
+                "api_key_configured": bool(
+                    getattr(settings, "IBM_WATSON_TTS_API_KEY", None)
+                )
+                if settings
+                else False,
+                "service_url": getattr(settings, "IBM_WATSON_TTS_URL", "not_configured")
+                if settings
+                else "not_configured",
             },
             "watson_stt_available": watson_stt_functional,
             "watson_tts_available": watson_tts_functional,
@@ -1300,50 +1858,60 @@ class SpeechProcessor:
                 "speech_synthesis": watson_tts_functional,
                 "pronunciation_analysis": True,
                 "audio_enhancement": self.audio_libs_available,
-                "real_time_processing": self.audio_libs_available and self.watson_sdk_available
+                "real_time_processing": self.audio_libs_available
+                and self.watson_sdk_available,
             },
             "configuration": {
                 "default_sample_rate": self.default_sample_rate,
                 "default_channels": self.default_channels,
-                "chunk_size": self.chunk_size
+                "chunk_size": self.chunk_size,
             },
             "api_models": {
                 "watson_stt_models": [
-                    "en-US_BroadbandModel", "fr-FR_BroadbandModel", "es-ES_BroadbandModel",
-                    "de-DE_BroadbandModel", "zh-CN_BroadbandModel", "ja-JP_BroadbandModel"
+                    "en-US_BroadbandModel",
+                    "fr-FR_BroadbandModel",
+                    "es-ES_BroadbandModel",
+                    "de-DE_BroadbandModel",
+                    "zh-CN_BroadbandModel",
+                    "ja-JP_BroadbandModel",
                 ],
                 "watson_tts_voices": [
-                    "en-US_AllisonV3Voice", "fr-FR_ReneeV3Voice", "es-ES_LauraV3Voice",
-                    "de-DE_BirgitV3Voice", "ja-JP_EmiV3Voice", "ko-KR_YoungmiVoice"
-                ]
+                    "en-US_AllisonV3Voice",
+                    "fr-FR_ReneeV3Voice",
+                    "es-ES_LauraV3Voice",
+                    "de-DE_BirgitV3Voice",
+                    "ja-JP_EmiV3Voice",
+                    "ko-KR_YoungmiVoice",
+                ],
             },
             "chinese_support": {
                 "stt_available": True,  # Chinese STT (zh-CN_BroadbandModel) is available
                 "tts_native_voice": False,  # No native Chinese voice in current plan
                 "tts_fallback": "en-US_AllisonV3Voice",  # English fallback for Chinese
                 "pronunciation_learning": True,  # Enhanced SSML for Chinese learning
-                "note": "Chinese STT fully supported. TTS uses English voice with Chinese-optimized SSML."
+                "note": "Chinese STT fully supported. TTS uses English voice with Chinese-optimized SSML.",
             },
             "spanish_support": {
                 "stt_model": "es-MX_BroadbandModel",  # Mexican Spanish STT as requested
                 "tts_voice": "es-LA_SofiaV3Voice",  # Latin American Spanish (closest to es-MX)
-                "note": "Using Mexican Spanish STT and Latin American Spanish TTS (closest to es-MX preference)"
-            }
+                "note": "Using Mexican Spanish STT and Latin American Spanish TTS (closest to es-MX preference)",
+            },
         }
-    
+
     async def check_watson_health(self) -> Dict[str, Any]:
         """Check Watson service health"""
         health_status = {
             "stt_available": False,
             "tts_available": False,
             "stt_response_time": None,
-            "tts_response_time": None
+            "tts_response_time": None,
         }
-        
+
         # Check STT health
         if self.watson_stt_client:
             try:
                 import time
+
                 start_time = time.time()
                 # Simple health check - list models
                 self.watson_stt_client.list_models()
@@ -1351,11 +1919,12 @@ class SpeechProcessor:
                 health_status["stt_response_time"] = time.time() - start_time
             except Exception:
                 health_status["stt_available"] = False
-        
+
         # Check TTS health
         if self.watson_tts_client:
             try:
                 import time
+
                 start_time = time.time()
                 # Simple health check - list voices
                 self.watson_tts_client.list_voices()
@@ -1363,8 +1932,9 @@ class SpeechProcessor:
                 health_status["tts_response_time"] = time.time() - start_time
             except Exception:
                 health_status["tts_available"] = False
-                
+
         return health_status
+
 
 # Global speech processor instance
 speech_processor = SpeechProcessor()
@@ -1372,47 +1942,40 @@ speech_processor = SpeechProcessor()
 
 # Convenience functions for easy integration
 async def speech_to_text(
-    audio_data: bytes,
-    language: str = "en",
-    analyze_pronunciation: bool = True
+    audio_data: bytes, language: str = "en", analyze_pronunciation: bool = True
 ) -> Tuple[str, Optional[PronunciationAnalysis]]:
     """Convert speech to text with optional pronunciation analysis"""
-    
+
     result, pronunciation = await speech_processor.process_speech_to_text(
         audio_data=audio_data,
         language=language,
-        enable_pronunciation_analysis=analyze_pronunciation
+        enable_pronunciation_analysis=analyze_pronunciation,
     )
-    
+
     return result.transcript, pronunciation
 
+
 async def text_to_speech(
-    text: str,
-    language: str = "en",
-    voice_type: str = "neural"
+    text: str, language: str = "en", voice_type: str = "neural"
 ) -> bytes:
     """Convert text to speech"""
-    
+
     result = await speech_processor.process_text_to_speech(
-        text=text,
-        language=language,
-        voice_type=voice_type
+        text=text, language=language, voice_type=voice_type
     )
-    
+
     return result.audio_data
 
+
 async def analyze_pronunciation(
-    audio_data: bytes,
-    reference_text: str,
-    language: str = "en"
+    audio_data: bytes, reference_text: str, language: str = "en"
 ) -> PronunciationAnalysis:
     """Analyze pronunciation quality"""
-    
+
     return await speech_processor.analyze_pronunciation_quality(
-        user_audio=audio_data,
-        reference_text=reference_text,
-        language=language
+        user_audio=audio_data, reference_text=reference_text, language=language
     )
+
 
 async def get_speech_status() -> Dict[str, Any]:
     """Get speech processing pipeline status"""

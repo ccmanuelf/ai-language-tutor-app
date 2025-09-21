@@ -182,6 +182,11 @@ models/
 embeddings/
 vectors/
 
+# Piper TTS voice models (large binary files)
+app/data/piper_voices/
+*.onnx
+*.onnx.json
+
 # Watson Speech Services cache
 watson_cache/
 speech_cache/
