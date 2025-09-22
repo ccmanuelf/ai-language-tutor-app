@@ -1,0 +1,41 @@
+🔍 ENVIRONMENT VALIDATION - MANDATORY PRE-TEST CHECK
+============================================================
+
+1️⃣ PYTHON ENVIRONMENT CHECK
+------------------------------
+✅ CORRECT: /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/bin/python
+
+2️⃣ CRITICAL DEPENDENCIES CHECK
+-----------------------------------
+✅ PyAudio: Available
+✅ NumPy: Available
+✅ Piper TTS: Available
+✅ IBM Watson SDK: Available
+✅ Mistral AI: Available
+
+3️⃣ WORKING DIRECTORY CHECK
+------------------------------
+✅ CORRECT: /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app
+
+4️⃣ VOICE MODELS CHECK
+-------------------------
+✅ SUFFICIENT: 12 ONNX models, 11 configs
+
+5️⃣ SERVICE AVAILABILITY TEST
+--------------------------------
+✅ Mistral STT: Available
+✅ Piper TTS: Available
+✅ Watson STT: Available
+✅ Watson TTS: Available
+
+🎯 VALIDATION SUMMARY
+=========================
+✅ PASS Python Environment: /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/bin/python
+✅ PASS Dependencies: 5/5 available
+✅ PASS Working Directory: /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app
+✅ PASS Voice Models: 12 models
+✅ PASS Service Availability: 4/4 services
+\nOverall: 5/5 checks passed
+\n🎉 ENVIRONMENT VALIDATION: PASSED
+🎉 Safe to proceed with testing and validation
+\n📁 Validation results saved to: validation_results/last_environment_validation.json
