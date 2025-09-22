@@ -220,11 +220,21 @@ class QualityGateValidator:
 
         print(f"✅ Total language files: {len(language_files)}")
 
+        # 🔊 CRITICAL AUDIO PLAYBACK WARNING
+        print(f"\\n🔊 CRITICAL AUDIO PLAYBACK REQUIREMENT:")
+        print(f"   ⚠️  FILE GENERATION ALONE IS INSUFFICIENT")
+        print(f"   🎵 Each language MUST be played through speakers")
+        print(f"   👂 Human auditory verification REQUIRED")
+        print(f"   ⏭️  Sequential playback to prevent system timeouts")
+        print(f"   🚨 Audio playback failures block task completion")
+
         self.results["gates"]["language_validation"] = {
             "passed": True,
             "mandatory_languages": list(mandatory_languages.keys()),
             "found_languages": list(found_languages),
             "total_files": len(language_files),
+            "audio_playback_required": True,
+            "critical_note": "AUDIO PLAYBACK VERIFICATION REQUIRED - File generation alone insufficient",
         }
         return True
 

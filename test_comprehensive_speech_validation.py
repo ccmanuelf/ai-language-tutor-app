@@ -9,11 +9,58 @@ import os
 import sys
 import wave
 import numpy as np
+import time
+import subprocess
+import platform
 from pathlib import Path
 
 sys.path.append(".")
 
 from app.services.speech_processor import SpeechProcessor, AUDIO_LIBS_AVAILABLE
+
+
+def play_audio_file(filepath):
+    """
+    🔊 CRITICAL: Play audio file through system speakers for auditory verification
+    Sequential playback prevents system timeouts and ensures proper verification
+    """
+    try:
+        system = platform.system().lower()
+        filepath = str(filepath)
+
+        print(f"    🔊 Playing: {Path(filepath).name}")
+
+        if system == "darwin":  # macOS
+            subprocess.run(["afplay", filepath], check=True, timeout=10)
+        elif system == "linux":
+            # Try multiple Linux audio players
+            players = ["aplay", "paplay", "play"]
+            played = False
+            for player in players:
+                try:
+                    subprocess.run([player, filepath], check=True, timeout=10)
+                    played = True
+                    break
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    continue
+            if not played:
+                raise Exception("No audio player found (tried aplay, paplay, play)")
+        elif system == "windows":
+            import winsound
+
+            winsound.PlaySound(filepath, winsound.SND_FILENAME)
+        else:
+            raise Exception(f"Unsupported platform: {system}")
+
+        print(f"    ✅ Audio playback completed successfully")
+        return True
+
+    except subprocess.TimeoutExpired:
+        print(f"    ❌ Audio playback timeout (>10s)")
+        return False
+    except Exception as e:
+        print(f"    ❌ Audio playback failed: {e}")
+        return False
 
 
 async def comprehensive_speech_validation():
@@ -141,6 +188,7 @@ async def comprehensive_speech_validation():
     print()
 
     mandatory_languages_passed = 0
+    audio_playback_passed = 0
     required_languages = len(mandatory_test_phrases)
 
     for i, (phrase, language) in enumerate(mandatory_test_phrases, 1):
@@ -153,7 +201,7 @@ async def comprehensive_speech_validation():
             )
 
             # Save audio file
-            filename = f"tts_test_{i}_{language}_{phrase.replace(' ', '_')}.wav"
+            filename = f"tts_test_{i}_{language}_{phrase.replace(' ', '_').replace(',', '').replace(':', '')}.wav"
             filepath = validation_dir / filename
 
             with open(filepath, "wb") as f:
@@ -168,6 +216,24 @@ async def comprehensive_speech_validation():
                 validation_results["audio_files_generated"].append(str(filepath))
                 validation_results["tests_passed"] += 1
                 mandatory_languages_passed += 1
+
+                # 🔊 CRITICAL: AUDIO PLAYBACK VERIFICATION
+                print(f"    🔊 CRITICAL: Playing audio for verification...")
+                playback_success = play_audio_file(filepath)
+
+                if playback_success:
+                    print(f"    ✅ Audio playback verification: PASSED")
+                    audio_playback_passed += 1
+                else:
+                    print(f"    ❌ Audio playback verification: FAILED")
+                    validation_results["critical_issues"].append(
+                        f"MANDATORY language {language} audio playback failed"
+                    )
+
+                # Sequential delay to prevent system conflicts
+                print(f"    ⏳ Sequential delay (preventing timeouts)...")
+                time.sleep(2)  # 2-second delay between audio files
+
             else:
                 print(f"    ❌ File generation failed or too small")
                 validation_results["tests_failed"] += 1
@@ -182,20 +248,37 @@ async def comprehensive_speech_validation():
                 f"MANDATORY language {language} TTS error: {e}"
             )
 
-    # CRITICAL CHECK: All mandatory languages must pass
-    print(f"\n🚨 MANDATORY LANGUAGE VALIDATION:")
-    print(f"   Required: {required_languages}/5 core languages")
-    print(f"   Achieved: {mandatory_languages_passed}/5 core languages")
+    # CRITICAL CHECK: All mandatory languages AND audio playback must pass
+    print(f"\n🚨 MANDATORY LANGUAGE & AUDIO VALIDATION:")
+    print(f"   Required Languages: {required_languages}/5 core languages")
+    print(f"   Generated Languages: {mandatory_languages_passed}/5 core languages")
+    print(f"   Audio Playback: {audio_playback_passed}/5 core languages")
 
-    if mandatory_languages_passed < required_languages:
+    languages_complete = mandatory_languages_passed >= required_languages
+    audio_complete = audio_playback_passed >= required_languages
+
+    if not languages_complete:
         print(
             f"   ❌ CRITICAL FAILURE: Missing {required_languages - mandatory_languages_passed} mandatory languages"
         )
         validation_results["critical_issues"].append(
             f"CRITICAL: Only {mandatory_languages_passed}/{required_languages} mandatory languages passed"
         )
+
+    if not audio_complete:
+        print(
+            f"   ❌ CRITICAL FAILURE: Audio playback failed for {required_languages - audio_playback_passed} languages"
+        )
+        validation_results["critical_issues"].append(
+            f"CRITICAL: Only {audio_playback_passed}/{required_languages} languages played successfully"
+        )
+
+    if languages_complete and audio_complete:
+        print(
+            f"   ✅ SUCCESS: All {required_languages} mandatory languages generated AND played"
+        )
     else:
-        print(f"   ✅ SUCCESS: All {required_languages} mandatory languages validated")
+        print(f"   🚨 FAILURE: Both generation AND playback required for completion")
 
     print()
 
@@ -294,24 +377,31 @@ async def comprehensive_speech_validation():
         file_size = Path(audio_file).stat().st_size
         print(f"  📁 {Path(audio_file).name} ({file_size:,} bytes)")
 
-    # ENHANCED VALIDATION CRITERIA: Mandatory languages + quality thresholds
+    # ENHANCED VALIDATION CRITERIA: Mandatory languages + audio playback + quality thresholds
     mandatory_languages_satisfied = mandatory_languages_passed >= required_languages
+    audio_playback_satisfied = audio_playback_passed >= required_languages
     quality_threshold_met = success_rate >= 90
     no_critical_issues = len(validation_results["critical_issues"]) == 0
 
     validation_passed = (
-        mandatory_languages_satisfied and quality_threshold_met and no_critical_issues
+        mandatory_languages_satisfied
+        and audio_playback_satisfied
+        and quality_threshold_met
+        and no_critical_issues
     )
 
     if validation_passed:
         print(f"\\n🎉 VALIDATION STATUS: PASSED")
-        print(f"🎉 All {required_languages} mandatory languages validated")
+        print(f"🎉 All {required_languages} mandatory languages generated AND played")
         print(f"🎉 Speech architecture migration is validated and functional")
         return True
     else:
         print(f"\\n❌ VALIDATION STATUS: FAILED")
         print(
             f"❌ Mandatory Languages: {'✅' if mandatory_languages_satisfied else '❌'} ({mandatory_languages_passed}/{required_languages})"
+        )
+        print(
+            f"❌ Audio Playback: {'✅' if audio_playback_satisfied else '❌'} ({audio_playback_passed}/{required_languages})"
         )
         print(
             f"❌ Quality Threshold: {'✅' if quality_threshold_met else '❌'} ({success_rate:.1f}% >= 90%)"
