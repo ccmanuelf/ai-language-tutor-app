@@ -13,6 +13,21 @@
 - Voice-first learning approach
 - Superior architecture over reference applications
 
+**🌍 CORE LANGUAGE REQUIREMENTS (MANDATORY)**:
+1. **English** (US) - Primary: American English (`en-US`)
+2. **Spanish** (MX) - Primary: Mexican Latin American Spanish (`es-MX`)
+3. **French** (EU) - Primary: European French (`fr-FR`)
+4. **German** (DE) - Primary: Standard German (`de-DE`)
+5. **Chinese** (CN) - Primary: Simplified Chinese with standard accent (`zh-CN`)
+
+**🔄 OPTIONAL LANGUAGES (ENCOURAGED)**:
+6. **Portuguese** (BR) - Brazilian Portuguese (`pt-BR`) + European (`pt-PT`) optional
+7. **Japanese** (`ja-JP`) - Encouraged future enhancement
+8. **Korean** (`ko-KR`) - Encouraged future enhancement
+9. **Italian** (`it-IT`) - Available as bonus language
+
+**Language Validation**: ALL core functionality must be validated across the 5 mandatory languages. See `docs/LANGUAGE_REQUIREMENTS.md` for complete specification.
+
 **⚡ ARCHITECTURAL CHANGE (2025-09-20)**:
 - **Migration**: IBM Watson STT/TTS → Mistral STT + Local TTS
 - **Rationale**: 98% cost reduction ($3-5/hour → $0.06/hour), privacy benefits, unlimited usage

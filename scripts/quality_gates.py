@@ -161,9 +161,76 @@ class QualityGateValidator:
 
         return env_passed
 
-    def gate_4_reproducibility(self):
-        """Gate 4: Reproducibility verification"""
-        print("\\n🚨 GATE 4: REPRODUCIBILITY")
+    def gate_4_language_validation(self):
+        """Gate 4: Verify MANDATORY core languages"""
+        print("\\n🚨 GATE 4: LANGUAGE VALIDATION")
+        print("-" * 32)
+
+        # Define MANDATORY core languages as per LANGUAGE_REQUIREMENTS.md
+        mandatory_languages = {
+            "en-US": "English (US)",
+            "es-MX": "Spanish (MX)",
+            "fr-FR": "French (EU)",
+            "de-DE": "German (DE)",
+            "zh-CN": "Chinese (CN)",
+        }
+
+        # Check if language test results exist
+        language_files = list(Path("test_outputs").glob("*_tts_*.wav"))
+        if not language_files:
+            print("❌ No language test audio files found")
+            self.results["gates"]["language_validation"] = {
+                "passed": False,
+                "reason": "No language test files found",
+                "mandatory_languages": list(mandatory_languages.keys()),
+                "found_languages": [],
+            }
+            return False
+
+        # Verify ALL mandatory languages are present
+        found_languages = set()
+        for file in language_files:
+            for lang_code in mandatory_languages.keys():
+                if lang_code.replace("-", "_") in file.name:
+                    found_languages.add(lang_code)
+
+        missing_languages = set(mandatory_languages.keys()) - found_languages
+
+        if missing_languages:
+            print(f"❌ CRITICAL: Missing mandatory languages:")
+            for lang in missing_languages:
+                print(f"   ❌ {mandatory_languages[lang]} ({lang})")
+            print(f"\\n✅ Found languages:")
+            for lang in found_languages:
+                print(f"   ✅ {mandatory_languages[lang]} ({lang})")
+            print(f"\\n🚨 ALL 5 core languages must be validated for completion")
+
+            self.results["gates"]["language_validation"] = {
+                "passed": False,
+                "reason": f"Missing {len(missing_languages)} mandatory languages",
+                "mandatory_languages": list(mandatory_languages.keys()),
+                "found_languages": list(found_languages),
+                "missing_languages": list(missing_languages),
+            }
+            return False
+
+        print(f"✅ All {len(mandatory_languages)} MANDATORY core languages validated:")
+        for lang_code in mandatory_languages:
+            print(f"   ✅ {mandatory_languages[lang_code]} ({lang_code})")
+
+        print(f"✅ Total language files: {len(language_files)}")
+
+        self.results["gates"]["language_validation"] = {
+            "passed": True,
+            "mandatory_languages": list(mandatory_languages.keys()),
+            "found_languages": list(found_languages),
+            "total_files": len(language_files),
+        }
+        return True
+
+    def gate_5_reproducibility(self):
+        """Gate 5: Reproducibility verification"""
+        print("\\n🚨 GATE 5: REPRODUCIBILITY")
         print("-" * 28)
 
         # Check for test scripts
@@ -196,9 +263,9 @@ class QualityGateValidator:
         reproducibility_passed = script_exists and docs_exist
 
         if reproducibility_passed:
-            print("✅ GATE 4 PASSED: Reproducibility requirements met")
+            print("✅ GATE 5 PASSED: Reproducibility requirements met")
         else:
-            print("❌ GATE 4 FAILED: Missing reproducibility elements")
+            print("❌ GATE 5 FAILED: Missing reproducibility elements")
 
         self.results["gates"]["reproducibility"] = {
             "passed": reproducibility_passed,
@@ -222,7 +289,8 @@ class QualityGateValidator:
             self.gate_1_evidence_collection(),
             self.gate_2_functional_verification(),
             self.gate_3_environment_validation(),
-            self.gate_4_reproducibility(),
+            self.gate_4_language_validation(),
+            self.gate_5_reproducibility(),
         ]
 
         passed_gates = sum(gate_results)
@@ -236,6 +304,7 @@ class QualityGateValidator:
             "Evidence Collection",
             "Functional Verification",
             "Environment Validation",
+            "Language Validation",
             "Reproducibility",
         ]
 
