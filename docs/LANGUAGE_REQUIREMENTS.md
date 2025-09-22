@@ -125,6 +125,17 @@ These languages MUST be validated and confirmed working as part of expected CORE
 
 ## 🧪 **VALIDATION REQUIREMENTS**
 
+### **🔊 CRITICAL AUDIO PLAYBACK REQUIREMENT**
+**🚨 MANDATORY: All language validation MUST include actual audio playback testing**
+
+**File generation alone is INSUFFICIENT for validation. Each language MUST:**
+- ✅ Generate valid audio file (WAV format, ≥16kHz, >0.5s duration)
+- 🔊 **PLAY audio through system speakers for auditory verification**
+- 👂 **Confirm audio is audible, clear, and correctly pronounced**
+- ⏭️ **Sequential playback (one by one) to prevent system timeouts**
+
+**Audio playback failures are considered CRITICAL validation failures that block task completion.**
+
 ### **Mandatory Language Testing**
 ALL core functionality tests MUST include validation of these 5 languages:
 
@@ -136,6 +147,16 @@ CORE_LANGUAGES = [
     ("de", "Hallo Welt"),           # German (Standard)
     ("zh", "你好世界")               # Chinese (Simplified)
 ]
+```
+
+**🎵 AUDIO PLAYBACK PROTOCOL:**
+```python
+# MANDATORY: Each language must be played sequentially
+for lang, text in CORE_LANGUAGES:
+    audio_file = generate_tts(text, lang)
+    play_audio_file(audio_file)  # REQUIRED - must hear through speakers
+    verify_audible_output()      # REQUIRED - human verification
+    time.sleep(1)               # Prevent system conflicts
 ```
 
 ### **Optional Language Testing**
@@ -151,11 +172,13 @@ OPTIONAL_LANGUAGES = [
 ```
 
 ### **Quality Gates Language Requirements**
-**Gate 2 (Functional Verification)** must validate:
+**Gate 4 (Language Validation)** must validate:
 - ✅ All 5 core languages produce valid audio output
+- 🔊 **All 5 core languages play successfully through speakers**
 - ✅ Audio duration >0.5s for each core language
 - ✅ Sample rate ≥16kHz for each core language
 - ✅ No errors or fallbacks for core languages
+- ⏭️ Sequential playback without system timeouts
 
 ---
 
