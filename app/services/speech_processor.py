@@ -45,19 +45,9 @@ except ImportError:
         "Audio processing libraries not available. Install pyaudio and numpy for full functionality."
     )
 
-# IBM Watson Speech Services
-try:
-    from ibm_watson import SpeechToTextV1, TextToSpeechV1
-    from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-    from ibm_cloud_sdk_core import ApiException
-    from ibm_watson.websocket import RecognizeCallback, AudioSource
-
-    WATSON_SDK_AVAILABLE = True
-except ImportError:
-    WATSON_SDK_AVAILABLE = False
-    logging.warning(
-        "IBM Watson SDK not available. Install ibm-watson for full functionality."
-    )
+# IBM Watson Speech Services - REMOVED in Phase 2A Migration
+# Watson dependencies deprecated in favor of Mistral STT + Piper TTS
+WATSON_SDK_AVAILABLE = False
 
 # Mistral Speech Services
 try:
@@ -86,50 +76,8 @@ from app.core.config import get_settings
 logger = logging.getLogger(__name__)
 
 
-class WatsonConfig:
-    """Enhanced configuration management for Watson services following IBM best practices"""
-
-    def __init__(self):
-        # Primary: Environment variables (following IBM best practices)
-        self.stt_apikey = os.getenv("SPEECH_TO_TEXT_APIKEY") or os.getenv(
-            "IBM_WATSON_STT_API_KEY"
-        )
-        self.stt_url = os.getenv("SPEECH_TO_TEXT_URL") or os.getenv(
-            "IBM_WATSON_STT_URL"
-        )
-        self.tts_apikey = os.getenv("TEXT_TO_SPEECH_APIKEY") or os.getenv(
-            "IBM_WATSON_TTS_API_KEY"
-        )
-        self.tts_url = os.getenv("TEXT_TO_SPEECH_URL") or os.getenv(
-            "IBM_WATSON_TTS_URL"
-        )
-
-        # Fallback: Settings from config file
-        if not self.stt_apikey:
-            settings = get_settings()
-            self.stt_apikey = getattr(settings, "IBM_WATSON_STT_API_KEY", None)
-        if not self.stt_url:
-            settings = get_settings()
-            self.stt_url = getattr(settings, "IBM_WATSON_STT_URL", None)
-        if not self.tts_apikey:
-            settings = get_settings()
-            self.tts_apikey = getattr(settings, "IBM_WATSON_TTS_API_KEY", None)
-        if not self.tts_url:
-            settings = get_settings()
-            self.tts_url = getattr(settings, "IBM_WATSON_TTS_URL", None)
-
-    def validate(self):
-        """Validate configuration and return status"""
-        issues = []
-        if not self.stt_apikey:
-            issues.append("Speech to Text API key not configured")
-        if not self.stt_url:
-            issues.append("Speech to Text URL not configured")
-        if not self.tts_apikey:
-            issues.append("Text to Speech API key not configured")
-        if not self.tts_url:
-            issues.append("Text to Speech URL not configured")
-        return len(issues) == 0, issues
+# WatsonConfig class removed - deprecated in Phase 2A migration
+# Configuration now handled by Mistral STT and Piper TTS services
 
 
 class AudioFormat(Enum):
@@ -206,28 +154,25 @@ class SpeechProcessor:
     """Main speech processing pipeline"""
 
     def __init__(self):
-        # Initialize Watson configuration
-        self.config = WatsonConfig()
-        self.config_valid, self.config_issues = self.config.validate()
-
-        # Set availability based on configuration
-        self.watson_stt_available = bool(self.config.stt_apikey and self.config.stt_url)
-        self.watson_tts_available = bool(self.config.tts_apikey and self.config.tts_url)
+        # Phase 2A: Migration to Mistral STT + Piper TTS (Watson deprecated)
         self.audio_libs_available = AUDIO_LIBS_AVAILABLE
-        self.watson_sdk_available = WATSON_SDK_AVAILABLE
 
-        # Initialize Mistral STT service
+        # Watson services deprecated - set to unavailable
+        self.watson_sdk_available = False
+        self.watson_stt_available = False
+        self.watson_tts_available = False
+        self.watson_stt_client = None
+        self.watson_tts_client = None
+
+        # Initialize Mistral STT service (primary STT provider)
         self.mistral_stt_available = MISTRAL_STT_AVAILABLE
         self.mistral_stt_service = None
         self._init_mistral_stt()
 
-        # Initialize Piper TTS service
+        # Initialize Piper TTS service (primary TTS provider)
         self.piper_tts_available = PIPER_TTS_AVAILABLE
         self.piper_tts_service = None
         self._init_piper_tts()
-
-        # Initialize Watson SDK clients
-        self._init_watson_clients()
 
         # Audio processing settings
         self.default_sample_rate = 16000
@@ -241,13 +186,10 @@ class SpeechProcessor:
         # Pronunciation analysis settings
         self.pronunciation_models = self._load_pronunciation_models()
 
-        # Log configuration status
-        if not self.config_valid:
-            logger.warning(
-                f"Watson configuration issues: {', '.join(self.config_issues)}"
-            )
-        else:
-            logger.info("Watson configuration validated successfully")
+        # Log speech services status
+        logger.info(
+            f"Speech services initialized - Mistral STT: {self.mistral_stt_available}, Piper TTS: {self.piper_tts_available}"
+        )
 
     def detect_voice_activity(
         self, audio_data: bytes, sample_rate: int = 16000
@@ -312,56 +254,7 @@ class SpeechProcessor:
             logger.warning(f"Silence removal failed: {e}")
             return audio_data
 
-    def _init_watson_clients(self):
-        """Initialize IBM Watson Speech-to-Text and Text-to-Speech clients with proper HTTP configuration"""
-        self.watson_stt_client = None
-        self.watson_tts_client = None
-
-        if not self.watson_sdk_available:
-            logger.warning(
-                "IBM Watson SDK not available. Speech services will be limited."
-            )
-            return
-
-        try:
-            # Initialize Speech-to-Text client
-            if self.watson_stt_available:
-                stt_authenticator = IAMAuthenticator(self.config.stt_apikey)
-                self.watson_stt_client = SpeechToTextV1(authenticator=stt_authenticator)
-                self.watson_stt_client.set_service_url(self.config.stt_url)
-
-                # Configure HTTP client for better performance and reliability
-                # Note: Removed retry_attempts and max_retry_interval as they're not supported
-                self.watson_stt_client.set_http_config(
-                    {
-                        "timeout": 30  # 30 second timeout
-                    }
-                )
-
-                logger.info("Watson Speech-to-Text client initialized successfully")
-
-            # Initialize Text-to-Speech client
-            if self.watson_tts_available:
-                tts_authenticator = IAMAuthenticator(self.config.tts_apikey)
-                self.watson_tts_client = TextToSpeechV1(authenticator=tts_authenticator)
-                self.watson_tts_client.set_service_url(self.config.tts_url)
-
-                # Configure HTTP client for better performance and reliability
-                # Note: Removed retry_attempts and max_retry_interval as they're not supported
-                self.watson_tts_client.set_http_config(
-                    {
-                        "timeout": 30  # 30 second timeout
-                    }
-                )
-
-                logger.info("Watson Text-to-Speech client initialized successfully")
-
-        except Exception as e:
-            logger.error(f"Failed to initialize Watson clients: {e}")
-            self.watson_stt_client = None
-            self.watson_tts_client = None
-            self.watson_stt_available = False
-            self.watson_tts_available = False
+    # _init_watson_clients method removed - Watson deprecated in Phase 2A migration
 
     def _init_mistral_stt(self):
         """Initialize Mistral STT service"""
@@ -537,7 +430,7 @@ class SpeechProcessor:
             language: Target language for recognition
             audio_format: Audio format
             enable_pronunciation_analysis: Whether to analyze pronunciation
-            provider: STT provider - "auto", "mistral", "watson", "mistral_fallback"
+            provider: STT provider - "auto", "mistral" (Watson deprecated in Phase 2A)
 
         Returns:
             Speech recognition result and optional pronunciation analysis
@@ -610,7 +503,7 @@ class SpeechProcessor:
             voice_type: Voice type (neural, standard)
             speaking_rate: Speaking speed (0.5-2.0)
             emphasis_words: Words to emphasize for learning
-            provider: TTS provider ("auto", "piper", "watson", "piper_fallback")
+            provider: TTS provider ("auto", "piper" - Watson deprecated in Phase 2A)
 
         Returns:
             Speech synthesis result
@@ -737,14 +630,8 @@ class SpeechProcessor:
             )
 
         elif provider == "watson":
-            if not self.watson_tts_available:
-                raise Exception("Watson TTS provider requested but not available")
-            return await self._text_to_speech_watson(
-                text=text,
-                language=language,
-                voice_type=voice_type,
-                speaking_rate=speaking_rate,
-            )
+            # Watson TTS deprecated in Phase 2A migration
+            raise Exception("Watson TTS deprecated - use 'auto' or 'piper' providers")
 
         else:
             raise Exception(f"Unknown TTS provider: {provider}")
@@ -811,18 +698,15 @@ class SpeechProcessor:
         Select STT provider and process audio
 
         Provider options:
-        - "auto": Default to Mistral for cost savings, fallback to Watson
-        - "mistral": Use Mistral only
-        - "watson": Use Watson only
-        - "mistral_fallback": Try Mistral first, fallback to Watson on error
+        - "auto": Use Mistral STT (primary provider in Phase 2A)
+        - "mistral": Use Mistral STT explicitly
+        Note: Watson deprecated in Phase 2A migration
         """
 
         # Provider selection logic
         if provider == "watson":
-            # Explicit Watson request
-            if not self.watson_stt_available:
-                raise Exception("Watson STT not available but explicitly requested")
-            return await self._speech_to_text_watson(audio_data, language, audio_format)
+            # Watson STT deprecated in Phase 2A migration
+            raise Exception("Watson STT deprecated - use 'auto' or 'mistral' providers")
 
         elif provider == "mistral":
             # Explicit Mistral request
@@ -877,172 +761,10 @@ class SpeechProcessor:
 
         else:
             raise ValueError(
-                f"Unknown STT provider: {provider}. Use 'auto', 'mistral', 'watson', or 'mistral_fallback'"
+                f"Unknown STT provider: {provider}. Use 'auto' or 'mistral' (Watson deprecated in Phase 2A)"
             )
 
-    async def _speech_to_text_watson(
-        self, audio_data: bytes, language: str, audio_format: AudioFormat
-    ) -> SpeechRecognitionResult:
-        """Watson Speech-to-Text implementation with real API calls"""
-
-        if not self.watson_stt_available or not self.watson_stt_client:
-            raise Exception(
-                "Watson Speech-to-Text not configured or client not initialized"
-            )
-
-        try:
-            # Preprocess audio for better quality
-            processed_audio = await self._preprocess_audio(audio_data, audio_format)
-
-            # Language mapping for Watson STT (updated with verified available models)
-            watson_language_map = {
-                "en": "en-US_BroadbandModel",
-                "fr": "fr-FR_BroadbandModel",
-                "es": "es-MX_BroadbandModel",  # Mexican Spanish for user preference
-                "de": "de-DE_BroadbandModel",
-                "zh": "zh-CN_BroadbandModel",  # Chinese STT is available
-                "ja": "ja-JP_BroadbandModel",
-                "ko": "ko-KR_BroadbandModel",
-                "it": "it-IT_BroadbandModel",
-                "pt": "pt-BR_BroadbandModel",
-                "nl": "nl-NL_BroadbandModel",
-            }
-
-            watson_model = watson_language_map.get(language, "en-US_BroadbandModel")
-
-            # Prepare audio file-like object for Watson API
-            audio_file = io.BytesIO(processed_audio)
-
-            # Watson STT API call with optimized parameters for language learning
-            # Fixed parameter compatibility issues - removed unsupported parameters
-            response = self.watson_stt_client.recognize(
-                audio=audio_file,
-                content_type=f"audio/{audio_format.value}",
-                model=watson_model,
-                word_alternatives_threshold=0.7,
-                word_confidence=True,
-                timestamps=True,
-                max_alternatives=3,
-                inactivity_timeout=30,  # Add timeout for better control
-                smart_formatting=True,  # Enable smart formatting for better output
-                speaker_labels=False,  # Disable unless needed for performance
-            ).get_result()
-
-            # Process Watson response with enhanced processing
-            return self._process_watson_response(response, language)
-
-        except ValueError as ve:
-            logger.warning(f"Watson STT processing warning: {ve}")
-            # Handle specific validation errors
-            return SpeechRecognitionResult(
-                transcript="",
-                confidence=0.0,
-                language=language,
-                processing_time=0.0,
-                alternative_transcripts=[],
-                metadata={"info": str(ve)},
-            )
-
-        except ApiException as api_error:
-            logger.error(f"Watson STT API error {api_error.code}: {api_error.message}")
-            # Handle API-specific errors
-            return SpeechRecognitionResult(
-                transcript="[API Error]",
-                confidence=0.0,
-                language=language,
-                processing_time=0.0,
-                alternative_transcripts=[],
-                metadata={"error": f"API Error: {api_error.message}"},
-            )
-
-        except Exception as e:
-            logger.error(f"Watson STT unexpected error: {e}", exc_info=True)
-            # Handle unexpected errors
-            return SpeechRecognitionResult(
-                transcript="[Processing Error]",
-                confidence=0.0,
-                language=language,
-                processing_time=0.0,
-                alternative_transcripts=[],
-                metadata={"error": f"Service unavailable: {str(e)}"},
-            )
-
-    def _process_watson_response(
-        self, response: dict, language: str
-    ) -> SpeechRecognitionResult:
-        """Process Watson STT response with enhanced error handling"""
-
-        try:
-            # Validate response structure
-            if not isinstance(response, dict):
-                raise ValueError("Invalid response format")
-
-            if "results" not in response:
-                raise ValueError("Missing results in response")
-
-            results = response["results"]
-            if not results:
-                return SpeechRecognitionResult(
-                    transcript="",
-                    confidence=0.0,
-                    language=language,
-                    processing_time=0.0,
-                    alternative_transcripts=[],
-                    metadata={"info": "No speech detected"},
-                )
-
-            # Extract primary result
-            primary_result = results[0]
-            if (
-                "alternatives" not in primary_result
-                or not primary_result["alternatives"]
-            ):
-                raise ValueError("No alternatives in primary result")
-
-            best_alternative = primary_result["alternatives"][0]
-
-            # Extract confidence with fallback
-            confidence = best_alternative.get("confidence", 0.0)
-            if not isinstance(confidence, (int, float)):
-                confidence = 0.0
-
-            # Extract transcript with fallback
-            transcript = best_alternative.get("transcript", "").strip()
-
-            # Extract alternatives
-            alternatives = []
-            if len(primary_result["alternatives"]) > 1:
-                alternatives = primary_result["alternatives"][1:3]  # Top 2 alternatives
-
-            # Extract word confidence and timestamps if available
-            word_info = best_alternative.get("word_confidence", [])
-            timestamps = best_alternative.get("timestamps", [])
-
-            return SpeechRecognitionResult(
-                transcript=transcript,
-                confidence=float(confidence),
-                language=language,
-                processing_time=0.0,  # Will be set by caller
-                alternative_transcripts=alternatives,
-                metadata={
-                    "watson_model": response.get("result_index", 0),
-                    "word_count": len(word_info),
-                    "timestamp_count": len(timestamps),
-                    "processing_metrics": response.get("processing_metrics", {}),
-                    "speaker_labels": response.get("speaker_labels", []),
-                },
-            )
-
-        except Exception as e:
-            logger.error(f"Error processing Watson response: {e}")
-            return SpeechRecognitionResult(
-                transcript="[Processing Error]",
-                confidence=0.0,
-                language=language,
-                processing_time=0.0,
-                alternative_transcripts=[],
-                metadata={"error": str(e)},
-            )
+    # Watson STT methods removed - deprecated in Phase 2A migration
 
     async def _speech_to_text_mistral(
         self, audio_data: bytes, language: str, audio_format: AudioFormat
@@ -1101,118 +823,7 @@ class SpeechProcessor:
                 },
             )
 
-    async def _text_to_speech_watson(
-        self, text: str, language: str, voice_type: str, speaking_rate: float
-    ) -> SpeechSynthesisResult:
-        """Watson Text-to-Speech implementation with real API calls"""
-
-        if not self.watson_tts_available or not self.watson_tts_client:
-            raise Exception(
-                "Watson Text-to-Speech not configured or client not initialized"
-            )
-
-        try:
-            # Language and voice mapping for Watson TTS (updated with verified available voices)
-            watson_voices = {
-                "en": "en-US_AllisonV3Voice"
-                if voice_type == "neural"
-                else "en-US_AllisonVoice",
-                "fr": "fr-FR_ReneeV3Voice"
-                if voice_type == "neural"
-                else "fr-FR_ReneeVoice",
-                "es": "es-LA_SofiaV3Voice"
-                if voice_type == "neural"
-                else "es-LA_SofiaVoice",  # Latin American Spanish (closest to es-MX)
-                "de": "de-DE_BirgitV3Voice"
-                if voice_type == "neural"
-                else "de-DE_BirgitVoice",
-                "zh": "en-US_AllisonV3Voice",  # Fallback to English (no Chinese voices available in plan)
-                "ja": "ja-JP_EmiV3Voice"
-                if voice_type == "neural"
-                else "ja-JP_EmiVoice",
-                "ko": "ko-KR_JinV3Voice",  # Korean support
-                "it": "it-IT_FrancescaV3Voice"
-                if voice_type == "neural"
-                else "it-IT_FrancescaVoice",
-                "pt": "pt-BR_IsabelaV3Voice"
-                if voice_type == "neural"
-                else "pt-BR_IsabelaVoice",
-                "nl": "nl-NL_MerelV3Voice",
-            }
-
-            watson_voice = watson_voices.get(language, "en-US_AllisonV3Voice")
-
-            # In real implementation, this would call Watson TTS API
-            # Enhance text with SSML for better pronunciation learning
-            enhanced_text = await self._prepare_text_for_synthesis(
-                text=text,
-                language=language,
-                emphasis_words=None,
-                speaking_rate=speaking_rate,
-            )
-
-            # Add Chinese language support info
-            if language == "zh" and watson_voice.startswith("en-"):
-                logger.info(
-                    f"Chinese STT available, but TTS uses English voice fallback (no Chinese TTS voices in current Watson plan)."
-                )
-                # Use simpler SSML markup for English voice compatibility
-                enhanced_text = f"<prosody rate='-20%'>{enhanced_text}</prosody>"
-
-            # Watson TTS API call with optimized parameters
-            response = self.watson_tts_client.synthesize(
-                text=enhanced_text,
-                voice=watson_voice,
-                accept="audio/wav",  # High quality WAV format
-                rate_percentage=int(
-                    (speaking_rate - 1.0) * 50
-                ),  # Convert to Watson rate
-            ).get_result()
-
-            # Extract audio data from response
-            audio_data = response.content
-
-            # Estimate duration (rough calculation)
-            # Average speaking rate is ~150 words per minute for normal speech
-            word_count = len(text.split())
-            estimated_duration = (word_count / 150) * 60 / speaking_rate
-
-            return SpeechSynthesisResult(
-                audio_data=audio_data,
-                audio_format=AudioFormat.WAV,
-                sample_rate=22050,  # Watson default
-                duration_seconds=estimated_duration,
-                processing_time=0.0,  # Will be set by caller
-                metadata={
-                    "watson_voice": watson_voice,
-                    "voice_type": voice_type,
-                    "speaking_rate": speaking_rate,
-                    "service": "watson_tts",
-                    "text_length": len(text),
-                    "word_count": word_count,
-                    "enhanced_text": enhanced_text != text,
-                },
-            )
-
-        except Exception as e:
-            logger.error(f"Watson TTS API call failed: {e}")
-            # Fall back to mock response if API fails
-            mock_audio_data = f"[Watson TTS unavailable: {str(e)}]".encode("utf-8")
-
-            return SpeechSynthesisResult(
-                audio_data=mock_audio_data,
-                audio_format=AudioFormat.WAV,
-                sample_rate=22050,
-                duration_seconds=len(text) * 0.1,  # Rough estimate
-                processing_time=0.0,
-                metadata={
-                    "watson_voice": watson_voices.get(language, "en-US_AllisonV3Voice"),
-                    "voice_type": voice_type,
-                    "speaking_rate": speaking_rate,
-                    "service": "watson_tts",
-                    "error": str(e),
-                },
-            )
+    # Watson TTS method removed - deprecated in Phase 2A migration
 
     async def _text_to_speech_piper(
         self, text: str, language: str, voice_type: str, speaking_rate: float

@@ -45,18 +45,8 @@ class Settings(BaseSettings):
     QWEN_API_KEY: Optional[str] = Field(
         default=None, description="Alibaba Qwen API key"
     )
-    IBM_WATSON_STT_API_KEY: Optional[str] = Field(
-        default=None, description="IBM Watson STT API key"
-    )
-    IBM_WATSON_TTS_API_KEY: Optional[str] = Field(
-        default=None, description="IBM Watson TTS API key"
-    )
-    IBM_WATSON_STT_URL: Optional[str] = Field(
-        default=None, description="IBM Watson STT service URL"
-    )
-    IBM_WATSON_TTS_URL: Optional[str] = Field(
-        default=None, description="IBM Watson TTS service URL"
-    )
+    # IBM Watson configuration removed in Phase 2A Migration
+    # Replaced by Mistral STT + Piper TTS for 99.8% cost reduction
 
     # Ollama settings for local LLMs
     OLLAMA_HOST: str = Field(
