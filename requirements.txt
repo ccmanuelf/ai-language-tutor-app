@@ -32,9 +32,8 @@ langchain==0.0.350
 langchain-community==0.0.2
 tiktoken==0.5.2
 
-# IBM Watson Speech Services
-ibm-watson==10.0.0
-ibm-cloud-sdk-core==3.24.2
+# IBM Watson Speech Services - REMOVED in Phase 2A Migration
+# Replaced by Mistral STT + Piper TTS for 99.8% cost reduction
 websockets==12.0
 PyAudio==0.2.14
 wave==0.0.2
