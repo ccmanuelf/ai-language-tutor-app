@@ -457,6 +457,169 @@ async def get_scenario_categories():
         )
 
 
+# Universal Template Endpoints
+@router.get("/templates", response_model=ScenarioResponse)
+async def get_universal_templates(
+    tier: Optional[int] = None, current_user: User = Depends(get_current_user)
+):
+    """Get all available universal scenario templates"""
+    try:
+        templates = scenario_manager.get_universal_templates(tier=tier)
+
+        return ScenarioResponse(
+            success=True,
+            message=f"Retrieved {len(templates)} universal templates"
+            + (f" for tier {tier}" if tier else ""),
+            data={
+                "templates": templates,
+                "total_count": len(templates),
+                "tier_filter": tier,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Failed to get universal templates: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve templates: {str(e)}"
+        )
+
+
+@router.get("/templates/tier1", response_model=ScenarioResponse)
+async def get_tier1_scenarios(current_user: User = Depends(get_current_user)):
+    """Get all Tier 1 (essential) scenario templates"""
+    try:
+        tier1_scenarios = scenario_manager.get_tier1_scenarios()
+
+        return ScenarioResponse(
+            success=True,
+            message=f"Retrieved {len(tier1_scenarios)} Tier 1 essential scenarios",
+            data={
+                "tier1_scenarios": tier1_scenarios,
+                "total_count": len(tier1_scenarios),
+                "tier": 1,
+                "description": "Essential daily interaction scenarios for language learning",
+            },
+        )
+    except Exception as e:
+        logger.error(f"Failed to get Tier 1 scenarios: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve Tier 1 scenarios: {str(e)}"
+        )
+
+
+class CreateFromTemplateRequest(BaseModel):
+    """Request model for creating scenario from template"""
+
+    template_id: str = Field(..., description="Universal template ID")
+    difficulty: str = Field(
+        ..., description="Difficulty level (beginner/intermediate/advanced)"
+    )
+    variation_id: Optional[str] = Field(
+        None, description="Specific variation ID (optional)"
+    )
+    user_role: Optional[str] = Field(
+        "student", description="User's role in the scenario"
+    )
+    ai_role: Optional[str] = Field("teacher", description="AI's role in the scenario")
+
+
+@router.post("/templates/create", response_model=ScenarioResponse)
+async def create_scenario_from_template(
+    request: CreateFromTemplateRequest, current_user: User = Depends(get_current_user)
+):
+    """Create a new scenario instance from a universal template"""
+    try:
+        # Validate difficulty
+        try:
+            difficulty = ScenarioDifficulty(request.difficulty.lower())
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid difficulty level: {request.difficulty}. Must be beginner, intermediate, or advanced",
+            )
+
+        # Import ConversationRole
+        from app.services.scenario_manager import ConversationRole
+
+        # Validate roles
+        try:
+            user_role = ConversationRole(request.user_role.lower())
+            ai_role = ConversationRole(request.ai_role.lower())
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid role. Available roles: customer, service_provider, friend, colleague, student, teacher, tourist, local",
+            )
+
+        # Create scenario from template
+        scenario = scenario_manager.create_scenario_from_template(
+            template_id=request.template_id,
+            difficulty=difficulty,
+            user_role=user_role,
+            ai_role=ai_role,
+            variation_id=request.variation_id,
+        )
+
+        if not scenario:
+            raise HTTPException(
+                status_code=404, detail=f"Template not found: {request.template_id}"
+            )
+
+        # Get scenario details
+        scenario_details = scenario_manager.get_scenario_details(scenario.scenario_id)
+
+        return ScenarioResponse(
+            success=True,
+            message=f"Created scenario from template: {scenario.name}",
+            data={
+                "scenario": scenario_details,
+                "template_id": request.template_id,
+                "variation_id": request.variation_id,
+                "created_at": datetime.utcnow().isoformat(),
+            },
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create scenario from template: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create scenario: {str(e)}"
+        )
+
+
+@router.get("/category/{category_name}", response_model=ScenarioResponse)
+async def get_scenarios_by_category(
+    category_name: str, current_user: User = Depends(get_current_user)
+):
+    """Get all scenarios and templates for a specific category"""
+    try:
+        # Validate category
+        try:
+            category = ScenarioCategory(category_name.lower())
+        except ValueError:
+            available_categories = [cat.value for cat in ScenarioCategory]
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid category: {category_name}. Available: {', '.join(available_categories)}",
+            )
+
+        category_data = scenario_manager.get_scenarios_by_category(category)
+
+        return ScenarioResponse(
+            success=True,
+            message=f"Retrieved scenarios for category: {category.value}",
+            data=category_data,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get scenarios by category: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve category scenarios: {str(e)}"
+        )
+
+
 def _get_category_description(category: ScenarioCategory) -> str:
     """Get description for a scenario category"""
     descriptions = {
