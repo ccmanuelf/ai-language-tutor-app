@@ -21,6 +21,7 @@ from .home import create_home_routes
 from .profile import create_profile_route
 from .chat import create_chat_route
 from .progress import create_progress_route
+from .content_view import create_content_view_route
 
 
 def create_frontend_app():
@@ -40,6 +41,7 @@ def create_frontend_app():
     create_profile_route(app)
     create_chat_route(app)
     create_progress_route(app)
+    create_content_view_route(app)
 
     return app
 

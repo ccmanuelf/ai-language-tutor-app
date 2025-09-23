@@ -725,6 +725,189 @@ def load_styles():
             font-size: 1.75rem;
         }
     }
+
+    /* Modal Styles */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .modal-dialog {
+        background: var(--bg-primary);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-lg);
+        max-width: 600px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .modal-content {
+        padding: 2rem;
+    }
+
+    /* Scenario-specific styles */
+    .scenario-info {
+        line-height: 1.6;
+    }
+
+    .scenario-info h4 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    .scenario-info h5 {
+        color: var(--text-primary);
+        margin: 1.5rem 0 0.5rem 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .scenario-info p {
+        margin-bottom: 0.75rem;
+    }
+
+    .scenario-info ul, .scenario-info ol {
+        margin-bottom: 1rem;
+        padding-left: 1.5rem;
+    }
+
+    .scenario-info li {
+        margin-bottom: 0.5rem;
+    }
+
+    .vocabulary-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .vocab-tag {
+        display: inline-block;
+        background: var(--primary-light);
+        color: var(--primary-dark);
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    /* Scenario progress indicators */
+    .scenario-progress {
+        background: var(--bg-secondary);
+        padding: 1rem;
+        border-radius: var(--radius);
+        margin: 1rem 0;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .scenario-progress h4 {
+        margin: 0 0 0.5rem 0;
+        color: var(--primary-color);
+        font-size: 1rem;
+    }
+
+    .scenario-progress p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .phase-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+    }
+
+    .phase-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--border-color);
+    }
+
+    .phase-dot.active {
+        background: var(--primary-color);
+    }
+
+    .phase-dot.completed {
+        background: var(--success-color);
+    }
+
+    /* Enhanced conversation area for scenarios */
+    .conversation-area {
+        position: relative;
+    }
+
+    .scenario-context {
+        background: linear-gradient(135deg, var(--primary-light), var(--secondary-color));
+        color: white;
+        padding: 1rem;
+        border-radius: var(--radius);
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    .scenario-context h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+    }
+
+    .scenario-context p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 0.9rem;
+    }
+
+    /* Message enhancements for scenarios */
+    .message.scenario-feedback {
+        background: var(--bg-tertiary);
+        border-left: 4px solid var(--accent-color);
+        color: var(--text-primary);
+        font-style: italic;
+    }
+
+    .message.phase-transition {
+        background: linear-gradient(135deg, var(--success-color), var(--primary-color));
+        color: white;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    /* Responsive modal */
+    @media (max-width: 640px) {
+        .modal {
+            padding: 0.5rem;
+        }
+
+        .modal-dialog {
+            max-height: 90vh;
+        }
+
+        .modal-content {
+            padding: 1rem;
+        }
+
+        .vocabulary-tags {
+            gap: 0.25rem;
+        }
+
+        .vocab-tag {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+        }
+    }
     """)
 
 

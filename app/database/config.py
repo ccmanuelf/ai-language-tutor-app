@@ -319,7 +319,7 @@ db_manager = DatabaseManager()
 # FastAPI Dependencies
 def get_db_session() -> Generator[Session, None, None]:
     """FastAPI dependency for primary database sessions"""
-    # Use the primary engine which automatically selects SQLite or MariaDB
+    # Use the primary SQLite engine
     engine = db_manager.get_primary_engine()
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     session = SessionLocal()

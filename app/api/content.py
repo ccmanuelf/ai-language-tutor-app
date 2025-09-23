@@ -1,0 +1,536 @@
+"""
+Content Processing API Endpoints
+AI Language Tutor App - Task 2.1 Implementation
+
+Provides:
+- Content upload and processing endpoints
+- YouTube video processing
+- Document upload and parsing
+- Learning material generation
+- Content library management
+- Real-time processing status
+"""
+
+import asyncio
+import tempfile
+import shutil
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    UploadFile,
+    File,
+    Form,
+    BackgroundTasks,
+    Depends,
+)
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, HttpUrl
+from enum import Enum
+
+from app.services.content_processor import (
+    content_processor,
+    ContentType,
+    ProcessingStatus,
+    LearningMaterialType,
+    ProcessingProgress,
+    ProcessedContent,
+)
+from app.core.security import get_current_user
+from app.models.simple_user import SimpleUser as User
+
+router = APIRouter()
+
+
+# Request/Response Models
+class ContentTypeEnum(str, Enum):
+    """API-friendly content type enum"""
+
+    youtube_video = "youtube_video"
+    pdf_document = "pdf_document"
+    word_document = "word_document"
+    text_file = "text_file"
+    web_article = "web_article"
+
+
+class MaterialTypeEnum(str, Enum):
+    """API-friendly material type enum"""
+
+    summary = "summary"
+    flashcards = "flashcards"
+    quiz = "quiz"
+    notes = "notes"
+    mind_map = "mind_map"
+    key_concepts = "key_concepts"
+    practice_questions = "practice_questions"
+
+
+class ProcessContentRequest(BaseModel):
+    """Request model for processing content from URL"""
+
+    url: HttpUrl
+    material_types: Optional[List[MaterialTypeEnum]] = [
+        "summary",
+        "flashcards",
+        "key_concepts",
+    ]
+    language: str = "en"
+    title: Optional[str] = None
+
+
+class ProcessingStatusResponse(BaseModel):
+    """Response model for processing status"""
+
+    content_id: str
+    status: str
+    current_step: str
+    progress_percentage: int
+    time_elapsed: float
+    estimated_remaining: float
+    details: str
+    error_message: Optional[str] = None
+    created_at: datetime
+
+
+class ContentLibraryItem(BaseModel):
+    """Response model for content library items"""
+
+    content_id: str
+    title: str
+    content_type: str
+    topics: List[str]
+    difficulty_level: str
+    created_at: datetime
+    material_count: int
+    word_count: int
+    estimated_study_time: int
+
+
+class LearningMaterialResponse(BaseModel):
+    """Response model for learning materials"""
+
+    material_id: str
+    content_id: str
+    material_type: str
+    title: str
+    content: Dict[str, Any]
+    difficulty_level: str
+    estimated_time: int
+    tags: List[str]
+    created_at: datetime
+
+
+class ProcessedContentResponse(BaseModel):
+    """Response model for complete processed content"""
+
+    metadata: Dict[str, Any]
+    content_preview: str  # First 500 chars
+    learning_materials: List[LearningMaterialResponse]
+    processing_stats: Dict[str, Any]
+
+
+@router.post("/process/url", response_model=Dict[str, str])
+async def process_content_from_url(
+    request: ProcessContentRequest, current_user: User = Depends(get_current_user)
+):
+    """
+    Process content from URL (YouTube, web articles, etc.)
+
+    Returns content_id for tracking processing progress
+    """
+    try:
+        # Convert material types to internal enum
+        material_types = [
+            LearningMaterialType(mt.value) for mt in request.material_types
+        ]
+
+        # Start content processing
+        content_id = await content_processor.process_content(
+            source=str(request.url),
+            material_types=material_types,
+            language=request.language,
+        )
+
+        return {
+            "content_id": content_id,
+            "message": "Content processing started",
+            "status_url": f"/api/content/status/{content_id}",
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Failed to process content: {str(e)}"
+        )
+
+
+@router.post("/process/upload", response_model=Dict[str, str])
+async def process_uploaded_file(
+    file: UploadFile = File(...),
+    material_types: List[MaterialTypeEnum] = Form(
+        ["summary", "flashcards", "key_concepts"]
+    ),
+    language: str = Form("en"),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Process uploaded file (PDF, DOCX, TXT, etc.)
+
+    Returns content_id for tracking processing progress
+    """
+    try:
+        # Validate file type
+        allowed_extensions = {".pdf", ".docx", ".doc", ".txt", ".md", ".rtf"}
+        file_extension = Path(file.filename).suffix.lower()
+
+        if file_extension not in allowed_extensions:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type: {file_extension}. Allowed: {', '.join(allowed_extensions)}",
+            )
+
+        # Save uploaded file temporarily
+        temp_dir = Path(tempfile.gettempdir()) / "ai_tutor_uploads"
+        temp_dir.mkdir(exist_ok=True)
+
+        temp_file_path = (
+            temp_dir / f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename}"
+        )
+
+        with open(temp_file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # Convert material types to internal enum
+        material_types_enum = [LearningMaterialType(mt.value) for mt in material_types]
+
+        # Start content processing
+        content_id = await content_processor.process_content(
+            source=file.filename,
+            file_path=temp_file_path,
+            material_types=material_types_enum,
+            language=language,
+        )
+
+        return {
+            "content_id": content_id,
+            "message": f"File '{file.filename}' processing started",
+            "status_url": f"/api/content/status/{content_id}",
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to process file: {str(e)}")
+
+
+@router.get("/status/{content_id}", response_model=ProcessingStatusResponse)
+async def get_processing_status(
+    content_id: str, current_user: User = Depends(get_current_user)
+):
+    """Get real-time processing status for content"""
+    try:
+        progress = await content_processor.get_processing_progress(content_id)
+
+        if not progress:
+            raise HTTPException(
+                status_code=404, detail=f"Content ID {content_id} not found"
+            )
+
+        return ProcessingStatusResponse(
+            content_id=progress.content_id,
+            status=progress.status.value,
+            current_step=progress.current_step,
+            progress_percentage=progress.progress_percentage,
+            time_elapsed=progress.time_elapsed,
+            estimated_remaining=progress.estimated_remaining,
+            details=progress.details,
+            error_message=progress.error_message,
+            created_at=progress.created_at,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}")
+
+
+@router.get("/content/{content_id}", response_model=ProcessedContentResponse)
+async def get_processed_content(
+    content_id: str, current_user: User = Depends(get_current_user)
+):
+    """Get processed content and learning materials"""
+    try:
+        processed = await content_processor.get_processed_content(content_id)
+
+        if not processed:
+            raise HTTPException(
+                status_code=404, detail=f"Content ID {content_id} not found"
+            )
+
+        # Convert learning materials to response format
+        materials = [
+            LearningMaterialResponse(
+                material_id=material.material_id,
+                content_id=material.content_id,
+                material_type=material.material_type.value,
+                title=material.title,
+                content=material.content,
+                difficulty_level=material.difficulty_level,
+                estimated_time=material.estimated_time,
+                tags=material.tags,
+                created_at=material.created_at,
+            )
+            for material in processed.learning_materials
+        ]
+
+        # Convert metadata to dict
+        metadata_dict = {
+            "content_id": processed.metadata.content_id,
+            "title": processed.metadata.title,
+            "content_type": processed.metadata.content_type.value,
+            "source_url": processed.metadata.source_url,
+            "language": processed.metadata.language,
+            "duration": processed.metadata.duration,
+            "word_count": processed.metadata.word_count,
+            "difficulty_level": processed.metadata.difficulty_level,
+            "topics": processed.metadata.topics,
+            "author": processed.metadata.author,
+            "created_at": processed.metadata.created_at,
+            "file_size": processed.metadata.file_size,
+        }
+
+        return ProcessedContentResponse(
+            metadata=metadata_dict,
+            content_preview=processed.processed_content[:500],
+            learning_materials=materials,
+            processing_stats=processed.processing_stats,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get content: {str(e)}")
+
+
+@router.get("/library", response_model=List[ContentLibraryItem])
+async def get_content_library(
+    limit: int = 50,
+    offset: int = 0,
+    content_type: Optional[ContentTypeEnum] = None,
+    difficulty: Optional[str] = None,
+    language: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+):
+    """Get user's content library with filtering and pagination"""
+    try:
+        # Get all content
+        library = await content_processor.get_content_library()
+
+        # Apply filters
+        if content_type:
+            library = [
+                item for item in library if item["content_type"] == content_type.value
+            ]
+
+        if difficulty:
+            library = [
+                item for item in library if item["difficulty_level"] == difficulty
+            ]
+
+        if language:
+            library = [item for item in library if item.get("language") == language]
+
+        # Apply pagination
+        total_items = len(library)
+        library = library[offset : offset + limit]
+
+        # Convert to response format
+        response_items = [
+            ContentLibraryItem(
+                content_id=item["content_id"],
+                title=item["title"],
+                content_type=item["content_type"],
+                topics=item["topics"],
+                difficulty_level=item["difficulty_level"],
+                created_at=datetime.fromisoformat(item["created_at"]),
+                material_count=item["material_count"],
+                word_count=item["word_count"],
+                estimated_study_time=item["estimated_study_time"],
+            )
+            for item in library
+        ]
+
+        return response_items
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get library: {str(e)}")
+
+
+@router.get("/search")
+async def search_content(
+    query: str,
+    content_type: Optional[ContentTypeEnum] = None,
+    difficulty: Optional[str] = None,
+    language: Optional[str] = None,
+    limit: int = 20,
+    current_user: User = Depends(get_current_user),
+):
+    """Search content library"""
+    try:
+        # Prepare filters
+        filters = {}
+        if content_type:
+            filters["content_type"] = content_type.value
+        if difficulty:
+            filters["difficulty_level"] = difficulty
+        if language:
+            filters["language"] = language
+
+        # Perform search
+        results = await content_processor.search_content(query, filters)
+
+        # Apply limit
+        results = results[:limit]
+
+        return {"query": query, "total_results": len(results), "results": results}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
+
+@router.get("/material/{material_id}")
+async def get_learning_material(
+    material_id: str, current_user: User = Depends(get_current_user)
+):
+    """Get specific learning material by ID"""
+    try:
+        # Find material in content library
+        for content_id, processed in content_processor.content_library.items():
+            for material in processed.learning_materials:
+                if material.material_id == material_id:
+                    return LearningMaterialResponse(
+                        material_id=material.material_id,
+                        content_id=material.content_id,
+                        material_type=material.material_type.value,
+                        title=material.title,
+                        content=material.content,
+                        difficulty_level=material.difficulty_level,
+                        estimated_time=material.estimated_time,
+                        tags=material.tags,
+                        created_at=material.created_at,
+                    )
+
+        raise HTTPException(
+            status_code=404, detail=f"Material ID {material_id} not found"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get material: {str(e)}")
+
+
+@router.delete("/content/{content_id}")
+async def delete_content(
+    content_id: str, current_user: User = Depends(get_current_user)
+):
+    """Delete processed content and its materials"""
+    try:
+        if content_id not in content_processor.content_library:
+            raise HTTPException(
+                status_code=404, detail=f"Content ID {content_id} not found"
+            )
+
+        # Remove from library
+        del content_processor.content_library[content_id]
+
+        # Remove processing progress if exists
+        if content_id in content_processor.processing_progress:
+            del content_processor.processing_progress[content_id]
+
+        return {"message": f"Content {content_id} deleted successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to delete content: {str(e)}"
+        )
+
+
+@router.get("/stats")
+async def get_content_stats(current_user: User = Depends(get_current_user)):
+    """Get content library statistics"""
+    try:
+        library = await content_processor.get_content_library()
+
+        # Calculate statistics
+        total_content = len(library)
+        total_materials = sum(item["material_count"] for item in library)
+        total_study_time = sum(item["estimated_study_time"] for item in library)
+
+        # Count by content type
+        content_types = {}
+        for item in library:
+            content_type = item["content_type"]
+            content_types[content_type] = content_types.get(content_type, 0) + 1
+
+        # Count by difficulty
+        difficulties = {}
+        for item in library:
+            difficulty = item["difficulty_level"]
+            difficulties[difficulty] = difficulties.get(difficulty, 0) + 1
+
+        return {
+            "total_content": total_content,
+            "total_materials": total_materials,
+            "total_study_time_minutes": total_study_time,
+            "content_by_type": content_types,
+            "content_by_difficulty": difficulties,
+            "average_materials_per_content": total_materials / total_content
+            if total_content > 0
+            else 0,
+            "average_study_time_per_content": total_study_time / total_content
+            if total_content > 0
+            else 0,
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get stats: {str(e)}")
+
+
+# Health check for content processing service
+@router.get("/health")
+async def content_service_health():
+    """Health check for content processing service"""
+    try:
+        # Check if processor is responsive
+        stats = {
+            "status": "healthy",
+            "service": "content-processor",
+            "active_processing": len(
+                [
+                    p
+                    for p in content_processor.processing_progress.values()
+                    if p.status
+                    in [
+                        ProcessingStatus.QUEUED,
+                        ProcessingStatus.EXTRACTING,
+                        ProcessingStatus.ANALYZING,
+                        ProcessingStatus.GENERATING,
+                    ]
+                ]
+            ),
+            "total_content": len(content_processor.content_library),
+            "temp_dir_exists": content_processor.temp_dir.exists(),
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        return stats
+
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "service": "content-processor",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat(),
+        }

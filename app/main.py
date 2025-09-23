@@ -11,9 +11,11 @@ import os
 from pathlib import Path
 
 # Import core configuration
-from core.config import get_settings
-from api.auth import router as auth_router
-from api.conversations import router as conversations_router
+from app.core.config import get_settings
+from app.api.auth import router as auth_router
+from app.api.conversations import router as conversations_router
+from app.api.content import router as content_router
+from app.api.scenarios import router as scenarios_router
 
 
 def create_app() -> FastAPI:
@@ -44,6 +46,8 @@ def create_app() -> FastAPI:
     # Include API routers
     app.include_router(auth_router)
     app.include_router(conversations_router)
+    app.include_router(content_router, prefix="/api/content", tags=["content"])
+    app.include_router(scenarios_router, prefix="/api/scenarios", tags=["scenarios"])
 
     # Health check endpoint
     @app.get("/health")

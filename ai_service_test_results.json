@@ -1,0 +1,60 @@
+{
+  "test_timestamp": "202905.798053541",
+  "detailed_results": {
+    "claude": {
+      "available": true,
+      "json_valid": false,
+      "content": "*perks up and leans in* Oh wow, Python! That's so cool, I love talking about programming languages. Python is just such a versatile and powerful tool, you know? I'm always excited to hear when people are getting into it. \n\n*tilts head slightly* So what got you interested in Python in the first place? Is this something new for you, or have you worked with other languages before? I'm always curious to hear people's programming journeys - there are just so many different paths you can take.\n\n*nods enthusiastically* And web development, huh? That's a really fun and dynamic field. There's just endless possibilities with what you can create on the web these days. Do you have any particular projects or ideas you're working on? I'd love to hear more about what's got you excited about Python for web dev.\n\n*leans back and smiles warmly* Anyway, I'm happy",
+      "cost": 0.3335,
+      "model": "claude-3-haiku-20240307",
+      "json_error": "Expecting value: line 1 column 1 (char 0)"
+    },
+    "mistral": {
+      "available": true,
+      "json_valid": false,
+      "content": "Oh, I see you're working on something structured! Let me help you format that content into the JSON you need. Here's how it would look:\n\n```json\n{\n    \"topics\": [\"programming\", \"web development\"],\n    \"difficulty_level\": \"beginner\",\n    \"key_concepts\": [\"Python\", \"programming language\"],\n    \"detected_language\": \"en\"\n}\n```\n\nIs this for a project or just practicing JSON formatting? I'd love to hear more about what you're working on! \ud83d\ude0a",
+      "cost": 0.00026858000000000003,
+      "model": "mistral-small-latest",
+      "json_error": "Expecting value: line 1 column 1 (char 0)"
+    },
+    "qwen": {
+      "available": true,
+      "json_valid": false,
+      "content": "I'm having connection trouble. Let's try again! What would you like to talk about?",
+      "cost": 0.0,
+      "model": "qwen-plus",
+      "json_error": "Expecting value: line 1 column 1 (char 0)"
+    },
+    "ollama": {
+      "available": true,
+      "json_valid": true,
+      "content": " {\n    \"topics\": [\"Programming Languages\", \"Web Development\"],\n    \"difficulty_level\": \"Beginner\",\n    \"key_concepts\": [\"Python\", \"Web Development Tools\"],\n    \"detected_language\": \"English\"\n}",
+      "cost": 0.0,
+      "model": "neural-chat:7b",
+      "parsed_data": {
+        "topics": [
+          "Programming Languages",
+          "Web Development"
+        ],
+        "difficulty_level": "Beginner",
+        "key_concepts": [
+          "Python",
+          "Web Development Tools"
+        ],
+        "detected_language": "English"
+      }
+    }
+  },
+  "summary": {
+    "valid_providers": [
+      "ollama"
+    ],
+    "failed_providers": [
+      "claude",
+      "mistral",
+      "qwen"
+    ],
+    "success_rate": 25.0,
+    "recommended": "ollama"
+  }
+}
