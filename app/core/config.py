@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # Database settings
     DATABASE_URL: str = Field(
         default="mysql+pymysql://root:password@localhost/ai_language_tutor",
-        description="MariaDB connection URL",
+        description="SQLite database connection URL",
     )
     CHROMADB_PATH: str = Field(
         default="./data/chromadb", description="ChromaDB storage path"

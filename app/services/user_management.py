@@ -67,7 +67,7 @@ class UserProfileService:
         Returns:
             Created user data
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             # Check if user_id already exists
             existing_user = (
@@ -152,7 +152,7 @@ class UserProfileService:
         Returns:
             User data or None if not found
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -177,7 +177,7 @@ class UserProfileService:
         Returns:
             Complete user profile
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -248,7 +248,7 @@ class UserProfileService:
         Returns:
             Updated user data
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -293,7 +293,7 @@ class UserProfileService:
         Returns:
             Success status
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -343,7 +343,7 @@ class UserProfileService:
         Returns:
             List of users
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             query = session.query(User)
 
@@ -384,7 +384,7 @@ class UserProfileService:
         Returns:
             Success status
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -459,7 +459,7 @@ class UserProfileService:
         Returns:
             List of user languages
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -500,7 +500,7 @@ class UserProfileService:
         Returns:
             Success status
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -540,7 +540,7 @@ class UserProfileService:
         Returns:
             Created progress record
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -606,7 +606,7 @@ class UserProfileService:
         Returns:
             Updated progress record
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -660,7 +660,7 @@ class UserProfileService:
         Returns:
             List of learning progress records
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -699,7 +699,7 @@ class UserProfileService:
         Returns:
             Success status
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -742,7 +742,7 @@ class UserProfileService:
         Returns:
             User preferences dictionary
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -767,7 +767,7 @@ class UserProfileService:
         Returns:
             List of family members
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             # For this implementation, we'll look for users with similar email domain
             # or users created by the same parent (this could be enhanced with explicit family relationships)
@@ -811,7 +811,7 @@ class UserProfileService:
         Returns:
             User statistics dictionary
         """
-        session = get_mariadb_session()
+        session = get_db_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:

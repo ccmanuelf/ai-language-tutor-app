@@ -294,9 +294,9 @@ class ScenarioFactory:
 
     def _create_default_templates(self):
         """Create default templates when no configuration files exist"""
-        logger.info("Creating default Tier 1 scenario templates")
+        logger.info("Creating comprehensive 32-scenario template system")
 
-        # Tier 1: Essential Daily Interactions
+        # Load Tier 1 templates (defined in this file)
         tier1_templates = [
             self._create_greetings_template(),
             self._create_family_template(),
@@ -305,9 +305,24 @@ class ScenarioFactory:
             self._create_home_neighborhood_template(),
         ]
 
-        for template in tier1_templates:
+        # Load extended templates (Tiers 2-4) from extended module
+        try:
+            from app.services.scenario_templates_extended import (
+                ExtendedScenarioTemplates,
+            )
+
+            extended_templates = ExtendedScenarioTemplates.get_all_extended_templates()
+            all_templates = tier1_templates + extended_templates
+            logger.info(
+                f"Successfully loaded {len(tier1_templates)} Tier 1 + {len(extended_templates)} extended scenario templates = {len(all_templates)} total"
+            )
+        except ImportError as e:
+            logger.warning(f"Could not load extended templates: {e}, using Tier 1 only")
+            all_templates = tier1_templates
+
+        for template in all_templates:
             self.universal_templates[template.template_id] = template
-            logger.info(f"Created default template: {template.name}")
+            logger.info(f"Created template: {template.name} (Tier {template.tier})")
 
     def _create_greetings_template(self) -> UniversalScenarioTemplate:
         """Create greetings and introductions template"""
@@ -452,6 +467,197 @@ class ScenarioFactory:
                 "Use appropriate greeting for time/context",
                 "Maintain natural conversation flow",
                 "End conversation politely",
+            ],
+        )
+
+    # Tier 2: Daily Routines and Activities (6-15)
+    def _create_daily_routine_template(self) -> UniversalScenarioTemplate:
+        """Create daily routine template"""
+        return UniversalScenarioTemplate(
+            template_id="daily_routine",
+            name="Daily Routine",
+            category=ScenarioCategory.DAILY_LIFE,
+            tier=2,
+            base_vocabulary=[
+                "morning",
+                "afternoon",
+                "evening",
+                "night",
+                "wake up",
+                "get up",
+                "brush teeth",
+                "shower",
+                "breakfast",
+                "lunch",
+                "dinner",
+                "work",
+                "school",
+                "sleep",
+                "exercise",
+                "hobby",
+                "schedule",
+                "time",
+                "early",
+                "late",
+                "busy",
+                "free time",
+                "weekend",
+                "weekday",
+            ],
+            essential_phrases={
+                "beginner": [
+                    "I wake up at...",
+                    "I go to work",
+                    "I have breakfast",
+                    "What time do you...?",
+                ],
+                "intermediate": [
+                    "My daily routine is...",
+                    "I usually start my day with...",
+                    "In the evening, I like to...",
+                ],
+                "advanced": [
+                    "I'm trying to establish a better routine",
+                    "My schedule varies depending on...",
+                ],
+            },
+            cultural_context={
+                "notes": "Daily routines vary significantly across cultures and lifestyles"
+            },
+            learning_objectives=[
+                "Describe daily activities",
+                "Talk about time and schedules",
+                "Express habits and routines",
+            ],
+            conversation_starters=[
+                "What's your typical day like?",
+                "When do you usually wake up?",
+            ],
+            scenario_variations=[
+                {
+                    "id": "workday",
+                    "description": "Typical working day routine",
+                    "phases": [
+                        "morning_routine",
+                        "work_preparation",
+                        "work_day",
+                        "evening_activities",
+                    ],
+                },
+                {
+                    "id": "weekend",
+                    "description": "Weekend routine discussion",
+                    "phases": [
+                        "weekend_morning",
+                        "leisure_activities",
+                        "social_time",
+                        "relaxation",
+                    ],
+                },
+            ],
+            difficulty_modifiers={
+                "beginner": {"duration": 10},
+                "intermediate": {"duration": 15},
+                "advanced": {"duration": 20},
+            },
+            success_metrics=[
+                "Describe complete daily routine",
+                "Use time expressions correctly",
+                "Express preferences about activities",
+            ],
+        )
+
+    def _create_basic_conversations_template(self) -> UniversalScenarioTemplate:
+        """Create basic conversations template"""
+        return UniversalScenarioTemplate(
+            template_id="basic_conversations",
+            name="Basic Conversations",
+            category=ScenarioCategory.SOCIAL,
+            tier=2,
+            base_vocabulary=[
+                "yes",
+                "no",
+                "maybe",
+                "please",
+                "thank you",
+                "sorry",
+                "excuse me",
+                "help",
+                "understand",
+                "speak",
+                "listen",
+                "repeat",
+                "slow",
+                "fast",
+                "question",
+                "answer",
+                "problem",
+                "solution",
+                "agree",
+                "disagree",
+            ],
+            essential_phrases={
+                "beginner": [
+                    "Can you help me?",
+                    "I don't understand",
+                    "Could you repeat that?",
+                    "Thank you very much",
+                ],
+                "intermediate": [
+                    "Could you speak more slowly?",
+                    "What does that mean?",
+                    "I'm not sure I follow",
+                ],
+                "advanced": [
+                    "I beg your pardon?",
+                    "Could you clarify what you mean by...?",
+                    "I'm afraid I didn't catch that",
+                ],
+            },
+            cultural_context={
+                "notes": "Politeness levels and conversation patterns vary by culture"
+            },
+            learning_objectives=[
+                "Master essential conversation phrases",
+                "Learn to ask for clarification",
+                "Practice polite interruptions",
+            ],
+            conversation_starters=[
+                "Excuse me, could you help me?",
+                "I have a question",
+                "Sorry to bother you",
+            ],
+            scenario_variations=[
+                {
+                    "id": "asking_help",
+                    "description": "Asking for help or assistance",
+                    "phases": [
+                        "polite_approach",
+                        "explain_need",
+                        "receive_help",
+                        "thank_and_close",
+                    ],
+                },
+                {
+                    "id": "clarification",
+                    "description": "Asking for clarification",
+                    "phases": [
+                        "indicate_confusion",
+                        "request_explanation",
+                        "confirm_understanding",
+                        "continue_conversation",
+                    ],
+                },
+            ],
+            difficulty_modifiers={
+                "beginner": {"duration": 8},
+                "intermediate": {"duration": 12},
+                "advanced": {"duration": 15},
+            },
+            success_metrics=[
+                "Use polite expressions correctly",
+                "Ask for help appropriately",
+                "Handle misunderstandings gracefully",
             ],
         )
 

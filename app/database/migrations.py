@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 class MigrationManager:
     """Manages database migrations across all database systems"""
-    
+
     def __init__(self):
         self.db_manager = db_manager
         self.local_db_manager = local_db_manager
@@ -40,30 +40,30 @@ class MigrationManager:
         self.alembic_config_path = "./alembic.ini"
         self.migrations_dir = "./app/database/alembic"
         self._ensure_migration_structure()
-    
+
     def _ensure_migration_structure(self):
         """Ensure migration directory structure exists"""
         os.makedirs(self.migrations_dir, exist_ok=True)
         versions_dir = Path(self.migrations_dir) / "versions"
         versions_dir.mkdir(exist_ok=True)
-    
+
     def initialize_alembic(self) -> bool:
         """Initialize Alembic for the project"""
         try:
             # Create alembic.ini if it doesn't exist
             if not os.path.exists(self.alembic_config_path):
                 self._create_alembic_config()
-            
+
             # Initialize alembic directory structure
             if not os.path.exists(os.path.join(self.migrations_dir, "env.py")):
                 self._create_alembic_env()
-            
+
             logger.info("Alembic initialized successfully")
             return True
         except Exception as e:
             logger.error(f"Failed to initialize Alembic: {e}")
             return False
-    
+
     def _create_alembic_config(self):
         """Create alembic.ini configuration file"""
         config_content = f"""# A generic, single database configuration.
@@ -178,7 +178,7 @@ datefmt = %H:%M:%S
 """
         with open(self.alembic_config_path, "w") as f:
             f.write(config_content)
-    
+
     def _create_alembic_env(self):
         """Create Alembic env.py file"""
         env_content = '''"""Alembic environment configuration for AI Language Tutor App"""
@@ -231,7 +231,7 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-    
+
     # Use our database manager's engine
     connectable = db_manager.mariadb_engine
 
@@ -249,11 +249,11 @@ if context.is_offline_mode():
 else:
     run_migrations_online()
 '''
-        
+
         env_path = Path(self.migrations_dir) / "env.py"
         with open(env_path, "w") as f:
             f.write(env_content)
-        
+
         # Create script.py.mako template
         script_content = '''"""${message}
 
@@ -280,29 +280,29 @@ def upgrade() -> None:
 def downgrade() -> None:
     ${downgrades if downgrades else "pass"}
 '''
-        
+
         script_path = Path(self.migrations_dir) / "script.py.mako"
         with open(script_path, "w") as f:
             f.write(script_content)
-    
+
     def create_initial_migration(self) -> bool:
         """Create initial migration for all database tables"""
         try:
             config = Config(self.alembic_config_path)
-            
+
             # Generate initial migration
             command.revision(
                 config,
                 autogenerate=True,
-                message="Initial migration - create all tables"
+                message="Initial migration - create all tables",
             )
-            
+
             logger.info("Initial migration created successfully")
             return True
         except Exception as e:
             logger.error(f"Failed to create initial migration: {e}")
             return False
-    
+
     def run_migrations(self) -> bool:
         """Run pending migrations"""
         try:
@@ -313,7 +313,7 @@ def downgrade() -> None:
         except Exception as e:
             logger.error(f"Failed to run migrations: {e}")
             return False
-    
+
     def rollback_migration(self, revision: str = "-1") -> bool:
         """Rollback to a specific migration"""
         try:
@@ -324,44 +324,46 @@ def downgrade() -> None:
         except Exception as e:
             logger.error(f"Failed to rollback migration: {e}")
             return False
-    
+
     def get_migration_history(self) -> List[Dict[str, Any]]:
         """Get migration history"""
         try:
             config = Config(self.alembic_config_path)
             script = ScriptDirectory.from_config(config)
-            
+
             with db_manager.mariadb_session_scope() as session:
                 context = MigrationContext.configure(session.connection())
                 current_rev = context.get_current_revision()
-            
+
             history = []
             for revision in script.walk_revisions():
-                history.append({
-                    "revision": revision.revision,
-                    "down_revision": revision.down_revision,
-                    "message": revision.doc,
-                    "is_current": revision.revision == current_rev
-                })
-            
+                history.append(
+                    {
+                        "revision": revision.revision,
+                        "down_revision": revision.down_revision,
+                        "message": revision.doc,
+                        "is_current": revision.revision == current_rev,
+                    }
+                )
+
             return history
         except Exception as e:
             logger.error(f"Failed to get migration history: {e}")
             return []
-    
+
     def initialize_all_databases(self) -> Dict[str, bool]:
         """Initialize all database systems"""
         results = {}
-        
-        # Initialize MariaDB schema
+
+        # Initialize SQLite schema
         try:
-            Base.metadata.create_all(bind=db_manager.mariadb_engine)
-            results["mariadb_schema"] = True
-            logger.info("MariaDB schema initialized")
+            Base.metadata.create_all(bind=db_manager.sqlite_engine)
+            results["sqlite_schema"] = True
+            logger.info("SQLite schema initialized")
         except Exception as e:
-            logger.error(f"Failed to initialize MariaDB schema: {e}")
-            results["mariadb_schema"] = False
-        
+            logger.error(f"Failed to initialize SQLite schema: {e}")
+            results["sqlite_schema"] = False
+
         # Initialize local databases
         try:
             local_db_manager.initialize_local_schemas()
@@ -370,7 +372,7 @@ def downgrade() -> None:
         except Exception as e:
             logger.error(f"Failed to initialize local databases: {e}")
             results["local_databases"] = False
-        
+
         # Initialize ChromaDB
         try:
             chroma_manager.initialize_collections()
@@ -379,9 +381,9 @@ def downgrade() -> None:
         except Exception as e:
             logger.error(f"Failed to initialize ChromaDB: {e}")
             results["chromadb"] = False
-        
+
         return results
-    
+
     def seed_initial_data(self) -> bool:
         """Seed initial data into databases"""
         try:
@@ -390,19 +392,49 @@ def downgrade() -> None:
                 if session.query(Language).count() > 0:
                     logger.info("Initial data already exists")
                     return True
-                
+
                 # Seed supported languages
                 languages = [
-                    Language(code="zh", name="Chinese", native_name="中文", has_speech_support=True, has_tts_support=True),
-                    Language(code="fr", name="French", native_name="Français", has_speech_support=True, has_tts_support=True),
-                    Language(code="de", name="German", native_name="Deutsch", has_speech_support=True, has_tts_support=True),
-                    Language(code="ja", name="Japanese", native_name="日本語", has_speech_support=True, has_tts_support=True),
-                    Language(code="en", name="English", native_name="English", has_speech_support=True, has_tts_support=True),
+                    Language(
+                        code="zh",
+                        name="Chinese",
+                        native_name="中文",
+                        has_speech_support=True,
+                        has_tts_support=True,
+                    ),
+                    Language(
+                        code="fr",
+                        name="French",
+                        native_name="Français",
+                        has_speech_support=True,
+                        has_tts_support=True,
+                    ),
+                    Language(
+                        code="de",
+                        name="German",
+                        native_name="Deutsch",
+                        has_speech_support=True,
+                        has_tts_support=True,
+                    ),
+                    Language(
+                        code="ja",
+                        name="Japanese",
+                        native_name="日本語",
+                        has_speech_support=True,
+                        has_tts_support=True,
+                    ),
+                    Language(
+                        code="en",
+                        name="English",
+                        native_name="English",
+                        has_speech_support=True,
+                        has_tts_support=True,
+                    ),
                 ]
-                
+
                 for lang in languages:
                     session.add(lang)
-                
+
                 # Create demo admin user
                 admin_user = User(
                     user_id="admin",
@@ -411,103 +443,107 @@ def downgrade() -> None:
                     role=UserRole.ADMIN,
                     is_active=True,
                     is_verified=True,
-                    preferences={"theme": "light", "language": "en"}
+                    preferences={"theme": "light", "language": "en"},
                 )
                 session.add(admin_user)
-            
+
             logger.info("Initial data seeded successfully")
             return True
         except Exception as e:
             logger.error(f"Failed to seed initial data: {e}")
             return False
-    
+
     def backup_database(self, backup_path: Optional[str] = None) -> str:
         """Create a database backup"""
         if not backup_path:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             backup_path = f"./backups/backup_{timestamp}.sql"
-        
+
         os.makedirs(os.path.dirname(backup_path), exist_ok=True)
-        
+
         try:
             # Simple SQL dump (in production, use mysqldump or similar)
             with db_manager.mariadb_session_scope() as session:
                 # Get all table names
                 inspector = inspect(db_manager.mariadb_engine)
                 tables = inspector.get_table_names()
-                
+
                 with open(backup_path, "w") as f:
                     f.write(f"-- Database backup created on {datetime.now()}\\n\\n")
-                    
+
                     for table in tables:
                         f.write(f"-- Table: {table}\\n")
                         result = session.execute(text(f"SELECT * FROM {table}"))
                         rows = result.fetchall()
-                        
+
                         if rows:
                             columns = list(result.keys())
                             f.write(f"-- Columns: {', '.join(columns)}\\n")
                             f.write(f"-- Rows: {len(rows)}\\n\\n")
-            
+
             logger.info(f"Database backup created: {backup_path}")
             return backup_path
         except Exception as e:
             logger.error(f"Failed to create backup: {e}")
             raise
-    
+
     def check_database_integrity(self) -> Dict[str, Any]:
         """Check database integrity across all systems"""
         integrity_report = {
             "timestamp": datetime.now().isoformat(),
             "mariadb": {},
             "local_db": {},
-            "chromadb": {}
+            "chromadb": {},
         }
-        
-        # Check MariaDB
+
+        # Check SQLite
         try:
             with db_manager.mariadb_session_scope() as session:
                 # Count records in main tables
                 integrity_report["mariadb"] = {
                     "users": session.query(User).count(),
                     "languages": session.query(Language).count(),
-                    "status": "healthy"
+                    "status": "healthy",
                 }
         except Exception as e:
             integrity_report["mariadb"] = {"status": "error", "error": str(e)}
-        
+
         # Check local databases
         try:
             stats = local_db_manager.get_database_stats()
             integrity_report["local_db"] = {**stats, "status": "healthy"}
         except Exception as e:
             integrity_report["local_db"] = {"status": "error", "error": str(e)}
-        
+
         # Check ChromaDB
         try:
             stats = chroma_manager.get_collection_stats()
             integrity_report["chromadb"] = {**stats, "status": "healthy"}
         except Exception as e:
             integrity_report["chromadb"] = {"status": "error", "error": str(e)}
-        
+
         return integrity_report
 
 
 # Global migration manager
 migration_manager = MigrationManager()
 
+
 # Convenience functions
 def initialize_databases():
     """Initialize all database systems"""
     return migration_manager.initialize_all_databases()
 
+
 def run_migrations():
     """Run pending migrations"""
     return migration_manager.run_migrations()
 
+
 def seed_initial_data():
     """Seed initial data"""
     return migration_manager.seed_initial_data()
+
 
 def check_database_integrity():
     """Check database integrity"""
