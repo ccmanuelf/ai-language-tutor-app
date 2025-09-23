@@ -1,7 +1,7 @@
 """
 Database Models for AI Language Tutor App
 
-This module defines SQLAlchemy models for the MariaDB database.
+This module defines SQLAlchemy models for the SQLite database.
 Includes user management, conversations, documents, learning progress, and more.
 """
 
@@ -657,6 +657,30 @@ class APIUsage(Base):
         }
 
 
+# Database session management
+def get_db_session():
+    """
+    Get database session for dependency injection
+
+    This function provides a database session that can be used
+    with FastAPI's Depends() for automatic session management
+    and cleanup.
+    """
+    from app.database.config import db_manager
+
+    try:
+        # Use SQLite session from db_manager
+        session = db_manager.get_sqlite_session()
+        yield session
+    except Exception as e:
+        if session:
+            session.rollback()
+        raise e
+    finally:
+        if session:
+            session.close()
+
+
 # Export all models for easy importing
 __all__ = [
     "Base",
@@ -674,4 +698,5 @@ __all__ = [
     "DocumentType",
     "LearningStatus",
     "user_languages",
+    "get_db_session",
 ]

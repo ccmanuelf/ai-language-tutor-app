@@ -7,7 +7,7 @@ with real-time speech processing, AI conversations, and content-driven learning.
 Architecture:
 - Frontend: FastHTML + MonsterUI
 - Backend: FastAPI
-- Database: MariaDB + ChromaDB + DuckDB/SQLite
+- Database: SQLite + ChromaDB + DuckDB (local storage)
 - AI: Claude, Mistral, Qwen APIs + Ollama (offline)
 - Speech: IBM Watson STT/TTS APIs
 

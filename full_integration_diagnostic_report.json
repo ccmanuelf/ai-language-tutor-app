@@ -1,119 +1,21 @@
 {
   "diagnostic_summary": {
-    "timestamp": "2025-09-23T08:24:02.480448",
-    "duration_seconds": 2.27,
-    "total_issues": 15,
-    "critical_errors": 12,
-    "issues_found": 2,
-    "warnings": 1,
-    "severity_score": 131,
-    "status": "CRITICAL_ISSUES"
+    "timestamp": "2025-09-23T10:01:09.960504",
+    "duration_seconds": 1.43,
+    "total_issues": 0,
+    "critical_errors": 0,
+    "issues_found": 0,
+    "warnings": 0,
+    "severity_score": 0,
+    "status": "EXCELLENT"
   },
-  "critical_errors": [
-    {
-      "type": "IMPORT_ERROR",
-      "component": "app.services.conversation_manager",
-      "error": "No module named 'passlib'",
-      "traceback": "Traceback (most recent call last):\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/test_full_integration_diagnostic.py\", line 121, in analyze_import_chains\n    module = __import__(module_path, fromlist=[component])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/conversation_manager.py\", line 43, in <module>\n    from app.services.user_management import get_user_by_id\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/user_management.py\", line 44, in <module>\n    from app.services.auth import auth_service\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/auth.py\", line 19, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'\n"
-    },
-    {
-      "type": "IMPORT_ERROR",
-      "component": "app.services.conversation_manager.conversation_manager",
-      "error": "No module named 'passlib'",
-      "traceback": "Traceback (most recent call last):\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/test_full_integration_diagnostic.py\", line 121, in analyze_import_chains\n    module = __import__(module_path, fromlist=[component])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/conversation_manager.py\", line 43, in <module>\n    from app.services.user_management import get_user_by_id\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/user_management.py\", line 44, in <module>\n    from app.services.auth import auth_service\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/auth.py\", line 19, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'\n"
-    },
-    {
-      "type": "IMPORT_ERROR",
-      "component": "app.services.conversation_manager.LearningFocus",
-      "error": "No module named 'passlib'",
-      "traceback": "Traceback (most recent call last):\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/test_full_integration_diagnostic.py\", line 121, in analyze_import_chains\n    module = __import__(module_path, fromlist=[component])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/conversation_manager.py\", line 43, in <module>\n    from app.services.user_management import get_user_by_id\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/user_management.py\", line 44, in <module>\n    from app.services.auth import auth_service\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/auth.py\", line 19, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'\n"
-    },
-    {
-      "type": "IMPORT_ERROR",
-      "component": "app.api.scenarios",
-      "error": "No module named 'passlib'",
-      "traceback": "Traceback (most recent call last):\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/test_full_integration_diagnostic.py\", line 121, in analyze_import_chains\n    module = __import__(module_path, fromlist=[component])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/api/scenarios.py\", line 34, in <module>\n    from app.services.conversation_manager import conversation_manager, LearningFocus\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/conversation_manager.py\", line 43, in <module>\n    from app.services.user_management import get_user_by_id\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/user_management.py\", line 44, in <module>\n    from app.services.auth import auth_service\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/auth.py\", line 19, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'\n"
-    },
-    {
-      "type": "IMPORT_ERROR",
-      "component": "app.api.scenarios.router",
-      "error": "No module named 'passlib'",
-      "traceback": "Traceback (most recent call last):\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/test_full_integration_diagnostic.py\", line 121, in analyze_import_chains\n    module = __import__(module_path, fromlist=[component])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/api/scenarios.py\", line 34, in <module>\n    from app.services.conversation_manager import conversation_manager, LearningFocus\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/conversation_manager.py\", line 43, in <module>\n    from app.services.user_management import get_user_by_id\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/user_management.py\", line 44, in <module>\n    from app.services.auth import auth_service\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/auth.py\", line 19, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'\n"
-    },
-    {
-      "type": "IMPORT_ERROR",
-      "component": "app.api.scenarios.ScenarioResponse",
-      "error": "No module named 'passlib'",
-      "traceback": "Traceback (most recent call last):\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/test_full_integration_diagnostic.py\", line 121, in analyze_import_chains\n    module = __import__(module_path, fromlist=[component])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/api/scenarios.py\", line 34, in <module>\n    from app.services.conversation_manager import conversation_manager, LearningFocus\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/conversation_manager.py\", line 43, in <module>\n    from app.services.user_management import get_user_by_id\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/user_management.py\", line 44, in <module>\n    from app.services.auth import auth_service\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/auth.py\", line 19, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'\n"
-    },
-    {
-      "type": "DB_COMPONENT_ERROR",
-      "component": "app.services.user_management",
-      "error": "No module named 'passlib'",
-      "traceback": "Traceback (most recent call last):\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/test_full_integration_diagnostic.py\", line 176, in check_database_dependencies\n    module = __import__(component, fromlist=[\"\"])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/user_management.py\", line 44, in <module>\n    from app.services.auth import auth_service\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/auth.py\", line 19, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'\n"
-    },
-    {
-      "type": "MISSING_ROUTER_INTEGRATION",
-      "file": "app/main.py",
-      "error": "Scenarios router not integrated in main app"
-    },
-    {
-      "type": "API_INTEGRATION_ERROR",
-      "error": "No module named 'passlib'",
-      "traceback": "Traceback (most recent call last):\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/test_full_integration_diagnostic.py\", line 284, in check_api_integration\n    from app.api.scenarios import router, get_scenarios_router\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/api/scenarios.py\", line 34, in <module>\n    from app.services.conversation_manager import conversation_manager, LearningFocus\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/conversation_manager.py\", line 43, in <module>\n    from app.services.user_management import get_user_by_id\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/user_management.py\", line 44, in <module>\n    from app.services.auth import auth_service\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/auth.py\", line 19, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'\n"
-    },
-    {
-      "type": "MISSING_RUNTIME_DEPENDENCY",
-      "dependency": "fasthtml",
-      "error": "Required dependency fasthtml not available"
-    },
-    {
-      "type": "AUTH_CHAIN_ERROR",
-      "component": "app.services.auth",
-      "error": "No module named 'passlib'",
-      "traceback": "Traceback (most recent call last):\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/test_full_integration_diagnostic.py\", line 422, in check_authentication_chain\n    module = __import__(component, fromlist=[\"\"])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/auth.py\", line 19, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'\n"
-    },
-    {
-      "type": "AUTH_CHAIN_ERROR",
-      "component": "app.services.user_management",
-      "error": "No module named 'passlib'",
-      "traceback": "Traceback (most recent call last):\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/test_full_integration_diagnostic.py\", line 422, in check_authentication_chain\n    module = __import__(component, fromlist=[\"\"])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/user_management.py\", line 44, in <module>\n    from app.services.auth import auth_service\n  File \"/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/services/auth.py\", line 19, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'\n"
-    }
-  ],
-  "issues_found": [
-    {
-      "type": "DEPRECATED_REFERENCE",
-      "component": "app.database.config",
-      "issue": "Contains MariaDB references - should use SQLite"
-    },
-    {
-      "type": "DEPRECATED_REFERENCE",
-      "component": "app.models.database",
-      "issue": "Contains MariaDB references - should use SQLite"
-    }
-  ],
-  "warnings": [
-    {
-      "type": "MISSING_DB_FUNCTION",
-      "component": "app.models.database",
-      "issue": "get_db_session not found"
-    }
-  ],
+  "critical_errors": [],
+  "issues_found": [],
+  "warnings": [],
   "recommendations": [
-    "\ud83d\udea8 CRITICAL issues found - immediate attention required",
-    "\ud83d\udd34 Fix 12 critical error(s) immediately",
-    "\ud83d\udd27 Address 2 integration issue(s)",
-    "\u26a0\ufe0f Review 1 warning(s)"
+    "\ud83c\udf89 No critical issues found - system appears robust"
   ],
   "next_actions": [
-    "1. IMMEDIATE: Fix all critical errors before proceeding",
-    "   - Fix IMPORT_ERROR: app.services.conversation_manager",
-    "   - Fix IMPORT_ERROR: app.services.conversation_manager.conversation_manager",
-    "   - Fix IMPORT_ERROR: app.services.conversation_manager.LearningFocus",
-    "2. HIGH PRIORITY: Address integration issues",
-    "   - Fix DEPRECATED_REFERENCE: app.database.config",
-    "   - Fix DEPRECATED_REFERENCE: app.models.database",
-    "3. MEDIUM PRIORITY: Review warnings",
     "4. Run full integration test after fixes",
     "5. Test with real authentication and database"
   ]

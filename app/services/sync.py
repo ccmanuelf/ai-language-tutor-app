@@ -2,7 +2,7 @@
 Data Synchronization Service for AI Language Tutor App
 
 This module handles data synchronization between:
-- MariaDB (server-side persistent storage)
+- SQLite (local persistent storage)
 - Local SQLite/DuckDB (offline storage)
 - ChromaDB (vector storage)
 
@@ -28,7 +28,14 @@ import json
 from app.database.config import db_manager
 from app.database.local_config import local_db_manager
 from app.database.chromadb_config import chroma_manager
-from app.models.database import User, Conversation, ConversationMessage, Document, LearningProgress, VocabularyItem
+from app.models.database import (
+    User,
+    Conversation,
+    ConversationMessage,
+    Document,
+    LearningProgress,
+    VocabularyItem,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -36,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 class SyncDirection(Enum):
     """Sync direction types"""
+
     UP = "up"  # Local to server
     DOWN = "down"  # Server to local
     BIDIRECTIONAL = "bidirectional"
@@ -43,6 +51,7 @@ class SyncDirection(Enum):
 
 class SyncStatus(Enum):
     """Sync status types"""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -52,6 +61,7 @@ class SyncStatus(Enum):
 
 class ConflictResolution(Enum):
     """Conflict resolution strategies"""
+
     SERVER_WINS = "server_wins"
     LOCAL_WINS = "local_wins"
     LATEST_TIMESTAMP = "latest_timestamp"
@@ -61,6 +71,7 @@ class ConflictResolution(Enum):
 @dataclass
 class SyncItem:
     """Represents an item to be synchronized"""
+
     table_name: str
     record_id: str
     action: str  # insert, update, delete
@@ -73,6 +84,7 @@ class SyncItem:
 @dataclass
 class SyncResult:
     """Result of a synchronization operation"""
+
     success: bool
     items_processed: int
     items_success: int
@@ -85,7 +97,7 @@ class SyncResult:
 
 class DataSyncService:
     """Main data synchronization service"""
-    
+
     def __init__(self):
         self.db_manager = db_manager
         self.local_db_manager = local_db_manager
@@ -94,22 +106,24 @@ class DataSyncService:
         self.conflict_resolution = ConflictResolution.LATEST_TIMESTAMP
         self.last_sync_times: Dict[str, datetime] = {}
         self.is_syncing = False
-    
+
     # Core Sync Methods
-    async def sync_user_data(self, user_id: str, direction: SyncDirection = SyncDirection.BIDIRECTIONAL) -> SyncResult:
+    async def sync_user_data(
+        self, user_id: str, direction: SyncDirection = SyncDirection.BIDIRECTIONAL
+    ) -> SyncResult:
         """
         Synchronize all data for a specific user
-        
+
         Args:
             user_id: User identifier
             direction: Sync direction
-            
+
         Returns:
             Sync result
         """
         start_time = datetime.now()
         logger.info(f"Starting sync for user {user_id}, direction: {direction.value}")
-        
+
         try:
             self.is_syncing = True
             result = SyncResult(
@@ -120,9 +134,9 @@ class DataSyncService:
                 conflicts=[],
                 errors=[],
                 sync_duration=0.0,
-                timestamp=start_time
+                timestamp=start_time,
             )
-            
+
             # Sync different data types based on priority
             sync_tasks = [
                 ("user_profiles", self._sync_user_profiles),
@@ -131,7 +145,7 @@ class DataSyncService:
                 ("vocabulary", self._sync_vocabulary),
                 ("documents", self._sync_documents),
             ]
-            
+
             for task_name, sync_function in sync_tasks:
                 try:
                     task_result = await sync_function(user_id, direction)
@@ -140,23 +154,27 @@ class DataSyncService:
                     result.items_failed += task_result.items_failed
                     result.conflicts.extend(task_result.conflicts)
                     result.errors.extend(task_result.errors)
-                    
-                    logger.info(f"Sync {task_name}: {task_result.items_success}/{task_result.items_processed} success")
-                    
+
+                    logger.info(
+                        f"Sync {task_name}: {task_result.items_success}/{task_result.items_processed} success"
+                    )
+
                 except Exception as e:
                     logger.error(f"Error syncing {task_name}: {e}")
                     result.errors.append(f"{task_name}: {str(e)}")
                     result.success = False
-            
+
             # Update last sync time
             self.last_sync_times[user_id] = datetime.now()
-            
+
             # Calculate duration
             result.sync_duration = (datetime.now() - start_time).total_seconds()
-            
-            logger.info(f"Sync completed for user {user_id}: {result.items_success}/{result.items_processed} items")
+
+            logger.info(
+                f"Sync completed for user {user_id}: {result.items_success}/{result.items_processed} items"
+            )
             return result
-            
+
         except Exception as e:
             logger.error(f"Sync failed for user {user_id}: {e}")
             return SyncResult(
@@ -167,15 +185,17 @@ class DataSyncService:
                 conflicts=[],
                 errors=[str(e)],
                 sync_duration=(datetime.now() - start_time).total_seconds(),
-                timestamp=start_time
+                timestamp=start_time,
             )
         finally:
             self.is_syncing = False
-    
-    async def _sync_user_profiles(self, user_id: str, direction: SyncDirection) -> SyncResult:
+
+    async def _sync_user_profiles(
+        self, user_id: str, direction: SyncDirection
+    ) -> SyncResult:
         """Sync user profile data"""
         result = SyncResult(True, 0, 0, 0, [], [], 0.0, datetime.now())
-        
+
         try:
             if direction in [SyncDirection.DOWN, SyncDirection.BIDIRECTIONAL]:
                 # Download from server to local
@@ -186,7 +206,7 @@ class DataSyncService:
                             user_id=user.user_id,
                             username=user.username,
                             email=user.email,
-                            preferences=user.preferences
+                            preferences=user.preferences,
                         )
                         result.items_processed += 1
                         if success:
@@ -194,22 +214,28 @@ class DataSyncService:
                         else:
                             result.items_failed += 1
                             result.errors.append("Failed to save user profile locally")
-            
+
             if direction in [SyncDirection.UP, SyncDirection.BIDIRECTIONAL]:
                 # Upload from local to server (less common for profiles)
                 local_profile = self.local_db_manager.get_user_profile(user_id)
                 if local_profile:
                     # Compare with server version and handle conflicts
                     with self.db_manager.mariadb_session_scope() as session:
-                        server_user = session.query(User).filter(User.user_id == user_id).first()
+                        server_user = (
+                            session.query(User).filter(User.user_id == user_id).first()
+                        )
                         if server_user:
                             # Check for conflicts based on timestamps
-                            local_updated = datetime.fromisoformat(local_profile.get("updated_at", "2000-01-01"))
+                            local_updated = datetime.fromisoformat(
+                                local_profile.get("updated_at", "2000-01-01")
+                            )
                             server_updated = server_user.updated_at
-                            
+
                             if local_updated > server_updated:
                                 # Local is newer, update server
-                                server_user.preferences = local_profile.get("preferences", {})
+                                server_user.preferences = local_profile.get(
+                                    "preferences", {}
+                                )
                                 server_user.updated_at = datetime.now()
                                 result.items_processed += 1
                                 result.items_success += 1
@@ -219,36 +245,47 @@ class DataSyncService:
                                     user_id=server_user.user_id,
                                     username=server_user.username,
                                     email=server_user.email,
-                                    preferences=server_user.preferences
+                                    preferences=server_user.preferences,
                                 )
                                 result.items_processed += 1
                                 result.items_success += 1
-        
+
         except Exception as e:
             logger.error(f"Error syncing user profiles: {e}")
             result.errors.append(str(e))
             result.success = False
-        
+
         return result
-    
-    async def _sync_conversations(self, user_id: str, direction: SyncDirection) -> SyncResult:
+
+    async def _sync_conversations(
+        self, user_id: str, direction: SyncDirection
+    ) -> SyncResult:
         """Sync conversation data"""
         result = SyncResult(True, 0, 0, 0, [], [], 0.0, datetime.now())
-        
+
         try:
             # Get last sync time for incremental sync
-            last_sync = self.last_sync_times.get(f"{user_id}_conversations", datetime.min)
-            
+            last_sync = self.last_sync_times.get(
+                f"{user_id}_conversations", datetime.min
+            )
+
             if direction in [SyncDirection.DOWN, SyncDirection.BIDIRECTIONAL]:
                 # Download recent conversations from server
                 with self.db_manager.mariadb_session_scope() as session:
-                    conversations = session.query(Conversation).filter(
-                        and_(
-                            Conversation.user_id == session.query(User.id).filter(User.user_id == user_id).scalar(),
-                            Conversation.last_message_at > last_sync
+                    conversations = (
+                        session.query(Conversation)
+                        .filter(
+                            and_(
+                                Conversation.user_id
+                                == session.query(User.id)
+                                .filter(User.user_id == user_id)
+                                .scalar(),
+                                Conversation.last_message_at > last_sync,
+                            )
                         )
-                    ).all()
-                    
+                        .all()
+                    )
+
                     for conv in conversations:
                         # Save conversation metadata locally
                         conv_data = {
@@ -257,14 +294,17 @@ class DataSyncService:
                             "language": conv.language,
                             "ai_model": conv.ai_model,
                             "started_at": conv.started_at.isoformat(),
-                            "last_message_at": conv.last_message_at.isoformat()
+                            "last_message_at": conv.last_message_at.isoformat(),
                         }
-                        
+
                         # Get messages for this conversation
-                        messages = session.query(ConversationMessage).filter(
-                            ConversationMessage.conversation_id == conv.id
-                        ).order_by(ConversationMessage.created_at).all()
-                        
+                        messages = (
+                            session.query(ConversationMessage)
+                            .filter(ConversationMessage.conversation_id == conv.id)
+                            .order_by(ConversationMessage.created_at)
+                            .all()
+                        )
+
                         for msg in messages:
                             success = self.local_db_manager.save_conversation_locally(
                                 user_id=user_id,
@@ -275,20 +315,22 @@ class DataSyncService:
                                 metadata={
                                     "timestamp": msg.created_at.isoformat(),
                                     "token_count": msg.token_count,
-                                    "pronunciation_score": msg.pronunciation_score
-                                }
+                                    "pronunciation_score": msg.pronunciation_score,
+                                },
                             )
-                            
+
                             result.items_processed += 1
                             if success:
                                 result.items_success += 1
                             else:
                                 result.items_failed += 1
-            
+
             if direction in [SyncDirection.UP, SyncDirection.BIDIRECTIONAL]:
                 # Upload recent local conversations to server
-                recent_conversations = self.local_db_manager.get_recent_conversations(user_id, limit=100)
-                
+                recent_conversations = self.local_db_manager.get_recent_conversations(
+                    user_id, limit=100
+                )
+
                 # Group messages by conversation
                 conversations_to_sync = {}
                 for msg in recent_conversations:
@@ -296,20 +338,24 @@ class DataSyncService:
                     if conv_id not in conversations_to_sync:
                         conversations_to_sync[conv_id] = []
                     conversations_to_sync[conv_id].append(msg)
-                
+
                 # Process each conversation
                 with self.db_manager.mariadb_session_scope() as session:
-                    server_user = session.query(User).filter(User.user_id == user_id).first()
+                    server_user = (
+                        session.query(User).filter(User.user_id == user_id).first()
+                    )
                     if not server_user:
                         result.errors.append(f"User {user_id} not found on server")
                         return result
-                    
+
                     for conv_id, messages in conversations_to_sync.items():
                         # Check if conversation exists on server
-                        server_conv = session.query(Conversation).filter(
-                            Conversation.conversation_id == conv_id
-                        ).first()
-                        
+                        server_conv = (
+                            session.query(Conversation)
+                            .filter(Conversation.conversation_id == conv_id)
+                            .first()
+                        )
+
                         if not server_conv:
                             # Create new conversation on server
                             server_conv = Conversation(
@@ -317,83 +363,106 @@ class DataSyncService:
                                 user_id=server_user.id,
                                 language=messages[0].get("language", "en"),
                                 title=f"Conversation {conv_id[:8]}",
-                                started_at=datetime.fromisoformat(messages[0]["timestamp"]),
-                                last_message_at=datetime.fromisoformat(messages[-1]["timestamp"])
+                                started_at=datetime.fromisoformat(
+                                    messages[0]["timestamp"]
+                                ),
+                                last_message_at=datetime.fromisoformat(
+                                    messages[-1]["timestamp"]
+                                ),
                             )
                             session.add(server_conv)
                             session.flush()
-                        
+
                         # Add messages that don't exist on server
                         for msg in messages:
-                            existing_msg = session.query(ConversationMessage).filter(
-                                and_(
-                                    ConversationMessage.conversation_id == server_conv.id,
-                                    ConversationMessage.content == msg["content"],
-                                    ConversationMessage.created_at >= datetime.fromisoformat(msg["timestamp"]) - timedelta(seconds=1)
+                            existing_msg = (
+                                session.query(ConversationMessage)
+                                .filter(
+                                    and_(
+                                        ConversationMessage.conversation_id
+                                        == server_conv.id,
+                                        ConversationMessage.content == msg["content"],
+                                        ConversationMessage.created_at
+                                        >= datetime.fromisoformat(msg["timestamp"])
+                                        - timedelta(seconds=1),
+                                    )
                                 )
-                            ).first()
-                            
+                                .first()
+                            )
+
                             if not existing_msg:
                                 new_msg = ConversationMessage(
                                     conversation_id=server_conv.id,
                                     role=msg["message_type"],
                                     content=msg["content"],
                                     language=msg.get("language"),
-                                    created_at=datetime.fromisoformat(msg["timestamp"])
+                                    created_at=datetime.fromisoformat(msg["timestamp"]),
                                 )
                                 session.add(new_msg)
                                 result.items_processed += 1
                                 result.items_success += 1
-        
+
         except Exception as e:
             logger.error(f"Error syncing conversations: {e}")
             result.errors.append(str(e))
             result.success = False
-        
+
         return result
-    
-    async def _sync_learning_progress(self, user_id: str, direction: SyncDirection) -> SyncResult:
+
+    async def _sync_learning_progress(
+        self, user_id: str, direction: SyncDirection
+    ) -> SyncResult:
         """Sync learning progress data"""
         result = SyncResult(True, 0, 0, 0, [], [], 0.0, datetime.now())
-        
+
         try:
             if direction in [SyncDirection.UP, SyncDirection.BIDIRECTIONAL]:
                 # This is typically more important - upload learning progress to server
                 with self.db_manager.mariadb_session_scope() as session:
-                    server_user = session.query(User).filter(User.user_id == user_id).first()
+                    server_user = (
+                        session.query(User).filter(User.user_id == user_id).first()
+                    )
                     if server_user:
                         # Here you would implement the actual sync logic
                         # For now, we'll just mark as processed
                         result.items_processed += 1
                         result.items_success += 1
-        
+
         except Exception as e:
             logger.error(f"Error syncing learning progress: {e}")
             result.errors.append(str(e))
             result.success = False
-        
+
         return result
-    
-    async def _sync_vocabulary(self, user_id: str, direction: SyncDirection) -> SyncResult:
+
+    async def _sync_vocabulary(
+        self, user_id: str, direction: SyncDirection
+    ) -> SyncResult:
         """Sync vocabulary data"""
         result = SyncResult(True, 0, 0, 0, [], [], 0.0, datetime.now())
         # Implementation similar to other sync methods
         return result
-    
-    async def _sync_documents(self, user_id: str, direction: SyncDirection) -> SyncResult:
+
+    async def _sync_documents(
+        self, user_id: str, direction: SyncDirection
+    ) -> SyncResult:
         """Sync document data and embeddings"""
         result = SyncResult(True, 0, 0, 0, [], [], 0.0, datetime.now())
-        
+
         try:
             if direction in [SyncDirection.DOWN, SyncDirection.BIDIRECTIONAL]:
                 # Sync document embeddings to ChromaDB
                 with self.db_manager.mariadb_session_scope() as session:
-                    server_user = session.query(User).filter(User.user_id == user_id).first()
+                    server_user = (
+                        session.query(User).filter(User.user_id == user_id).first()
+                    )
                     if server_user:
-                        documents = session.query(Document).filter(
-                            Document.user_id == server_user.id
-                        ).all()
-                        
+                        documents = (
+                            session.query(Document)
+                            .filter(Document.user_id == server_user.id)
+                            .all()
+                        )
+
                         for doc in documents:
                             if doc.is_processed and doc.processed_content:
                                 # Add to ChromaDB if not already there
@@ -406,80 +475,94 @@ class DataSyncService:
                                             "filename": doc.filename,
                                             "language": doc.language,
                                             "document_type": doc.document_type.value,
-                                            "timestamp": doc.uploaded_at.isoformat()
-                                        }
+                                            "timestamp": doc.uploaded_at.isoformat(),
+                                        },
                                     )
                                     result.items_processed += 1
                                     result.items_success += 1
                                 except Exception as e:
-                                    logger.warning(f"Failed to add document embedding: {e}")
+                                    logger.warning(
+                                        f"Failed to add document embedding: {e}"
+                                    )
                                     result.items_failed += 1
-        
+
         except Exception as e:
             logger.error(f"Error syncing documents: {e}")
             result.errors.append(str(e))
             result.success = False
-        
+
         return result
-    
+
     # Conflict Resolution
-    def resolve_conflict(self, conflict_data: Dict[str, Any], resolution: ConflictResolution) -> Dict[str, Any]:
+    def resolve_conflict(
+        self, conflict_data: Dict[str, Any], resolution: ConflictResolution
+    ) -> Dict[str, Any]:
         """
         Resolve a data conflict between local and server versions
-        
+
         Args:
             conflict_data: Conflict information including local and server data
             resolution: Resolution strategy to use
-            
+
         Returns:
             Resolved data
         """
         local_data = conflict_data.get("local_data", {})
         server_data = conflict_data.get("server_data", {})
-        
+
         if resolution == ConflictResolution.SERVER_WINS:
             return server_data
         elif resolution == ConflictResolution.LOCAL_WINS:
             return local_data
         elif resolution == ConflictResolution.LATEST_TIMESTAMP:
-            local_timestamp = datetime.fromisoformat(local_data.get("updated_at", "2000-01-01"))
-            server_timestamp = datetime.fromisoformat(server_data.get("updated_at", "2000-01-01"))
+            local_timestamp = datetime.fromisoformat(
+                local_data.get("updated_at", "2000-01-01")
+            )
+            server_timestamp = datetime.fromisoformat(
+                server_data.get("updated_at", "2000-01-01")
+            )
             return server_data if server_timestamp > local_timestamp else local_data
         else:
             # Manual review - return conflict for user decision
-            return {"status": "requires_manual_review", "local": local_data, "server": server_data}
-    
+            return {
+                "status": "requires_manual_review",
+                "local": local_data,
+                "server": server_data,
+            }
+
     # Background Sync
     async def start_background_sync(self, user_id: str, interval_minutes: int = 15):
         """Start background synchronization for a user"""
-        logger.info(f"Starting background sync for user {user_id} (interval: {interval_minutes}min)")
-        
+        logger.info(
+            f"Starting background sync for user {user_id} (interval: {interval_minutes}min)"
+        )
+
         while True:
             try:
                 if not self.is_syncing:
                     await self.sync_user_data(user_id, SyncDirection.BIDIRECTIONAL)
-                
+
                 # Wait for next sync
                 await asyncio.sleep(interval_minutes * 60)
-                
+
             except Exception as e:
                 logger.error(f"Background sync error for user {user_id}: {e}")
                 await asyncio.sleep(60)  # Wait 1 minute before retrying
-    
+
     # Sync Status and Monitoring
     def get_sync_status(self, user_id: str) -> Dict[str, Any]:
         """Get synchronization status for a user"""
         last_sync = self.last_sync_times.get(user_id)
-        
+
         return {
             "user_id": user_id,
             "last_sync": last_sync.isoformat() if last_sync else None,
             "is_syncing": self.is_syncing,
             "pending_items": len(self.sync_queue),
             "sync_interval_minutes": 15,  # Could be configurable
-            "online_status": self._check_connectivity()
+            "online_status": self._check_connectivity(),
         }
-    
+
     def _check_connectivity(self) -> bool:
         """Check if we have connectivity to the server"""
         try:
@@ -487,7 +570,7 @@ class DataSyncService:
             return health_check.get("status") == "healthy"
         except Exception:
             return False
-    
+
     def get_sync_statistics(self, user_id: str, days: int = 7) -> Dict[str, Any]:
         """Get sync statistics for the last N days"""
         # This would be implemented with proper tracking
@@ -501,21 +584,26 @@ class DataSyncService:
             "items_synced": 150,
             "conflicts_resolved": 2,
             "last_successful_sync": self.last_sync_times.get(user_id),
-            "average_sync_duration": 2.5  # seconds
+            "average_sync_duration": 2.5,  # seconds
         }
 
 
 # Global sync service
 sync_service = DataSyncService()
 
+
 # Convenience functions
-async def sync_user_data(user_id: str, direction: SyncDirection = SyncDirection.BIDIRECTIONAL) -> SyncResult:
+async def sync_user_data(
+    user_id: str, direction: SyncDirection = SyncDirection.BIDIRECTIONAL
+) -> SyncResult:
     """Sync data for a user"""
     return await sync_service.sync_user_data(user_id, direction)
+
 
 def get_sync_status(user_id: str) -> Dict[str, Any]:
     """Get sync status for a user"""
     return sync_service.get_sync_status(user_id)
+
 
 async def start_background_sync(user_id: str, interval_minutes: int = 15):
     """Start background sync for a user"""
