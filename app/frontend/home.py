@@ -444,7 +444,7 @@ def create_main_content():
             ),
             # Upload options
             Div(
-                # Upload card
+                # Upload card - Updated for content processing
                 Div(
                     Div(
                         Span(
@@ -456,7 +456,7 @@ def create_main_content():
                             style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);",
                         ),
                         P(
-                            "File, audio, video",
+                            "PDF, DOCX, TXT files",
                             style="color: var(--text-muted); font-size: 0.9rem;",
                         ),
                         style="text-align: center;",
@@ -473,11 +473,11 @@ def create_main_content():
                         align-items: center;
                         justify-content: center;
                     """,
-                    onclick="window.location.href='/chat'",
+                    onclick="showContentProcessingModal('upload')",
                     onmouseover="this.style.borderColor='var(--primary-color)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)'",
                     onmouseout="this.style.borderColor='var(--border-color)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'",
                 ),
-                # Paste card (marked as popular)
+                # Paste card (marked as popular) - Updated for content processing
                 Div(
                     Div(
                         Span(
@@ -525,7 +525,7 @@ def create_main_content():
                         justify-content: center;
                         position: relative;
                     """,
-                    onclick="window.location.href='/chat'",
+                    onclick="showContentProcessingModal('paste')",
                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)'",
                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'",
                 ),
@@ -846,6 +846,348 @@ def create_main_content():
     )
 
 
+def create_content_processing_modals():
+    """Create modals for content processing functionality"""
+    return Div(
+        # Upload modal
+        Div(
+            Div(
+                Div(
+                    H2("Upload Content", cls="modal-title"),
+                    Button("×", cls="close", onclick="closeModal('uploadModal')"),
+                    cls="modal-header",
+                ),
+                Form(
+                    Div(
+                        Label("Choose File", cls="form-label"),
+                        Input(
+                            type="file",
+                            id="fileInput",
+                            accept=".pdf,.docx,.doc,.txt,.md",
+                            cls="form-input",
+                        ),
+                        cls="form-group",
+                    ),
+                    Div(
+                        Label("Learning Materials to Generate", cls="form-label"),
+                        Div(
+                            Label(
+                                Input(type="checkbox", value="summary", checked=True),
+                                " Summary",
+                                style="margin-right: 1rem; display: inline-flex; align-items: center;",
+                            ),
+                            Label(
+                                Input(
+                                    type="checkbox", value="flashcards", checked=True
+                                ),
+                                " Flashcards",
+                                style="margin-right: 1rem; display: inline-flex; align-items: center;",
+                            ),
+                            Label(
+                                Input(
+                                    type="checkbox", value="key_concepts", checked=True
+                                ),
+                                " Key Concepts",
+                                style="display: inline-flex; align-items: center;",
+                            ),
+                            style="display: flex; flex-wrap: wrap; gap: 0.5rem;",
+                        ),
+                        cls="form-group",
+                    ),
+                    Div(
+                        Button(
+                            "Cancel",
+                            type="button",
+                            cls="btn btn-secondary",
+                            onclick="closeModal('uploadModal')",
+                            style="margin-right: 1rem;",
+                        ),
+                        Button("Process Content", type="submit", cls="btn btn-primary"),
+                        style="display: flex; justify-content: flex-end;",
+                    ),
+                    onsubmit="handleFileUpload(event)",
+                ),
+                Div(
+                    Div(
+                        id="uploadStatus",
+                        style="font-weight: 600; margin-bottom: 0.5rem;",
+                    ),
+                    Div(
+                        Div(id="uploadProgress", cls="progress-fill"),
+                        cls="progress-bar",
+                    ),
+                    Div(
+                        id="uploadDetails",
+                        style="font-size: 0.9rem; color: var(--text-muted);",
+                    ),
+                    cls="processing-status",
+                    id="uploadProcessingStatus",
+                ),
+                cls="modal-content",
+            ),
+            id="uploadModal",
+            cls="modal",
+        ),
+        # Paste URL modal
+        Div(
+            Div(
+                Div(
+                    H2("Process from URL", cls="modal-title"),
+                    Button("×", cls="close", onclick="closeModal('pasteModal')"),
+                    cls="modal-header",
+                ),
+                Form(
+                    Div(
+                        Label("YouTube URL or Website", cls="form-label"),
+                        Input(
+                            type="url",
+                            id="urlInput",
+                            placeholder="https://youtube.com/watch?v=... or any website URL",
+                            cls="form-input",
+                        ),
+                        cls="form-group",
+                    ),
+                    Div(
+                        Label("Learning Materials to Generate", cls="form-label"),
+                        Div(
+                            Label(
+                                Input(type="checkbox", value="summary", checked=True),
+                                " Summary",
+                                style="margin-right: 1rem; display: inline-flex; align-items: center;",
+                            ),
+                            Label(
+                                Input(
+                                    type="checkbox", value="flashcards", checked=True
+                                ),
+                                " Flashcards",
+                                style="margin-right: 1rem; display: inline-flex; align-items: center;",
+                            ),
+                            Label(
+                                Input(
+                                    type="checkbox", value="key_concepts", checked=True
+                                ),
+                                " Key Concepts",
+                                style="display: inline-flex; align-items: center;",
+                            ),
+                            style="display: flex; flex-wrap: wrap; gap: 0.5rem;",
+                        ),
+                        cls="form-group",
+                    ),
+                    Div(
+                        Button(
+                            "Cancel",
+                            type="button",
+                            cls="btn btn-secondary",
+                            onclick="closeModal('pasteModal')",
+                            style="margin-right: 1rem;",
+                        ),
+                        Button("Process Content", type="submit", cls="btn btn-primary"),
+                        style="display: flex; justify-content: flex-end;",
+                    ),
+                    onsubmit="handleUrlSubmit(event)",
+                ),
+                Div(
+                    Div(
+                        id="pasteStatus",
+                        style="font-weight: 600; margin-bottom: 0.5rem;",
+                    ),
+                    Div(
+                        Div(id="pasteProgress", cls="progress-fill"), cls="progress-bar"
+                    ),
+                    Div(
+                        id="pasteDetails",
+                        style="font-size: 0.9rem; color: var(--text-muted);",
+                    ),
+                    cls="processing-status",
+                    id="pasteProcessingStatus",
+                ),
+                cls="modal-content",
+            ),
+            id="pasteModal",
+            cls="modal",
+        ),
+    )
+
+
+def create_content_processing_scripts():
+    """Create JavaScript for content processing functionality"""
+    return Script("""
+        // Modal functionality
+        function showContentProcessingModal(type) {
+            if (type === 'upload') {
+                document.getElementById('uploadModal').style.display = 'block';
+            } else if (type === 'paste') {
+                document.getElementById('pasteModal').style.display = 'block';
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            // Reset forms and status
+            if (modalId === 'uploadModal') {
+                document.getElementById('uploadProcessingStatus').style.display = 'none';
+                document.getElementById('uploadProgress').style.width = '0%';
+            } else if (modalId === 'pasteModal') {
+                document.getElementById('pasteProcessingStatus').style.display = 'none';
+                document.getElementById('pasteProgress').style.width = '0%';
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const uploadModal = document.getElementById('uploadModal');
+            const pasteModal = document.getElementById('pasteModal');
+            if (event.target === uploadModal) {
+                closeModal('uploadModal');
+            } else if (event.target === pasteModal) {
+                closeModal('pasteModal');
+            }
+        }
+
+        // Handle file upload
+        async function handleFileUpload(event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+
+            // Get selected material types
+            const materialTypes = [];
+            const checkboxes = event.target.querySelectorAll('input[type="checkbox"]:checked');
+            checkboxes.forEach(cb => materialTypes.push(cb.value));
+
+            // Show processing status
+            document.getElementById('uploadProcessingStatus').style.display = 'block';
+            document.getElementById('uploadStatus').textContent = 'Uploading file...';
+            document.getElementById('uploadProgress').style.width = '10%';
+
+            try {
+                // Create form data
+                const formData = new FormData();
+                formData.append('file', file);
+                materialTypes.forEach(type => formData.append('material_types', type));
+                formData.append('language', 'en');
+
+                // Upload file
+                const response = await fetch('/api/content/process/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Upload failed');
+                }
+
+                const result = await response.json();
+                const contentId = result.content_id;
+
+                // Start polling for progress
+                pollProcessingStatus(contentId, 'upload');
+
+            } catch (error) {
+                document.getElementById('uploadStatus').textContent = 'Error: ' + error.message;
+                document.getElementById('uploadDetails').textContent = 'Please try again';
+            }
+        }
+
+        // Handle URL submission
+        async function handleUrlSubmit(event) {
+            event.preventDefault();
+
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            // Get selected material types
+            const materialTypes = [];
+            const checkboxes = event.target.querySelectorAll('input[type="checkbox"]:checked');
+            checkboxes.forEach(cb => materialTypes.push(cb.value));
+
+            // Show processing status
+            document.getElementById('pasteProcessingStatus').style.display = 'block';
+            document.getElementById('pasteStatus').textContent = 'Processing URL...';
+            document.getElementById('pasteProgress').style.width = '10%';
+
+            try {
+                // Submit URL for processing
+                const response = await fetch('/api/content/process/url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        material_types: materialTypes,
+                        language: 'en'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('URL processing failed');
+                }
+
+                const result = await response.json();
+                const contentId = result.content_id;
+
+                // Start polling for progress
+                pollProcessingStatus(contentId, 'paste');
+
+            } catch (error) {
+                document.getElementById('pasteStatus').textContent = 'Error: ' + error.message;
+                document.getElementById('pasteDetails').textContent = 'Please check the URL and try again';
+            }
+        }
+
+        // Poll processing status
+        async function pollProcessingStatus(contentId, type) {
+            const statusId = type + 'Status';
+            const progressId = type + 'Progress';
+            const detailsId = type + 'Details';
+
+            try {
+                const response = await fetch(`/api/content/status/${contentId}`);
+                const status = await response.json();
+
+                // Update UI
+                document.getElementById(statusId).textContent = status.current_step;
+                document.getElementById(progressId).style.width = status.progress_percentage + '%';
+                document.getElementById(detailsId).textContent = status.details;
+
+                if (status.status === 'completed') {
+                    document.getElementById(statusId).textContent = 'Processing completed!';
+                    document.getElementById(detailsId).textContent = `Finished in ${status.time_elapsed.toFixed(1)}s. Redirecting to results...`;
+
+                    // Redirect to content view after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = `/content/${contentId}`;
+                    }, 2000);
+
+                } else if (status.status === 'failed') {
+                    document.getElementById(statusId).textContent = 'Processing failed';
+                    document.getElementById(detailsId).textContent = status.error_message || 'Unknown error occurred';
+
+                } else {
+                    // Continue polling every 2 seconds
+                    setTimeout(() => pollProcessingStatus(contentId, type), 2000);
+                }
+
+            } catch (error) {
+                document.getElementById(statusId).textContent = 'Error checking status';
+                document.getElementById(detailsId).textContent = 'Please refresh the page';
+            }
+        }
+    """)
+
+
 def create_home_routes(app):
     """Create YouLearn-style home routes"""
 
@@ -891,11 +1233,143 @@ def create_home_routes(app):
                         background: var(--bg-secondary);
                         -webkit-font-smoothing: antialiased;
                     }
+
+                    /* Modal styles */
+                    .modal {
+                        display: none;
+                        position: fixed;
+                        z-index: 1000;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        height: 100%;
+                        background-color: rgba(0,0,0,0.5);
+                    }
+
+                    .modal-content {
+                        background-color: var(--bg-primary);
+                        margin: 5% auto;
+                        padding: 2rem;
+                        border: none;
+                        border-radius: var(--radius-lg);
+                        width: 90%;
+                        max-width: 500px;
+                        box-shadow: var(--shadow-md);
+                    }
+
+                    .modal-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 1.5rem;
+                    }
+
+                    .modal-title {
+                        font-size: 1.5rem;
+                        font-weight: 700;
+                        color: var(--text-primary);
+                    }
+
+                    .close {
+                        color: var(--text-muted);
+                        font-size: 1.5rem;
+                        font-weight: bold;
+                        cursor: pointer;
+                        border: none;
+                        background: none;
+                    }
+
+                    .close:hover {
+                        color: var(--text-primary);
+                    }
+
+                    .form-group {
+                        margin-bottom: 1rem;
+                    }
+
+                    .form-label {
+                        display: block;
+                        margin-bottom: 0.5rem;
+                        font-weight: 600;
+                        color: var(--text-primary);
+                    }
+
+                    .form-input {
+                        width: 100%;
+                        padding: 0.75rem;
+                        border: 2px solid var(--border-color);
+                        border-radius: var(--radius);
+                        font-size: 1rem;
+                        transition: border-color 0.2s;
+                    }
+
+                    .form-input:focus {
+                        outline: none;
+                        border-color: var(--primary-color);
+                        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+                    }
+
+                    .btn {
+                        padding: 0.75rem 1.5rem;
+                        border: none;
+                        border-radius: var(--radius);
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        text-decoration: none;
+                        display: inline-block;
+                        text-align: center;
+                    }
+
+                    .btn-primary {
+                        background: var(--primary-color);
+                        color: white;
+                    }
+
+                    .btn-primary:hover {
+                        background: var(--primary-dark);
+                        transform: translateY(-1px);
+                    }
+
+                    .btn-secondary {
+                        background: var(--bg-tertiary);
+                        color: var(--text-primary);
+                    }
+
+                    .btn-secondary:hover {
+                        background: var(--border-color);
+                    }
+
+                    .processing-status {
+                        margin-top: 1rem;
+                        padding: 1rem;
+                        background: var(--bg-secondary);
+                        border-radius: var(--radius);
+                        display: none;
+                    }
+
+                    .progress-bar {
+                        width: 100%;
+                        height: 0.5rem;
+                        background: var(--bg-tertiary);
+                        border-radius: 0.25rem;
+                        overflow: hidden;
+                        margin: 0.5rem 0;
+                    }
+
+                    .progress-fill {
+                        height: 100%;
+                        background: var(--primary-color);
+                        width: 0%;
+                        transition: width 0.3s ease;
+                    }
                 """),
             ),
             Body(
                 create_youlearn_sidebar(),
                 create_main_content(),
+                create_content_processing_modals(),
+                create_content_processing_scripts(),
                 style="margin: 0; padding: 0;",
             ),
         )

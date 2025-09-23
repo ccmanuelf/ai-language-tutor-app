@@ -42,8 +42,12 @@ class Settings(BaseSettings):
     MISTRAL_API_KEY: Optional[str] = Field(
         default=None, description="Mistral AI API key"
     )
+    DEEPSEEK_API_KEY: Optional[str] = Field(
+        default=None, description="DeepSeek AI API key (primary Chinese AI service)"
+    )
     QWEN_API_KEY: Optional[str] = Field(
-        default=None, description="Alibaba Qwen API key"
+        default=None,
+        description="[DEPRECATED] Alibaba Qwen API key - use DEEPSEEK_API_KEY instead",
     )
     # IBM Watson configuration removed in Phase 2A Migration
     # Replaced by Mistral STT + Piper TTS for 99.8% cost reduction

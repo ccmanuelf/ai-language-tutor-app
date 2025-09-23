@@ -47,6 +47,9 @@ Pillow==10.1.0
 python-magic==0.4.27
 beautifulsoup4==4.12.2
 youtube-transcript-api==0.6.1
+textract==1.6.5
+yt-dlp==2024.12.14
+aiofiles==24.1.0
 
 # Text Processing and Embeddings
 sentence-transformers==2.2.2

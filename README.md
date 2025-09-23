@@ -12,13 +12,25 @@
 ## 🎯 Project Overview
 
 ### Mission Statement
-Create a **comprehensive language learning platform** that surpasses individual reference applications by combining:
+Create a **comprehensive AI-powered learning platform** that functions as an interactive learning companion, blending conversational tutoring, real-time research, and multimedia teaching tools to help users master any topic with personalized guidance.
+
+**Core Vision**: An AI learning assistant that combines conversational tutoring, real-time research, user-provided content, spoken interaction, and visual mind-mapping to deliver engaging, personalized, and feedback-driven education on any topic.
+
+### Platform Capabilities
 - **YouLearn AI**: Transform any content into structured learning materials in under 2 minutes
 - **Pingo AI**: Scenario-based conversation practice with real-time feedback  
 - **Fluently AI**: Live pronunciation analysis and accent coaching
 - **Airlearn**: Spaced repetition and adaptive learning paths
 
 **Target**: Family-safe, educational tool maintaining $30/month operational budget with enterprise-grade quality.
+
+### Key Features Summary
+- **Custom Learning Content**: Users choose any subject or upload materials (PDFs, websites, videos, notes)
+- **Conversational Interface**: Natural, voice-first dialogue with spoken explanations and visual aids
+- **Adaptive Research**: On-demand internet lookups to expand knowledge beyond provided materials
+- **Visual Learning Tools**: Auto-generated flowcharts, diagrams, and mind maps for better comprehension
+- **Engaging Interactions**: Questions, prompts, and interactive exercises rather than static explanations
+- **Continuous Feedback**: Real-time monitoring, corrections, and tailored guidance for progress tracking
 
 ## 📊 Current Status
 
