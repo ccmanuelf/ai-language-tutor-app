@@ -22,6 +22,10 @@ from app.services.auth import get_current_user
 from app.models.database import User, UserRole
 from app.database.config import get_db_session_context
 from app.frontend.admin_dashboard import create_user_management_page
+from app.frontend.admin_language_config import (
+    language_config_page,
+    language_config_javascript,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -123,16 +127,28 @@ def create_admin_routes(app):
     async def admin_languages_page(
         current_user: Dict[str, Any] = Depends(get_current_user),
     ):
-        """Admin language configuration page (placeholder)"""
+        """Admin language configuration page"""
         try:
-            # Check admin access
+            # Check admin access and permissions
             if not admin_auth_service.is_admin_user(current_user):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Admin access required",
                 )
 
-            # TODO: Implement language configuration page
+            # Check language management permission
+            if not admin_auth_service.has_permission(
+                current_user, AdminPermission.MANAGE_LANGUAGES
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Language management permission required",
+                )
+
+            # Create the full language configuration page with admin layout
+            from app.frontend.styles import get_admin_styles
+            from app.frontend.layout import create_admin_header, create_admin_sidebar
+
             return Html(
                 Head(
                     Title("Admin Dashboard - Language Configuration"),
@@ -140,15 +156,22 @@ def create_admin_routes(app):
                     Meta(
                         name="viewport", content="width=device-width, initial-scale=1.0"
                     ),
+                    get_admin_styles(),
                 ),
                 Body(
-                    H1("Language Configuration"),
-                    P("Language configuration interface coming soon..."),
-                    A(
-                        "Back to Users",
-                        href="/dashboard/admin/users",
-                        style="color: #3b82f6; text-decoration: none;",
+                    # Admin Layout Container
+                    Div(
+                        create_admin_sidebar("languages"),
+                        Div(
+                            create_admin_header(current_user, "Language Configuration"),
+                            Div(language_config_page(), cls="p-6"),
+                            cls="flex-1 ml-64 overflow-auto",
+                        ),
+                        cls="flex min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900",
                     ),
+                    # JavaScript for language configuration functionality
+                    language_config_javascript(),
+                    cls="font-sans antialiased",
                 ),
             )
 

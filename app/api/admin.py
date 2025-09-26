@@ -594,3 +594,9 @@ async def get_system_stats(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve system statistics",
         )
+
+
+# Include language configuration router
+from app.api.language_config import router as language_config_router
+
+admin_router.include_router(language_config_router)
