@@ -36,9 +36,9 @@ Base = declarative_base()
 class UserRole(PyEnum):
     """User roles in the system"""
 
-    PARENT = "parent"
-    CHILD = "child"
-    ADMIN = "admin"
+    PARENT = "PARENT"
+    CHILD = "CHILD"
+    ADMIN = "ADMIN"
 
 
 class LanguageCode(PyEnum):
