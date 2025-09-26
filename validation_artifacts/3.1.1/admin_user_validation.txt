@@ -1,0 +1,93 @@
+2025-09-26 09:30:33,459 - __main__ - INFO - 🚀 Starting Admin User Upgrade Process
+2025-09-26 09:30:33,459 - __main__ - INFO - ==================================================
+2025-09-26 09:30:33,459 - __main__ - INFO - STEP 1: Checking current admin status
+2025-09-26 09:30:33,459 - __main__ - INFO - Checking current admin user status...
+2025-09-26 09:30:33,473 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-09-26 09:30:33,473 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-26 09:30:33,474 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.user_id AS users_user_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role AS users_role, users.first_name AS users_first_name, users.last_name AS users_last_name, users.date_of_birth AS users_date_of_birth, users.avatar_url AS users_avatar_url, users.preferences AS users_preferences, users.ui_language AS users_ui_language, users.timezone AS users_timezone, users.privacy_settings AS users_privacy_settings, users.parental_controls AS users_parental_controls, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login AS users_last_login, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.email = ?
+ LIMIT ? OFFSET ?
+2025-09-26 09:30:33,474 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.user_id AS users_user_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role AS users_role, users.first_name AS users_first_name, users.last_name AS users_last_name, users.date_of_birth AS users_date_of_birth, users.avatar_url AS users_avatar_url, users.preferences AS users_preferences, users.ui_language AS users_ui_language, users.timezone AS users_timezone, users.privacy_settings AS users_privacy_settings, users.parental_controls AS users_parental_controls, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login AS users_last_login, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.email = ?
+ LIMIT ? OFFSET ?
+2025-09-26 09:30:33,474 INFO sqlalchemy.engine.Engine [generated in 0.00009s] ('mcampos.cerda@tutanota.com', 1, 0)
+2025-09-26 09:30:33,474 - sqlalchemy.engine.Engine - INFO - [generated in 0.00009s] ('mcampos.cerda@tutanota.com', 1, 0)
+2025-09-26 09:30:33,475 INFO sqlalchemy.engine.Engine COMMIT
+2025-09-26 09:30:33,475 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-09-26 09:30:33,475 - __main__ - INFO - Admin user found:
+2025-09-26 09:30:33,475 - __main__ - INFO -   User ID: admin_1758913874
+2025-09-26 09:30:33,476 - __main__ - INFO -   Username: Admin User
+2025-09-26 09:30:33,476 - __main__ - INFO -   Email: mcampos.cerda@tutanota.com
+2025-09-26 09:30:33,476 - __main__ - INFO -   Role: UserRole.ADMIN
+2025-09-26 09:30:33,476 - __main__ - INFO -   Is Admin: True
+2025-09-26 09:30:33,476 - __main__ - INFO - 
+STEP 2: Upgrading admin user
+2025-09-26 09:30:33,476 - __main__ - INFO - Upgrading user mcampos.cerda@tutanota.com to ADMIN role...
+2025-09-26 09:30:33,476 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-09-26 09:30:33,476 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-26 09:30:33,476 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.user_id AS users_user_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role AS users_role, users.first_name AS users_first_name, users.last_name AS users_last_name, users.date_of_birth AS users_date_of_birth, users.avatar_url AS users_avatar_url, users.preferences AS users_preferences, users.ui_language AS users_ui_language, users.timezone AS users_timezone, users.privacy_settings AS users_privacy_settings, users.parental_controls AS users_parental_controls, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login AS users_last_login, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.email = ?
+ LIMIT ? OFFSET ?
+2025-09-26 09:30:33,476 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.user_id AS users_user_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role AS users_role, users.first_name AS users_first_name, users.last_name AS users_last_name, users.date_of_birth AS users_date_of_birth, users.avatar_url AS users_avatar_url, users.preferences AS users_preferences, users.ui_language AS users_ui_language, users.timezone AS users_timezone, users.privacy_settings AS users_privacy_settings, users.parental_controls AS users_parental_controls, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login AS users_last_login, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.email = ?
+ LIMIT ? OFFSET ?
+2025-09-26 09:30:33,476 INFO sqlalchemy.engine.Engine [cached since 0.001906s ago] ('mcampos.cerda@tutanota.com', 1, 0)
+2025-09-26 09:30:33,476 - sqlalchemy.engine.Engine - INFO - [cached since 0.001906s ago] ('mcampos.cerda@tutanota.com', 1, 0)
+2025-09-26 09:30:33,476 - __main__ - INFO - Current role: UserRole.ADMIN
+2025-09-26 09:30:33,476 - __main__ - INFO - ✅ User is already an admin
+2025-09-26 09:30:33,476 INFO sqlalchemy.engine.Engine COMMIT
+2025-09-26 09:30:33,476 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-09-26 09:30:33,476 - __main__ - INFO - 
+STEP 3: Verifying admin upgrade
+2025-09-26 09:30:33,476 - __main__ - INFO - Checking current admin user status...
+2025-09-26 09:30:33,476 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-09-26 09:30:33,476 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-26 09:30:33,476 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.user_id AS users_user_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role AS users_role, users.first_name AS users_first_name, users.last_name AS users_last_name, users.date_of_birth AS users_date_of_birth, users.avatar_url AS users_avatar_url, users.preferences AS users_preferences, users.ui_language AS users_ui_language, users.timezone AS users_timezone, users.privacy_settings AS users_privacy_settings, users.parental_controls AS users_parental_controls, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login AS users_last_login, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.email = ?
+ LIMIT ? OFFSET ?
+2025-09-26 09:30:33,476 - sqlalchemy.engine.Engine - INFO - SELECT users.id AS users_id, users.user_id AS users_user_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.role AS users_role, users.first_name AS users_first_name, users.last_name AS users_last_name, users.date_of_birth AS users_date_of_birth, users.avatar_url AS users_avatar_url, users.preferences AS users_preferences, users.ui_language AS users_ui_language, users.timezone AS users_timezone, users.privacy_settings AS users_privacy_settings, users.parental_controls AS users_parental_controls, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login AS users_last_login, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.email = ?
+ LIMIT ? OFFSET ?
+2025-09-26 09:30:33,476 INFO sqlalchemy.engine.Engine [cached since 0.002341s ago] ('mcampos.cerda@tutanota.com', 1, 0)
+2025-09-26 09:30:33,476 - sqlalchemy.engine.Engine - INFO - [cached since 0.002341s ago] ('mcampos.cerda@tutanota.com', 1, 0)
+2025-09-26 09:30:33,476 INFO sqlalchemy.engine.Engine COMMIT
+2025-09-26 09:30:33,476 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-09-26 09:30:33,476 - __main__ - INFO - Admin user found:
+2025-09-26 09:30:33,476 - __main__ - INFO -   User ID: admin_1758913874
+2025-09-26 09:30:33,476 - __main__ - INFO -   Username: Admin User
+2025-09-26 09:30:33,476 - __main__ - INFO -   Email: mcampos.cerda@tutanota.com
+2025-09-26 09:30:33,477 - __main__ - INFO -   Role: UserRole.ADMIN
+2025-09-26 09:30:33,477 - __main__ - INFO -   Is Admin: True
+2025-09-26 09:30:33,477 - __main__ - INFO - ✅ Admin user upgrade verified successfully
+2025-09-26 09:30:33,477 - __main__ - INFO - 
+STEP 4: Testing permission system
+2025-09-26 09:30:33,477 - __main__ - INFO - Testing admin permission system...
+2025-09-26 09:30:33,477 - __main__ - INFO - ADMIN permissions (14): ['view_users', 'view_analytics', 'view_system_status', 'manage_users', 'create_users']...
+2025-09-26 09:30:33,477 - __main__ - INFO - PARENT permissions (3): ['view_users', 'view_analytics', 'view_system_status']
+2025-09-26 09:30:33,477 - __main__ - INFO - CHILD permissions (0): []
+2025-09-26 09:30:33,477 - __main__ - INFO - ✅ admin + access_admin_dashboard = True (expected: True)
+2025-09-26 09:30:33,477 - __main__ - INFO - ✅ admin + manage_users = True (expected: True)
+2025-09-26 09:30:33,477 - __main__ - INFO - ✅ parent + view_analytics = True (expected: True)
+2025-09-26 09:30:33,477 - __main__ - INFO - ✅ parent + manage_users = False (expected: False)
+2025-09-26 09:30:33,477 - __main__ - INFO - ✅ child + access_admin_dashboard = False (expected: False)
+2025-09-26 09:30:33,477 - __main__ - INFO - ✅ Permission system tests completed
+2025-09-26 09:30:33,477 - __main__ - INFO - 
+==================================================
+2025-09-26 09:30:33,477 - __main__ - INFO - 🎉 ADMIN USER UPGRADE COMPLETED SUCCESSFULLY
+2025-09-26 09:30:33,477 - __main__ - INFO - ==================================================
+2025-09-26 09:30:33,477 - __main__ - INFO - ✅ Admin user: mcampos.cerda@tutanota.com
+2025-09-26 09:30:33,477 - __main__ - INFO - ✅ User ID: admin_1758913874
+2025-09-26 09:30:33,477 - __main__ - INFO - ✅ Role: UserRole.ADMIN
+2025-09-26 09:30:33,477 - __main__ - INFO - ✅ Admin access: True
+2025-09-26 09:30:33,477 - __main__ - INFO - ✅ Permission system: Working
+2025-09-26 09:30:33,477 - __main__ - INFO - 
+🔑 Next steps:
+2025-09-26 09:30:33,477 - __main__ - INFO -   1. Test admin login
+2025-09-26 09:30:33,477 - __main__ - INFO -   2. Access admin dashboard
+2025-09-26 09:30:33,477 - __main__ - INFO -   3. Verify configuration access

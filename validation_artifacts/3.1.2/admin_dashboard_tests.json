@@ -1,0 +1,45 @@
+{
+  "timestamp": "2025-09-26T09:46:00.130085",
+  "total_tests": 6,
+  "passed": 6,
+  "failed": 0,
+  "test_results": [
+    {
+      "test_name": "Admin Dashboard Components",
+      "status": "PASSED",
+      "message": "All admin dashboard components working correctly",
+      "timestamp": "2025-09-26T09:46:00.133131"
+    },
+    {
+      "test_name": "Admin API Models",
+      "status": "PASSED",
+      "message": "All admin API models working correctly",
+      "timestamp": "2025-09-26T09:46:00.135638"
+    },
+    {
+      "test_name": "Database Integration",
+      "status": "PASSED",
+      "message": "Database integration working correctly",
+      "timestamp": "2025-09-26T09:46:00.155956"
+    },
+    {
+      "test_name": "Permission System Integration",
+      "status": "PASSED",
+      "message": "Permission system integration working correctly",
+      "timestamp": "2025-09-26T09:46:00.155984"
+    },
+    {
+      "test_name": "Guest Session Management",
+      "status": "PASSED",
+      "message": "Guest session management working correctly",
+      "timestamp": "2025-09-26T09:46:00.156029"
+    },
+    {
+      "test_name": "Dashboard Data Flow",
+      "status": "PASSED",
+      "message": "Complete dashboard data flow working correctly",
+      "timestamp": "2025-09-26T09:46:00.158741"
+    }
+  ],
+  "overall_status": "PASSED"
+}
