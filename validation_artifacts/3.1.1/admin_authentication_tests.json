@@ -1,0 +1,39 @@
+{
+  "timestamp": "2025-09-26T09:32:58.650768",
+  "total_tests": 5,
+  "passed": 2,
+  "failed": 3,
+  "test_results": [
+    {
+      "test_name": "Admin User Exists",
+      "status": "PASSED",
+      "message": "Admin user exists with correct role",
+      "timestamp": "2025-09-26T09:32:58.667618"
+    },
+    {
+      "test_name": "AdminAuthService",
+      "status": "FAILED",
+      "message": "AdminAuthService error: 'AdminAuthService' object has no attribute 'has_admin_role'",
+      "timestamp": "2025-09-26T09:32:58.667636"
+    },
+    {
+      "test_name": "Role Hierarchy",
+      "status": "FAILED",
+      "message": "Role hierarchy error: 'AdminAuthService' object has no attribute 'check_permission'",
+      "timestamp": "2025-09-26T09:32:58.667645"
+    },
+    {
+      "test_name": "Guest User Management",
+      "status": "FAILED",
+      "message": "Guest user management error: 'AdminAuthService' object has no attribute 'create_guest_user'",
+      "timestamp": "2025-09-26T09:32:58.667653"
+    },
+    {
+      "test_name": "Database Integration",
+      "status": "PASSED",
+      "message": "Database integration successful",
+      "timestamp": "2025-09-26T09:32:58.670517"
+    }
+  ],
+  "overall_status": "FAILED"
+}
