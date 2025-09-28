@@ -26,6 +26,7 @@ from app.frontend.admin_language_config import (
     language_config_page,
     language_config_javascript,
 )
+from app.frontend.admin_ai_models import create_ai_models_page
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +189,7 @@ def create_admin_routes(app):
     async def admin_features_page(
         current_user: Dict[str, Any] = Depends(get_current_user),
     ):
-        """Admin feature toggle page (placeholder)"""
+        """Admin feature toggle management page"""
         try:
             # Check admin access
             if not admin_auth_service.is_admin_user(current_user):
@@ -197,23 +198,48 @@ def create_admin_routes(app):
                     detail="Admin access required",
                 )
 
-            # TODO: Implement feature toggle page
+            # Check feature toggle management permission
+            if not admin_auth_service.has_permission(
+                current_user, AdminPermission.MANAGE_FEATURES
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Feature management permission required",
+                )
+
+            # Create the full feature toggles page with admin layout
+            from app.frontend.styles import get_admin_styles
+            from app.frontend.layout import create_admin_header, create_admin_sidebar
+            from app.frontend.admin_feature_toggles import create_feature_toggles_page
+
             return Html(
                 Head(
-                    Title("Admin Dashboard - Feature Management"),
+                    Title("Admin Dashboard - Feature Toggles"),
                     Meta(charset="utf-8"),
                     Meta(
                         name="viewport", content="width=device-width, initial-scale=1.0"
                     ),
+                    get_admin_styles(),
+                    # Add HTMX for dynamic updates
+                    Script(src="https://unpkg.com/htmx.org@1.9.6"),
                 ),
                 Body(
-                    H1("Feature Management"),
-                    P("Feature toggle interface coming soon..."),
-                    A(
-                        "Back to Users",
-                        href="/dashboard/admin/users",
-                        style="color: #3b82f6; text-decoration: none;",
+                    # Admin Layout Container
+                    Div(
+                        create_admin_sidebar("features"),
+                        Div(
+                            create_admin_header(current_user, "Feature Toggles"),
+                            Div(
+                                create_feature_toggles_page(
+                                    current_user.get("role", "ADMIN")
+                                ),
+                                cls="p-6",
+                            ),
+                            cls="flex-1 ml-64 overflow-auto",
+                        ),
+                        cls="flex min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900",
                     ),
+                    cls="font-sans antialiased",
                 ),
             )
 
@@ -224,6 +250,58 @@ def create_admin_routes(app):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to load feature management page",
+            )
+
+    @app.get("/dashboard/admin/ai-models")
+    async def admin_ai_models_page(
+        current_user: Dict[str, Any] = Depends(get_current_user),
+    ):
+        """Admin AI model management page"""
+        try:
+            # Check admin access
+            if not admin_auth_service.is_admin_user(current_user):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Admin access required",
+                )
+
+            # Check AI model management permission
+            if not admin_auth_service.has_permission(
+                current_user,
+                AdminPermission.MANAGE_FEATURES,  # Using MANAGE_FEATURES as proxy for AI models
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="AI model management permission required",
+                )
+
+            # Create the full AI models page with admin layout
+            from app.frontend.styles import get_admin_styles
+
+            return Html(
+                Head(
+                    Title("Admin Dashboard - AI Model Management"),
+                    Meta(charset="utf-8"),
+                    Meta(
+                        name="viewport", content="width=device-width, initial-scale=1.0"
+                    ),
+                    get_admin_styles(),
+                    # Add HTMX for dynamic updates
+                    Script(src="https://unpkg.com/htmx.org@1.9.6"),
+                ),
+                Body(
+                    create_ai_models_page(),
+                    cls="font-sans antialiased",
+                ),
+            )
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error in admin AI models page: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to load AI model management page",
             )
 
     @app.get("/dashboard/admin/system")

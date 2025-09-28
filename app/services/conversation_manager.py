@@ -41,6 +41,7 @@ from app.models.database import (
     VocabularyItem,
 )
 from app.services.user_management import get_user_by_id
+from app.decorators.feature_toggle import require_feature, FeatureToggleService
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)

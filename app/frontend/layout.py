@@ -153,3 +153,194 @@ def create_button(
         button_attrs["onclick"] = onclick
 
     return Button(text, **button_attrs)
+
+
+def create_admin_sidebar(current_page: str = "users"):
+    """Create admin dashboard sidebar navigation"""
+
+    # Navigation items with icons and labels
+    nav_items = [
+        {
+            "key": "users",
+            "label": "User Management",
+            "icon": "👥",
+            "href": "/dashboard/admin/users",
+            "description": "Manage user accounts and permissions",
+        },
+        {
+            "key": "languages",
+            "label": "Language Config",
+            "icon": "🌐",
+            "href": "/dashboard/admin/languages",
+            "description": "Configure languages and voice models",
+        },
+        {
+            "key": "features",
+            "label": "Feature Toggles",
+            "icon": "🎛️",
+            "href": "/dashboard/admin/features",
+            "description": "Enable/disable system features",
+        },
+        {
+            "key": "ai_models",
+            "label": "AI Models",
+            "icon": "🤖",
+            "href": "/dashboard/admin/ai-models",
+            "description": "Manage AI models and providers",
+        },
+        {
+            "key": "system",
+            "label": "System Status",
+            "icon": "📊",
+            "href": "/dashboard/admin/system",
+            "description": "Monitor system health and performance",
+        },
+        {
+            "key": "analytics",
+            "label": "Analytics",
+            "icon": "📈",
+            "href": "/dashboard/admin/analytics",
+            "description": "View usage analytics and reports",
+        },
+    ]
+
+    return Div(
+        # Sidebar Header
+        Div(
+            Div(
+                Span("⚙️", cls="text-2xl"),
+                H2("Admin Panel", cls="text-xl font-bold text-white ml-3"),
+                cls="flex items-center",
+            ),
+            cls="p-6 border-b border-gray-700",
+        ),
+        # Navigation Menu
+        Nav(
+            *[
+                A(
+                    Div(
+                        Span(item["icon"], cls="text-xl"),
+                        Div(
+                            Span(item["label"], cls="font-medium text-white"),
+                            Span(
+                                item["description"],
+                                cls="text-xs text-gray-300 block mt-1",
+                            ),
+                            cls="ml-3",
+                        ),
+                        cls="flex items-center p-3 rounded-lg transition-colors duration-200 "
+                        + (
+                            "bg-purple-600 text-white"
+                            if current_page == item["key"]
+                            else "text-gray-300 hover:bg-gray-700 hover:text-white"
+                        ),
+                    ),
+                    href=item["href"],
+                    cls="block mb-2",
+                )
+                for item in nav_items
+            ],
+            cls="p-4",
+        ),
+        # Footer section
+        Div(
+            Div(
+                P("Admin Dashboard", cls="text-sm font-medium text-gray-300"),
+                P("AI Language Tutor", cls="text-xs text-gray-400"),
+                cls="text-center",
+            ),
+            cls="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700",
+        ),
+        cls="fixed left-0 top-0 h-full w-64 bg-gray-800 shadow-lg z-40",
+    )
+
+
+def create_admin_header(current_user: dict, page_title: str = "Admin Dashboard"):
+    """Create admin dashboard header"""
+
+    user_name = (
+        current_user.get("first_name", "") + " " + current_user.get("last_name", "")
+    )
+    if not user_name.strip():
+        user_name = current_user.get("username", "Admin User")
+
+    return Header(
+        Div(
+            # Page Title Section
+            Div(
+                H1(page_title, cls="text-2xl font-bold text-white"),
+                P("Administrative Control Panel", cls="text-gray-300 text-sm"),
+                cls="flex-1",
+            ),
+            # User Info and Actions
+            Div(
+                # Quick Actions
+                Div(
+                    Button(
+                        "🔄 Refresh",
+                        onclick="location.reload()",
+                        cls="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mr-3",
+                    ),
+                    Button(
+                        "📊 System Status",
+                        onclick="window.open('/dashboard/admin/system', '_blank')",
+                        cls="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors mr-3",
+                    ),
+                    cls="flex items-center",
+                ),
+                # User Profile Dropdown
+                Div(
+                    Div(
+                        Span("👤", cls="text-lg mr-2"),
+                        Span(user_name, cls="text-white font-medium mr-2"),
+                        Span("▼", cls="text-gray-300 text-xs"),
+                        cls="flex items-center px-4 py-2 bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors",
+                        onclick="toggleUserMenu()",
+                    ),
+                    # Dropdown Menu (hidden by default)
+                    Div(
+                        A(
+                            Span("👤", cls="mr-2"),
+                            "Profile",
+                            href="/profile",
+                            cls="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white",
+                        ),
+                        A(
+                            Span("🏠", cls="mr-2"),
+                            "Return to App",
+                            href="/",
+                            cls="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white",
+                        ),
+                        A(
+                            Span("🚪", cls="mr-2"),
+                            "Logout",
+                            href="/auth/logout",
+                            cls="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white",
+                        ),
+                        cls="absolute right-0 top-12 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 hidden",
+                        id="userMenu",
+                    ),
+                    cls="relative",
+                ),
+                cls="flex items-center space-x-4",
+            ),
+            cls="flex items-center justify-between",
+        ),
+        # JavaScript for dropdown functionality
+        Script("""
+            function toggleUserMenu() {
+                const menu = document.getElementById('userMenu');
+                menu.classList.toggle('hidden');
+            }
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                const menu = document.getElementById('userMenu');
+                const button = event.target.closest('[onclick="toggleUserMenu()"]');
+                if (!button && !menu.contains(event.target)) {
+                    menu.classList.add('hidden');
+                }
+            });
+        """),
+        cls="bg-gray-900 shadow-lg p-4 mb-6",
+    )

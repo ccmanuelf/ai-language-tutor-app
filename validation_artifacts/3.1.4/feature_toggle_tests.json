@@ -1,0 +1,199 @@
+{
+  "timestamp": "2025-09-27T20:44:43.117250",
+  "total_tests": 30,
+  "passed_tests": 30,
+  "failed_tests": 0,
+  "test_categories": {
+    "Database Operations": {
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Database Connection",
+          "status": "PASSED"
+        },
+        {
+          "name": "Table Schema Validation",
+          "status": "PASSED"
+        },
+        {
+          "name": "Data Integrity Check",
+          "status": "PASSED"
+        },
+        {
+          "name": "Required Features Exist",
+          "status": "PASSED"
+        }
+      ]
+    },
+    "Feature Toggle Manager": {
+      "total": 6,
+      "passed": 6,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Manager Initialization",
+          "status": "PASSED"
+        },
+        {
+          "name": "Feature Existence Check",
+          "status": "PASSED"
+        },
+        {
+          "name": "Role Permission System",
+          "status": "PASSED"
+        },
+        {
+          "name": "Get All Features",
+          "status": "PASSED"
+        },
+        {
+          "name": "Features by Category",
+          "status": "PASSED"
+        },
+        {
+          "name": "Feature Configuration",
+          "status": "PASSED"
+        }
+      ]
+    },
+    "Service Integration": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Global Functions",
+          "status": "PASSED"
+        },
+        {
+          "name": "Service Integration Functions",
+          "status": "PASSED"
+        },
+        {
+          "name": "Feature Context Manager",
+          "status": "PASSED"
+        }
+      ]
+    },
+    "Permission System": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Role Hierarchy",
+          "status": "PASSED"
+        },
+        {
+          "name": "Admin-Only Features",
+          "status": "PASSED"
+        },
+        {
+          "name": "Child Accessible Features",
+          "status": "PASSED"
+        }
+      ]
+    },
+    "Configuration Management": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Feature Update Operations",
+          "status": "PASSED"
+        },
+        {
+          "name": "Bulk Operations",
+          "status": "PASSED"
+        },
+        {
+          "name": "Export/Import Configuration",
+          "status": "PASSED"
+        }
+      ]
+    },
+    "Decorators and Utilities": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Feature Gate Decorator",
+          "status": "PASSED"
+        },
+        {
+          "name": "FeatureToggleService Class",
+          "status": "PASSED"
+        }
+      ]
+    },
+    "Caching System": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Cache Initialization",
+          "status": "PASSED"
+        },
+        {
+          "name": "Cache Refresh",
+          "status": "PASSED"
+        }
+      ]
+    },
+    "Error Handling": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Invalid Feature Names",
+          "status": "PASSED"
+        },
+        {
+          "name": "Invalid Roles",
+          "status": "PASSED"
+        },
+        {
+          "name": "Empty Inputs",
+          "status": "PASSED"
+        }
+      ]
+    },
+    "Performance Tests": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Bulk Feature Checks Performance",
+          "status": "PASSED"
+        },
+        {
+          "name": "Memory Usage",
+          "status": "PASSED"
+        }
+      ]
+    },
+    "Integration Tests": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Statistics Generation",
+          "status": "PASSED"
+        },
+        {
+          "name": "Feature Categories Validation",
+          "status": "PASSED"
+        }
+      ]
+    }
+  },
+  "detailed_results": []
+}
