@@ -1,21 +1,23 @@
 {
   "task_id": "3.1.4",
-  "timestamp": "2025-09-27T11:18:38.753883",
+  "timestamp": "2025-09-27T20:37:43.018455",
   "gates": {
     "evidence_collection": {
       "passed": true,
-      "files_count": 3,
-      "substantial_files": 3,
+      "files_count": 5,
+      "substantial_files": 5,
       "files": [
         "validation_artifacts/3.1.4/spaced_repetition_tests.json",
         "validation_artifacts/3.1.4/spaced_repetition_implementation_details.md",
+        "validation_artifacts/3.1.4/TASK_3_1_4_FEATURE_TOGGLE_VALIDATION.md",
+        "validation_artifacts/3.1.4/feature_toggle_tests.json",
         "validation_artifacts/3.1.4/TASK_3_1_4_VALIDATION_REPORT.md"
       ]
     },
     "functional_verification": {
       "passed": true,
       "audio_files_valid": "N/A",
-      "test_files_found": 1
+      "test_files_found": 2
     },
     "environment_validation": {
       "passed": true
@@ -30,11 +32,11 @@
         "zh-CN"
       ],
       "found_languages": [
-        "de-DE",
         "zh-CN",
-        "es-MX",
         "en-US",
-        "fr-FR"
+        "de-DE",
+        "fr-FR",
+        "es-MX"
       ],
       "total_files": 5,
       "audio_playback_required": true,
@@ -43,7 +45,7 @@
     "reproducibility": {
       "passed": true,
       "test_scripts": 54,
-      "documentation": 38,
+      "documentation": 39,
       "readme_files": 1
     }
   },

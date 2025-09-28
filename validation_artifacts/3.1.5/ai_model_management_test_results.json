@@ -1,0 +1,118 @@
+{
+  "summary": {
+    "total_tests": 15,
+    "passed_tests": 15,
+    "failed_tests": 0,
+    "success_rate": 100.0,
+    "quality_gates_passed": 5,
+    "quality_gates_total": 5
+  },
+  "test_results": [
+    {
+      "test_name": "Setup Test Environment",
+      "success": true,
+      "details": "Test database created: /var/folders/vn/q6m8t2g57hgcg494tqfcnkyh0000gn/T/tmpc507xezu.db",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:39.405723"
+    },
+    {
+      "test_name": "Database Schema Validation",
+      "success": true,
+      "details": "All tables and columns present: 3 tables, 27 columns",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:39.405972"
+    },
+    {
+      "test_name": "Default Models Loading",
+      "success": true,
+      "details": "Loaded 5 models with 4 providers",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:39.406026"
+    },
+    {
+      "test_name": "Model CRUD - UPDATE",
+      "success": true,
+      "details": "Successfully updated model configuration",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:39.406467"
+    },
+    {
+      "test_name": "Model CRUD - ENABLE/DISABLE",
+      "success": true,
+      "details": "Successfully toggled model enabled status",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:39.407556"
+    },
+    {
+      "test_name": "Model Filtering and Search",
+      "success": true,
+      "details": "Successfully filtered models: 4 conversation, 5 enabled",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:39.407614"
+    },
+    {
+      "test_name": "Usage Statistics Tracking",
+      "success": true,
+      "details": "Successfully tracked usage: 2 total requests",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:39.410273"
+    },
+    {
+      "test_name": "Performance Report Generation",
+      "success": true,
+      "details": "Generated report with 4 recommendations",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:39.410577"
+    },
+    {
+      "test_name": "System Overview and Statistics",
+      "success": true,
+      "details": "Overview generated: 5 models, $0.0080 cost",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:39.426970"
+    },
+    {
+      "test_name": "Model Optimization and Recommendations",
+      "success": true,
+      "details": "Generated recommendations for 4/4 test cases",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:39.427096"
+    },
+    {
+      "test_name": "Health Monitoring and Status Checks",
+      "success": true,
+      "details": "Health check completed: 4/4 providers checked",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:48.121738"
+    },
+    {
+      "test_name": "Error Handling and Edge Cases",
+      "success": true,
+      "details": "Handled 4/4 error scenarios correctly",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:48.121801"
+    },
+    {
+      "test_name": "Data Persistence and Database Operations",
+      "success": true,
+      "details": "Data persisted correctly: config updated, 3 requests, 3 logs",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:48.123926"
+    },
+    {
+      "test_name": "Integration with AI Router",
+      "success": true,
+      "details": "Router integration verified: 5 router providers, 4 manager providers",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:48.140828"
+    },
+    {
+      "test_name": "Cleanup Test Environment",
+      "success": true,
+      "details": "Test environment cleaned up successfully",
+      "error": "",
+      "timestamp": "2025-09-27T20:55:48.141015"
+    }
+  ],
+  "timestamp": "2025-09-27T20:55:48.141222"
+}

@@ -18,6 +18,8 @@ from app.api.content import router as content_router
 from app.api.scenarios import router as scenarios_router
 from app.api.realtime_analysis import router as realtime_router
 from app.api.tutor_modes import router as tutor_modes_router
+from app.api.feature_toggles import router as feature_toggles_router
+from app.api.ai_models import router as ai_models_router
 
 
 def create_app() -> FastAPI:
@@ -52,6 +54,8 @@ def create_app() -> FastAPI:
     app.include_router(scenarios_router, prefix="/api/scenarios", tags=["scenarios"])
     app.include_router(realtime_router, tags=["realtime-analysis"])
     app.include_router(tutor_modes_router, tags=["tutor-modes"])
+    app.include_router(feature_toggles_router, tags=["feature-toggles"])
+    app.include_router(ai_models_router, tags=["ai-models"])
 
     # Health check endpoint
     @app.get("/health")
