@@ -1,0 +1,434 @@
+{
+  "restaurant_dinner_reservation": {
+    "scenario_id": "restaurant_dinner_reservation",
+    "name": "Making a Dinner Reservation",
+    "category": "restaurant",
+    "difficulty": "beginner",
+    "description": "Practice making a dinner reservation at a restaurant, ordering food, and handling the bill.",
+    "user_role": "customer",
+    "ai_role": "service_provider",
+    "setting": "An upscale restaurant in the city center",
+    "duration_minutes": 15,
+    "phases": [
+      {
+        "phase_id": "reservation",
+        "name": "Making the Reservation",
+        "description": "Call or visit to make a dinner reservation",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "reservation",
+          "table",
+          "party",
+          "time",
+          "available"
+        ],
+        "essential_phrases": [
+          "I'd like to make a reservation",
+          "For how many people?",
+          "What time would you prefer?",
+          "We have availability at..."
+        ],
+        "learning_objectives": [
+          "Use polite language for requests",
+          "Understand time expressions",
+          "Handle scheduling conflicts"
+        ],
+        "cultural_notes": "In many cultures, advance reservations are expected for dinner at upscale restaurants.",
+        "success_criteria": [
+          "Successfully request a reservation",
+          "Provide party size and preferred time",
+          "Confirm reservation details"
+        ]
+      },
+      {
+        "phase_id": "arrival_seating",
+        "name": "Arrival and Seating",
+        "description": "Arrive at the restaurant and get seated",
+        "expected_duration_minutes": 2,
+        "key_vocabulary": [
+          "host",
+          "hostess",
+          "table",
+          "booth",
+          "window",
+          "ready"
+        ],
+        "essential_phrases": [
+          "We have a reservation under...",
+          "Right this way, please",
+          "Your table is ready",
+          "Would you prefer a table or booth?"
+        ],
+        "learning_objectives": [
+          "Check in for reservation",
+          "Express seating preferences",
+          "Follow directions"
+        ],
+        "cultural_notes": null,
+        "success_criteria": [
+          "Check in with reservation name",
+          "Follow host to table",
+          "Express any seating preferences"
+        ]
+      },
+      {
+        "phase_id": "ordering",
+        "name": "Ordering Food and Drinks",
+        "description": "Review menu and place your order",
+        "expected_duration_minutes": 7,
+        "key_vocabulary": [
+          "menu",
+          "appetizer",
+          "entrée",
+          "beverage",
+          "special",
+          "allergy"
+        ],
+        "essential_phrases": [
+          "What would you recommend?",
+          "I'll have the...",
+          "How is that prepared?",
+          "Any allergies or dietary restrictions?"
+        ],
+        "learning_objectives": [
+          "Ask for recommendations",
+          "Place complete order",
+          "Ask about food preparation",
+          "Communicate dietary needs"
+        ],
+        "cultural_notes": null,
+        "success_criteria": [
+          "Order appetizer and main course",
+          "Ask at least one question about the menu",
+          "Choose appropriate beverages"
+        ]
+      },
+      {
+        "phase_id": "payment",
+        "name": "Paying the Bill",
+        "description": "Review bill, tip appropriately, and complete payment",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "bill",
+          "check",
+          "tip",
+          "credit card",
+          "cash",
+          "receipt"
+        ],
+        "essential_phrases": [
+          "Could we have the check, please?",
+          "Is tip included?",
+          "I'll pay with credit card",
+          "Thank you for excellent service"
+        ],
+        "learning_objectives": [
+          "Request the bill politely",
+          "Understand tipping customs",
+          "Complete payment transaction",
+          "Express satisfaction"
+        ],
+        "cultural_notes": null,
+        "success_criteria": [
+          "Request and review the bill",
+          "Calculate and add appropriate tip",
+          "Complete payment successfully"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "basic_greetings",
+      "numbers",
+      "time_expressions"
+    ],
+    "learning_outcomes": [],
+    "vocabulary_focus": [
+      "reservation",
+      "table",
+      "menu",
+      "order",
+      "waiter",
+      "waitress",
+      "appetizer",
+      "entrée",
+      "dessert",
+      "beverage",
+      "bill",
+      "tip"
+    ],
+    "cultural_context": {
+      "tipping_culture": "Standard tip is 15-20% for good service",
+      "dining_etiquette": "Wait for everyone to be served before eating",
+      "payment_customs": "Usually one person pays for the group"
+    },
+    "is_active": true,
+    "created_at": "2025-09-28T12:38:07.362393",
+    "updated_at": "2025-09-28T12:38:07.362394"
+  },
+  "hotel_check_in": {
+    "scenario_id": "hotel_check_in",
+    "name": "Hotel Check-in Process",
+    "category": "travel",
+    "difficulty": "intermediate",
+    "description": "Check into a hotel, handle room requests, and get local information.",
+    "user_role": "tourist",
+    "ai_role": "service_provider",
+    "setting": "Hotel reception desk in a foreign country",
+    "duration_minutes": 12,
+    "phases": [
+      {
+        "phase_id": "check_in",
+        "name": "Hotel Check-in",
+        "description": "Provide reservation details and complete check-in process",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "reservation",
+          "passport",
+          "ID",
+          "confirmation",
+          "room key"
+        ],
+        "essential_phrases": [
+          "I have a reservation under...",
+          "Could I see your ID please?",
+          "Here's your room key",
+          "Your room is on the third floor"
+        ],
+        "learning_objectives": [
+          "Present reservation information",
+          "Understand check-in procedures",
+          "Handle document requests"
+        ],
+        "cultural_notes": null,
+        "success_criteria": [
+          "Provide reservation details",
+          "Present required documents",
+          "Receive room assignment"
+        ]
+      },
+      {
+        "phase_id": "room_preferences",
+        "name": "Room Preferences and Requests",
+        "description": "Discuss room features and make special requests",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "view",
+          "balcony",
+          "smoking",
+          "non-smoking",
+          "upgrade",
+          "amenities"
+        ],
+        "essential_phrases": [
+          "Is there a room with a view?",
+          "Could I request a non-smoking room?",
+          "Are there any upgrades available?",
+          "What amenities are included?"
+        ],
+        "learning_objectives": [
+          "Express preferences politely",
+          "Ask about available options",
+          "Understand room features"
+        ],
+        "cultural_notes": null,
+        "success_criteria": [
+          "Make at least one room preference request",
+          "Ask about hotel amenities",
+          "Understand upgrade options"
+        ]
+      },
+      {
+        "phase_id": "local_information",
+        "name": "Getting Local Information",
+        "description": "Ask for directions and recommendations for local attractions",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "directions",
+          "restaurant",
+          "tourist",
+          "attraction",
+          "transportation",
+          "map"
+        ],
+        "essential_phrases": [
+          "What would you recommend for sightseeing?",
+          "How do I get to...?",
+          "Are there good restaurants nearby?",
+          "Could you mark it on the map?"
+        ],
+        "learning_objectives": [
+          "Ask for recommendations",
+          "Understand directions",
+          "Get local insights"
+        ],
+        "cultural_notes": null,
+        "success_criteria": [
+          "Ask for restaurant recommendations",
+          "Get directions to at least one attraction",
+          "Understand transportation options"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "travel_vocabulary",
+      "directions",
+      "polite_requests"
+    ],
+    "learning_outcomes": [],
+    "vocabulary_focus": [
+      "reservation",
+      "check-in",
+      "passport",
+      "room",
+      "key",
+      "floor",
+      "elevator",
+      "directions",
+      "restaurant",
+      "attraction",
+      "map"
+    ],
+    "cultural_context": {
+      "hospitality_customs": "Hotel staff are usually very helpful with tourist information",
+      "tipping_culture": "Small tips for helpful service are appreciated",
+      "local_etiquette": "Always be polite and patient with language barriers"
+    },
+    "is_active": true,
+    "created_at": "2025-09-28T12:38:07.362397",
+    "updated_at": "2025-09-28T12:38:07.362398"
+  },
+  "clothing_shopping": {
+    "scenario_id": "clothing_shopping",
+    "name": "Clothes Shopping Experience",
+    "category": "shopping",
+    "difficulty": "beginner",
+    "description": "Shop for clothes, try on items, and make purchases.",
+    "user_role": "customer",
+    "ai_role": "service_provider",
+    "setting": "Clothing store in a shopping mall",
+    "duration_minutes": 10,
+    "phases": [
+      {
+        "phase_id": "browsing",
+        "name": "Browsing and Initial Inquiry",
+        "description": "Look around the store and ask for help",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "size",
+          "color",
+          "style",
+          "price",
+          "section",
+          "looking for"
+        ],
+        "essential_phrases": [
+          "I'm looking for...",
+          "What size do you need?",
+          "Do you have this in blue?",
+          "Where can I find...?"
+        ],
+        "learning_objectives": [
+          "Express what you're looking for",
+          "Ask about sizes and colors",
+          "Navigate store layout"
+        ],
+        "cultural_notes": null,
+        "success_criteria": [
+          "Ask for help finding items",
+          "Specify size and color preferences",
+          "Understand store organization"
+        ]
+      },
+      {
+        "phase_id": "trying_on",
+        "name": "Trying on Clothes",
+        "description": "Use fitting room and get feedback on fit",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "fitting room",
+          "try on",
+          "fit",
+          "tight",
+          "loose",
+          "perfect"
+        ],
+        "essential_phrases": [
+          "Where are the fitting rooms?",
+          "How does it fit?",
+          "It's a bit tight",
+          "Do you have a larger size?"
+        ],
+        "learning_objectives": [
+          "Use fitting room facilities",
+          "Describe how clothes fit",
+          "Ask for different sizes"
+        ],
+        "cultural_notes": null,
+        "success_criteria": [
+          "Successfully use fitting room",
+          "Describe fit using appropriate vocabulary",
+          "Request size adjustments"
+        ]
+      },
+      {
+        "phase_id": "purchasing",
+        "name": "Making the Purchase",
+        "description": "Decide on items and complete the purchase",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "buy",
+          "purchase",
+          "receipt",
+          "credit card",
+          "cash",
+          "total"
+        ],
+        "essential_phrases": [
+          "I'll take this one",
+          "How much is the total?",
+          "Do you accept credit cards?",
+          "Could I have a receipt?"
+        ],
+        "learning_objectives": [
+          "Make purchase decisions",
+          "Handle payment process",
+          "Get transaction documentation"
+        ],
+        "cultural_notes": null,
+        "success_criteria": [
+          "Decide on items to purchase",
+          "Complete payment successfully",
+          "Receive receipt and items"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "colors",
+      "numbers",
+      "clothing_vocabulary"
+    ],
+    "learning_outcomes": [],
+    "vocabulary_focus": [
+      "clothes",
+      "shirt",
+      "pants",
+      "dress",
+      "shoes",
+      "size",
+      "color",
+      "fitting room",
+      "try on",
+      "buy",
+      "price",
+      "receipt"
+    ],
+    "cultural_context": {
+      "shopping_etiquette": "It's normal to try on clothes before buying",
+      "payment_methods": "Most stores accept both cash and cards",
+      "return_policy": "Keep receipts for returns or exchanges"
+    },
+    "is_active": true,
+    "created_at": "2025-09-28T12:38:07.362400",
+    "updated_at": "2025-09-28T12:38:07.362401"
+  }
+}

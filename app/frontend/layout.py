@@ -189,6 +189,13 @@ def create_admin_sidebar(current_page: str = "users"):
             "description": "Manage AI models and providers",
         },
         {
+            "key": "scenarios",
+            "label": "Scenarios & Content",
+            "icon": "🎭",
+            "href": "/dashboard/admin/scenarios",
+            "description": "Manage learning scenarios and content processing",
+        },
+        {
             "key": "system",
             "label": "System Status",
             "icon": "📊",

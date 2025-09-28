@@ -1254,6 +1254,13 @@ class ScenarioManager:
         self.scenario_templates = self._initialize_scenario_templates()
         self.scenario_factory = ScenarioFactory()
         self._load_predefined_scenarios()
+        self._initialized = False
+
+    async def initialize(self):
+        """Initialize async components"""
+        if not self._initialized:
+            await self._load_scenarios_from_file()
+            self._initialized = True
 
     def _initialize_scenario_templates(self) -> Dict[str, Any]:
         """Initialize scenario templates for different categories"""
@@ -2299,6 +2306,213 @@ class ScenarioManager:
                 )
 
         return recommendations[:3]  # Return top 3 recommendations
+
+    # ===========================
+    # Persistence Methods for Admin API
+    # ===========================
+
+    async def get_all_scenarios(self) -> List[ConversationScenario]:
+        """Get all scenarios for admin management"""
+        return list(self.scenarios.values())
+
+    async def get_scenario_by_id(
+        self, scenario_id: str
+    ) -> Optional[ConversationScenario]:
+        """Get a specific scenario by ID"""
+        return self.scenarios.get(scenario_id)
+
+    async def save_scenario(self, scenario: ConversationScenario) -> bool:
+        """Save or update a scenario"""
+        try:
+            # Store in memory (in production, this would save to database)
+            self.scenarios[scenario.scenario_id] = scenario
+
+            # Save to JSON file for persistence across restarts
+            await self._save_scenarios_to_file()
+
+            logger.info(f"Saved scenario: {scenario.name} ({scenario.scenario_id})")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error saving scenario {scenario.scenario_id}: {str(e)}")
+            return False
+
+    async def update_scenario(
+        self, scenario_id: str, scenario: ConversationScenario
+    ) -> bool:
+        """Update an existing scenario (alias for save_scenario)"""
+        return await self.save_scenario(scenario)
+
+    async def delete_scenario(self, scenario_id: str) -> bool:
+        """Delete a scenario"""
+        try:
+            if scenario_id in self.scenarios:
+                scenario_name = self.scenarios[scenario_id].name
+                del self.scenarios[scenario_id]
+
+                # Remove from file storage
+                await self._save_scenarios_to_file()
+
+                logger.info(f"Deleted scenario: {scenario_name} ({scenario_id})")
+                return True
+            else:
+                logger.warning(f"Scenario {scenario_id} not found for deletion")
+                return False
+
+        except Exception as e:
+            logger.error(f"Error deleting scenario {scenario_id}: {str(e)}")
+            return False
+
+    async def set_scenario_active(self, scenario_id: str, is_active: bool) -> bool:
+        """Set scenario active/inactive status"""
+        try:
+            if scenario_id in self.scenarios:
+                scenario = self.scenarios[scenario_id]
+                # Add is_active attribute if it doesn't exist
+                scenario.is_active = is_active
+
+                # Save changes
+                await self._save_scenarios_to_file()
+
+                status = "activated" if is_active else "deactivated"
+                logger.info(f"Scenario {scenario.name} ({scenario_id}) {status}")
+                return True
+            else:
+                logger.warning(f"Scenario {scenario_id} not found")
+                return False
+
+        except Exception as e:
+            logger.error(f"Error updating scenario {scenario_id} status: {str(e)}")
+            return False
+
+    async def _save_scenarios_to_file(self):
+        """Save scenarios to JSON file for persistence"""
+        try:
+            data_dir = Path("data/scenarios")
+            data_dir.mkdir(parents=True, exist_ok=True)
+            scenarios_file = data_dir / "scenarios.json"
+
+            # Convert scenarios to serializable format
+            scenarios_data = {}
+            for scenario_id, scenario in self.scenarios.items():
+                scenario_dict = {
+                    "scenario_id": scenario.scenario_id,
+                    "name": scenario.name,
+                    "category": scenario.category.value,
+                    "difficulty": scenario.difficulty.value,
+                    "description": scenario.description,
+                    "user_role": scenario.user_role.value,
+                    "ai_role": scenario.ai_role.value,
+                    "setting": scenario.setting,
+                    "duration_minutes": scenario.duration_minutes,
+                    "phases": [
+                        {
+                            "phase_id": phase.phase_id,
+                            "name": phase.name,
+                            "description": phase.description,
+                            "expected_duration_minutes": phase.expected_duration_minutes,
+                            "key_vocabulary": phase.key_vocabulary,
+                            "essential_phrases": phase.essential_phrases,
+                            "learning_objectives": phase.learning_objectives,
+                            "cultural_notes": phase.cultural_notes,
+                            "success_criteria": phase.success_criteria or [],
+                        }
+                        for phase in scenario.phases
+                    ],
+                    "prerequisites": getattr(scenario, "prerequisites", []),
+                    "learning_outcomes": getattr(scenario, "learning_outcomes", []),
+                    "vocabulary_focus": getattr(scenario, "vocabulary_focus", []),
+                    "cultural_context": getattr(scenario, "cultural_context", None),
+                    "is_active": getattr(scenario, "is_active", True),
+                    "created_at": getattr(
+                        scenario, "created_at", datetime.now()
+                    ).isoformat()
+                    if hasattr(scenario, "created_at") and scenario.created_at
+                    else datetime.now().isoformat(),
+                    "updated_at": getattr(
+                        scenario, "updated_at", datetime.now()
+                    ).isoformat()
+                    if hasattr(scenario, "updated_at") and scenario.updated_at
+                    else datetime.now().isoformat(),
+                }
+                scenarios_data[scenario_id] = scenario_dict
+
+            # Write to file
+            with open(scenarios_file, "w", encoding="utf-8") as f:
+                json.dump(scenarios_data, f, indent=2, ensure_ascii=False)
+
+            logger.debug(f"Saved {len(scenarios_data)} scenarios to {scenarios_file}")
+
+        except Exception as e:
+            logger.error(f"Error saving scenarios to file: {str(e)}")
+
+    async def _load_scenarios_from_file(self):
+        """Load scenarios from JSON file"""
+        try:
+            scenarios_file = Path("data/scenarios/scenarios.json")
+            if not scenarios_file.exists():
+                logger.info(
+                    "No saved scenarios file found, starting with predefined scenarios only"
+                )
+                return
+
+            with open(scenarios_file, "r", encoding="utf-8") as f:
+                scenarios_data = json.load(f)
+
+            # Convert back to ConversationScenario objects
+            for scenario_id, scenario_dict in scenarios_data.items():
+                # Convert phases
+                phases = []
+                for phase_data in scenario_dict.get("phases", []):
+                    phase = ScenarioPhase(
+                        phase_id=phase_data["phase_id"],
+                        name=phase_data["name"],
+                        description=phase_data["description"],
+                        expected_duration_minutes=phase_data[
+                            "expected_duration_minutes"
+                        ],
+                        key_vocabulary=phase_data.get("key_vocabulary", []),
+                        essential_phrases=phase_data.get("essential_phrases", []),
+                        learning_objectives=phase_data.get("learning_objectives", []),
+                        cultural_notes=phase_data.get("cultural_notes"),
+                        success_criteria=phase_data.get("success_criteria", []),
+                    )
+                    phases.append(phase)
+
+                # Create scenario object
+                scenario = ConversationScenario(
+                    scenario_id=scenario_dict["scenario_id"],
+                    name=scenario_dict["name"],
+                    category=ScenarioCategory(scenario_dict["category"]),
+                    difficulty=ScenarioDifficulty(scenario_dict["difficulty"]),
+                    description=scenario_dict["description"],
+                    user_role=ConversationRole(scenario_dict["user_role"]),
+                    ai_role=ConversationRole(scenario_dict["ai_role"]),
+                    setting=scenario_dict["setting"],
+                    duration_minutes=scenario_dict["duration_minutes"],
+                    phases=phases,
+                    prerequisites=scenario_dict.get("prerequisites", []),
+                    learning_outcomes=scenario_dict.get("learning_outcomes", []),
+                    vocabulary_focus=scenario_dict.get("vocabulary_focus", []),
+                    cultural_context=scenario_dict.get("cultural_context"),
+                )
+
+                # Add additional attributes
+                scenario.is_active = scenario_dict.get("is_active", True)
+                scenario.created_at = datetime.fromisoformat(
+                    scenario_dict.get("created_at", datetime.now().isoformat())
+                )
+                scenario.updated_at = datetime.fromisoformat(
+                    scenario_dict.get("updated_at", datetime.now().isoformat())
+                )
+
+                # Store the scenario
+                self.scenarios[scenario_id] = scenario
+
+            logger.info(f"Loaded {len(scenarios_data)} scenarios from file")
+
+        except Exception as e:
+            logger.error(f"Error loading scenarios from file: {str(e)}")
 
 
 # Global scenario manager instance

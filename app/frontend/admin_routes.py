@@ -27,6 +27,7 @@ from app.frontend.admin_language_config import (
     language_config_javascript,
 )
 from app.frontend.admin_ai_models import create_ai_models_page
+from app.frontend.admin_scenario_management import create_scenario_management_page
 
 logger = logging.getLogger(__name__)
 
@@ -344,6 +345,72 @@ def create_admin_routes(app):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to load system status page",
+            )
+
+    @app.get("/dashboard/admin/scenarios")
+    async def admin_scenarios_page(
+        current_user: Dict[str, Any] = Depends(get_current_user),
+    ):
+        """Admin scenario and content management page"""
+        try:
+            # Check admin access
+            if not admin_auth_service.is_admin_user(current_user):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Admin access required",
+                )
+
+            # Check scenario management permission
+            if not admin_auth_service.has_permission(
+                current_user, AdminPermission.MANAGE_SCENARIOS
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Scenario management permission required",
+                )
+
+            # Create the full scenario management page with admin layout
+            from app.frontend.styles import get_admin_styles
+            from app.frontend.layout import create_admin_header, create_admin_sidebar
+
+            return Html(
+                Head(
+                    Title("Admin Dashboard - Scenario & Content Management"),
+                    Meta(charset="utf-8"),
+                    Meta(
+                        name="viewport", content="width=device-width, initial-scale=1.0"
+                    ),
+                    get_admin_styles(),
+                    # Add HTMX for dynamic updates
+                    Script(src="https://unpkg.com/htmx.org@1.9.6"),
+                ),
+                Body(
+                    # Admin Layout Container
+                    Div(
+                        create_admin_sidebar("scenarios"),
+                        Div(
+                            create_admin_header(
+                                current_user, "Scenario & Content Management"
+                            ),
+                            Div(
+                                create_scenario_management_page(),
+                                cls="p-6",
+                            ),
+                            cls="flex-1 ml-64 overflow-auto",
+                        ),
+                        cls="flex min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900",
+                    ),
+                    cls="font-sans antialiased",
+                ),
+            )
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error in admin scenarios page: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to load scenario management page",
             )
 
 
