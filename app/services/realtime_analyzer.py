@@ -31,6 +31,14 @@ from enum import Enum
 import statistics
 from collections import defaultdict, deque
 
+
+def safe_mean(values: List[Union[int, float]], default: float = 0.0) -> float:
+    """Safely calculate mean, returning default if empty list"""
+    if not values:
+        return default
+    return statistics.mean(values)
+
+
 # Audio analysis libraries
 try:
     import numpy as np
@@ -694,17 +702,9 @@ class RealTimeAnalyzer:
         session = self.active_sessions[session_id]
 
         # Calculate averages
-        avg_pronunciation = (
-            statistics.mean(session.pronunciation_scores)
-            if session.pronunciation_scores
-            else 0
-        )
-        avg_grammar = (
-            statistics.mean(session.grammar_scores) if session.grammar_scores else 0
-        )
-        avg_fluency = (
-            statistics.mean(session.fluency_scores) if session.fluency_scores else 0
-        )
+        avg_pronunciation = safe_mean(session.pronunciation_scores)
+        avg_grammar = safe_mean(session.grammar_scores)
+        avg_fluency = safe_mean(session.fluency_scores)
 
         # Calculate improvement trends
         pronunciation_trend = self._calculate_trend(session.pronunciation_scores)
@@ -776,8 +776,8 @@ class RealTimeAnalyzer:
         recent = scores[-3:]
         earlier = scores[:-3] if len(scores) > 3 else scores
 
-        recent_avg = statistics.mean(recent)
-        earlier_avg = statistics.mean(earlier)
+        recent_avg = safe_mean(recent)
+        earlier_avg = safe_mean(earlier)
 
         if recent_avg > earlier_avg + 5:
             return "improving"

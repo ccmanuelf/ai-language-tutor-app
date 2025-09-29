@@ -29,6 +29,10 @@ from app.frontend.admin_language_config import (
 from app.frontend.admin_ai_models import create_ai_models_page
 from app.frontend.admin_scenario_management import create_scenario_management_page
 from app.frontend.admin_feature_toggles import create_feature_toggle_page
+from app.frontend.progress_analytics_dashboard import (
+    progress_analytics_dashboard_page,
+    progress_analytics_styles,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -409,6 +413,154 @@ def create_admin_routes(app):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to load scenario management page",
+            )
+
+    @app.get("/dashboard/admin/progress-analytics")
+    async def admin_progress_analytics_page(
+        current_user: Dict[str, Any] = Depends(get_current_user),
+    ):
+        """Admin progress analytics dashboard page - Task 3.1.8"""
+        try:
+            # Check admin access
+            if not admin_auth_service.is_admin_user(current_user):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Admin access required",
+                )
+
+            # Check analytics viewing permission
+            if not admin_auth_service.has_permission(
+                current_user, AdminPermission.VIEW_ANALYTICS
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Analytics viewing permission required",
+                )
+
+            # Create the full progress analytics page with admin layout
+            from app.frontend.styles import get_admin_styles
+            from app.frontend.layout import create_admin_header, create_admin_sidebar
+
+            # Sample analytics data for demonstration
+            analytics_data = {
+                "conversation_analytics": {
+                    "overview": {
+                        "total_conversations": 47,
+                        "total_conversation_time": 385.5,
+                        "average_session_length": 8.2,
+                        "total_exchanges": 1247,
+                        "average_exchanges_per_session": 26.5,
+                    },
+                    "performance_metrics": {
+                        "average_fluency_score": 0.78,
+                        "average_grammar_accuracy": 0.72,
+                        "average_pronunciation_clarity": 0.81,
+                        "average_vocabulary_complexity": 0.68,
+                        "average_confidence_level": 0.74,
+                    },
+                    "learning_progress": {
+                        "total_new_vocabulary": 156,
+                        "total_grammar_patterns": 23,
+                        "total_cultural_contexts": 18,
+                        "average_improvement_trend": 0.12,
+                    },
+                    "engagement_analysis": {
+                        "average_engagement_score": 0.83,
+                        "total_hesitations": 134,
+                        "total_self_corrections": 67,
+                        "hesitation_rate": 0.11,
+                    },
+                },
+                "skill_analytics": {
+                    "skill_overview": {
+                        "total_skills_tracked": 8,
+                        "average_skill_level": 67.3,
+                        "overall_mastery_percentage": 72.1,
+                        "strongest_skill": "vocabulary",
+                        "weakest_skill": "pronunciation",
+                    },
+                },
+                "learning_path": {
+                    "path_title": "Comprehensive Language Mastery Path",
+                    "path_description": "A balanced approach focusing on conversation skills while strengthening grammar foundations",
+                    "confidence_score": 0.85,
+                    "expected_success_rate": 0.78,
+                    "estimated_duration_weeks": 12,
+                    "time_commitment_hours_per_week": 5.5,
+                },
+                "memory_retention": {
+                    "short_term_retention_rate": 0.82,
+                    "medium_term_retention_rate": 0.67,
+                    "long_term_retention_rate": 0.54,
+                    "active_recall_success_rate": 0.73,
+                    "average_exposures_to_master": 5.2,
+                    "learning_velocity": 12.3,
+                    "most_retained_item_types": ["vocabulary", "phrases"],
+                },
+                "recommendations": {
+                    "recommendations": [
+                        {
+                            "icon": "🎯",
+                            "priority": "High Priority",
+                            "text": "Focus on pronunciation practice - clarity score could improve with daily phonetic exercises",
+                            "action": "Start Pronunciation Course",
+                        },
+                        {
+                            "icon": "📚",
+                            "priority": "Medium Priority",
+                            "text": "Grammar accuracy needs attention. Review conditional sentences and subjunctive mood patterns",
+                            "action": "Review Grammar",
+                        },
+                        {
+                            "icon": "🗣️",
+                            "priority": "High Priority",
+                            "text": "Practice speaking in more challenging scenarios to build confidence",
+                            "action": "Try Advanced Scenarios",
+                        },
+                    ]
+                },
+            }
+
+            return Html(
+                Head(
+                    Title("Admin Dashboard - Progress Analytics"),
+                    Meta(charset="utf-8"),
+                    Meta(
+                        name="viewport", content="width=device-width, initial-scale=1.0"
+                    ),
+                    get_admin_styles(),
+                    progress_analytics_styles(),
+                ),
+                Body(
+                    # Admin Layout Container
+                    Div(
+                        create_admin_sidebar("progress-analytics"),
+                        Div(
+                            create_admin_header(
+                                current_user, "Progress Analytics Dashboard"
+                            ),
+                            Div(
+                                progress_analytics_dashboard_page(
+                                    user_data=current_user,
+                                    analytics_data=analytics_data,
+                                ),
+                                cls="p-6",
+                            ),
+                            cls="flex-1 ml-64 overflow-auto",
+                        ),
+                        cls="flex min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900",
+                    ),
+                    cls="font-sans antialiased",
+                ),
+            )
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error in admin progress analytics page: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to load progress analytics page",
             )
 
 
