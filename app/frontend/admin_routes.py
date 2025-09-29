@@ -28,6 +28,7 @@ from app.frontend.admin_language_config import (
 )
 from app.frontend.admin_ai_models import create_ai_models_page
 from app.frontend.admin_scenario_management import create_scenario_management_page
+from app.frontend.admin_feature_toggles import create_feature_toggle_page
 
 logger = logging.getLogger(__name__)
 
@@ -211,7 +212,6 @@ def create_admin_routes(app):
             # Create the full feature toggles page with admin layout
             from app.frontend.styles import get_admin_styles
             from app.frontend.layout import create_admin_header, create_admin_sidebar
-            from app.frontend.admin_feature_toggles import create_feature_toggles_page
 
             return Html(
                 Head(
@@ -231,9 +231,7 @@ def create_admin_routes(app):
                         Div(
                             create_admin_header(current_user, "Feature Toggles"),
                             Div(
-                                create_feature_toggles_page(
-                                    current_user.get("role", "ADMIN")
-                                ),
+                                create_feature_toggle_page(),
                                 cls="p-6",
                             ),
                             cls="flex-1 ml-64 overflow-auto",

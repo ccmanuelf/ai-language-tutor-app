@@ -101,12 +101,17 @@ class ConversationScenario:
     phases: List[ScenarioPhase]
     vocabulary_focus: List[str]
     cultural_context: Dict[str, Any]
-    learning_goals: List[str]
+    learning_goals: List[str] = None
+    learning_outcomes: List[str] = None
     prerequisites: List[str] = None
 
     def __post_init__(self):
         if self.prerequisites is None:
             self.prerequisites = []
+        if self.learning_outcomes is None:
+            self.learning_outcomes = []
+        if self.learning_goals is None:
+            self.learning_goals = []
 
 
 @dataclass
@@ -1262,6 +1267,10 @@ class ScenarioManager:
             await self._load_scenarios_from_file()
             self._initialized = True
 
+    def get_scenario_templates(self) -> Dict[str, Any]:
+        """Get scenario templates for different categories"""
+        return self.scenario_templates
+
     def _initialize_scenario_templates(self) -> Dict[str, Any]:
         """Initialize scenario templates for different categories"""
         return {
@@ -1338,6 +1347,28 @@ class ScenarioManager:
                     "business_etiquette",
                     "hierarchy",
                     "communication_style",
+                ],
+            },
+            "social": {
+                "phases": [
+                    "greeting",
+                    "small_talk",
+                    "main_conversation",
+                    "planning",
+                    "farewell",
+                ],
+                "vocabulary": [
+                    "friend",
+                    "party",
+                    "weekend",
+                    "hobby",
+                    "movie",
+                    "invitation",
+                ],
+                "cultural_aspects": [
+                    "social_customs",
+                    "friendship_norms",
+                    "casual_communication",
                 ],
             },
         }
@@ -2324,6 +2355,11 @@ class ScenarioManager:
     async def save_scenario(self, scenario: ConversationScenario) -> bool:
         """Save or update a scenario"""
         try:
+            # Validate scenario before saving
+            if not self._validate_scenario(scenario):
+                logger.warning(f"Scenario validation failed: {scenario.scenario_id}")
+                return False
+
             # Store in memory (in production, this would save to database)
             self.scenarios[scenario.scenario_id] = scenario
 
@@ -2336,6 +2372,18 @@ class ScenarioManager:
         except Exception as e:
             logger.error(f"Error saving scenario {scenario.scenario_id}: {str(e)}")
             return False
+
+    def _validate_scenario(self, scenario: ConversationScenario) -> bool:
+        """Validate scenario data before saving"""
+        if not scenario.scenario_id or not scenario.scenario_id.strip():
+            return False
+        if not scenario.name or not scenario.name.strip():
+            return False
+        if scenario.duration_minutes <= 0:
+            return False
+        if not scenario.phases or len(scenario.phases) == 0:
+            return False
+        return True
 
     async def update_scenario(
         self, scenario_id: str, scenario: ConversationScenario
