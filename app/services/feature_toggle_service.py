@@ -115,6 +115,39 @@ class FeatureToggleService:
             logger.error(f"Failed to load user access: {e}")
             self._user_access = {}
 
+    def _deserialize_datetime_recursive(self, obj):
+        """Recursively convert ISO datetime strings back to datetime objects."""
+        if isinstance(obj, str):
+            # Try to parse as datetime if it looks like ISO format
+            if (
+                len(obj) >= 19
+                and "T" in obj
+                and ":" in obj
+                and (
+                    obj.endswith("Z")
+                    or "+" in obj[-6:]
+                    or "-" in obj[-6:]
+                    or "." in obj
+                )
+            ):
+                try:
+                    # Handle various datetime formats
+                    if obj.endswith("Z"):
+                        obj = obj[:-1] + "+00:00"
+                    return datetime.fromisoformat(obj)
+                except ValueError:
+                    return obj
+            return obj
+        elif isinstance(obj, dict):
+            return {
+                key: self._deserialize_datetime_recursive(value)
+                for key, value in obj.items()
+            }
+        elif isinstance(obj, list):
+            return [self._deserialize_datetime_recursive(item) for item in obj]
+        else:
+            return obj
+
     async def _load_events(self):
         """Load feature toggle events from storage."""
         if not self.events_file.exists():
@@ -127,6 +160,8 @@ class FeatureToggleService:
 
             self._events = []
             for event_data in data.get("events", []):
+                # Recursively convert datetime strings back to datetime objects
+                event_data = self._deserialize_datetime_recursive(event_data)
                 event = FeatureToggleEvent(**event_data)
                 self._events.append(event)
 
@@ -203,15 +238,28 @@ class FeatureToggleService:
             logger.error(f"Failed to save user access: {e}")
             raise
 
+    def _serialize_datetime_recursive(self, obj):
+        """Recursively convert datetime objects to ISO strings for JSON serialization."""
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        elif isinstance(obj, dict):
+            return {
+                key: self._serialize_datetime_recursive(value)
+                for key, value in obj.items()
+            }
+        elif isinstance(obj, list):
+            return [self._serialize_datetime_recursive(item) for item in obj]
+        else:
+            return obj
+
     async def _save_events(self):
         """Save feature toggle events to storage."""
         try:
             events_data = []
             for event in self._events[-1000:]:  # Keep only last 1000 events
                 event_dict = event.dict()
-                # Convert datetime to ISO string
-                if "timestamp" in event_dict and event_dict["timestamp"]:
-                    event_dict["timestamp"] = event_dict["timestamp"].isoformat()
+                # Recursively convert all datetime objects to ISO strings
+                event_dict = self._serialize_datetime_recursive(event_dict)
                 events_data.append(event_dict)
 
             data = {
@@ -599,13 +647,8 @@ class FeatureToggleService:
         if not feature:
             return False
 
-        # Check if feature is globally disabled
-        if feature.status == FeatureToggleStatus.DISABLED:
-            result = False
-        elif feature.status == FeatureToggleStatus.MAINTENANCE:
-            result = False
-        else:
-            result = await self._evaluate_feature(feature, user_id, user_roles)
+        # Always evaluate the feature - let _evaluate_feature handle user overrides
+        result = await self._evaluate_feature(feature, user_id, user_roles)
 
         # Cache result
         if cache_key not in self._feature_cache:
@@ -633,6 +676,12 @@ class FeatureToggleService:
                     or user_access.override_expires > datetime.now()
                 ):
                     return user_access.enabled
+
+        # Check global feature status after user overrides
+        if feature.status == FeatureToggleStatus.DISABLED:
+            return False
+        elif feature.status == FeatureToggleStatus.MAINTENANCE:
+            return False
 
         # Check admin requirement
         if feature.requires_admin:
@@ -663,7 +712,7 @@ class FeatureToggleService:
             if user_id:
                 # Use consistent hash of user_id + feature_id for deterministic rollout
                 hash_input = f"{user_id}:{feature.id}"
-                user_hash = hash(hash_input) % 100
+                user_hash = abs(hash(hash_input)) % 100
                 if user_hash >= feature.rollout_percentage:
                     return False
 
