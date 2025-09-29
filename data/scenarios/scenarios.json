@@ -1,10 +1,10 @@
 {
   "restaurant_dinner_reservation": {
     "scenario_id": "restaurant_dinner_reservation",
-    "name": "Making a Dinner Reservation",
+    "name": "Making a Dinner Reservation (Updated)",
     "category": "restaurant",
     "difficulty": "beginner",
-    "description": "Practice making a dinner reservation at a restaurant, ordering food, and handling the bill.",
+    "description": "Practice making a dinner reservation at a restaurant, ordering food, and handling the bill. - Updated for testing",
     "user_role": "customer",
     "ai_role": "service_provider",
     "setting": "An upscale restaurant in the city center",
@@ -162,8 +162,8 @@
       "payment_customs": "Usually one person pays for the group"
     },
     "is_active": true,
-    "created_at": "2025-09-28T12:38:07.362393",
-    "updated_at": "2025-09-28T12:38:07.362394"
+    "created_at": "2025-09-28T20:59:28.921239",
+    "updated_at": "2025-09-28T20:59:28.925458"
   },
   "hotel_check_in": {
     "scenario_id": "hotel_check_in",
@@ -294,8 +294,8 @@
       "local_etiquette": "Always be polite and patient with language barriers"
     },
     "is_active": true,
-    "created_at": "2025-09-28T12:38:07.362397",
-    "updated_at": "2025-09-28T12:38:07.362398"
+    "created_at": "2025-09-28T20:59:28.921243",
+    "updated_at": "2025-09-28T20:59:28.925895"
   },
   "clothing_shopping": {
     "scenario_id": "clothing_shopping",
@@ -428,7 +428,351 @@
       "return_policy": "Keep receipts for returns or exchanges"
     },
     "is_active": true,
-    "created_at": "2025-09-28T12:38:07.362400",
-    "updated_at": "2025-09-28T12:38:07.362401"
+    "created_at": "2025-09-28T20:59:28.921246",
+    "updated_at": "2025-09-28T20:59:28.926323"
+  },
+  "test_restaurant_1": {
+    "scenario_id": "test_restaurant_1",
+    "name": "Test Restaurant Reservation (Updated)",
+    "category": "restaurant",
+    "difficulty": "beginner",
+    "description": "Test scenario for restaurant reservations",
+    "user_role": "customer",
+    "ai_role": "service_provider",
+    "setting": "A busy restaurant in downtown",
+    "duration_minutes": 20,
+    "phases": [
+      {
+        "phase_id": "intro",
+        "name": "Introduction",
+        "description": "Initial greeting and context setting",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "reservation",
+          "table",
+          "time"
+        ],
+        "essential_phrases": [
+          "I'd like to make a reservation"
+        ],
+        "learning_objectives": [
+          "Basic greetings",
+          "Making requests"
+        ],
+        "cultural_notes": null,
+        "success_criteria": []
+      },
+      {
+        "phase_id": "booking",
+        "name": "Booking Details",
+        "description": "Providing reservation details",
+        "expected_duration_minutes": 10,
+        "key_vocabulary": [
+          "party size",
+          "date",
+          "availability"
+        ],
+        "essential_phrases": [
+          "Table for two",
+          "What times are available?"
+        ],
+        "learning_objectives": [
+          "Numbers",
+          "Time expressions"
+        ],
+        "cultural_notes": null,
+        "success_criteria": []
+      },
+      {
+        "phase_id": "confirmation",
+        "name": "Confirmation",
+        "description": "Confirming the reservation",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "confirmation",
+          "name",
+          "phone"
+        ],
+        "essential_phrases": [
+          "Could I have your name?",
+          "Thank you"
+        ],
+        "learning_objectives": [
+          "Personal information",
+          "Polite responses"
+        ],
+        "cultural_notes": null,
+        "success_criteria": []
+      }
+    ],
+    "prerequisites": [],
+    "learning_outcomes": [
+      "Conversational fluency",
+      "Practical vocabulary"
+    ],
+    "vocabulary_focus": [
+      "service interactions",
+      "polite expressions"
+    ],
+    "cultural_context": "Western business culture",
+    "is_active": true,
+    "created_at": "2025-09-28T20:59:28.912148",
+    "updated_at": "2025-09-28T20:59:28.912857"
+  },
+  "ebe8ce54-5da9-4f0a-af91-fe350fd4695b": {
+    "scenario_id": "ebe8ce54-5da9-4f0a-af91-fe350fd4695b",
+    "name": "Test CRUD Scenario",
+    "category": "business",
+    "difficulty": "intermediate",
+    "description": "A test scenario for CRUD operations",
+    "user_role": "colleague",
+    "ai_role": "colleague",
+    "setting": "Office meeting room",
+    "duration_minutes": 30,
+    "phases": [
+      {
+        "phase_id": "meeting_start",
+        "name": "Meeting Start",
+        "description": "Opening the meeting",
+        "expected_duration_minutes": 10,
+        "key_vocabulary": [
+          "agenda",
+          "meeting",
+          "discussion"
+        ],
+        "essential_phrases": [
+          "Let's start the meeting",
+          "What's on the agenda?"
+        ],
+        "learning_objectives": [
+          "Meeting vocabulary",
+          "Professional communication"
+        ],
+        "cultural_notes": null,
+        "success_criteria": []
+      }
+    ],
+    "prerequisites": [
+      "Basic business vocabulary"
+    ],
+    "learning_outcomes": [
+      "Meeting management",
+      "Professional discussions"
+    ],
+    "vocabulary_focus": [
+      "business terms",
+      "meeting language"
+    ],
+    "cultural_context": "Corporate meeting culture",
+    "is_active": true,
+    "created_at": "2025-09-28T20:59:28.914128",
+    "updated_at": "2025-09-28T20:59:28.914129"
+  },
+  "c67d69a3-d71d-4144-8a57-d389c0cc168d": {
+    "scenario_id": "c67d69a3-d71d-4144-8a57-d389c0cc168d",
+    "name": "Valid Test Scenario",
+    "category": "restaurant",
+    "difficulty": "beginner",
+    "description": "A valid test scenario with all required fields",
+    "user_role": "customer",
+    "ai_role": "service_provider",
+    "setting": "Restaurant setting",
+    "duration_minutes": 20,
+    "phases": [
+      {
+        "phase_id": "valid_phase",
+        "name": "Valid Phase",
+        "description": "A valid phase",
+        "expected_duration_minutes": 10,
+        "key_vocabulary": [
+          "test"
+        ],
+        "essential_phrases": [
+          "test phrase"
+        ],
+        "learning_objectives": [
+          "test objective"
+        ],
+        "cultural_notes": null,
+        "success_criteria": []
+      }
+    ],
+    "prerequisites": [],
+    "learning_outcomes": [],
+    "vocabulary_focus": [
+      "test",
+      "vocabulary"
+    ],
+    "cultural_context": {
+      "test": "context"
+    },
+    "is_active": true,
+    "created_at": "2025-09-28T20:59:28.921255",
+    "updated_at": "2025-09-28T20:59:28.921256"
+  },
+  "file_save_test": {
+    "scenario_id": "file_save_test",
+    "name": "File Save Test Scenario",
+    "category": "education",
+    "difficulty": "beginner",
+    "description": "Test scenario for file saving",
+    "user_role": "student",
+    "ai_role": "teacher",
+    "setting": "Classroom",
+    "duration_minutes": 15,
+    "phases": [
+      {
+        "phase_id": "lesson_intro",
+        "name": "Lesson Introduction",
+        "description": "Introduction to the lesson",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "lesson",
+          "learn",
+          "study"
+        ],
+        "essential_phrases": [
+          "Let's begin",
+          "Today we will learn"
+        ],
+        "learning_objectives": [
+          "Lesson vocabulary",
+          "Study habits"
+        ],
+        "cultural_notes": null,
+        "success_criteria": []
+      }
+    ],
+    "prerequisites": [],
+    "learning_outcomes": [],
+    "vocabulary_focus": [
+      "test",
+      "vocabulary"
+    ],
+    "cultural_context": {
+      "test": "context"
+    },
+    "is_active": true,
+    "created_at": "2025-09-28T20:59:28.921223",
+    "updated_at": "2025-09-28T20:59:28.921224"
+  },
+  "integrity_test_scenario": {
+    "scenario_id": "integrity_test_scenario",
+    "name": "Data Integrity Test Scenario",
+    "category": "healthcare",
+    "difficulty": "advanced",
+    "description": "A complex scenario to test data integrity across persistence",
+    "user_role": "customer",
+    "ai_role": "service_provider",
+    "setting": "Medical clinic",
+    "duration_minutes": 45,
+    "phases": [
+      {
+        "phase_id": "check_in",
+        "name": "Check-in Process",
+        "description": "Patient check-in and registration",
+        "expected_duration_minutes": 10,
+        "key_vocabulary": [
+          "appointment",
+          "insurance",
+          "registration"
+        ],
+        "essential_phrases": [
+          "I have an appointment",
+          "Insurance card"
+        ],
+        "learning_objectives": [
+          "Medical vocabulary",
+          "Registration process"
+        ],
+        "cultural_notes": "Healthcare system procedures",
+        "success_criteria": [
+          "Completed registration",
+          "Insurance verified"
+        ]
+      },
+      {
+        "phase_id": "consultation",
+        "name": "Medical Consultation",
+        "description": "Discussion with healthcare provider",
+        "expected_duration_minutes": 30,
+        "key_vocabulary": [
+          "symptoms",
+          "diagnosis",
+          "treatment"
+        ],
+        "essential_phrases": [
+          "I've been feeling",
+          "How long has this been going on?"
+        ],
+        "learning_objectives": [
+          "Medical communication",
+          "Symptom description"
+        ],
+        "cultural_notes": "Doctor-patient communication",
+        "success_criteria": [
+          "Symptoms communicated",
+          "Treatment understood"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "Basic medical vocabulary",
+      "Health insurance knowledge"
+    ],
+    "learning_outcomes": [
+      "Medical communication skills",
+      "Healthcare navigation"
+    ],
+    "vocabulary_focus": [
+      "medical terms",
+      "health descriptions"
+    ],
+    "cultural_context": "Western healthcare system",
+    "is_active": true,
+    "created_at": "2025-09-28T20:59:28.922017",
+    "updated_at": "2025-09-28T20:59:28.922017"
+  },
+  "validation_test_valid": {
+    "scenario_id": "validation_test_valid",
+    "name": "Valid Validation Test",
+    "category": "restaurant",
+    "difficulty": "beginner",
+    "description": "A valid scenario for validation testing",
+    "user_role": "customer",
+    "ai_role": "service_provider",
+    "setting": "Valid setting",
+    "duration_minutes": 15,
+    "phases": [
+      {
+        "phase_id": "valid_phase",
+        "name": "Valid Phase",
+        "description": "A valid phase",
+        "expected_duration_minutes": 10,
+        "key_vocabulary": [
+          "valid"
+        ],
+        "essential_phrases": [
+          "valid phrase"
+        ],
+        "learning_objectives": [
+          "valid objective"
+        ],
+        "cultural_notes": null,
+        "success_criteria": []
+      }
+    ],
+    "prerequisites": [],
+    "learning_outcomes": [],
+    "vocabulary_focus": [
+      "test",
+      "vocabulary"
+    ],
+    "cultural_context": {
+      "test": "context"
+    },
+    "is_active": true,
+    "created_at": "2025-09-28T20:59:28.923435",
+    "updated_at": "2025-09-28T20:59:28.923435"
   }
 }
