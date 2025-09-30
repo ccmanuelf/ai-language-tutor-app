@@ -1,0 +1,276 @@
+{
+  "total_tests": 42,
+  "passed": 42,
+  "failed": 0,
+  "errors": [],
+  "start_time": 1759241227.5550752,
+  "end_time": 1759241230.045516,
+  "categories": {
+    "Admin System Integration": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Admin Auth Service Initialization",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "User Management Service Initialization",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Admin User Creation",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Admin Permission Verification",
+          "status": "\u2705 PASS",
+          "details": "Permissions: ['view_users', 'view_analytics', 'view_system_status', 'manage_users', 'create_users', 'delete_users', 'manage_languages', 'manage_features', 'manage_ai_models', 'manage_scenarios', 'manage_system_config', 'access_admin_dashboard', 'export_data', 'backup_system']"
+        },
+        {
+          "name": "Regular User Creation",
+          "status": "\u2705 PASS",
+          "details": ""
+        }
+      ]
+    },
+    "Feature Toggles Integration": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Feature Toggle Service Initialization",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Global Feature Toggle Manager",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Toggle Feature State",
+          "status": "\u2705 PASS",
+          "details": "Disabled: True, Restored: True"
+        },
+        {
+          "name": "User-Specific Feature Override",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Feature Categories Coverage",
+          "status": "\u2705 PASS",
+          "details": "Found 8 features"
+        }
+      ]
+    },
+    "Learning Engine Integration": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Scenario Manager Initialization",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Spaced Repetition Manager Initialization",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Progress Analytics Service Initialization",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Scenario Loading by Category",
+          "status": "\u2705 PASS",
+          "details": "Loaded 1 restaurant scenarios"
+        },
+        {
+          "name": "Learning Session Flow (SR + Vocabulary)",
+          "status": "\u2705 PASS",
+          "details": "Due items: 1"
+        }
+      ]
+    },
+    "Visual Learning Tools Integration": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Visual Learning Service Initialization",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Grammar Flowchart Creation",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Progress Visualization Creation",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Visual Vocabulary Creation",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Pronunciation Guide Creation",
+          "status": "\u2705 PASS",
+          "details": ""
+        }
+      ]
+    },
+    "AI Services Integration": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "AI Router Initialization",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "AI Model Manager Initialization",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "AI Models Availability",
+          "status": "\u2705 PASS",
+          "details": "Found 5 models"
+        },
+        {
+          "name": "AI Model Routing by Task Type",
+          "status": "\u2705 PASS",
+          "details": "Router handled unavailable providers gracefully"
+        },
+        {
+          "name": "Budget Manager Integration",
+          "status": "\u2705 PASS",
+          "details": ""
+        }
+      ]
+    },
+    "Speech Services Integration": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Mistral STT Service Initialization",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Piper TTS Service Initialization",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Speech Processor Integration",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "TTS Voice Availability",
+          "status": "\u2705 PASS",
+          "details": "Found 11 voices"
+        },
+        {
+          "name": "Multi-Language Voice Support",
+          "status": "\u2705 PASS",
+          "details": "ES: 4, FR: 1, EN: 1"
+        }
+      ]
+    },
+    "Multi-User Data Isolation": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Multi-User Creation",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "Vocabulary Data Isolation",
+          "status": "\u2705 PASS",
+          "details": "User1 words: ['aislamiento'], User2 words: ['prueba']"
+        },
+        {
+          "name": "Progress Data Isolation",
+          "status": "\u2705 PASS",
+          "details": "User1 sessions: 1, User2 sessions: 1"
+        },
+        {
+          "name": "Feature Toggle Override Isolation",
+          "status": "\u2705 PASS",
+          "details": "User1 access: True, User2 access: True"
+        },
+        {
+          "name": "Multi-User Cleanup",
+          "status": "\u2705 PASS",
+          "details": ""
+        }
+      ]
+    },
+    "End-to-End Workflow": {
+      "total": 7,
+      "passed": 7,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "E2E: User Onboarding",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "E2E: Scenario Selection",
+          "status": "\u2705 PASS",
+          "details": "Available scenarios: 1"
+        },
+        {
+          "name": "E2E: Start Conversation",
+          "status": "\u2705 PASS",
+          "details": "Started scenario: restaurant_dinner_reservation"
+        },
+        {
+          "name": "E2E: Vocabulary Learning",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "E2E: Progress Tracking",
+          "status": "\u2705 PASS",
+          "details": "Sessions tracked: 1"
+        },
+        {
+          "name": "E2E: Visual Learning Aids",
+          "status": "\u2705 PASS",
+          "details": ""
+        },
+        {
+          "name": "E2E: Cleanup",
+          "status": "\u2705 PASS",
+          "details": ""
+        }
+      ]
+    }
+  }
+}
