@@ -21,6 +21,7 @@ from app.api.tutor_modes import router as tutor_modes_router
 from app.api.feature_toggles import router as feature_toggles_router
 from app.api.ai_models import router as ai_models_router
 from app.api.scenario_management import router as scenario_management_router
+from app.api.visual_learning import router as visual_learning_router
 
 
 def create_app() -> FastAPI:
@@ -58,6 +59,7 @@ def create_app() -> FastAPI:
     app.include_router(feature_toggles_router, tags=["feature-toggles"])
     app.include_router(ai_models_router, tags=["ai-models"])
     app.include_router(scenario_management_router, tags=["scenario-management"])
+    app.include_router(visual_learning_router, tags=["visual-learning"])
 
     # Health check endpoint
     @app.get("/health")

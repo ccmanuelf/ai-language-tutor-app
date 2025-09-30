@@ -23,6 +23,7 @@ from .chat import create_chat_route
 from .progress import create_progress_route
 from .content_view import create_content_view_route
 from .admin_routes import register_admin_routes
+from .visual_learning import create_visual_learning_routes
 
 # Import admin API router
 from app.api.admin import admin_router
@@ -46,6 +47,7 @@ def create_frontend_app():
     create_chat_route(app)
     create_progress_route(app)
     create_content_view_route(app)
+    create_visual_learning_routes(app)
 
     # Register admin dashboard routes and API
     register_admin_routes(app, admin_router)

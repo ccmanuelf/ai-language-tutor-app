@@ -1,0 +1,90 @@
+{
+  "test_suite": "Visual Learning System",
+  "timestamp": "2025-09-29T21:06:37.257706",
+  "total_tests": 16,
+  "passed_tests": 16,
+  "failed_tests": 0,
+  "success_rate": "100.0%",
+  "test_results": [
+    {
+      "test": "Test 1: Create Grammar Flowchart",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 2: Add Flowchart Nodes",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 3: Connect Flowchart Nodes",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 4: Get Flowchart",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 5: List Flowcharts",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 6: Create Progress Visualization",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 7: Get User Visualizations",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 8: Create Vocabulary Visual",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 9: Get Vocabulary Visuals",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 10: Create Pronunciation Guide",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 11: Get Pronunciation Guides",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 12: Flowchart Persistence",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 13: Visualization Persistence",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 14: Vocabulary Persistence",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 15: Pronunciation Persistence",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    },
+    {
+      "test": "Test 16: Complete Workflow",
+      "status": "PASSED",
+      "message": "Test completed successfully"
+    }
+  ]
+}
