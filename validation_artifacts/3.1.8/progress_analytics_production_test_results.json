@@ -1,7 +1,7 @@
 {
   "framework": "Production-Realistic Progress Analytics Testing",
   "task": "3.1.8 - Enhanced Progress Analytics Dashboard",
-  "timestamp": "2025-09-29T14:04:48.110821",
+  "timestamp": "2025-09-29T15:51:16.522301",
   "database_path": "data/ai_language_tutor.db",
   "summary": {
     "total_tests": 11,
@@ -18,16 +18,16 @@
       "details": "Successfully connected to production database",
       "data": {
         "tables_status": [
-          "conversation_metrics(7 rows)",
+          "conversation_metrics(8 rows)",
           "skill_progress_metrics(3 rows)",
-          "learning_path_recommendations(1 rows)",
-          "memory_retention_analysis(1 rows)",
+          "learning_path_recommendations(2 rows)",
+          "memory_retention_analysis(2 rows)",
           "admin_spaced_repetition_config(3 rows)"
         ]
       },
       "error": null,
-      "execution_time_ms": 1.493896484375,
-      "timestamp": "2025-09-29T14:04:48.100423"
+      "execution_time_ms": 5.74169921875,
+      "timestamp": "2025-09-29T15:51:16.510527"
     },
     {
       "test_name": "Service Initialization",
@@ -35,8 +35,8 @@
       "details": "ProgressAnalyticsService initialized successfully with production database",
       "data": {},
       "error": null,
-      "execution_time_ms": 0.771240234375,
-      "timestamp": "2025-09-29T14:04:48.101206"
+      "execution_time_ms": 1.18896484375,
+      "timestamp": "2025-09-29T15:51:16.511756"
     },
     {
       "test_name": "Empty Data Handling",
@@ -52,8 +52,8 @@
         }
       },
       "error": null,
-      "execution_time_ms": 0.69482421875,
-      "timestamp": "2025-09-29T14:04:48.101906"
+      "execution_time_ms": 0.778076171875,
+      "timestamp": "2025-09-29T15:51:16.512545"
     },
     {
       "test_name": "Data Persistence",
@@ -65,11 +65,11 @@
           "fluency_persisted": true,
           "engagement_persisted": true
         },
-        "session_id": "test_session_1759172688"
+        "session_id": "test_session_1759179076"
       },
       "error": null,
-      "execution_time_ms": 1.643798828125,
-      "timestamp": "2025-09-29T14:04:48.103558"
+      "execution_time_ms": 1.670166015625,
+      "timestamp": "2025-09-29T15:51:16.514222"
     },
     {
       "test_name": "Skill Tracking Integration",
@@ -98,8 +98,8 @@
         ]
       },
       "error": null,
-      "execution_time_ms": 2.725830078125,
-      "timestamp": "2025-09-29T14:04:48.106293"
+      "execution_time_ms": 3.18603515625,
+      "timestamp": "2025-09-29T15:51:16.517418"
     },
     {
       "test_name": "Conversation Analytics Generation",
@@ -117,8 +117,8 @@
         }
       },
       "error": null,
-      "execution_time_ms": 0.43408203125,
-      "timestamp": "2025-09-29T14:04:48.106736"
+      "execution_time_ms": 0.505126953125,
+      "timestamp": "2025-09-29T15:51:16.517937"
     },
     {
       "test_name": "Learning Path Recommendations",
@@ -130,11 +130,11 @@
           "recommendation_data_valid": true,
           "recommendation_persisted": true
         },
-        "recommendation_id": "prod_test_1759172688"
+        "recommendation_id": "prod_test_1759179076"
       },
       "error": null,
-      "execution_time_ms": 0.624755859375,
-      "timestamp": "2025-09-29T14:04:48.107370"
+      "execution_time_ms": 0.752197265625,
+      "timestamp": "2025-09-29T15:51:16.518701"
     },
     {
       "test_name": "Memory Retention Analysis",
@@ -148,8 +148,8 @@
         }
       },
       "error": null,
-      "execution_time_ms": 0.802001953125,
-      "timestamp": "2025-09-29T14:04:48.108181"
+      "execution_time_ms": 0.65771484375,
+      "timestamp": "2025-09-29T15:51:16.519366"
     },
     {
       "test_name": "Comprehensive Analytics Integration",
@@ -167,8 +167,8 @@
         }
       },
       "error": null,
-      "execution_time_ms": 0.859130859375,
-      "timestamp": "2025-09-29T14:04:48.109044"
+      "execution_time_ms": 0.927978515625,
+      "timestamp": "2025-09-29T15:51:16.520299"
     },
     {
       "test_name": "Performance Benchmarks",
@@ -176,8 +176,8 @@
       "details": "Performance benchmarks met: 2/2 checks passed",
       "data": {
         "benchmarks_ms": {
-          "conversation_analytics": 0.4222393035888672,
-          "skill_analytics": 0.3719329833984375
+          "conversation_analytics": 0.5121231079101562,
+          "skill_analytics": 0.4038810729980469
         },
         "thresholds_ms": {
           "conversation_analytics": 500,
@@ -185,8 +185,8 @@
         }
       },
       "error": null,
-      "execution_time_ms": 0.797119140625,
-      "timestamp": "2025-09-29T14:04:48.109850"
+      "execution_time_ms": 0.919189453125,
+      "timestamp": "2025-09-29T15:51:16.521230"
     },
     {
       "test_name": "Error Recovery",
@@ -200,8 +200,8 @@
         }
       },
       "error": null,
-      "execution_time_ms": 0.933837890625,
-      "timestamp": "2025-09-29T14:04:48.110795"
+      "execution_time_ms": 1.037109375,
+      "timestamp": "2025-09-29T15:51:16.522272"
     }
   ]
 }
