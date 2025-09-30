@@ -36,7 +36,7 @@ python scripts/validate_environment.py
 
 2. **Read Current Status**: Load and analyze `docs/TASK_TRACKER.json` to understand current phase, task, and progress
 
-3. **Check Previous Session Handover**: Review `docs/SESSION_HANDOVER.md` and `docs/SESSION_HANDOVER_TASK_3_2_COMPLETE.md` if these exists from the last session
+3. **Check Previous Session Handover**: Review `docs/SESSION_HANDOVER.md` and `docs/session_handover_2025-09-30_task-4.1.md` if these exists from the last session
 
 4. **Validate Previous Work**:
    - Check if the previous session's work was completed and validated according to quality gates
