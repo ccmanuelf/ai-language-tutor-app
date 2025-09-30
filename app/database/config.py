@@ -118,16 +118,29 @@ class DatabaseManager:
 
     @property
     def sqlite_engine(self) -> Engine:
-        """Get or create SQLite engine"""
+        """Get or create SQLite engine with optimized connection pooling"""
         if self._sqlite_engine is None:
+            # Use QueuePool for better performance with multiple connections
+            # StaticPool is only suitable for single-threaded applications
             self._sqlite_engine = create_engine(
                 self.config.sqlite_url,
-                poolclass=StaticPool,
+                poolclass=QueuePool,
+                pool_size=self.config.POOL_SIZE,  # 10 connections
+                max_overflow=self.config.MAX_OVERFLOW,  # 20 additional connections
+                pool_timeout=self.config.POOL_TIMEOUT,  # 30 seconds
+                pool_pre_ping=True,  # Verify connections before using
+                pool_recycle=3600,  # Recycle connections after 1 hour
                 connect_args={
                     "check_same_thread": False,
                     "timeout": 20,
+                    # SQLite performance optimizations
+                    "isolation_level": None,  # Autocommit mode for better concurrency
                 },
                 echo=get_settings().DEBUG,
+                # Additional performance settings
+                execution_options={
+                    "compiled_cache": {},  # Enable query compilation caching
+                },
             )
         return self._sqlite_engine
 
@@ -255,23 +268,34 @@ class DatabaseManager:
 
     def get_connection_stats(self) -> Dict[str, Any]:
         """Get connection statistics and monitoring data"""
+        pool_status = None
+        if self._sqlite_engine:
+            # StaticPool doesn't have size/checked_out/checked_in methods
+            # Only QueuePool has these methods
+            pool_type = type(self.sqlite_engine.pool).__name__
+            if pool_type == "StaticPool":
+                pool_status = {
+                    "pool_type": "StaticPool",
+                    "note": "StaticPool maintains single connection, no pool metrics",
+                }
+            else:
+                # QueuePool or other pool types
+                try:
+                    pool_status = {
+                        "pool_type": pool_type,
+                        "size": self.sqlite_engine.pool.size(),
+                        "checked_out": self.sqlite_engine.pool.checkedout(),
+                        "checked_in": self.sqlite_engine.pool.checkedin(),
+                    }
+                except AttributeError:
+                    pool_status = {
+                        "pool_type": pool_type,
+                        "note": "Pool metrics not available for this pool type",
+                    }
+
         return {
             "connection_stats": self._connection_stats.copy(),
-            "pool_status": {
-                "sqlite": {
-                    "size": self.sqlite_engine.pool.size()
-                    if self._sqlite_engine
-                    else 0,
-                    "checked_out": self.sqlite_engine.pool.checkedout()
-                    if self._sqlite_engine
-                    else 0,
-                    "checked_in": self.sqlite_engine.pool.checkedin()
-                    if self._sqlite_engine
-                    else 0,
-                }
-                if self._sqlite_engine
-                else None
-            },
+            "pool_status": {"sqlite": pool_status},
             "health_summary": self.get_health_summary(),
         }
 

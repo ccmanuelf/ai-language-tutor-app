@@ -1,0 +1,28 @@
+         1376 function calls in 0.001 seconds
+
+   Ordered by: cumulative time
+   List reduced from 264 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/database/config.py:185(test_sqlite_connection)
+        1    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/database/config.py:161(test_chromadb_connection)
+        1    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/lib/python3.12/site-packages/chromadb/api/client.py:134(list_collections)
+        1    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1372(execute)
+        1    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/lib/python3.12/site-packages/sqlalchemy/sql/elements.py:507(_execute_on_connection)
+        1    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1589(_execute_clauseelement)
+        1    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1790(_execute_context)
+        5    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/logging/__init__.py:1660(_log)
+        4    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/lib/python3.12/site-packages/sqlalchemy/engine/base.py:184(_log_info)
+        4    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/lib/python3.12/site-packages/sqlalchemy/log.py:156(info)
+        4    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/lib/python3.12/site-packages/sqlalchemy/log.py:185(log)
+        1    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/lib/python3.12/site-packages/chromadb/api/rust.py:180(list_collections)
+        5    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/lib/python3.12/site-packages/chromadb/api/models/CollectionCommon.py:114(__init__)
+        5    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/lib/python3.12/site-packages/chromadb/api/types.py:675(validate_embedding_function)
+       10    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/inspect.py:3325(signature)
+       10    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/inspect.py:3067(from_callable)
+        1    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1852(_exec_single_context)
+       10    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/inspect.py:2463(_signature_from_callable)
+        5    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/logging/__init__.py:1686(handle)
+        5    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/logging/__init__.py:1746(callHandlers)
+
+

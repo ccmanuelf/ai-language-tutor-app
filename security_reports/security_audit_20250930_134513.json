@@ -1,0 +1,137 @@
+{
+  "timestamp": "2025-09-30T13:45:12.967753",
+  "secrets_scan": {
+    "total_findings": 4,
+    "findings": [
+      {
+        "file": "app/frontend_main_backup.py",
+        "pattern": "secret",
+        "line": 1993
+      },
+      {
+        "file": "app/frontend_main_backup.py",
+        "pattern": "secret",
+        "line": 1998
+      },
+      {
+        "file": "app/frontend/admin_dashboard.py",
+        "pattern": "password",
+        "line": 247
+      },
+      {
+        "file": "app/services/admin_auth.py",
+        "pattern": "password",
+        "line": 408
+      }
+    ]
+  },
+  "sql_injection_check": {
+    "files_with_risks": 2,
+    "files": [
+      "app/services/tutor_mode_manager.py",
+      "app/database/local_config.py"
+    ]
+  },
+  "authentication_security": {
+    "has_password_hashing": true,
+    "has_jwt": true,
+    "has_rate_limiting": true,
+    "has_csrf_protection": false,
+    "issues": []
+  },
+  "input_validation": {
+    "uses_pydantic": true,
+    "potential_xss_risks": [],
+    "file_upload_risks": [
+      "app/services/sync.py"
+    ]
+  },
+  "dependency_vulnerabilities": {
+    "requirements_found": true,
+    "recommendation": "Run 'pip-audit' or 'safety check' for comprehensive vulnerability scanning"
+  },
+  "cors_configuration": {
+    "has_cors": true,
+    "allows_all_origins": true,
+    "issues": [
+      "allows_all_origins"
+    ]
+  },
+  "environment_variables": {
+    "has_env_example": true,
+    "env_in_gitignore": true,
+    "uses_env_vars": true
+  },
+  "findings": [
+    {
+      "severity": "high",
+      "category": "secrets",
+      "title": "Potential secret exposure",
+      "description": "Hardcoded secret detected",
+      "file_path": "app/frontend_main_backup.py",
+      "line_number": 1993,
+      "remediation": "Move secrets to environment variables or secure vault"
+    },
+    {
+      "severity": "high",
+      "category": "secrets",
+      "title": "Potential secret exposure",
+      "description": "Hardcoded secret detected",
+      "file_path": "app/frontend_main_backup.py",
+      "line_number": 1998,
+      "remediation": "Move secrets to environment variables or secure vault"
+    },
+    {
+      "severity": "high",
+      "category": "secrets",
+      "title": "Potential password exposure",
+      "description": "Hardcoded password detected",
+      "file_path": "app/frontend/admin_dashboard.py",
+      "line_number": 247,
+      "remediation": "Move secrets to environment variables or secure vault"
+    },
+    {
+      "severity": "high",
+      "category": "secrets",
+      "title": "Potential password exposure",
+      "description": "Hardcoded password detected",
+      "file_path": "app/services/admin_auth.py",
+      "line_number": 408,
+      "remediation": "Move secrets to environment variables or secure vault"
+    },
+    {
+      "severity": "high",
+      "category": "sql_injection",
+      "title": "Potential SQL injection vulnerability",
+      "description": "SQL query construction using unsafe string operations",
+      "file_path": "app/database/local_config.py",
+      "line_number": null,
+      "remediation": "Use parameterized queries or ORM methods"
+    },
+    {
+      "severity": "high",
+      "category": "sql_injection",
+      "title": "Potential SQL injection vulnerability",
+      "description": "SQL query construction using unsafe string operations",
+      "file_path": "app/services/tutor_mode_manager.py",
+      "line_number": null,
+      "remediation": "Use parameterized queries or ORM methods"
+    },
+    {
+      "severity": "medium",
+      "category": "cors",
+      "title": "Overly permissive CORS configuration",
+      "description": "CORS allows all origins (*)",
+      "file_path": "app/main.py",
+      "line_number": null,
+      "remediation": "Restrict CORS to specific trusted origins"
+    }
+  ],
+  "summary": {
+    "total_findings": 7,
+    "critical": 0,
+    "high": 6,
+    "medium": 1,
+    "low": 0
+  }
+}
