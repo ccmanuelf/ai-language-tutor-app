@@ -53,6 +53,10 @@ class UserProfileService:
     def __init__(self):
         self.auth_service = auth_service
 
+    def _get_session(self):
+        """Helper to get database session from generator"""
+        return next(get_db_session())
+
     # User CRUD Operations
     def create_user(
         self, user_data: UserCreate, password: Optional[str] = None
@@ -67,7 +71,7 @@ class UserProfileService:
         Returns:
             Created user data
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             # Check if user_id already exists
             existing_user = (
@@ -89,7 +93,7 @@ class UserProfileService:
                 user_id=user_data.user_id,
                 username=user_data.username,
                 email=user_data.email,
-                role=UserRole(user_data.role.value),
+                role=UserRole(user_data.role.value.upper()),
                 first_name=user_data.first_name,
                 last_name=user_data.last_name,
                 ui_language=user_data.ui_language,
@@ -122,8 +126,25 @@ class UserProfileService:
 
             session.commit()
 
-            # Convert to response schema
-            user_response = UserResponse.from_orm(user)
+            # Convert to response schema - need to convert role from DB enum (UPPERCASE) to API enum (lowercase)
+            user_dict = {
+                "id": user.id,
+                "user_id": user.user_id,
+                "username": user.username,
+                "email": user.email,
+                "role": UserRoleEnum(
+                    user.role.value.lower()
+                ),  # Convert ADMIN -> admin, CHILD -> child, PARENT -> parent
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "ui_language": user.ui_language,
+                "timezone": user.timezone,
+                "is_active": user.is_active,
+                "is_verified": user.is_verified,
+                "created_at": user.created_at,
+                "updated_at": user.updated_at,
+            }
+            user_response = UserResponse(**user_dict)
 
             logger.info(f"User created successfully: {user.user_id}")
             return user_response
@@ -152,7 +173,7 @@ class UserProfileService:
         Returns:
             User data or None if not found
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -177,7 +198,7 @@ class UserProfileService:
         Returns:
             Complete user profile
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -248,7 +269,7 @@ class UserProfileService:
         Returns:
             Updated user data
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -293,7 +314,7 @@ class UserProfileService:
         Returns:
             Success status
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -343,7 +364,7 @@ class UserProfileService:
         Returns:
             List of users
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             query = session.query(User)
 
@@ -384,7 +405,7 @@ class UserProfileService:
         Returns:
             Success status
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -459,7 +480,7 @@ class UserProfileService:
         Returns:
             List of user languages
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -500,7 +521,7 @@ class UserProfileService:
         Returns:
             Success status
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -540,7 +561,7 @@ class UserProfileService:
         Returns:
             Created progress record
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -606,7 +627,7 @@ class UserProfileService:
         Returns:
             Updated progress record
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -660,7 +681,7 @@ class UserProfileService:
         Returns:
             List of learning progress records
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -699,7 +720,7 @@ class UserProfileService:
         Returns:
             Success status
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -742,7 +763,7 @@ class UserProfileService:
         Returns:
             User preferences dictionary
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:
@@ -767,7 +788,7 @@ class UserProfileService:
         Returns:
             List of family members
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             # For this implementation, we'll look for users with similar email domain
             # or users created by the same parent (this could be enhanced with explicit family relationships)
@@ -811,7 +832,7 @@ class UserProfileService:
         Returns:
             User statistics dictionary
         """
-        session = get_db_session()
+        session = self._get_session()
         try:
             user = session.query(User).filter(User.user_id == user_id).first()
             if not user:

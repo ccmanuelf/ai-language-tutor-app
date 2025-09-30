@@ -1,0 +1,37 @@
+{
+  "user_access": {
+    "test_user_integration": {
+      "analysis_progress_analytics": {
+        "user_id": "test_user_integration",
+        "feature_id": "analysis_progress_analytics",
+        "enabled": true,
+        "override_global": true,
+        "override_reason": null,
+        "override_expires": null,
+        "granted_at": "2025-09-30T09:07:08.942800",
+        "granted_by": null,
+        "last_used": null,
+        "usage_count": 0
+      }
+    },
+    "test_user_isolation_1": {
+      "analysis_progress_analytics": {
+        "user_id": "test_user_isolation_1",
+        "feature_id": "analysis_progress_analytics",
+        "enabled": true,
+        "override_global": true,
+        "override_reason": null,
+        "override_expires": null,
+        "granted_at": "2025-09-30T09:07:09.843117",
+        "granted_by": null,
+        "last_used": null,
+        "usage_count": 0
+      }
+    }
+  },
+  "metadata": {
+    "total_users": 2,
+    "last_updated": "2025-09-30T09:07:09.843144",
+    "version": "1.0"
+  }
+}

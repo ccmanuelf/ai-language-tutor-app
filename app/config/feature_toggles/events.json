@@ -1,0 +1,271 @@
+{
+  "events": [
+    {
+      "id": "d42a43ef-d108-497c-b0d7-641d0f862339",
+      "feature_id": "analysis_advanced_speech_analysis",
+      "event_type": "created",
+      "previous_state": null,
+      "new_state": {
+        "status": "enabled",
+        "enabled": true
+      },
+      "change_reason": null,
+      "user_id": "system",
+      "environment": "development",
+      "ip_address": null,
+      "user_agent": null,
+      "timestamp": "2025-09-30T08:26:17.864958"
+    },
+    {
+      "id": "2f0f9caa-d2a8-427d-9f13-63ef01cf1d6b",
+      "feature_id": "scenarios_conversation_scenarios",
+      "event_type": "created",
+      "previous_state": null,
+      "new_state": {
+        "status": "enabled",
+        "enabled": true
+      },
+      "change_reason": null,
+      "user_id": "system",
+      "environment": "development",
+      "ip_address": null,
+      "user_agent": null,
+      "timestamp": "2025-09-30T08:26:17.865085"
+    },
+    {
+      "id": "4e96ba09-ae45-4bf3-a9d7-087a9912caa4",
+      "feature_id": "tutor_modes_ai_tutor_mode",
+      "event_type": "created",
+      "previous_state": null,
+      "new_state": {
+        "status": "enabled",
+        "enabled": true
+      },
+      "change_reason": null,
+      "user_id": "system",
+      "environment": "development",
+      "ip_address": null,
+      "user_agent": null,
+      "timestamp": "2025-09-30T08:26:17.865100"
+    },
+    {
+      "id": "ce0981f1-322e-4cd7-9f4f-f1fd7dbcb316",
+      "feature_id": "analysis_spaced_repetition_system",
+      "event_type": "created",
+      "previous_state": null,
+      "new_state": {
+        "status": "enabled",
+        "enabled": true
+      },
+      "change_reason": null,
+      "user_id": "system",
+      "environment": "development",
+      "ip_address": null,
+      "user_agent": null,
+      "timestamp": "2025-09-30T08:26:17.865114"
+    },
+    {
+      "id": "d49b6c60-6911-4ef3-a1de-f2413e99c65d",
+      "feature_id": "ui_components_admin_dashboard",
+      "event_type": "created",
+      "previous_state": null,
+      "new_state": {
+        "status": "enabled",
+        "enabled": true
+      },
+      "change_reason": null,
+      "user_id": "system",
+      "environment": "development",
+      "ip_address": null,
+      "user_agent": null,
+      "timestamp": "2025-09-30T08:26:17.865127"
+    },
+    {
+      "id": "548ea2b1-329d-48e8-8643-78b2e4f1de41",
+      "feature_id": "experimental_experimental_voice_cloning",
+      "event_type": "created",
+      "previous_state": null,
+      "new_state": {
+        "status": "disabled",
+        "enabled": true
+      },
+      "change_reason": null,
+      "user_id": "system",
+      "environment": "development",
+      "ip_address": null,
+      "user_agent": null,
+      "timestamp": "2025-09-30T08:26:17.865138"
+    },
+    {
+      "id": "04d8ed09-56d1-4a17-a9e3-d8fafb7901d1",
+      "feature_id": "integrations_real-time_translation",
+      "event_type": "created",
+      "previous_state": null,
+      "new_state": {
+        "status": "enabled",
+        "enabled": true
+      },
+      "change_reason": null,
+      "user_id": "system",
+      "environment": "development",
+      "ip_address": null,
+      "user_agent": null,
+      "timestamp": "2025-09-30T08:26:17.865152"
+    },
+    {
+      "id": "a8e62359-9bcd-40f5-9517-02a2d1024e96",
+      "feature_id": "analysis_progress_analytics",
+      "event_type": "created",
+      "previous_state": null,
+      "new_state": {
+        "status": "enabled",
+        "enabled": true
+      },
+      "change_reason": null,
+      "user_id": "system",
+      "environment": "development",
+      "ip_address": null,
+      "user_agent": null,
+      "timestamp": "2025-09-30T08:26:17.865163"
+    },
+    {
+      "id": "07761577-756a-48e4-992e-379be5c0ad4d",
+      "feature_id": "analysis_progress_analytics",
+      "event_type": "updated",
+      "previous_state": {
+        "id": "analysis_progress_analytics",
+        "name": "Progress Analytics",
+        "description": "Detailed learning progress analytics and insights",
+        "category": "analysis",
+        "scope": "global",
+        "status": "enabled",
+        "enabled_by_default": true,
+        "requires_admin": false,
+        "experimental": false,
+        "conditions": [],
+        "target_users": [],
+        "target_roles": [],
+        "rollout_percentage": 0.0,
+        "created_at": "2025-09-30T08:26:17.865154",
+        "updated_at": "2025-09-30T08:26:17.865154",
+        "created_by": "system",
+        "updated_by": null,
+        "dependencies": [],
+        "conflicts": [],
+        "environments": {
+          "development": true,
+          "staging": false,
+          "production": false
+        },
+        "usage_tracking": true,
+        "metrics": {}
+      },
+      "new_state": {
+        "id": "analysis_progress_analytics",
+        "name": "Progress Analytics",
+        "description": "Detailed learning progress analytics and insights",
+        "category": "analysis",
+        "scope": "global",
+        "status": "disabled",
+        "enabled_by_default": true,
+        "requires_admin": false,
+        "experimental": false,
+        "conditions": [],
+        "target_users": [],
+        "target_roles": [],
+        "rollout_percentage": 0.0,
+        "created_at": "2025-09-30T08:26:17.865154",
+        "updated_at": "2025-09-30T08:26:17.865712",
+        "created_by": "system",
+        "updated_by": null,
+        "dependencies": [],
+        "conflicts": [],
+        "environments": {
+          "development": true,
+          "staging": false,
+          "production": false
+        },
+        "usage_tracking": true,
+        "metrics": {}
+      },
+      "change_reason": "Feature toggle updated",
+      "user_id": null,
+      "environment": "development",
+      "ip_address": null,
+      "user_agent": null,
+      "timestamp": "2025-09-30T08:26:17.866083"
+    },
+    {
+      "id": "b6056b21-12a5-4492-ad3c-610cb1b0dfc1",
+      "feature_id": "analysis_progress_analytics",
+      "event_type": "updated",
+      "previous_state": {
+        "id": "analysis_progress_analytics",
+        "name": "Progress Analytics",
+        "description": "Detailed learning progress analytics and insights",
+        "category": "analysis",
+        "scope": "global",
+        "status": "disabled",
+        "enabled_by_default": true,
+        "requires_admin": false,
+        "experimental": false,
+        "conditions": [],
+        "target_users": [],
+        "target_roles": [],
+        "rollout_percentage": 0.0,
+        "created_at": "2025-09-30T08:26:17.865154",
+        "updated_at": "2025-09-30T08:26:17.865712",
+        "created_by": "system",
+        "updated_by": null,
+        "dependencies": [],
+        "conflicts": [],
+        "environments": {
+          "development": true,
+          "staging": false,
+          "production": false
+        },
+        "usage_tracking": true,
+        "metrics": {}
+      },
+      "new_state": {
+        "id": "analysis_progress_analytics",
+        "name": "Progress Analytics",
+        "description": "Detailed learning progress analytics and insights",
+        "category": "analysis",
+        "scope": "global",
+        "status": "enabled",
+        "enabled_by_default": true,
+        "requires_admin": false,
+        "experimental": false,
+        "conditions": [],
+        "target_users": [],
+        "target_roles": [],
+        "rollout_percentage": 0.0,
+        "created_at": "2025-09-30T08:26:17.865154",
+        "updated_at": "2025-09-30T08:26:17.866378",
+        "created_by": "system",
+        "updated_by": null,
+        "dependencies": [],
+        "conflicts": [],
+        "environments": {
+          "development": true,
+          "staging": false,
+          "production": false
+        },
+        "usage_tracking": true,
+        "metrics": {}
+      },
+      "change_reason": "Feature toggle updated",
+      "user_id": null,
+      "environment": "development",
+      "ip_address": null,
+      "user_agent": null,
+      "timestamp": "2025-09-30T08:26:17.866641"
+    }
+  ],
+  "metadata": {
+    "total_events": 10,
+    "last_updated": "2025-09-30T08:26:17.866742",
+    "version": "1.0"
+  }
+}
