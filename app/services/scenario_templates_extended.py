@@ -11,7 +11,7 @@ Tier 4: Advanced Topics (26-32)
 """
 
 from typing import List, Dict, Any
-from app.services.scenario_manager import (
+from app.services.scenario_models import (
     UniversalScenarioTemplate,
     ScenarioCategory,
     ScenarioDifficulty,
