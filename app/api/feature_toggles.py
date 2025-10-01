@@ -22,12 +22,12 @@ from app.models.feature_toggle import (
     FeatureToggleCategory,
 )
 from app.services.feature_toggle_service import get_feature_toggle_service
-from app.core.auth import (
+from app.services.admin_auth import (
     get_current_admin_user,
     AdminPermission,
     check_admin_permission,
 )
-from app.models.user import User
+from app.models.database import User
 
 router = APIRouter(prefix="/api/admin/feature-toggles", tags=["Feature Toggles"])
 security = HTTPBearer()

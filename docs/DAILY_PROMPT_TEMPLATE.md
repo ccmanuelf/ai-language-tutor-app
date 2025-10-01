@@ -34,7 +34,7 @@ python scripts/validate_environment.py
    - Verify 5/5 checks pass (Python, dependencies, directory, models, services)
    - If any failures, fix before proceeding
 
-2. **Read Current Status**: Load and analyze `docs/TASK_TRACKER.json` to understand current phase, task, and progress
+2. **Read Current Status**: Load and analyze `docs/TASK_TRACKER.json` and `docs/TASK_4.2_RESTRUCTURE.md` and `docs/TASK_4.2.2_REFACTORING_PLAN.md` to understand current phase, task, and progress
 
 3. **Check Previous Session Handover**: Review `docs/SESSION_HANDOVER.md` and `docs/session_handover_2025-09-30_task-4.1.md` if these exists from the last session
 

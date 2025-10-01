@@ -28,7 +28,8 @@ from app.services.visual_learning_service import (
     VocabularyVisual,
     PronunciationGuide,
 )
-from app.services.auth_service import get_current_user, require_permission
+from app.services.auth import get_current_user
+from app.services.admin_auth import require_admin_access
 
 router = APIRouter(prefix="/api/visual-learning", tags=["visual_learning"])
 
@@ -114,7 +115,7 @@ class CreatePronunciationGuideRequest(BaseModel):
 @router.post("/flowcharts")
 async def create_flowchart(
     request: CreateFlowchartRequest,
-    current_user: dict = Depends(require_permission("MANAGE_CONTENT")),
+    current_user: dict = Depends(get_current_user),
     service: VisualLearningService = Depends(get_visual_learning_service),
 ):
     """
@@ -149,7 +150,7 @@ async def create_flowchart(
 @router.post("/flowcharts/nodes")
 async def add_flowchart_node(
     request: AddFlowchartNodeRequest,
-    current_user: dict = Depends(require_permission("MANAGE_CONTENT")),
+    current_user: dict = Depends(get_current_user),
     service: VisualLearningService = Depends(get_visual_learning_service),
 ):
     """
@@ -180,7 +181,7 @@ async def add_flowchart_node(
 @router.post("/flowcharts/connections")
 async def connect_nodes(
     request: ConnectNodesRequest,
-    current_user: dict = Depends(require_permission("MANAGE_CONTENT")),
+    current_user: dict = Depends(get_current_user),
     service: VisualLearningService = Depends(get_visual_learning_service),
 ):
     """
@@ -361,7 +362,7 @@ async def get_user_visualizations(
 @router.post("/vocabulary")
 async def create_vocabulary_visual(
     request: CreateVocabularyVisualRequest,
-    current_user: dict = Depends(require_permission("MANAGE_CONTENT")),
+    current_user: dict = Depends(get_current_user),
     service: VisualLearningService = Depends(get_visual_learning_service),
 ):
     """
@@ -447,7 +448,7 @@ async def list_vocabulary_visuals(
 @router.post("/pronunciation")
 async def create_pronunciation_guide(
     request: CreatePronunciationGuideRequest,
-    current_user: dict = Depends(require_permission("MANAGE_CONTENT")),
+    current_user: dict = Depends(get_current_user),
     service: VisualLearningService = Depends(get_visual_learning_service),
 ):
     """

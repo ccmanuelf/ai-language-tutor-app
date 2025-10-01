@@ -1,0 +1,636 @@
+{
+  "timestamp": "2025-09-30T14:11:28.297878",
+  "system_info": {
+    "cpu_count": 11,
+    "memory_total_gb": 18.0,
+    "memory_available_gb": 4.4735260009765625
+  },
+  "database_performance": {
+    "connection_tests": {
+      "chromadb": {
+        "status": "healthy",
+        "response_time_ms": 82.48,
+        "heartbeat": 1759259488380431000,
+        "collections_count": 5
+      },
+      "duckdb": {
+        "status": "healthy",
+        "response_time_ms": 51.4,
+        "timestamp": "2025-09-30 14:11:28.387782-05:00",
+        "database_path": "./data/local/app.duckdb"
+      },
+      "sqlite": {
+        "status": "healthy",
+        "response_time_ms": 5.57,
+        "timestamp": "2025-09-30 19:11:28",
+        "database_path": "sqlite:///./data/ai_language_tutor.db"
+      }
+    },
+    "query_performance": {
+      "simple_select": "success",
+      "timestamp_query": "success",
+      "table_list": "success"
+    },
+    "connection_pool_status": {
+      "connection_stats": {
+        "sqlite": {
+          "connects": 0,
+          "errors": 0,
+          "last_check": null
+        },
+        "chromadb": {
+          "connects": 0,
+          "errors": 0,
+          "last_check": 1759259488.444045
+        },
+        "duckdb": {
+          "connects": 0,
+          "errors": 0,
+          "last_check": 1759259488.444502
+        }
+      },
+      "pool_status": {
+        "sqlite": {
+          "pool_type": "QueuePool",
+          "size": 10,
+          "checked_out": 0,
+          "checked_in": 1
+        }
+      },
+      "health_summary": {
+        "chromadb": "healthy",
+        "duckdb": "healthy",
+        "sqlite": "healthy",
+        "overall": "healthy"
+      }
+    }
+  },
+  "cache_performance": {
+    "stats": {
+      "entries": 0,
+      "max_entries": 1000,
+      "hit_rate": 0,
+      "total_requests": 0,
+      "hits": 0,
+      "misses": 0,
+      "evictions": 0,
+      "total_size_bytes": 0,
+      "type_distribution": {},
+      "avg_entry_size": 0
+    },
+    "test_operations": [
+      {
+        "get": false,
+        "set": false
+      },
+      {
+        "get": false,
+        "set": false
+      },
+      {
+        "get": false,
+        "set": false
+      }
+    ]
+  },
+  "memory_analysis": {
+    "total_memory_mb": 246.671875,
+    "baseline_memory_mb": 226.078125,
+    "memory_increase_mb": 20.59375,
+    "top_memory_consumers": [
+      {
+        "file": "/opt/anaconda3/lib/python3.12/tracemalloc.py:560",
+        "size_mb": 0.00029754638671875,
+        "count": 2
+      },
+      {
+        "file": "/opt/anaconda3/lib/python3.12/tracemalloc.py:423",
+        "size_mb": 0.00029754638671875,
+        "count": 2
+      },
+      {
+        "file": "/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/scripts/performance_profiler.py:96",
+        "size_mb": 0.00020599365234375,
+        "count": 2
+      },
+      {
+        "file": "/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/scripts/performance_profiler.py:205",
+        "size_mb": 0.00019073486328125,
+        "count": 1
+      },
+      {
+        "file": "/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/scripts/performance_profiler.py:203",
+        "size_mb": 0.000152587890625,
+        "count": 4
+      },
+      {
+        "file": "/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/scripts/performance_profiler.py:204",
+        "size_mb": 0.000152587890625,
+        "count": 1
+      },
+      {
+        "file": "/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/scripts/performance_profiler.py:76",
+        "size_mb": 0.000152587890625,
+        "count": 1
+      },
+      {
+        "file": "/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/scripts/performance_profiler.py:102",
+        "size_mb": 6.389617919921875e-05,
+        "count": 1
+      },
+      {
+        "file": "/opt/anaconda3/lib/python3.12/site-packages/psutil/__init__.py:1100",
+        "size_mb": 2.288818359375e-05,
+        "count": 1
+      },
+      {
+        "file": "/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/scripts/performance_profiler.py:100",
+        "size_mb": 2.288818359375e-05,
+        "count": 1
+      }
+    ]
+  },
+  "algorithm_complexity": {
+    "file_analysis": [
+      {
+        "file": "app/services/scenario_manager.py",
+        "lines": 2397,
+        "nested_loop_indicator": 1377,
+        "nested_conditional_indicator": 2255,
+        "complexity_score": 3632
+      },
+      {
+        "file": "app/services/spaced_repetition_manager.py",
+        "lines": 1294,
+        "nested_loop_indicator": 186,
+        "nested_conditional_indicator": 2340,
+        "complexity_score": 2526
+      },
+      {
+        "file": "app/services/conversation_manager.py",
+        "lines": 908,
+        "nested_loop_indicator": 90,
+        "nested_conditional_indicator": 1408,
+        "complexity_score": 1498
+      },
+      {
+        "file": "app/services/ai_router.py",
+        "lines": 776,
+        "nested_loop_indicator": 58,
+        "nested_conditional_indicator": 1232,
+        "complexity_score": 1290
+      },
+      {
+        "file": "app/database/config.py",
+        "lines": 437,
+        "nested_loop_indicator": 40,
+        "nested_conditional_indicator": 108,
+        "complexity_score": 148
+      }
+    ],
+    "recommendations": [
+      {
+        "file": "app/services/scenario_manager.py",
+        "issue": "High algorithmic complexity detected",
+        "suggestion": "Consider refactoring nested loops and conditionals"
+      },
+      {
+        "file": "app/services/spaced_repetition_manager.py",
+        "issue": "High algorithmic complexity detected",
+        "suggestion": "Consider refactoring nested loops and conditionals"
+      },
+      {
+        "file": "app/services/conversation_manager.py",
+        "issue": "High algorithmic complexity detected",
+        "suggestion": "Consider refactoring nested loops and conditionals"
+      }
+    ]
+  },
+  "code_hotspots": {
+    "profile_file": "performance_reports/profile_20250930_141128.txt",
+    "top_functions": [
+      "         1404 function calls in 0.001 seconds",
+      "",
+      "   Ordered by: cumulative time",
+      "   List reduced from 279 to 20 due to restriction <20>",
+      "",
+      "   ncalls  tottime  percall  cumtime  percall filename:lineno(function)",
+      "        1    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/database/config.py:198(test_sqlite_connection)",
+      "        1    0.000    0.000    0.000    0.000 /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/app/database/config.py:174(test_chromadb_connection)",
+      "        1    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/site-packages/chromadb/api/client.py:134(list_collections)",
+      "        1    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1374(execute)",
+      "        1    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/sql/elements.py:506(_execute_on_connection)",
+      "        1    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1590(_execute_clauseelement)",
+      "        1    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1791(_execute_context)",
+      "        5    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/logging/__init__.py:1660(_log)",
+      "        4    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py:181(_log_info)",
+      "        4    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/log.py:156(info)",
+      "        4    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/log.py:185(log)",
+      "        5    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/site-packages/chromadb/api/models/CollectionCommon.py:114(__init__)",
+      "        5    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/site-packages/chromadb/api/types.py:708(validate_embedding_function)",
+      "        1    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/site-packages/chromadb/api/rust.py:182(list_collections)",
+      "       10    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/inspect.py:3325(signature)",
+      "       10    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/inspect.py:3067(from_callable)",
+      "       10    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/inspect.py:2463(_signature_from_callable)",
+      "        1    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1850(_exec_single_context)",
+      "        5    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/logging/__init__.py:1686(handle)",
+      "        5    0.000    0.000    0.000    0.000 /opt/anaconda3/lib/python3.12/logging/__init__.py:1746(callHandlers)",
+      "",
+      "",
+      ""
+    ]
+  },
+  "monolithic_analysis": {
+    "large_files": [
+      {
+        "file": "app/frontend_main_corrupted.py",
+        "lines": 2628,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/services/scenario_templates_extended.py",
+        "lines": 2614,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/services/scenario_manager.py",
+        "lines": 2397,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/frontend_main_backup.py",
+        "lines": 2087,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/frontend/chat.py",
+        "lines": 1682,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/frontend/progress_analytics_dashboard.py",
+        "lines": 1647,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/services/speech_processor.py",
+        "lines": 1595,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/frontend/admin_scenario_management.py",
+        "lines": 1449,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/frontend/home.py",
+        "lines": 1385,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/services/progress_analytics_service.py",
+        "lines": 1383,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/services/spaced_repetition_manager.py",
+        "lines": 1294,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/frontend/admin_feature_toggles.py",
+        "lines": 1176,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/frontend/admin_learning_analytics.py",
+        "lines": 1160,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/services/content_processor.py",
+        "lines": 1101,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/frontend/admin_ai_models.py",
+        "lines": 1002,
+        "risk_level": "high"
+      },
+      {
+        "file": "app/services/ai_model_manager.py",
+        "lines": 973,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/frontend/styles.py",
+        "lines": 938,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/services/feature_toggle_service.py",
+        "lines": 935,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/services/user_management.py",
+        "lines": 913,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/services/conversation_manager.py",
+        "lines": 908,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/frontend/learning_analytics_dashboard.py",
+        "lines": 876,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/api/progress_analytics.py",
+        "lines": 872,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/frontend/admin_language_config.py",
+        "lines": 864,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/services/realtime_analyzer.py",
+        "lines": 856,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/api/language_config_original.py",
+        "lines": 847,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/services/tutor_mode_manager.py",
+        "lines": 778,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/services/ai_router.py",
+        "lines": 776,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/api/ai_models.py",
+        "lines": 771,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/api/scenario_management.py",
+        "lines": 758,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/models/database.py",
+        "lines": 703,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/frontend/visual_learning.py",
+        "lines": 694,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/services/visual_learning_service.py",
+        "lines": 668,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/api/scenarios.py",
+        "lines": 646,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/services/budget_manager.py",
+        "lines": 642,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/frontend/admin_dashboard.py",
+        "lines": 622,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/api/feature_toggles.py",
+        "lines": 616,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/services/sync.py",
+        "lines": 611,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/api/admin.py",
+        "lines": 603,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/api/learning_analytics.py",
+        "lines": 591,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/frontend/admin_routes.py",
+        "lines": 577,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/services/auth.py",
+        "lines": 570,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/frontend/profile.py",
+        "lines": 566,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/database/local_config.py",
+        "lines": 562,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/database/migrations.py",
+        "lines": 551,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/api/visual_learning.py",
+        "lines": 538,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/api/content.py",
+        "lines": 537,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/services/ollama_service.py",
+        "lines": 528,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/frontend/user_ui.py",
+        "lines": 511,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/services/feature_toggle_manager.py",
+        "lines": 507,
+        "risk_level": "medium"
+      },
+      {
+        "file": "app/api/realtime_analysis.py",
+        "lines": 502,
+        "risk_level": "medium"
+      }
+    ],
+    "god_objects": [],
+    "recommendations": [
+      {
+        "file": "app/frontend_main_corrupted.py",
+        "issue": "Large file detected (2628 lines)",
+        "suggestion": "Consider splitting into smaller, focused modules"
+      },
+      {
+        "file": "app/services/scenario_templates_extended.py",
+        "issue": "Large file detected (2614 lines)",
+        "suggestion": "Consider splitting into smaller, focused modules"
+      },
+      {
+        "file": "app/services/scenario_manager.py",
+        "issue": "Large file detected (2397 lines)",
+        "suggestion": "Consider splitting into smaller, focused modules"
+      },
+      {
+        "file": "app/frontend_main_backup.py",
+        "issue": "Large file detected (2087 lines)",
+        "suggestion": "Consider splitting into smaller, focused modules"
+      },
+      {
+        "file": "app/frontend/chat.py",
+        "issue": "Large file detected (1682 lines)",
+        "suggestion": "Consider splitting into smaller, focused modules"
+      }
+    ]
+  },
+  "metrics": [
+    {
+      "component": "database",
+      "operation": "connection_health_check",
+      "duration_ms": 141.42894744873047,
+      "memory_mb": 20.484375,
+      "cpu_percent": 62.2,
+      "timestamp": "2025-09-30T14:11:28.439399",
+      "details": null
+    },
+    {
+      "component": "database",
+      "operation": "query_simple_select",
+      "duration_ms": 0.26106834411621094,
+      "memory_mb": 0.0,
+      "cpu_percent": 100.0,
+      "timestamp": "2025-09-30T14:11:28.439765",
+      "details": null
+    },
+    {
+      "component": "database",
+      "operation": "query_timestamp_query",
+      "duration_ms": 0.13017654418945312,
+      "memory_mb": 0.0,
+      "cpu_percent": 100.0,
+      "timestamp": "2025-09-30T14:11:28.439930",
+      "details": null
+    },
+    {
+      "component": "database",
+      "operation": "query_table_list",
+      "duration_ms": 0.13828277587890625,
+      "memory_mb": 0.0,
+      "cpu_percent": 100.0,
+      "timestamp": "2025-09-30T14:11:28.440098",
+      "details": null
+    },
+    {
+      "component": "cache",
+      "operation": "get_stats",
+      "duration_ms": 0.013113021850585938,
+      "memory_mb": 0.0,
+      "cpu_percent": 98.7,
+      "timestamp": "2025-09-30T14:11:28.440907",
+      "details": null
+    },
+    {
+      "component": "cache",
+      "operation": "get_operation_0",
+      "duration_ms": 0.04792213439941406,
+      "memory_mb": 0.0,
+      "cpu_percent": 100.1,
+      "timestamp": "2025-09-30T14:11:28.440988",
+      "details": null
+    },
+    {
+      "component": "cache",
+      "operation": "set_operation_0",
+      "duration_ms": 0.009059906005859375,
+      "memory_mb": 0.0,
+      "cpu_percent": 99.9,
+      "timestamp": "2025-09-30T14:11:28.441023",
+      "details": null
+    },
+    {
+      "component": "cache",
+      "operation": "get_operation_1",
+      "duration_ms": 0.01430511474609375,
+      "memory_mb": 0.0,
+      "cpu_percent": 100.7,
+      "timestamp": "2025-09-30T14:11:28.441065",
+      "details": null
+    },
+    {
+      "component": "cache",
+      "operation": "set_operation_1",
+      "duration_ms": 0.0069141387939453125,
+      "memory_mb": 0.0,
+      "cpu_percent": 96.9,
+      "timestamp": "2025-09-30T14:11:28.441094",
+      "details": null
+    },
+    {
+      "component": "cache",
+      "operation": "get_operation_2",
+      "duration_ms": 0.010013580322265625,
+      "memory_mb": 0.0,
+      "cpu_percent": 100.1,
+      "timestamp": "2025-09-30T14:11:28.441129",
+      "details": null
+    },
+    {
+      "component": "cache",
+      "operation": "set_operation_2",
+      "duration_ms": 0.0057220458984375,
+      "memory_mb": 0.0,
+      "cpu_percent": 98.4,
+      "timestamp": "2025-09-30T14:11:28.441157",
+      "details": null
+    },
+    {
+      "component": "memory",
+      "operation": "scenario_loading",
+      "duration_ms": 0.01811981201171875,
+      "memory_mb": 0.0,
+      "cpu_percent": 97.4,
+      "timestamp": "2025-09-30T14:11:28.441240",
+      "details": null
+    }
+  ],
+  "analysis_duration_seconds": 0.17052483558654785
+}

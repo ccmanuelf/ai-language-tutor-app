@@ -444,3 +444,49 @@ def get_admin_user_info() -> Optional[Dict[str, Any]]:
     except Exception as e:
         logger.error(f"Failed to get admin user info: {e}")
         return None
+
+
+# FastAPI Dependencies
+async def get_current_admin_user(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> User:
+    """FastAPI dependency to get current admin user"""
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
+
+    user_role = current_user.get("role")
+    if user_role not in [UserRoleEnum.ADMIN, UserRoleEnum.PARENT]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin or Parent access required",
+        )
+
+    # Return user-like dict compatible with User model
+    return current_user
+
+
+def check_admin_permission(permission: str):
+    """Decorator to check specific admin permission"""
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, current_user: Dict[str, Any] = None, **kwargs):
+            if not current_user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+                )
+
+            user_role = current_user.get("role")
+            if not admin_auth_service.has_permission(user_role, permission):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Permission denied: {permission}",
+                )
+
+            return await func(*args, current_user=current_user, **kwargs)
+
+        return wrapper
+
+    return decorator

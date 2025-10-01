@@ -26,7 +26,7 @@ import json
 
 from app.services.ai_model_manager import ai_model_manager, ModelCategory, ModelStatus
 from app.services.ai_router import ai_router
-from app.middleware.admin_middleware import require_admin_auth
+from app.services.admin_auth import require_admin_access
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class PerformanceReportRequest(BaseModel):
 
 
 @router.get("/overview")
-async def get_system_overview(admin_user=Depends(require_admin_auth)):
+async def get_system_overview(admin_user=Depends(require_admin_access)):
     """
     Get comprehensive system overview
 
@@ -103,7 +103,7 @@ async def get_models(
     status: Optional[str] = Query(None, description="Filter by status"),
     enabled_only: bool = Query(False, description="Show only enabled models"),
     search: Optional[str] = Query(None, description="Search in model names"),
-    admin_user=Depends(require_admin_auth),
+    admin_user=Depends(require_admin_access),
 ):
     """
     Get all AI models with filtering options
@@ -156,7 +156,7 @@ async def get_models(
 @router.get("/models/{model_id}")
 async def get_model(
     model_id: str = Path(..., description="Model ID"),
-    admin_user=Depends(require_admin_auth),
+    admin_user=Depends(require_admin_access),
 ):
     """
     Get specific model configuration and detailed statistics
@@ -200,7 +200,7 @@ async def get_model(
 async def update_model(
     model_id: str = Path(..., description="Model ID"),
     update_data: ModelUpdateRequest = Body(...),
-    admin_user=Depends(require_admin_auth),
+    admin_user=Depends(require_admin_access),
 ):
     """
     Update model configuration
@@ -250,7 +250,7 @@ async def update_model(
 @router.post("/models/{model_id}/toggle")
 async def toggle_model(
     model_id: str = Path(..., description="Model ID"),
-    admin_user=Depends(require_admin_auth),
+    admin_user=Depends(require_admin_access),
 ):
     """
     Toggle model enabled/disabled status
@@ -296,7 +296,7 @@ async def toggle_model(
 async def set_model_priority(
     model_id: str = Path(..., description="Model ID"),
     priority: int = Body(..., ge=1, le=10, description="Priority level (1-10)"),
-    admin_user=Depends(require_admin_auth),
+    admin_user=Depends(require_admin_access),
 ):
     """
     Set model priority for routing decisions
@@ -336,7 +336,7 @@ async def set_model_priority(
 async def get_performance_report(
     model_id: str = Path(..., description="Model ID"),
     days: int = Query(30, ge=1, le=365, description="Number of days for report"),
-    admin_user=Depends(require_admin_auth),
+    admin_user=Depends(require_admin_access),
 ):
     """
     Get detailed performance report for a model
@@ -370,7 +370,7 @@ async def get_performance_report(
 @router.post("/optimize")
 async def optimize_model_selection(
     request: ModelOptimizationRequest = Body(...),
-    admin_user=Depends(require_admin_auth),
+    admin_user=Depends(require_admin_access),
 ):
     """
     Get optimized model recommendations for specific use case
@@ -411,7 +411,7 @@ async def optimize_model_selection(
 
 
 @router.get("/health")
-async def get_health_status(admin_user=Depends(require_admin_auth)):
+async def get_health_status(admin_user=Depends(require_admin_access)):
     """
     Get comprehensive health status of all models and providers
 
@@ -430,7 +430,7 @@ async def get_health_status(admin_user=Depends(require_admin_auth)):
 
 
 @router.post("/health-check")
-async def run_health_check(admin_user=Depends(require_admin_auth)):
+async def run_health_check(admin_user=Depends(require_admin_access)):
     """
     Run comprehensive health check on all providers
 
@@ -480,7 +480,7 @@ async def get_usage_statistics(
     end_date: Optional[datetime] = Query(None, description="End date for statistics"),
     provider: Optional[str] = Query(None, description="Filter by provider"),
     model_id: Optional[str] = Query(None, description="Filter by specific model"),
-    admin_user=Depends(require_admin_auth),
+    admin_user=Depends(require_admin_access),
 ):
     """
     Get detailed usage statistics across models and providers
@@ -579,7 +579,7 @@ async def reset_usage_statistics(
         None, description="Specific model to reset, or all if not provided"
     ),
     confirm: bool = Body(False, description="Confirmation flag"),
-    admin_user=Depends(require_admin_auth),
+    admin_user=Depends(require_admin_access),
 ):
     """
     Reset usage statistics for models (admin only, requires confirmation)
@@ -632,7 +632,7 @@ async def reset_usage_statistics(
 async def export_model_data(
     format: str = Query("json", regex="^(json|csv)$", description="Export format"),
     include_stats: bool = Query(True, description="Include usage statistics"),
-    admin_user=Depends(require_admin_auth),
+    admin_user=Depends(require_admin_access),
 ):
     """
     Export model configuration and usage data
@@ -691,7 +691,7 @@ async def export_model_data(
 
 
 @router.get("/categories")
-async def get_model_categories(admin_user=Depends(require_admin_auth)):
+async def get_model_categories(admin_user=Depends(require_admin_access)):
     """
     Get all available model categories
 
@@ -718,7 +718,7 @@ async def get_model_categories(admin_user=Depends(require_admin_auth)):
 
 
 @router.get("/providers")
-async def get_providers(admin_user=Depends(require_admin_auth)):
+async def get_providers(admin_user=Depends(require_admin_access)):
     """
     Get all available providers with their status
 
@@ -756,15 +756,16 @@ async def get_providers(admin_user=Depends(require_admin_auth)):
         )
 
 
-# Register error handlers
-@router.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
-    """Handle HTTP exceptions with proper JSON response"""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "error": exc.detail,
-            "status_code": exc.status_code,
-            "timestamp": datetime.now().isoformat(),
-        },
-    )
+# Exception handling is done at app level, not router level
+# APIRouter doesn't have exception_handler decorator - that's only for FastAPI app instances
+# @router.exception_handler(HTTPException)
+# async def http_exception_handler(request, exc):
+#     """Handle HTTP exceptions with proper JSON response"""
+#     return JSONResponse(
+#         status_code=exc.status_code,
+#         content={
+#             "error": exc.detail,
+#             "status_code": exc.status_code,
+#             "timestamp": datetime.now().isoformat(),
+#         },
+#     )

@@ -31,7 +31,7 @@ from app.services.tutor_mode_manager import (
     DifficultyLevel,
     TutorModeCategory,
 )
-from app.services.user_management import get_current_user
+from app.services.auth import get_current_user
 from app.models.database import User
 
 logger = logging.getLogger(__name__)
