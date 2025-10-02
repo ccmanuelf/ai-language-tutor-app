@@ -179,7 +179,7 @@ class FeatureToggleService:
         try:
             features_data = []
             for feature in self._features.values():
-                feature_dict = feature.dict()
+                feature_dict = feature.model_dump()
                 # Convert datetime objects to ISO strings
                 for field in ["created_at", "updated_at"]:
                     if field in feature_dict and feature_dict[field]:
@@ -211,7 +211,7 @@ class FeatureToggleService:
             for user_id, access_dict in self._user_access.items():
                 user_access_data[user_id] = {}
                 for feature_id, access in access_dict.items():
-                    access_dict_data = access.dict()
+                    access_dict_data = access.model_dump()
                     # Convert datetime objects to ISO strings
                     for field in ["granted_at", "override_expires", "last_used"]:
                         if field in access_dict_data and access_dict_data[field]:
@@ -257,7 +257,7 @@ class FeatureToggleService:
         try:
             events_data = []
             for event in self._events[-1000:]:  # Keep only last 1000 events
-                event_dict = event.dict()
+                event_dict = event.model_dump()
                 # Recursively convert all datetime objects to ISO strings
                 event_dict = self._serialize_datetime_recursive(event_dict)
                 events_data.append(event_dict)
@@ -500,7 +500,7 @@ class FeatureToggleService:
         await self._record_event(
             feature_id=feature_id,
             event_type="created",
-            new_state=feature.dict(),
+            new_state=feature.model_dump(),
             user_id=created_by,
             change_reason="Feature toggle created",
         )
@@ -553,10 +553,10 @@ class FeatureToggleService:
             return None
 
         # Record previous state
-        previous_state = feature.dict()
+        previous_state = feature.model_dump()
 
         # Update fields
-        update_data = update_request.dict(exclude_unset=True)
+        update_data = update_request.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(feature, field, value)
 
@@ -570,7 +570,7 @@ class FeatureToggleService:
             feature_id=feature_id,
             event_type="updated",
             previous_state=previous_state,
-            new_state=feature.dict(),
+            new_state=feature.model_dump(),
             user_id=updated_by,
             change_reason="Feature toggle updated",
         )
@@ -593,7 +593,7 @@ class FeatureToggleService:
             return False
 
         # Record previous state
-        previous_state = feature.dict()
+        previous_state = feature.model_dump()
 
         # Remove feature
         del self._features[feature_id]
@@ -902,7 +902,7 @@ class FeatureToggleService:
             "features_by_category": by_category,
             "features_by_scope": by_scope,
             "features_by_environment": by_environment,
-            "recent_changes": [event.dict() for event in recent_changes],
+            "recent_changes": [event.model_dump() for event in recent_changes],
             "cache_size": len(self._feature_cache),
             "total_users_with_overrides": len(self._user_access),
             "total_events": len(self._events),

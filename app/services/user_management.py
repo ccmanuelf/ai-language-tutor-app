@@ -11,7 +11,7 @@ This module provides comprehensive user management functionality including:
 
 import logging
 from typing import Optional, List, Dict, Any, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import and_, or_, func
@@ -281,7 +281,7 @@ class UserProfileService:
                 if hasattr(user, field) and value is not None:
                     setattr(user, field, value)
 
-            user.updated_at = datetime.utcnow()
+            user.updated_at = datetime.now(timezone.utc)
             session.commit()
 
             # Update local profile
@@ -323,7 +323,7 @@ class UserProfileService:
             if soft_delete:
                 # Soft delete - deactivate user
                 user.is_active = False
-                user.updated_at = datetime.utcnow()
+                user.updated_at = datetime.now(timezone.utc)
                 session.commit()
                 logger.info(f"User soft deleted: {user_id}")
             else:
@@ -593,7 +593,7 @@ class UserProfileService:
                 target_level=progress_data.target_level,
                 status=LearningStatus.IN_PROGRESS,
                 goals=progress_data.goals or {},
-                started_at=datetime.utcnow(),
+                started_at=datetime.now(timezone.utc),
             )
 
             session.add(progress)
@@ -654,8 +654,8 @@ class UserProfileService:
                 if hasattr(progress, field) and value is not None:
                     setattr(progress, field, value)
 
-            progress.last_activity = datetime.utcnow()
-            progress.updated_at = datetime.utcnow()
+            progress.last_activity = datetime.now(timezone.utc)
+            progress.updated_at = datetime.now(timezone.utc)
 
             session.commit()
 
@@ -731,7 +731,7 @@ class UserProfileService:
             current_prefs.update(preferences)
 
             user.preferences = current_prefs
-            user.updated_at = datetime.utcnow()
+            user.updated_at = datetime.now(timezone.utc)
 
             session.commit()
 
@@ -854,7 +854,7 @@ class UserProfileService:
             total_sessions = sum(p.sessions_completed for p in progress_records)
 
             # Recent activity (last 30 days)
-            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+            thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
             recent_conversations = (
                 session.query(func.count())
                 .filter(
@@ -876,7 +876,7 @@ class UserProfileService:
                 "total_sessions_completed": total_sessions,
                 "recent_conversations_30d": recent_conversations or 0,
                 "languages_learning": len(self.get_user_languages(user_id)),
-                "account_age_days": (datetime.utcnow() - user.created_at).days,
+                "account_age_days": (datetime.now(timezone.utc) - user.created_at).days,
                 "last_login": user.last_login.isoformat() if user.last_login else None,
             }
 

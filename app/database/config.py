@@ -28,8 +28,13 @@ import chromadb
 from chromadb.config import Settings as ChromaSettings
 import duckdb
 import sqlite3
+
+# Register SQLite datetime adapters for Python 3.12+ compatibility
+from app.utils.sqlite_adapters import register_sqlite_adapters
+
+register_sqlite_adapters()
 from pydantic_settings import BaseSettings
-from pydantic import validator
+from pydantic import field_validator, ConfigDict
 from fastapi import Depends, HTTPException
 from app.core.config import get_settings
 
@@ -53,10 +58,7 @@ class DatabaseConfig(BaseSettings):
     MAX_OVERFLOW: int = 20
     POOL_TIMEOUT: int = 30
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-        extra = "ignore"
+    model_config = ConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 
     @property
     def sqlite_url(self) -> str:

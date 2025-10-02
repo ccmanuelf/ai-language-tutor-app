@@ -7,7 +7,7 @@ Tests the complete user management dashboard implementation.
 import sys
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import asyncio
 
 # Add the app directory to the Python path
@@ -177,8 +177,8 @@ def test_admin_api_models():
             role="CHILD",
             is_active=True,
             is_verified=True,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
             last_login=None,
         )
 
@@ -335,11 +335,11 @@ def test_guest_session_management():
         print("   ✅ Guest manager initialized with no active session")
 
         # Test creating guest session
-        guest_id = f"guest_{int(datetime.utcnow().timestamp())}"
+        guest_id = f"guest_{int(datetime.now(timezone.utc).timestamp())}"
         guest_manager.active_guest_session = guest_id
         guest_manager.guest_session_data = {
             "user_id": guest_id,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "status": "active",
         }
 
