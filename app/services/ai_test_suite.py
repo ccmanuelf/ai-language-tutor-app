@@ -211,10 +211,8 @@ class AIServicesTestSuite:
 
     async def test_conversation_manager(self):
         """Test conversation management functionality"""
-        from app.services.conversation_manager import (
-            conversation_manager,
-            LearningFocus,
-        )
+        from app.services.conversation_manager import conversation_manager
+        from app.services.conversation_models import LearningFocus
 
         conv_id = await conversation_manager.start_conversation(
             user_id="test_user",
@@ -264,10 +262,8 @@ class AIServicesTestSuite:
 
     async def test_conversation_flow(self):
         """Test complete conversation flow"""
-        from app.services.conversation_manager import (
-            conversation_manager,
-            LearningFocus,
-        )
+        from app.services.conversation_manager import conversation_manager
+        from app.services.conversation_models import LearningFocus
 
         conv_id = await conversation_manager.start_conversation(
             user_id="test_user_flow",
@@ -321,10 +317,8 @@ class AIServicesTestSuite:
 
     async def test_e2e_learning(self):
         """Test end-to-end learning session"""
-        from app.services.conversation_manager import (
-            conversation_manager,
-            LearningFocus,
-        )
+        from app.services.conversation_manager import conversation_manager
+        from app.services.conversation_models import LearningFocus
 
         conv_id = await conversation_manager.start_conversation(
             user_id="e2e_user",

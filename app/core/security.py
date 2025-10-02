@@ -4,10 +4,10 @@ Security utilities for AI Language Tutor App
 Provides JWT authentication, password hashing, and user session management.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Union
 from jose import jwt
-from passlib.context import CryptContext
+import bcrypt
 from fastapi import HTTPException, status, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -18,9 +18,6 @@ from app.models.simple_user import SimpleUser
 
 
 settings = get_settings()
-
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT Bearer token scheme
 security = HTTPBearer(auto_error=False)
@@ -35,10 +32,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Create JWT access token"""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -54,13 +53,20 @@ def verify_token(token: str) -> Optional[dict]:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify password against hash"""
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify password against hash using bcrypt (Python 3.13+ compatible)"""
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+        )
+    except Exception:
+        return False
 
 
 def get_password_hash(password: str) -> str:
-    """Hash password"""
-    return pwd_context.hash(password)
+    """Hash password using bcrypt (Python 3.13+ compatible)"""
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")
 
 
 def authenticate_user(db: Session, user_id: str, password: str) -> Optional[SimpleUser]:
@@ -78,28 +84,28 @@ def authenticate_user(db: Session, user_id: str, password: str) -> Optional[Simp
 
 def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    db: Session = Depends(get_primary_db_session)
+    db: Session = Depends(get_primary_db_session),
 ) -> Optional[SimpleUser]:
     """Get current user from JWT token"""
     if not credentials:
         return None
-    
+
     token = credentials.credentials
     payload = verify_token(token)
     if not payload:
         return None
-    
+
     user_id = payload.get("sub")
     if not user_id:
         return None
-    
+
     user = db.query(SimpleUser).filter(SimpleUser.user_id == user_id).first()
     return user
 
 
 def require_auth(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    db: Session = Depends(get_primary_db_session)
+    db: Session = Depends(get_primary_db_session),
 ) -> SimpleUser:
     """Require authentication - raises exception if not authenticated"""
     user = get_current_user(credentials, db)

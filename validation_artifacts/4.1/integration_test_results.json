@@ -1,40 +1,24 @@
 {
-  "total_tests": 42,
-  "passed": 42,
-  "failed": 0,
-  "errors": [],
-  "start_time": 1759241227.5550752,
-  "end_time": 1759241230.045516,
+  "total_tests": 28,
+  "passed": 25,
+  "failed": 3,
+  "errors": [
+    "Admin System Integration/Admin System Integration Setup: email-validator is not installed, run `pip install pydantic[email]`",
+    "Multi-User Data Isolation/Multi-User Data Isolation Setup: email-validator is not installed, run `pip install pydantic[email]`",
+    "End-to-End Workflow/End-to-End Workflow Setup: email-validator is not installed, run `pip install pydantic[email]`"
+  ],
+  "start_time": 1759328015.527242,
+  "end_time": 1759328016.560232,
   "categories": {
     "Admin System Integration": {
-      "total": 5,
-      "passed": 5,
-      "failed": 0,
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
       "tests": [
         {
-          "name": "Admin Auth Service Initialization",
-          "status": "\u2705 PASS",
-          "details": ""
-        },
-        {
-          "name": "User Management Service Initialization",
-          "status": "\u2705 PASS",
-          "details": ""
-        },
-        {
-          "name": "Admin User Creation",
-          "status": "\u2705 PASS",
-          "details": ""
-        },
-        {
-          "name": "Admin Permission Verification",
-          "status": "\u2705 PASS",
-          "details": "Permissions: ['view_users', 'view_analytics', 'view_system_status', 'manage_users', 'create_users', 'delete_users', 'manage_languages', 'manage_features', 'manage_ai_models', 'manage_scenarios', 'manage_system_config', 'access_admin_dashboard', 'export_data', 'backup_system']"
-        },
-        {
-          "name": "Regular User Creation",
-          "status": "\u2705 PASS",
-          "details": ""
+          "name": "Admin System Integration Setup",
+          "status": "\u274c FAIL",
+          "details": "email-validator is not installed, run `pip install pydantic[email]`"
         }
       ]
     },
@@ -93,7 +77,7 @@
         {
           "name": "Scenario Loading by Category",
           "status": "\u2705 PASS",
-          "details": "Loaded 1 restaurant scenarios"
+          "details": "Loaded 2 restaurant scenarios"
         },
         {
           "name": "Learning Session Flow (SR + Vocabulary)",
@@ -199,76 +183,26 @@
       ]
     },
     "Multi-User Data Isolation": {
-      "total": 5,
-      "passed": 5,
-      "failed": 0,
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
       "tests": [
         {
-          "name": "Multi-User Creation",
-          "status": "\u2705 PASS",
-          "details": ""
-        },
-        {
-          "name": "Vocabulary Data Isolation",
-          "status": "\u2705 PASS",
-          "details": "User1 words: ['aislamiento'], User2 words: ['prueba']"
-        },
-        {
-          "name": "Progress Data Isolation",
-          "status": "\u2705 PASS",
-          "details": "User1 sessions: 1, User2 sessions: 1"
-        },
-        {
-          "name": "Feature Toggle Override Isolation",
-          "status": "\u2705 PASS",
-          "details": "User1 access: True, User2 access: True"
-        },
-        {
-          "name": "Multi-User Cleanup",
-          "status": "\u2705 PASS",
-          "details": ""
+          "name": "Multi-User Data Isolation Setup",
+          "status": "\u274c FAIL",
+          "details": "email-validator is not installed, run `pip install pydantic[email]`"
         }
       ]
     },
     "End-to-End Workflow": {
-      "total": 7,
-      "passed": 7,
-      "failed": 0,
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
       "tests": [
         {
-          "name": "E2E: User Onboarding",
-          "status": "\u2705 PASS",
-          "details": ""
-        },
-        {
-          "name": "E2E: Scenario Selection",
-          "status": "\u2705 PASS",
-          "details": "Available scenarios: 1"
-        },
-        {
-          "name": "E2E: Start Conversation",
-          "status": "\u2705 PASS",
-          "details": "Started scenario: restaurant_dinner_reservation"
-        },
-        {
-          "name": "E2E: Vocabulary Learning",
-          "status": "\u2705 PASS",
-          "details": ""
-        },
-        {
-          "name": "E2E: Progress Tracking",
-          "status": "\u2705 PASS",
-          "details": "Sessions tracked: 1"
-        },
-        {
-          "name": "E2E: Visual Learning Aids",
-          "status": "\u2705 PASS",
-          "details": ""
-        },
-        {
-          "name": "E2E: Cleanup",
-          "status": "\u2705 PASS",
-          "details": ""
+          "name": "End-to-End Workflow Setup",
+          "status": "\u274c FAIL",
+          "details": "email-validator is not installed, run `pip install pydantic[email]`"
         }
       ]
     }

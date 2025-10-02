@@ -11,7 +11,7 @@ functionality including:
 
 import logging
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import HTTPException, status, Depends, Request
 from functools import wraps
 
@@ -133,7 +133,7 @@ class AdminAuthService:
                     return False
 
                 user.role = UserRole.ADMIN
-                user.updated_at = datetime.utcnow()
+                user.updated_at = datetime.now(timezone.utc)
                 # Context manager handles commit/rollback automatically
 
                 logger.info(f"Successfully upgraded user {user_email} to ADMIN role")
@@ -155,7 +155,7 @@ class AdminAuthService:
                     # User exists, upgrade to admin if not already
                     if existing_user.role != UserRole.ADMIN:
                         existing_user.role = UserRole.ADMIN
-                        existing_user.updated_at = datetime.utcnow()
+                        existing_user.updated_at = datetime.now(timezone.utc)
                         # Context manager handles commit automatically
                         logger.info(f"Upgraded existing user {email} to ADMIN role")
                     return True
@@ -164,7 +164,7 @@ class AdminAuthService:
                 from app.services.auth import hash_password
 
                 new_admin = User(
-                    user_id=f"admin_{int(datetime.utcnow().timestamp())}",
+                    user_id=f"admin_{int(datetime.now(timezone.utc).timestamp())}",
                     username=username,
                     email=email,
                     password_hash=hash_password(password),
@@ -173,8 +173,8 @@ class AdminAuthService:
                     last_name="Administrator",
                     is_active=True,
                     is_verified=True,
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow(),
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
                 )
 
                 session.add(new_admin)
@@ -309,7 +309,7 @@ class GuestUserManager:
         self.active_guest_session = session_id
         self.guest_session_data = {
             "session_id": session_id,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
             "device_info": device_info or {},
             "is_active": True,
         }

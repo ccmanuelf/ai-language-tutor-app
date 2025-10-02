@@ -4,7 +4,7 @@ AI Language Tutor App - Personal Family Educational Tool
 """
 
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, ConfigDict
 from typing import Optional
 import os
 from functools import lru_cache
@@ -80,10 +80,9 @@ class Settings(BaseSettings):
     )
     UPLOAD_DIR: str = Field(default="./data/uploads", description="Upload directory")
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
+    model_config = ConfigDict(
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=True
+    )
 
 
 @lru_cache()

@@ -16,7 +16,7 @@ Features:
 import asyncio
 import logging
 from typing import Dict, List, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel, Field
 from enum import Enum
@@ -31,7 +31,8 @@ from app.services.scenario_manager import (
     get_scenario_status,
     finish_scenario,
 )
-from app.services.conversation_manager import conversation_manager, LearningFocus
+from app.services.conversation_manager import conversation_manager
+from app.services.conversation_models import LearningFocus
 from app.services.auth import get_current_user
 from app.models.database import User
 
@@ -574,7 +575,7 @@ async def create_scenario_from_template(
                 "scenario": scenario_details,
                 "template_id": request.template_id,
                 "variation_id": request.variation_id,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
             },
         )
 

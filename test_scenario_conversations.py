@@ -34,7 +34,8 @@ from app.services.scenario_manager import (
     get_scenario_status,
     finish_scenario,
 )
-from app.services.conversation_manager import conversation_manager, LearningFocus
+from app.services.conversation_manager import conversation_manager
+from app.services.conversation_models import LearningFocus
 
 
 class ScenarioConversationTester:

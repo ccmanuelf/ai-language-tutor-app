@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.responses import JSONResponse
 from typing import Dict, List, Any, Optional
 from pydantic import BaseModel, EmailStr
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from app.services.admin_auth import (
@@ -147,7 +147,7 @@ async def create_user(
 
             # Create new user
             new_user = User(
-                user_id=f"user_{int(datetime.utcnow().timestamp())}",
+                user_id=f"user_{int(datetime.now(timezone.utc).timestamp())}",
                 username=user_data.username,
                 email=user_data.email,
                 password_hash=hash_password(user_data.password),
@@ -156,8 +156,8 @@ async def create_user(
                 role=role_mapping[user_data.role],
                 is_active=True,
                 is_verified=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
 
             session.add(new_user)
@@ -307,7 +307,7 @@ async def update_user(
                     )
                 user.is_active = user_data.is_active
 
-            user.updated_at = datetime.utcnow()
+            user.updated_at = datetime.now(timezone.utc)
             # Context manager handles commit
 
             logger.info(f"Admin {current_user.get('email')} updated user {user.email}")
@@ -349,7 +349,7 @@ async def toggle_user_status(
                 )
 
             user.is_active = not user.is_active
-            user.updated_at = datetime.utcnow()
+            user.updated_at = datetime.now(timezone.utc)
             # Context manager handles commit
 
             action = "activated" if user.is_active else "deactivated"
@@ -474,11 +474,11 @@ async def create_guest_session(
             )
 
         # Create new guest session
-        guest_id = f"guest_{int(datetime.utcnow().timestamp())}"
+        guest_id = f"guest_{int(datetime.now(timezone.utc).timestamp())}"
         guest_manager.active_guest_session = guest_id
         guest_manager.guest_session_data = {
             "user_id": guest_id,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "created_by": current_user.get("email"),
             "status": "active",
         }
@@ -568,7 +568,7 @@ async def get_system_stats(
             # Get recent users (last 7 days)
             from datetime import timedelta
 
-            seven_days_ago = datetime.utcnow() - timedelta(days=7)
+            seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
             recent_users = (
                 session.query(User).filter(User.created_at >= seven_days_ago).count()
             )
@@ -584,7 +584,7 @@ async def get_system_stats(
                     "parent_users": parent_users,
                     "child_users": child_users,
                     "recent_users": recent_users,
-                    "last_updated": datetime.utcnow().isoformat(),
+                    "last_updated": datetime.now(timezone.utc).isoformat(),
                 },
             )
 

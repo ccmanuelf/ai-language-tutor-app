@@ -7,6 +7,11 @@ addopts = [
     "--strict-config",
 ]
 testpaths = ["tests"]
+filterwarnings = [
+    # Ignore external library warnings beyond our control
+    # protobuf Python 3.14 compatibility - awaiting upstream fix
+    "ignore:Type google.protobuf.pyext._message.*:DeprecationWarning",
+]
 markers = [
     "unit: Unit tests",
     "integration: Integration tests",
@@ -18,4 +23,3 @@ markers = [
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-asyncio_mode = "auto"
