@@ -16,7 +16,7 @@ Features:
 from fastapi import APIRouter, HTTPException, Depends, status, Query, Body
 from fastapi.responses import JSONResponse
 from typing import Dict, List, Any, Optional, Union
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 import logging
 import json
 from datetime import datetime
@@ -92,21 +92,24 @@ class ScenarioModel(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    @validator("category")
+    @field_validator("category")
+    @classmethod
     def validate_category(cls, v):
         valid_categories = [cat.value for cat in ScenarioCategory]
         if v not in valid_categories:
             raise ValueError(f"Category must be one of: {valid_categories}")
         return v
 
-    @validator("difficulty")
+    @field_validator("difficulty")
+    @classmethod
     def validate_difficulty(cls, v):
         valid_difficulties = [diff.value for diff in ScenarioDifficulty]
         if v not in valid_difficulties:
             raise ValueError(f"Difficulty must be one of: {valid_difficulties}")
         return v
 
-    @validator("user_role", "ai_role")
+    @field_validator("user_role", "ai_role")
+    @classmethod
     def validate_roles(cls, v):
         valid_roles = [role.value for role in ConversationRole]
         if v not in valid_roles:

@@ -1,0 +1,1097 @@
+{
+  "timestamp": "2025-10-02T20:03:47.123041",
+  "total_modules": 181,
+  "successful_imports": 181,
+  "failed_imports": 0,
+  "warnings_found": 0,
+  "modules_with_warnings": [],
+  "import_errors": [],
+  "all_modules": [
+    {
+      "file": "app/__init__.py",
+      "module": "app",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/__init__.py",
+      "module": "app.api",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/admin.py",
+      "module": "app.api.admin",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/ai_models.py",
+      "module": "app.api.ai_models",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/auth.py",
+      "module": "app.api.auth",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/content.py",
+      "module": "app.api.content",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/conversations.py",
+      "module": "app.api.conversations",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/feature_toggles.py",
+      "module": "app.api.feature_toggles",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/language_config.py",
+      "module": "app.api.language_config",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/learning_analytics.py",
+      "module": "app.api.learning_analytics",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/progress_analytics.py",
+      "module": "app.api.progress_analytics",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/realtime_analysis.py",
+      "module": "app.api.realtime_analysis",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/scenario_management.py",
+      "module": "app.api.scenario_management",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/scenarios.py",
+      "module": "app.api.scenarios",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/tutor_modes.py",
+      "module": "app.api.tutor_modes",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/api/visual_learning.py",
+      "module": "app.api.visual_learning",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/core/__init__.py",
+      "module": "app.core",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/core/config.py",
+      "module": "app.core.config",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/core/security.py",
+      "module": "app.core.security",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/database/__init__.py",
+      "module": "app.database",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/database/chromadb_config.py",
+      "module": "app.database.chromadb_config",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/database/config.py",
+      "module": "app.database.config",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/database/local_config.py",
+      "module": "app.database.local_config",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/database/migrations.py",
+      "module": "app.database.migrations",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/decorators/feature_toggle.py",
+      "module": "app.decorators.feature_toggle",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/__init__.py",
+      "module": "app.frontend",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/admin_ai_models.py",
+      "module": "app.frontend.admin_ai_models",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/admin_dashboard.py",
+      "module": "app.frontend.admin_dashboard",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/admin_feature_toggles.py",
+      "module": "app.frontend.admin_feature_toggles",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/admin_language_config.py",
+      "module": "app.frontend.admin_language_config",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/admin_learning_analytics.py",
+      "module": "app.frontend.admin_learning_analytics",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/admin_routes.py",
+      "module": "app.frontend.admin_routes",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/admin_scenario_management.py",
+      "module": "app.frontend.admin_scenario_management",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/chat.py",
+      "module": "app.frontend.chat",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/content_view.py",
+      "module": "app.frontend.content_view",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/diagnostic.py",
+      "module": "app.frontend.diagnostic",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/home.py",
+      "module": "app.frontend.home",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/layout.py",
+      "module": "app.frontend.layout",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/learning_analytics_dashboard.py",
+      "module": "app.frontend.learning_analytics_dashboard",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/main.py",
+      "module": "app.frontend.main",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/profile.py",
+      "module": "app.frontend.profile",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/progress.py",
+      "module": "app.frontend.progress",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/progress_analytics_dashboard.py",
+      "module": "app.frontend.progress_analytics_dashboard",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/server.py",
+      "module": "app.frontend.server",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/styles.py",
+      "module": "app.frontend.styles",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/user_ui.py",
+      "module": "app.frontend.user_ui",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend/visual_learning.py",
+      "module": "app.frontend.visual_learning",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/frontend_main.py",
+      "module": "app.frontend_main",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/main.py",
+      "module": "app.main",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/middleware/admin_middleware.py",
+      "module": "app.middleware.admin_middleware",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/models/__init__.py",
+      "module": "app.models",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/models/database.py",
+      "module": "app.models.database",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/models/feature_toggle.py",
+      "module": "app.models.feature_toggle",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/models/schemas.py",
+      "module": "app.models.schemas",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/models/simple_user.py",
+      "module": "app.models.simple_user",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/__init__.py",
+      "module": "app.services",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/admin_auth.py",
+      "module": "app.services.admin_auth",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/ai_model_manager.py",
+      "module": "app.services.ai_model_manager",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/ai_router.py",
+      "module": "app.services.ai_router",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/ai_service_base.py",
+      "module": "app.services.ai_service_base",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/ai_test_suite.py",
+      "module": "app.services.ai_test_suite",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/auth.py",
+      "module": "app.services.auth",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/budget_manager.py",
+      "module": "app.services.budget_manager",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/claude_service.py",
+      "module": "app.services.claude_service",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/content_processor.py",
+      "module": "app.services.content_processor",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/conversation_analytics.py",
+      "module": "app.services.conversation_analytics",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/conversation_manager.py",
+      "module": "app.services.conversation_manager",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/conversation_messages.py",
+      "module": "app.services.conversation_messages",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/conversation_models.py",
+      "module": "app.services.conversation_models",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/conversation_persistence.py",
+      "module": "app.services.conversation_persistence",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/conversation_prompts.py",
+      "module": "app.services.conversation_prompts",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/conversation_state.py",
+      "module": "app.services.conversation_state",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/deepseek_service.py",
+      "module": "app.services.deepseek_service",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/feature_toggle_manager.py",
+      "module": "app.services.feature_toggle_manager",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/feature_toggle_service.py",
+      "module": "app.services.feature_toggle_service",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/mistral_service.py",
+      "module": "app.services.mistral_service",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/mistral_stt_service.py",
+      "module": "app.services.mistral_stt_service",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/ollama_service.py",
+      "module": "app.services.ollama_service",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/piper_tts_service.py",
+      "module": "app.services.piper_tts_service",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/progress_analytics_service.py",
+      "module": "app.services.progress_analytics_service",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/qwen_service.py",
+      "module": "app.services.qwen_service",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/realtime_analyzer.py",
+      "module": "app.services.realtime_analyzer",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/response_cache.py",
+      "module": "app.services.response_cache",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/scenario_factory.py",
+      "module": "app.services.scenario_factory",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/scenario_io.py",
+      "module": "app.services.scenario_io",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/scenario_manager.py",
+      "module": "app.services.scenario_manager",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/scenario_models.py",
+      "module": "app.services.scenario_models",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/scenario_templates.py",
+      "module": "app.services.scenario_templates",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/scenario_templates_extended.py",
+      "module": "app.services.scenario_templates_extended",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/spaced_repetition_manager.py",
+      "module": "app.services.spaced_repetition_manager",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/spaced_repetition_manager_original_backup.py",
+      "module": "app.services.spaced_repetition_manager_original_backup",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/spaced_repetition_manager_refactored.py",
+      "module": "app.services.spaced_repetition_manager_refactored",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/speech_processor.py",
+      "module": "app.services.speech_processor",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/sr_algorithm.py",
+      "module": "app.services.sr_algorithm",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/sr_analytics.py",
+      "module": "app.services.sr_analytics",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/sr_database.py",
+      "module": "app.services.sr_database",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/sr_gamification.py",
+      "module": "app.services.sr_gamification",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/sr_models.py",
+      "module": "app.services.sr_models",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/sr_sessions.py",
+      "module": "app.services.sr_sessions",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/sync.py",
+      "module": "app.services.sync",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/tutor_mode_manager.py",
+      "module": "app.services.tutor_mode_manager",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/user_management.py",
+      "module": "app.services.user_management",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/services/visual_learning_service.py",
+      "module": "app.services.visual_learning_service",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/utils/api_key_validator.py",
+      "module": "app.utils.api_key_validator",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "app/utils/sqlite_adapters.py",
+      "module": "app.utils.sqlite_adapters",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/add_language_config_tables.py",
+      "module": "scripts.add_language_config_tables",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/add_spaced_repetition_tables.py",
+      "module": "scripts.add_spaced_repetition_tables",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/comprehensive_scenario_test.py",
+      "module": "scripts.comprehensive_scenario_test",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/enhanced_quality_gates.py",
+      "module": "scripts.enhanced_quality_gates",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/performance_optimization_validation.py",
+      "module": "scripts.performance_optimization_validation",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/performance_profiler.py",
+      "module": "scripts.performance_profiler",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/quality_gates.py",
+      "module": "scripts.quality_gates",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/security_audit.py",
+      "module": "scripts.security_audit",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/setup_ollama.py",
+      "module": "scripts.setup_ollama",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/static_analysis_audit.py",
+      "module": "scripts.static_analysis_audit",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/test_ai_model_management_system.py",
+      "module": "scripts.test_ai_model_management_system",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/test_feature_toggle_system.py",
+      "module": "scripts.test_feature_toggle_system",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/test_scenario_management_system.py",
+      "module": "scripts.test_scenario_management_system",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/test_spaced_repetition_system.py",
+      "module": "scripts.test_spaced_repetition_system",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/upgrade_admin_user.py",
+      "module": "scripts.upgrade_admin_user",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/validate_environment.py",
+      "module": "scripts.validate_environment",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/validate_feature_toggles.py",
+      "module": "scripts.validate_feature_toggles",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/validate_scenario_management.py",
+      "module": "scripts.validate_scenario_management",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_admin_auth_simple.py",
+      "module": "test_admin_auth_simple",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_admin_authentication.py",
+      "module": "test_admin_authentication",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_admin_dashboard.py",
+      "module": "test_admin_dashboard",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_ai_services_comprehensive.py",
+      "module": "test_ai_services_comprehensive",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_ald_mexican_voice.py",
+      "module": "test_ald_mexican_voice",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_all_spanish_voices.py",
+      "module": "test_all_spanish_voices",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_auth.py",
+      "module": "test_auth",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_basic_functionality.py",
+      "module": "test_basic_functionality",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_chinese_audio.py",
+      "module": "test_chinese_audio",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_chinese_tts.py",
+      "module": "test_chinese_tts",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_comprehensive_fixes.py",
+      "module": "test_comprehensive_fixes",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_comprehensive_functionality.py",
+      "module": "test_comprehensive_functionality",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_comprehensive_scenarios.py",
+      "module": "test_comprehensive_scenarios",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_comprehensive_speech_validation.py",
+      "module": "test_comprehensive_speech_validation",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_content_api.py",
+      "module": "test_content_api",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_content_processing.py",
+      "module": "test_content_processing",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_conversation_fixes.py",
+      "module": "test_conversation_fixes",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_conversation_improvements.py",
+      "module": "test_conversation_improvements",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_conversation_refactoring.py",
+      "module": "test_conversation_refactoring",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_cost_optimization.py",
+      "module": "test_cost_optimization",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_deepseek_migration.py",
+      "module": "test_deepseek_migration",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_deepseek_only.py",
+      "module": "test_deepseek_only",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_diagnostic_page.py",
+      "module": "test_diagnostic_page",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_english_audio.py",
+      "module": "test_english_audio",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_feature_toggle_recursion_fix.py",
+      "module": "test_feature_toggle_recursion_fix",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_french_audio.py",
+      "module": "test_french_audio",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_frontend_status.py",
+      "module": "test_frontend_status",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_full_integration_diagnostic.py",
+      "module": "test_full_integration_diagnostic",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_functional_verification.py",
+      "module": "test_functional_verification",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_german_audio.py",
+      "module": "test_german_audio",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_ibm_watson_integration.py",
+      "module": "test_ibm_watson_integration",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_individual_languages.py",
+      "module": "test_individual_languages",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_italian_audio.py",
+      "module": "test_italian_audio",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_language_config_api.py",
+      "module": "test_language_config_api",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_language_config_simple.py",
+      "module": "test_language_config_simple",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_mistral_simple.py",
+      "module": "test_mistral_simple",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_mistral_stt_integration.py",
+      "module": "test_mistral_stt_integration",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_phase4_integration.py",
+      "module": "test_phase4_integration",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_portuguese_audio.py",
+      "module": "test_portuguese_audio",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_progress_analytics_comprehensive.py",
+      "module": "test_progress_analytics_comprehensive",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_progress_analytics_production.py",
+      "module": "test_progress_analytics_production",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_realtime_analysis_comprehensive.py",
+      "module": "test_realtime_analysis_comprehensive",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_realtime_analysis_timeout_debug.py",
+      "module": "test_realtime_analysis_timeout_debug",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_scenario_conversations.py",
+      "module": "test_scenario_conversations",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_scenario_core.py",
+      "module": "test_scenario_core",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_spanish_audio.py",
+      "module": "test_spanish_audio",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_spanish_voices_comparison.py",
+      "module": "test_spanish_voices_comparison",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_speech_fixes.py",
+      "module": "test_speech_fixes",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_speech_frontend.py",
+      "module": "test_speech_frontend",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_speech_functionality.py",
+      "module": "test_speech_functionality",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_speech_quality.py",
+      "module": "test_speech_quality",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_sr_refactoring.py",
+      "module": "test_sr_refactoring",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_tutor_modes_comprehensive.py",
+      "module": "test_tutor_modes_comprehensive",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_validation_subsections.py",
+      "module": "test_validation_subsections",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_visual_learning_system.py",
+      "module": "test_visual_learning_system",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_watson_integration.py",
+      "module": "test_watson_integration",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_watson_speech_integration.py",
+      "module": "test_watson_speech_integration",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "test_watson_stt.py",
+      "module": "test_watson_stt",
+      "status": "success",
+      "warning_count": 0
+    }
+  ]
+}

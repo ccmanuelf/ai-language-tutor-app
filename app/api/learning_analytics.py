@@ -354,7 +354,7 @@ async def get_user_analytics(
     user_id: int,
     language_code: str = Query(..., description="Language code"),
     period: str = Query(
-        "daily", regex="^(daily|weekly|monthly)$", description="Analytics period"
+        "daily", pattern="^(daily|weekly|monthly)$", description="Analytics period"
     ),
 ) -> JSONResponse:
     """Get comprehensive learning analytics for a user"""
@@ -432,7 +432,9 @@ async def get_user_goals(
     user_id: int,
     language_code: str = Query(..., description="Language code"),
     status: str = Query(
-        "active", regex="^(active|completed|paused|failed)$", description="Goal status"
+        "active",
+        pattern="^(active|completed|paused|failed)$",
+        description="Goal status",
     ),
 ) -> JSONResponse:
     """Get learning goals for a user"""
