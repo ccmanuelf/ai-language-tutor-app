@@ -27,7 +27,7 @@ import aiofiles
 from urllib.parse import urlparse, parse_qs
 
 # Document processing
-import PyPDF2
+import pypdf
 from docx import Document
 
 # YouTube processing
@@ -351,7 +351,7 @@ class ContentProcessor:
         """Extract content from PDF file"""
         try:
             with open(file_path, "rb") as file:
-                pdf_reader = PyPDF2.PdfReader(file)
+                pdf_reader = pypdf.PdfReader(file)
 
                 # Extract text from all pages
                 text_content = ""

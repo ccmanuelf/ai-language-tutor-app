@@ -630,7 +630,7 @@ async def reset_usage_statistics(
 
 @router.get("/export")
 async def export_model_data(
-    format: str = Query("json", regex="^(json|csv)$", description="Export format"),
+    format: str = Query("json", pattern="^(json|csv)$", description="Export format"),
     include_stats: bool = Query(True, description="Include usage statistics"),
     admin_user=Depends(require_admin_access),
 ):

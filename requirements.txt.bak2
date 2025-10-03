@@ -52,7 +52,7 @@ yt-dlp==2024.12.14
 aiofiles==24.1.0
 
 # Text Processing and Embeddings
-sentence-transformers==5.1.1
+sentence-transformers==2.2.2
 
 # Security and Authentication
 bcrypt==4.1.2

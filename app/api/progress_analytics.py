@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from fastapi import APIRouter, HTTPException, Depends, Query, Body
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 
 from app.services.progress_analytics_service import (
@@ -230,10 +230,11 @@ class SkillProgressUpdateRequest(BaseModel):
         None, description="Next milestone target"
     )
 
-    @validator(
+    @field_validator(
         "easy_items_percentage", "moderate_items_percentage", "hard_items_percentage"
     )
-    def validate_difficulty_percentages(cls, v, values):
+    @classmethod
+    def validate_difficulty_percentages(cls, v):
         """Ensure difficulty percentages add up to 100% or less"""
         # This is a simplified validation - in a real implementation,
         # you'd want to validate all three together

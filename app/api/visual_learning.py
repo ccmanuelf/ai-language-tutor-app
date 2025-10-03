@@ -75,7 +75,7 @@ class CreateVisualizationRequest(BaseModel):
     visualization_type: str = Field(..., description="Type of visualization")
     title: str = Field(..., min_length=1, max_length=200)
     description: str = Field(..., min_length=1)
-    data_points: List[Dict[str, Any]] = Field(..., min_items=1)
+    data_points: List[Dict[str, Any]] = Field(..., min_length=1)
     x_axis_label: str = Field(default="")
     y_axis_label: str = Field(default="")
     color_scheme: List[str] = Field(
