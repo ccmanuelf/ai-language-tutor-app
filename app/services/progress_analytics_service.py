@@ -1265,41 +1265,6 @@ class ProgressAnalyticsService:
             return False
             return self._get_empty_skill_analytics()
 
-    def _get_empty_skill_analytics(self) -> Dict[str, Any]:
-        """Return empty skill analytics structure"""
-        return {
-            "skill_overview": {
-                "total_skills_tracked": 0,
-                "average_skill_level": 0,
-                "overall_mastery_percentage": 0,
-                "strongest_skill": None,
-                "weakest_skill": None,
-            },
-            "progress_trends": {
-                "average_improvement_rate": 0,
-                "total_practice_time": 0,
-                "average_consistency_score": 0,
-                "skills_improving": 0,
-                "skills_stable": 0,
-                "skills_declining": 0,
-            },
-            "difficulty_analysis": {
-                "comfort_with_easy_items": 0,
-                "comfort_with_moderate_items": 0,
-                "comfort_with_hard_items": 0,
-                "overall_challenge_comfort": 0,
-            },
-            "retention_analysis": {
-                "average_retention_rate": 0,
-                "best_retained_skill": None,
-                "poorest_retained_skill": None,
-            },
-            "individual_skills": [],
-            "recommendations": [],
-            "next_milestones": [],
-        }
-
-    def _generate_skill_recommendations(self, skills: List[Dict]) -> List[str]:
         """Generate personalized skill improvement recommendations"""
         if not skills:
             return ["Start practicing to get personalized skill recommendations!"]

@@ -280,10 +280,10 @@ class EnhancedAIRouter:
 
         return model_mappings.get(provider_name, "default")
 
-    async def _estimate_request_cost(
+    async def _estimate_request_cost_legacy(
         self, provider_name: str, language: str, use_case: str
     ) -> float:
-        """Estimate cost for a request to a provider"""
+        """Legacy cost estimation method - kept for backward compatibility"""
 
         # Base cost estimates per provider (per 1K tokens)
         base_costs = {
