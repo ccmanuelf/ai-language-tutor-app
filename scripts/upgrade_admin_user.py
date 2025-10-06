@@ -14,14 +14,14 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from app.services.admin_auth import (
+from app.services.admin_auth import (  # noqa: E402 - Required after sys.path modification for script execution
     admin_auth_service,
     initialize_admin_system,
     get_admin_user_info,
 )
-from app.database.config import get_db_session_context
-from app.models.database import User, UserRole
-from app.models.schemas import UserRoleEnum
+from app.database.config import get_db_session_context  # noqa: E402 - Required after sys.path modification for script execution
+from app.models.database import User, UserRole  # noqa: E402 - Required after sys.path modification for script execution
+from app.models.schemas import UserRoleEnum  # noqa: E402 - Required after sys.path modification for script execution
 
 # Configure logging
 logging.basicConfig(

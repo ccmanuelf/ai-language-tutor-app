@@ -26,7 +26,7 @@ from typing import Dict, Any
 # Add app directory to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from app.services.ollama_service import ollama_manager, ollama_service
+from app.services.ollama_service import ollama_manager, ollama_service  # noqa: E402 - Required after sys.path modification for script execution
 
 
 class OllamaSetupScript:

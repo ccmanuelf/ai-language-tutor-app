@@ -39,7 +39,7 @@ import uuid
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from app.services.scenario_manager import (
+from app.services.scenario_manager import (  # noqa: E402 - Required after sys.path modification for script execution
     ScenarioManager,
     ConversationScenario,
     ScenarioCategory,
@@ -47,7 +47,7 @@ from app.services.scenario_manager import (
     ConversationRole,
     ScenarioPhase,
 )
-from app.services.admin_auth import AdminPermission
+from app.services.admin_auth import AdminPermission  # noqa: E402 - Required after logger configuration
 
 # Configure logging
 logging.basicConfig(

@@ -46,10 +46,10 @@ except ImportError:
     AUDIO_ANALYSIS_AVAILABLE = False
     logging.warning("NumPy not available for audio analysis")
 
-from app.services.ai_router import ai_router
-from app.services.ai_service_base import AIResponseStatus
-from app.services.speech_processor import SpeechProcessor
-from app.core.config import get_settings
+from app.services.ai_router import ai_router  # noqa: E402 - Required after logger configuration
+from app.services.ai_service_base import AIResponseStatus  # noqa: E402 - Required after logger configuration
+from app.services.speech_processor import SpeechProcessor  # noqa: E402 - Required after logger configuration
+from app.core.config import get_settings  # noqa: E402 - Required after logger configuration
 
 logger = logging.getLogger(__name__)
 

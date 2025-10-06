@@ -25,7 +25,7 @@ import logging
 # Add the app directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from app.services.feature_toggle_manager import (
+from app.services.feature_toggle_manager import (  # noqa: E402 - Required after sys.path modification for script execution
     FeatureToggleManager,
     FeatureToggle,
     feature_toggle_manager,
@@ -33,7 +33,7 @@ from app.services.feature_toggle_manager import (
     get_feature,
     get_features_by_category,
 )
-from app.decorators.feature_toggle import (
+from app.decorators.feature_toggle import (  # noqa: E402 - Required after sys.path modification for script execution
     feature_gate,
     FeatureToggleService,
     check_content_processing,

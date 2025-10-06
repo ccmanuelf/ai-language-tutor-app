@@ -28,10 +28,10 @@ import traceback
 # Add the app directory to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from app.services.ai_model_manager import (
+from app.services.ai_model_manager import (  # noqa: E402 - Required after sys.path modification for script execution
     ai_model_manager,
 )
-from app.services.ai_router import ai_router
+from app.services.ai_router import ai_router  # noqa: E402 - Required after sys.path modification for script execution
 
 
 class AIModelManagementTestSuite:
