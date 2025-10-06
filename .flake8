@@ -1,0 +1,51 @@
+[flake8]
+# FastHTML Framework Configuration
+# FastHTML uses star imports (from fasthtml.common import *) as its standard pattern
+# This is intentional and documented: https://docs.fasthtml.dev/
+
+# F403: 'from module import *' used; unable to detect undefined names
+# F405: name may be undefined, or defined from star imports
+# Reason: FastHTML's design pattern - provides clean, intuitive API
+per-file-ignores =
+    app/frontend/*.py:F403,F405
+    app/frontend_main.py:F403,F405
+
+# Additional ignores for external dependencies
+# W503: line break before binary operator (conflicts with W504, black prefers this)
+# E203: whitespace before ':' (conflicts with black formatting)
+ignore = W503,E203
+
+# Line length - match Black's default
+max-line-length = 88
+
+# Complexity thresholds
+max-complexity = 10
+
+# Exclude patterns
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    ai-tutor-env,
+    build,
+    dist,
+    *.egg-info,
+    .pytest_cache,
+    .mypy_cache,
+    node_modules,
+    migrations,
+    .backup,
+    validation_artifacts,
+    validation_results,
+    performance_reports,
+    security_reports
+
+# Show source code for errors
+show-source = True
+
+# Count errors
+count = True
+
+# Statistics
+statistics = True
