@@ -842,7 +842,7 @@ async def main():
     print(f"🔧 Validation Status: {summary['validation_status']}")
 
     if performance:
-        print(f"\n📈 PERFORMANCE METRICS")
+        print("\n📈 PERFORMANCE METRICS")
         print(
             f"⏱️  Avg Evaluation Time: {performance.get('average_evaluation_time', 0) * 1000:.2f}ms"
         )

@@ -936,7 +936,7 @@ class AIModelManagementTestSuite:
                     print(f"  • {result['test_name']}: {result['error']}")
 
         # Detailed categories analysis
-        print(f"\n📋 TEST CATEGORIES ANALYSIS:")
+        print("\n📋 TEST CATEGORIES ANALYSIS:")
 
         categories = {
             "Database & Storage": [
@@ -976,7 +976,7 @@ class AIModelManagementTestSuite:
             )
 
         # Quality gates assessment
-        print(f"\n🎯 QUALITY GATES ASSESSMENT:")
+        print("\n🎯 QUALITY GATES ASSESSMENT:")
 
         gates = [
             (
@@ -1022,7 +1022,7 @@ class AIModelManagementTestSuite:
         print(f"\nQuality Gates: {passed_gates}/{len(gates)} PASSED")
 
         # Final verdict
-        print(f"\n🏆 FINAL VERDICT:")
+        print("\n🏆 FINAL VERDICT:")
         if success_rate >= 95:
             print("🌟 EXCELLENT: AI Model Management System is production-ready!")
         elif success_rate >= 85:
@@ -1062,7 +1062,7 @@ class AIModelManagementTestSuite:
                 )
 
             print(
-                f"\n💾 Detailed results saved to: ./validation_artifacts/3.1.5/ai_model_management_test_results.json"
+                "\n💾 Detailed results saved to: ./validation_artifacts/3.1.5/ai_model_management_test_results.json"
             )
 
         except Exception as e:

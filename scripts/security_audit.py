@@ -403,7 +403,7 @@ class SecurityAuditor:
             json.dump(report, f, indent=2, default=str)
 
         logger.info("=" * 80)
-        logger.info(f"✅ Security audit complete")
+        logger.info("✅ Security audit complete")
         logger.info(f"🔒 Report saved to: {report_file}")
         logger.info("=" * 80)
 
@@ -419,14 +419,14 @@ class SecurityAuditor:
         print("=" * 80)
 
         summary = report["summary"]
-        print(f"\n📊 FINDINGS OVERVIEW:")
+        print("\n📊 FINDINGS OVERVIEW:")
         print(f"  • Total Findings: {summary['total_findings']}")
         print(f"  • Critical: {summary['critical']}")
         print(f"  • High: {summary['high']}")
         print(f"  • Medium: {summary['medium']}")
         print(f"  • Low: {summary['low']}")
 
-        print(f"\n🔐 AUTHENTICATION & AUTHORIZATION:")
+        print("\n🔐 AUTHENTICATION & AUTHORIZATION:")
         auth = report["authentication_security"]
         print(
             f"  • Password Hashing: {'✅ Yes' if auth['has_password_hashing'] else '❌ No'}"
@@ -436,7 +436,7 @@ class SecurityAuditor:
             f"  • Rate Limiting: {'✅ Yes' if auth['has_rate_limiting'] else '❌ No'}"
         )
 
-        print(f"\n🛡️  INPUT VALIDATION:")
+        print("\n🛡️  INPUT VALIDATION:")
         validation = report["input_validation"]
         print(
             f"  • Pydantic Validation: {'✅ Yes' if validation['uses_pydantic'] else '❌ No'}"
@@ -445,7 +445,7 @@ class SecurityAuditor:
             f"  • Potential XSS Risks: {len(validation['potential_xss_risks'])} files"
         )
 
-        print(f"\n🔑 SECRETS MANAGEMENT:")
+        print("\n🔑 SECRETS MANAGEMENT:")
         secrets = report["secrets_scan"]
         env_vars = report["environment_variables"]
         print(f"  • Hardcoded Secrets: {secrets['total_findings']} found")
@@ -456,7 +456,7 @@ class SecurityAuditor:
             f"  • Uses Environment Variables: {'✅ Yes' if env_vars['uses_env_vars'] else '❌ No'}"
         )
 
-        print(f"\n🌐 CORS CONFIGURATION:")
+        print("\n🌐 CORS CONFIGURATION:")
         cors = report["cors_configuration"]
         print(f"  • CORS Configured: {'✅ Yes' if cors['has_cors'] else '❌ No'}")
         print(
@@ -466,7 +466,7 @@ class SecurityAuditor:
         # Show critical/high findings
         critical_high = [f for f in self.findings if f.severity in ["critical", "high"]]
         if critical_high:
-            print(f"\n⚠️  CRITICAL/HIGH PRIORITY FINDINGS:")
+            print("\n⚠️  CRITICAL/HIGH PRIORITY FINDINGS:")
             for i, finding in enumerate(critical_high[:5], 1):
                 print(f"  {i}. [{finding.severity.upper()}] {finding.title}")
                 if finding.file_path:
@@ -474,7 +474,7 @@ class SecurityAuditor:
                 if finding.remediation:
                     print(f"     Fix: {finding.remediation}")
         else:
-            print(f"\n✅ No critical or high priority security issues detected!")
+            print("\n✅ No critical or high priority security issues detected!")
 
         print("\n" + "=" * 80)
 

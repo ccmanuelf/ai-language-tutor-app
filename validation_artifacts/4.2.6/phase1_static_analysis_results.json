@@ -1,7 +1,7 @@
 {
-  "timestamp": "2025-10-06T10:06:17.463306",
-  "total_modules": 182,
-  "successful_imports": 182,
+  "timestamp": "2025-10-06T10:07:38.496002",
+  "total_modules": 183,
+  "successful_imports": 183,
   "failed_imports": 0,
   "warnings_found": 0,
   "modules_with_warnings": [],
@@ -664,6 +664,12 @@
     {
       "file": "scripts/fix_boolean_comparisons.py",
       "module": "scripts.fix_boolean_comparisons",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/fix_fstring_placeholders.py",
+      "module": "scripts.fix_fstring_placeholders",
       "status": "success",
       "warning_count": 0
     },

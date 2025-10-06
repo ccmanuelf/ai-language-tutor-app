@@ -380,7 +380,7 @@ class AIServicesTestSuite:
         print(f"⏱️  Total Time: {summary['total_execution_time']:.2f}s")
 
         if summary["performance_metrics"]:
-            print(f"\n📈 PERFORMANCE")
+            print("\n📈 PERFORMANCE")
             for metric, data in summary["performance_metrics"].items():
                 if "average_time" in data:
                     print(f"   {metric}: {data['average_time']:.3f}s avg")
@@ -390,7 +390,7 @@ class AIServicesTestSuite:
             print("\n🎉 TEST SUITE PASSED!")
             print("✨ AI Language Tutor services are ready for production!")
         else:
-            print(f"\n⚠️  TEST SUITE NEEDS ATTENTION")
+            print("\n⚠️  TEST SUITE NEEDS ATTENTION")
             print(f"   {summary['failed'] + summary['errors']} tests need fixes")
 
 

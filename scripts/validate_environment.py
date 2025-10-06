@@ -32,7 +32,7 @@ def validate_environment():
     else:
         print(f"❌ WRONG: {current_python}")
         print(f"   Expected path containing: {expected_path}")
-        print(f"   Run: source ai-tutor-env/bin/activate")
+        print("   Run: source ai-tutor-env/bin/activate")
         checks.append(("Python Environment", False, f"Wrong path: {current_python}"))
 
     print()
@@ -82,7 +82,7 @@ def validate_environment():
         checks.append(("Working Directory", True, current_dir))
     else:
         print(f"❌ WRONG: {current_dir}")
-        print(f"   Expected: path containing 'ai-language-tutor-app'")
+        print("   Expected: path containing 'ai-language-tutor-app'")
         checks.append(("Working Directory", False, current_dir))
 
     print()

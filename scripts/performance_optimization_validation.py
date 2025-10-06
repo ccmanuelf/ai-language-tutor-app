@@ -355,7 +355,7 @@ class PerformanceOptimizationValidator:
         perf = report["validations"]["performance_measurements"]["metrics"]
         if "database_queries" in perf:
             db_metrics = perf["database_queries"]
-            print(f"  • Query Performance (100 iterations):")
+            print("  • Query Performance (100 iterations):")
             print(f"    - Average: {db_metrics['avg_time_ms']}ms")
             print(f"    - P95: {db_metrics['p95_time_ms']}ms")
             print(

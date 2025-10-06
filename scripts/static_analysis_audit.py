@@ -203,16 +203,16 @@ class StaticAnalysisAuditor:
                     for warning in result.get("warnings", []):
                         print(f"      - {warning}")
                 else:
-                    print(f"   ✅ OK")
+                    print("   ✅ OK")
 
             elif result["status"] == "failed":
                 self.results["failed_imports"] += 1
                 self.results["import_errors"].append(result)
-                print(f"   ❌ FAILED")
+                print("   ❌ FAILED")
                 for error in result.get("errors", []):
                     print(f"      - {error}")
             else:
-                print(f"   ⏭️  Skipped")
+                print("   ⏭️  Skipped")
 
             print()
 

@@ -299,7 +299,7 @@ def create_guest_session_panel(guest_info: Optional[Dict[str, Any]] = None) -> D
                         style="margin: 0 0 8px 0; color: #4b5563;",
                     ),
                     P(
-                        f"Status: Active",
+                        "Status: Active",
                         style="margin: 0; color: #16a34a; font-weight: 500;",
                     ),
                     style="flex: 1;",
