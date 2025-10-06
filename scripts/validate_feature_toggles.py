@@ -345,9 +345,9 @@ class FeatureToggleValidator:
             feature.id, None
         )  # Anonymous
 
-        assert result1 == True, "Global feature should be enabled for user1"
-        assert result2 == True, "Global feature should be enabled for user2"
-        assert result3 == True, "Global feature should be enabled for anonymous"
+        assert result1, "Global feature should be enabled for user1"
+        assert result2, "Global feature should be enabled for user2"
+        assert result3, "Global feature should be enabled for anonymous"
 
     async def _test_role_based_feature(self):
         """Test role-based feature evaluation."""
@@ -373,9 +373,9 @@ class FeatureToggleValidator:
             feature.id, "user3", ["moderator"]
         )
 
-        assert result_admin == True, "Admin should have access to role-based feature"
-        assert result_user == False, "Regular user should not have access"
-        assert result_mod == True, "Moderator should have access to role-based feature"
+        assert result_admin, "Admin should have access to role-based feature"
+        assert not result_user, "Regular user should not have access"
+        assert result_mod, "Moderator should have access to role-based feature"
 
     async def _test_user_specific_feature(self):
         """Test user-specific feature evaluation."""
@@ -398,8 +398,8 @@ class FeatureToggleValidator:
             feature.id, "regular_user"
         )
 
-        assert result_special == True, "Special user should have access"
-        assert result_regular == False, "Regular user should not have access"
+        assert result_special, "Special user should have access"
+        assert not result_regular, "Regular user should not have access"
 
     async def _test_experimental_feature(self):
         """Test experimental feature evaluation."""
@@ -451,7 +451,7 @@ class FeatureToggleValidator:
             result_before = await self.test_service.is_feature_enabled(
                 feature.id, "test_user"
             )
-            assert result_before == False, "Feature should be disabled initially"
+            assert not result_before, "Feature should be disabled initially"
 
             # Grant access to specific user
             success = await self.test_service.set_user_feature_access(
@@ -462,25 +462,25 @@ class FeatureToggleValidator:
                 override_reason="Testing user access",
                 granted_by="admin",
             )
-            assert success == True, "Setting user access should succeed"
+            assert success, "Setting user access should succeed"
 
             # Check if user now has access
             result_after = await self.test_service.is_feature_enabled(
                 feature.id, "test_user"
             )
-            assert result_after == True, "User should have access after grant"
+            assert result_after, "User should have access after grant"
 
             # Other users should still not have access
             result_other = await self.test_service.is_feature_enabled(
                 feature.id, "other_user"
             )
-            assert result_other == False, "Other users should not have access"
+            assert not result_other, "Other users should not have access"
 
             # Test user features overview
             user_features = await self.test_service.get_user_features("test_user")
             assert isinstance(user_features, dict), "Should return dict of features"
             assert feature.id in user_features, "Feature should be in user features"
-            assert user_features[feature.id] == True, (
+            assert user_features[feature.id], (
                 "Feature should be enabled for user"
             )
 
@@ -540,7 +540,7 @@ class FeatureToggleValidator:
 
             # Verify user access persists
             user_access = await service2.is_feature_enabled(feature_id, "persist_user")
-            assert user_access == True, "User access should persist"
+            assert user_access, "User access should persist"
 
             # Verify statistics
             stats = await service2.get_feature_statistics()

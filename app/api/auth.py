@@ -213,7 +213,7 @@ async def list_users(
             status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
         )
 
-    users = db.query(SimpleUser).filter(SimpleUser.is_active == True).all()
+    users = db.query(SimpleUser).filter(SimpleUser.is_active is True).all()
     return [
         UserProfile(
             id=user.id,

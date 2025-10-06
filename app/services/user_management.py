@@ -798,7 +798,7 @@ class UserProfileService:
                 .filter(
                     and_(
                         User.role == UserRole.CHILD,
-                        User.is_active == True,
+                        User.is_active is True,
                         User.id != parent.id,
                     )
                 )
