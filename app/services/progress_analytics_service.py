@@ -30,7 +30,7 @@ from app.utils.sqlite_adapters import register_sqlite_adapters
 
 register_sqlite_adapters()
 
-from app.services.spaced_repetition_manager import (
+from app.services.spaced_repetition_manager import (  # noqa: E402 - Required after logger configuration
     SpacedRepetitionManager,
 )
 

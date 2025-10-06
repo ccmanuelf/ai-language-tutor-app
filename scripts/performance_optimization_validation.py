@@ -26,8 +26,8 @@ from typing import Dict, Any
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from sqlalchemy import text
-from app.database.config import db_manager
+from sqlalchemy import text  # noqa: E402 - Required after sys.path modification for script execution
+from app.database.config import db_manager  # noqa: E402 - Required after sys.path modification for script execution
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

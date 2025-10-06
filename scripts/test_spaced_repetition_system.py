@@ -25,7 +25,7 @@ import uuid
 # Add the app directory to the path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from app.services.spaced_repetition_manager import (
+from app.services.spaced_repetition_manager import (  # noqa: E402 - Required after sys.path modification for script execution
     SpacedRepetitionManager,
     ItemType,
     SessionType,

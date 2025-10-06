@@ -594,6 +594,6 @@ async def get_system_stats(
 
 
 # Include language configuration router
-from app.api.language_config import router as language_config_router
+from app.api.language_config import router as language_config_router  # noqa: E402 - Required after configuration setup
 
 admin_router.include_router(language_config_router)

@@ -31,10 +31,10 @@ import duckdb
 from app.utils.sqlite_adapters import register_sqlite_adapters
 
 register_sqlite_adapters()
-from pydantic_settings import BaseSettings
-from pydantic import ConfigDict
-from fastapi import HTTPException
-from app.core.config import get_settings
+from pydantic_settings import BaseSettings  # noqa: E402 - Required after warnings filter setup
+from pydantic import ConfigDict  # noqa: E402 - Required after warnings filter setup
+from fastapi import HTTPException  # noqa: E402 - Required after warnings filter setup
+from app.core.config import get_settings  # noqa: E402 - Required after warnings filter setup
 
 logger = logging.getLogger(__name__)
 

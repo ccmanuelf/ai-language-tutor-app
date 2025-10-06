@@ -18,11 +18,11 @@ import shutil
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from app.services.feature_toggle_service import (
+from app.services.feature_toggle_service import (  # noqa: E402 - Required after sys.path modification for script execution
     FeatureToggleService,
     get_feature_toggle_service,
 )
-from app.models.feature_toggle import (
+from app.models.feature_toggle import (  # noqa: E402 - Required after sys.path modification for script execution
     FeatureToggleRequest,
     FeatureToggleUpdateRequest,
     FeatureToggleCategory,

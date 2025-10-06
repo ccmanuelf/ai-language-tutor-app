@@ -60,7 +60,7 @@ except ImportError:
     PIPER_TTS_AVAILABLE = False
     logging.warning("Piper TTS service not available.")
 
-from app.core.config import get_settings
+from app.core.config import get_settings  # noqa: E402 - Required after logger configuration
 
 logger = logging.getLogger(__name__)
 

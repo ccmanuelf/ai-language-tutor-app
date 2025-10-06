@@ -29,9 +29,9 @@ from app.utils.sqlite_adapters import register_sqlite_adapters
 
 register_sqlite_adapters()
 
-from app.services.ai_router import ai_router
-from app.services.budget_manager import budget_manager
-from app.core.config import get_settings
+from app.services.ai_router import ai_router  # noqa: E402 - Required after logger configuration
+from app.services.budget_manager import budget_manager  # noqa: E402 - Required after logger configuration
+from app.core.config import get_settings  # noqa: E402 - Required after logger configuration
 
 logger = logging.getLogger(__name__)
 
