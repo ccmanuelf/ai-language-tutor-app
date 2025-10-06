@@ -254,7 +254,7 @@ class AIServicesTestSuite:
 
         selection = await ai_router.select_provider(language="en", force_local=True)
         assert selection.provider_name == "ollama"
-        assert selection.is_fallback == True
+        assert selection.is_fallback is True
 
         status = await ai_router.get_router_status()
         assert "budget_status" in status
@@ -334,7 +334,7 @@ class AIServicesTestSuite:
         # Test session management
         await conversation_manager.pause_conversation(conv_id)
         success = await conversation_manager.resume_conversation(conv_id)
-        assert success == True
+        assert success
 
     async def test_budget_fallback(self):
         """Test budget exhaustion fallback"""
@@ -348,7 +348,7 @@ class AIServicesTestSuite:
 
         selection = await ai_router.select_provider(language="en")
         assert selection.provider_name == "ollama"
-        assert selection.is_fallback == True
+        assert selection.is_fallback is True
 
         # Reset budget
         budget_manager.current_usage = initial_status.total_usage

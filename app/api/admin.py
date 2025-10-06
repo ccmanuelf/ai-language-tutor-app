@@ -551,7 +551,7 @@ async def get_system_stats(
     try:
         with get_db_session_context() as session:
             total_users = session.query(User).count()
-            active_users = session.query(User).filter(User.is_active == True).count()
+            active_users = session.query(User).filter(User.is_active is True).count()
             admin_users = (
                 session.query(User).filter(User.role == UserRole.ADMIN).count()
             )

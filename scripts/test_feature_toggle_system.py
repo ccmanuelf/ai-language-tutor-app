@@ -256,7 +256,7 @@ class FeatureToggleSystemTests:
             invalid_enabled = feature_toggle_manager.is_feature_enabled(
                 "nonexistent_feature"
             )
-            assert invalid_enabled == False, "Invalid features should return False"
+            assert not invalid_enabled, "Invalid features should return False"
 
         run_test("Feature Existence Check", test_feature_check)
 
@@ -266,13 +266,13 @@ class FeatureToggleSystemTests:
             admin_enabled = feature_toggle_manager.is_feature_enabled(
                 "user_management", "ADMIN"
             )
-            assert admin_enabled == True, "Admin should have access to user_management"
+            assert admin_enabled, "Admin should have access to user_management"
 
             # Test child access to admin feature
             child_enabled = feature_toggle_manager.is_feature_enabled(
                 "user_management", "CHILD"
             )
-            assert child_enabled == False, (
+            assert not child_enabled, (
                 "Child should not have access to admin features"
             )
 
@@ -353,7 +353,7 @@ class FeatureToggleSystemTests:
             assert isinstance(result1, bool), "is_feature_enabled should return boolean"
 
             result2 = get_feature("content_processing")
-            assert result2 is not None or result1 == False, (
+            assert not result2 is not None or result1, (
                 "get_feature should return feature or None"
             )
 
@@ -386,7 +386,7 @@ class FeatureToggleSystemTests:
 
             # Test with invalid feature
             with FeatureContext("invalid_feature", silent=True) as enabled:
-                assert enabled == False, "Invalid feature should return False"
+                assert not enabled, "Invalid feature should return False"
 
         run_test("Feature Context Manager", test_feature_context)
 
@@ -448,8 +448,8 @@ class FeatureToggleSystemTests:
                     feature, "CHILD"
                 )
 
-                assert admin_access == True, f"Admin should have access to {feature}"
-                assert child_access == False, (
+                assert admin_access, f"Admin should have access to {feature}"
+                assert not child_access, (
                     f"Child should not have access to {feature}"
                 )
 
@@ -467,7 +467,7 @@ class FeatureToggleSystemTests:
                 child_access = feature_toggle_manager.is_feature_enabled(
                     feature, "CHILD"
                 )
-                assert child_access == True, f"Child should have access to {feature}"
+                assert child_access, f"Child should have access to {feature}"
 
         run_test("Child Accessible Features", test_child_accessible_features)
 
@@ -503,7 +503,7 @@ class FeatureToggleSystemTests:
 
             # Create the feature
             created = feature_toggle_manager.create_feature(test_feature)
-            assert created == True, "Should be able to create test feature"
+            assert created, "Should be able to create test feature"
 
             # Update the feature
             updated = feature_toggle_manager.update_feature(
@@ -511,19 +511,19 @@ class FeatureToggleSystemTests:
                 is_enabled=False,
                 description="Updated test feature",
             )
-            assert updated == True, "Should be able to update feature"
+            assert updated, "Should be able to update feature"
 
             # Verify update
             feature = feature_toggle_manager.get_feature(self.test_feature_name)
             assert feature is not None, "Feature should exist after update"
-            assert feature.is_enabled == False, (
+            assert not feature.is_enabled, (
                 "Feature should be disabled after update"
             )
             assert "Updated" in feature.description, "Description should be updated"
 
             # Clean up - delete test feature
             deleted = feature_toggle_manager.delete_feature(self.test_feature_name)
-            assert deleted == True, "Should be able to delete test feature"
+            assert deleted, "Should be able to delete test feature"
 
         run_test("Feature Update Operations", test_feature_update)
 
@@ -727,7 +727,7 @@ class FeatureToggleSystemTests:
         def test_invalid_features():
             # Should return False for non-existent features
             enabled = feature_toggle_manager.is_feature_enabled("nonexistent_feature")
-            assert enabled == False, "Non-existent features should return False"
+            assert not enabled, "Non-existent features should return False"
 
             feature = feature_toggle_manager.get_feature("nonexistent_feature")
             assert feature is None, "Non-existent features should return None"
@@ -740,14 +740,14 @@ class FeatureToggleSystemTests:
             enabled = feature_toggle_manager.is_feature_enabled(
                 "content_processing", "INVALID_ROLE"
             )
-            assert enabled == False, "Invalid roles should return False"
+            assert not enabled, "Invalid roles should return False"
 
         run_test("Invalid Roles", test_invalid_roles)
 
         # Test 3: Empty inputs
         def test_empty_inputs():
             enabled = feature_toggle_manager.is_feature_enabled("")
-            assert enabled == False, "Empty feature name should return False"
+            assert not enabled, "Empty feature name should return False"
 
             feature = feature_toggle_manager.get_feature("")
             assert feature is None, "Empty feature name should return None"
