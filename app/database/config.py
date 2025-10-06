@@ -426,11 +426,4 @@ def get_sqlite_session() -> Session:
     return db_manager.get_sqlite_session()
 
 
-def get_chromadb_client():
-    """Get ChromaDB client"""
-    return db_manager.chromadb_client
-
-
-def get_duckdb_connection():
-    """Get DuckDB connection"""
-    return db_manager.duckdb_connection
+# Removed duplicate functions - already defined above as FastAPI dependencies

@@ -34,9 +34,9 @@ python scripts/validate_environment.py
    - Verify 5/5 checks pass (Python, dependencies, directory, models, services)
    - If any failures, fix before proceeding
 
-2. **Read Current Status**: Load and analyze `docs/TASK_TRACKER.json` and `docs/TASK_4.2.4_REFACTORING_PLAN.md` to understand current phase, task, and progress
+2. **Read Current Status**: Load and analyze `docs/TASK_TRACKER.json` and `validation_artifacts/4.2.6/PHASE_2B_PROGRESS_REPORT.md` to understand current phase, task, and progress
 
-3. **Check Previous Session Handover**: Review `docs/SESSION_HANDOVER_TASK_4_2_6.md` and `docs/SESSION_HANDOVER_TASK_4_2_6_PHASE_2.md` and `docs/CURRENT_STATUS_PHASE_2B.md` and `validation_artifacts/4.2.6/PHASE_2B_COMPREHENSIVE_CLEANUP_PLAN.md` if these exists from the last session
+3. **Check Previous Session Handover**: Review `docs/SESSION_HANDOVER_TASK_4_2_6.md` and `docs/SESSION_HANDOVER_TASK_4_2_6_PHASE_2.md` and `docs/SESSION_HANDOVER_TASK_4_2_6_PHASE_2B_PROGRESS.md` and `docs/RESUMPTION_GUIDE_PHASE_2B.md` if these exists from the last session
 
 4. **Validate Previous Work**:
    - Check if the previous session's work was completed and validated according to quality gates
