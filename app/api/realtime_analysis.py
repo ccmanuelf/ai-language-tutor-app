@@ -17,29 +17,22 @@ Features:
 - Analytics dashboard endpoints
 """
 
-import asyncio
 import logging
-import json
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, WebSocket, WebSocketDisconnect
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 import base64
 
 from app.services.realtime_analyzer import (
     realtime_analyzer,
     AnalysisType,
-    FeedbackPriority,
-    RealTimeFeedback,
-    AudioSegment,
     start_realtime_analysis,
     analyze_speech_realtime,
     get_realtime_analytics,
     end_realtime_session,
 )
 from app.services.auth import get_current_user
-from app.services.user_management import get_user_by_id
 from app.models.database import User
 
 logger = logging.getLogger(__name__)

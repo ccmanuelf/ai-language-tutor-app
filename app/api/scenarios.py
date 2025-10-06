@@ -13,21 +13,17 @@ Features:
 - Integration with conversation management system
 """
 
-import asyncio
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
-from enum import Enum
 
 from app.services.scenario_manager import (
     scenario_manager,
     ScenarioCategory,
     ScenarioDifficulty,
     get_available_scenarios,
-    start_scenario,
-    process_scenario_interaction,
     get_scenario_status,
     finish_scenario,
 )

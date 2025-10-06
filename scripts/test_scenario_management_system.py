@@ -29,14 +29,10 @@ Validation Standards:
 import asyncio
 import json
 import logging
-import os
 import sys
-import tempfile
-import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-import aiohttp
+from typing import List
 import uuid
 
 # Add the project root to the Python path
@@ -51,7 +47,7 @@ from app.services.scenario_manager import (
     ConversationRole,
     ScenarioPhase,
 )
-from app.services.admin_auth import admin_auth_service, AdminPermission
+from app.services.admin_auth import AdminPermission
 
 # Configure logging
 logging.basicConfig(
@@ -1942,7 +1938,7 @@ class ScenarioManagementTester:
         """Test file system error handling"""
         try:
             # Test saving to non-existent directory (should create it)
-            original_scenarios = dict(self.scenario_manager.scenarios)
+            dict(self.scenario_manager.scenarios)
 
             # Test saving scenarios (should handle directory creation)
             await self.scenario_manager._save_scenarios_to_file()

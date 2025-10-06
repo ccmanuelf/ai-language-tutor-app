@@ -12,10 +12,9 @@ This module implements intelligent response caching to reduce API costs by:
 import logging
 import hashlib
 import json
-import time
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from enum import Enum
 
 logger = logging.getLogger(__name__)

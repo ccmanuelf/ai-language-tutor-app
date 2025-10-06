@@ -18,11 +18,8 @@ import os
 import sys
 import json
 import sqlite3
-import asyncio
-import pytest
-import requests
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, Any
 import logging
 
 # Add the app directory to the Python path
@@ -37,7 +34,6 @@ from app.services.feature_toggle_manager import (
     get_features_by_category,
 )
 from app.decorators.feature_toggle import (
-    require_feature,
     feature_gate,
     FeatureToggleService,
     check_content_processing,
@@ -922,7 +918,7 @@ def main():
 
     try:
         # Run all tests
-        results = test_suite.run_all_tests()
+        test_suite.run_all_tests()
 
         # Generate report
         success = test_suite.generate_report()

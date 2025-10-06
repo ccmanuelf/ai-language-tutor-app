@@ -7,9 +7,7 @@ learning analytics settings, and gamification parameters.
 """
 
 from fasthtml.common import *
-from typing import Dict, List, Optional, Any
-import json
-from datetime import datetime
+from typing import Dict
 
 
 def admin_learning_analytics_styles():

@@ -13,14 +13,13 @@ Features:
 - Scenario validation and testing
 """
 
-from fastapi import APIRouter, HTTPException, Depends, status, Query, Body
+from fastapi import APIRouter, HTTPException, Depends, status, Query
 from fastapi.responses import JSONResponse
-from typing import Dict, List, Any, Optional, Union
+from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator
 import logging
-import json
 from datetime import datetime
-from uuid import uuid4, UUID
+from uuid import uuid4
 
 from app.services.admin_auth import (
     require_admin_access,
@@ -28,7 +27,6 @@ from app.services.admin_auth import (
     AdminPermission,
 )
 from app.services.scenario_manager import (
-    ScenarioManager,
     scenario_manager,
     ConversationScenario,
     ScenarioCategory,
@@ -36,8 +34,6 @@ from app.services.scenario_manager import (
     ConversationRole,
     ScenarioPhase,
 )
-from app.services.content_processor import ContentProcessor
-from app.database.config import get_db_session_context
 
 logger = logging.getLogger(__name__)
 

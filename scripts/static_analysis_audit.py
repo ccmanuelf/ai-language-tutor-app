@@ -17,7 +17,6 @@ Author: AI Language Tutor App Team
 Date: 2025-10-02
 """
 
-import os
 import sys
 import importlib
 import warnings
@@ -89,7 +88,7 @@ class StaticAnalysisAuditor:
 
             module_name = ".".join(parts)
             return module_name
-        except Exception as e:
+        except Exception:
             return None
 
     def import_module_with_warnings(

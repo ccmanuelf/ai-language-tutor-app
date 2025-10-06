@@ -3,7 +3,6 @@ Authentication API endpoints for user management
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status, Form
-from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List

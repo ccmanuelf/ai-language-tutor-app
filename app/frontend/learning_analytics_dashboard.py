@@ -7,9 +7,8 @@ spaced repetition progress, achievements, and gamification elements.
 """
 
 from fasthtml.common import *
-from typing import Dict, List, Optional, Any
-import json
-from datetime import datetime, timedelta
+from typing import Dict, List
+from datetime import datetime
 
 
 def learning_analytics_styles():
@@ -624,7 +623,7 @@ def create_streak_section(streak_data: Dict):
     """Create the learning streak section"""
 
     current_streak = streak_data.get("current_streak", 0)
-    longest_streak = streak_data.get("longest_streak", 0)
+    streak_data.get("longest_streak", 0)
 
     # Determine streak emoji based on length
     if current_streak == 0:
@@ -655,7 +654,7 @@ def create_spaced_repetition_section(sr_data: Dict):
     total_items = sr_data.get("total_items", 0)
     mastered_items = sr_data.get("mastered_items", 0)
     due_items = sr_data.get("due_items", 0)
-    avg_mastery = sr_data.get("avg_mastery", 0)
+    sr_data.get("avg_mastery", 0)
 
     # Sample items for demonstration
     sample_items = [

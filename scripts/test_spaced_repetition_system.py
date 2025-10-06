@@ -18,8 +18,8 @@ import json
 import sqlite3
 import logging
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Tuple
+from datetime import datetime
+from typing import Dict, List, Any
 import uuid
 
 # Add the app directory to the path
@@ -855,7 +855,7 @@ class SpacedRepetitionTestSuite:
 
         try:
             # Test achievement creation
-            achievement_id = str(uuid.uuid4())
+            str(uuid.uuid4())
 
             self.sr_manager._award_achievement(
                 user_id=TEST_CONFIG["test_user_id"],

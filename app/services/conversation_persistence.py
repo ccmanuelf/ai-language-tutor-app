@@ -48,7 +48,6 @@ class ConversationPersistence:
 
     def __init__(self):
         """Initialize the conversation persistence service."""
-        pass
 
     async def save_conversation_to_db(
         self, conversation_id: str, context: ConversationContext, status: str = "active"

@@ -5,11 +5,9 @@ This service provides human-like, natural conversational AI for language learnin
 using Anthropic's Claude API with optimized prompts for educational conversations.
 """
 
-import asyncio
 import logging
 from typing import Dict, List, Any, Optional
 from datetime import datetime
-import json
 
 try:
     import anthropic
@@ -26,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 class ClaudeService(BaseAIService):
     """Claude AI service with natural conversation optimization"""
-    
+
     def __init__(self):
         super().__init__()
         self.service_name = "claude"
@@ -36,10 +34,10 @@ class ClaudeService(BaseAIService):
         self.max_tokens_per_request = 4096
         self.rate_limit_per_minute = 1000
         self.is_available = ANTHROPIC_AVAILABLE
-        
+
         self.settings = get_settings()
         self.client = None
-        
+
         if ANTHROPIC_AVAILABLE and hasattr(self.settings, 'ANTHROPIC_API_KEY') and self.settings.ANTHROPIC_API_KEY:
             try:
                 self.client = anthropic.Anthropic(api_key=self.settings.ANTHROPIC_API_KEY)
@@ -50,10 +48,10 @@ class ClaudeService(BaseAIService):
         else:
             logger.warning("Claude API not available - missing API key or anthropic library")
             self.is_available = False
-    
+
     def _get_conversation_prompt(self, language: str, user_message: str, conversation_history: Optional[List[Dict[str, str]]] = None) -> str:
         """Generate dynamic, emotionally rich conversation prompt with context"""
-        
+
         # Build conversation context
         context_summary = ""
         if conversation_history and len(conversation_history) > 1:
@@ -63,7 +61,7 @@ class ClaudeService(BaseAIService):
                     recent_topics.append(msg.get('content', '')[:50])
             if recent_topics:
                 context_summary = f"\n\nCONVERSATION CONTEXT: We've been talking about: {', '.join(recent_topics)}. Continue this natural flow."
-        
+
         language_contexts = {
             "en": {
                 "persona": "You are Alex, a genuinely enthusiastic and warm conversation partner who loves connecting with people. You have real emotions, get excited about interesting topics, and react naturally to what people tell you. You're like talking to your most engaging friend.",
@@ -109,19 +107,19 @@ class ClaudeService(BaseAIService):
                 }
             }
         }
-        
+
         # Get language-specific context
         lang_context = language_contexts.get(language, language_contexts["en"])
-        
+
         # Detect emotional triggers in user message
         detected_mood = "neutral"
         user_lower = user_message.lower()
-        
+
         for mood, triggers in lang_context.get("mood_triggers", {}).items():
             if any(trigger in user_lower for trigger in triggers):
                 detected_mood = mood
                 break
-        
+
         # Build dynamic prompt based on mood and context
         mood_instructions = {
             "exciting": "The user seems excited! Match their energy! Be super enthusiastic, use lots of exclamation points, and ask rapid follow-up questions!",
@@ -129,7 +127,7 @@ class ClaudeService(BaseAIService):
             "curious": "The user mentioned something interesting! Show genuine curiosity, ask thoughtful questions, and encourage them to share more.",
             "neutral": "Have a warm, engaging conversation. Be naturally curious about them as a person."
         }
-        
+
         prompt = f"""{lang_context['persona']}
 
 {lang_context['style']}
@@ -139,7 +137,7 @@ MOOD INSTRUCTION: {mood_instructions[detected_mood]}
 USER MESSAGE: "{user_message}"
 {context_summary}
 
-REMEMBER: 
+REMEMBER:
 - You're having a real conversation, not giving a lesson
 - React naturally to what they say
 - Ask questions that show you're listening
@@ -148,8 +146,9 @@ REMEMBER:
 - Never sound like an AI assistant or language teacher
 
 Respond naturally as if you're their {language} friend:"""
-        
+
         return prompt
+
     async def generate_response(
         self,
         messages: Optional[List[Dict[str, str]]] = None,
@@ -161,12 +160,12 @@ Respond naturally as if you're their {language} friend:"""
         **kwargs
     ) -> AIResponse:
         """Generate natural conversation response using Claude"""
-        
+
         start_time = datetime.now()
-        
+
         if not self.is_available:
             raise Exception("Claude service not available - check API key configuration")
-        
+
         try:
             # Handle single message input (from conversation API)
             if message and not messages:
@@ -175,13 +174,13 @@ Respond naturally as if you're their {language} friend:"""
                 user_message = messages[-1].get("content", "") if messages else ""
             else:
                 user_message = "Hello! I'd like to practice conversation."
-            
+
             # Use specified model or default
             model_name = model or "claude-3-haiku-20240307"
-            
+
             # Generate natural conversation prompt with history
             conversation_prompt = self._get_conversation_prompt(language, user_message, conversation_history)
-            
+
             # Make API call to Claude
             response = self.client.messages.create(
                 model=model_name,
@@ -194,14 +193,14 @@ Respond naturally as if you're their {language} friend:"""
                     }
                 ]
             )
-            
+
             processing_time = (datetime.now() - start_time).total_seconds()
-            
+
             # Calculate cost
             input_tokens = response.usage.input_tokens
             output_tokens = response.usage.output_tokens
             cost = (input_tokens * self.cost_per_token_input) + (output_tokens * self.cost_per_token_output)
-            
+
             # Extract response content safely
             response_content = ""
             if response.content:
@@ -209,10 +208,10 @@ Respond naturally as if you're their {language} friend:"""
                     if hasattr(content_block, 'text'):
                         response_content += content_block.text
                         break
-            
+
             if not response_content:
                 response_content = "I'm sorry, I couldn't generate a response."
-            
+
             return AIResponse(
                 content=response_content,
                 model=model_name,
@@ -228,14 +227,14 @@ Respond naturally as if you're their {language} friend:"""
                     "conversation_style": "natural_tutoring"
                 }
             )
-            
+
         except Exception as e:
             processing_time = (datetime.now() - start_time).total_seconds()
             logger.error(f"Claude API error: {e}")
-            
+
             return AIResponse(
                 content=f"I'm having trouble connecting right now. Let's try again! What would you like to talk about?",
-                model=model or "claude-3-haiku-20240307", 
+                model=model or "claude-3-haiku-20240307",
                 provider="claude",
                 language=language,
                 processing_time=processing_time,
@@ -244,12 +243,12 @@ Respond naturally as if you're their {language} friend:"""
                 error_message=str(e),
                 metadata={"fallback_response": True}
             )
-    
+
     async def check_availability(self) -> bool:
         """Check if Claude service is available"""
         if not self.client:
             return False
-        
+
         try:
             # Test with a minimal request
             test_response = self.client.messages.create(
@@ -261,11 +260,11 @@ Respond naturally as if you're their {language} friend:"""
         except Exception as e:
             logger.warning(f"Claude availability check failed: {e}")
             return False
-    
+
     async def get_health_status(self) -> Dict[str, Any]:
         """Get detailed health status"""
         is_available = await self.check_availability()
-        
+
         return {
             "status": "healthy" if is_available else "error",
             "available": is_available,

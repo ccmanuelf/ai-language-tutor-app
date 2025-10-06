@@ -105,7 +105,6 @@ async def test_api_endpoints():
 
     try:
         from app.api.scenario_management import (
-            router,
             ensure_scenario_manager_initialized,
         )
 

@@ -27,7 +27,6 @@ from uuid import uuid4
 
 from app.services.conversation_models import (
     ConversationContext,
-    ConversationStatus,
     MessageRole,
     LearningFocus,
 )

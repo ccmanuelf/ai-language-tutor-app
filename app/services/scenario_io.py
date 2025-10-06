@@ -8,7 +8,7 @@ loading from and saving to JSON files.
 import logging
 import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict
 from datetime import datetime
 
 from .scenario_models import (

@@ -976,25 +976,451 @@
                   ]
                 },
                 "phase_2_code_quality": {
-                  "status": "READY",
-                  "description": "Code quality scan for maintenance and technical debt",
+                  "status": "COMPLETED",
+                  "completion_date": "2025-10-03",
+                  "description": "Code quality scan for maintenance and technical debt - Comprehensive audit completed",
+                  "actual_hours": 2,
                   "estimated_hours": 3,
-                  "objectives": [
-                    "Identify unused imports and dead code",
-                    "Check for undefined variables",
-                    "Run type checking if beneficial",
-                    "Analyze code complexity metrics"
+                  "total_issues_found": 3277,
+                  "issues_fixed": 97,
+                  "issues_documented": 3180,
+                  "validation_results": {
+                    "static_analysis": "100.0% (181/181 modules)",
+                    "integration_tests": "8/8 PASSED",
+                    "unused_imports_fixed": 97,
+                    "files_cleaned": 111
+                  },
+                  "objectives_achieved": [
+                    "✅ Identified unused imports (97 files) - FIXED",
+                    "✅ Dead code analysis complete - 0 found",
+                    "✅ Undefined variables check - 0 found",
+                    "✅ Complexity metrics analyzed - 49 functions documented"
                   ],
-                  "tools": [
-                    "pylint or flake8 for code quality",
-                    "mypy for type checking (optional)",
-                    "radon for complexity analysis"
+                  "tools_used": [
+                    "autoflake - unused import removal",
+                    "flake8 - code style analysis",
+                    "radon - complexity metrics"
+                  ],
+                  "issue_categories": {
+                    "critical": {
+                      "count": 0,
+                      "description": "No critical issues found"
+                    },
+                    "high": {
+                      "count": 87,
+                      "description": "Unused imports (97 files), FastHTML star imports (2,163), High complexity (8 functions)",
+                      "fixed": 97,
+                      "documented": 2171
+                    },
+                    "medium": {
+                      "count": 2800,
+                      "description": "Whitespace (497), Import order (41), Boolean comparisons (35), Moderate complexity (41)",
+                      "action": "Documented as technical debt"
+                    },
+                    "low": {
+                      "count": 100,
+                      "description": "Bare except (12), F-strings (48), Unused variables (32), Formatting (31)",
+                      "action": "Address opportunistically"
+                    }
+                  },
+                  "complexity_analysis": {
+                    "high_complexity_e_or_d": 8,
+                    "moderate_complexity_c": 41,
+                    "average_complexity": "C (14.9)",
+                    "target_complexity": "10",
+                    "top_offenders": [
+                      "progress_analytics_service.py:564 - E (33)",
+                      "feature_toggle_service.py:661 - E (32)",
+                      "progress_analytics_service.py:922 - D (28)",
+                      "ai_model_manager.py:693 - D (23)",
+                      "feature_toggle_service.py:854 - D (21)"
+                    ]
+                  },
+                  "files_modified": 98,
+                  "files_created": 2,
+                  "validation_artifacts": [
+                    "validation_artifacts/4.2.6/phase2_code_quality_findings.md",
+                    "validation_artifacts/4.2.6/PHASE_2_COMPLETION_REPORT.md"
+                  ]
+                },
+                "phase_2b_comprehensive_cleanup": {
+                  "status": "IN_PROGRESS",
+                  "start_date": "2025-10-03",
+                  "description": "OPTION A - Full comprehensive cleanup to achieve zero code quality issues",
+                  "estimated_hours": 20,
+                  "current_hours": 0,
+                  "decision_rationale": "User chose Option A for maximum code quality - time investment well worth it, payback exponential, manageable risk",
+                  "total_issues_remaining": 3180,
+                  "target_issues": 0,
+                  "approach": "Systematic, validated, incremental cleanup with full testing at each step",
+                  "quality_philosophy": "Better safe than sorry - professional-grade codebase for family use",
+                  "subtasks": {
+                    "2b_1_automated_fixes": {
+                      "status": "READY",
+                      "name": "Quick Automated Fixes (Whitespace, Formatting, Escape)",
+                      "priority": "HIGH",
+                      "estimated_hours": 0.5,
+                      "risk_level": "LOW",
+                      "issues_to_fix": 529,
+                      "dependencies": [],
+                      "description": "Automated cleanup using autopep8 and manual fix for invalid escape",
+                      "acceptance_criteria": [
+                        "✅ 497 whitespace issues fixed (W291, W292, W293)",
+                        "✅ 31 formatting issues fixed (E128, E301, E302, E303, E305)",
+                        "✅ 1 invalid escape sequence fixed (W605)",
+                        "✅ Static analysis remains at 100%",
+                        "✅ Integration tests remain at 8/8 passing"
+                      ],
+                      "tools": ["autopep8"],
+                      "validation_required": true
+                    },
+                    "2b_2_boolean_comparisons": {
+                      "status": "BLOCKED",
+                      "name": "Fix Boolean Comparison Anti-patterns",
+                      "priority": "MEDIUM",
+                      "estimated_hours": 1,
+                      "risk_level": "LOW",
+                      "issues_to_fix": 35,
+                      "dependencies": ["2b_1_automated_fixes"],
+                      "description": "Replace == True/False with direct boolean evaluation",
+                      "acceptance_criteria": [
+                        "✅ 35 E712 violations fixed",
+                        "✅ Code uses direct boolean evaluation",
+                        "✅ All assertions still pass",
+                        "✅ Static analysis remains at 100%"
+                      ],
+                      "approach": "Python script for pattern replacement + manual validation",
+                      "validation_required": true
+                    },
+                    "2b_3_fstring_placeholders": {
+                      "status": "BLOCKED",
+                      "name": "Fix F-strings Without Placeholders",
+                      "priority": "LOW",
+                      "estimated_hours": 1,
+                      "risk_level": "LOW",
+                      "issues_to_fix": 48,
+                      "dependencies": ["2b_2_boolean_comparisons"],
+                      "description": "Convert f-strings without placeholders to regular strings",
+                      "acceptance_criteria": [
+                        "✅ 48 F541 violations fixed",
+                        "✅ All f-strings contain placeholders or converted to regular strings",
+                        "✅ Static analysis remains at 100%"
+                      ],
+                      "approach": "Grep to find, manual/scripted replacement",
+                      "validation_required": true
+                    },
+                    "2b_4_import_order": {
+                      "status": "BLOCKED",
+                      "name": "Document Import Order Exceptions",
+                      "priority": "MEDIUM",
+                      "estimated_hours": 0.5,
+                      "risk_level": "LOW",
+                      "issues_to_fix": 41,
+                      "dependencies": ["2b_3_fstring_placeholders"],
+                      "description": "Add noqa comments with justification for E402 violations in scripts",
+                      "acceptance_criteria": [
+                        "✅ 41 E402 violations suppressed with # noqa: E402 comments",
+                        "✅ Each has inline justification (sys.path modification required)",
+                        "✅ Documented in CODE_STYLE_GUIDE.md",
+                        "✅ Flake8 violations reduced"
+                      ],
+                      "rationale": "Scripts require sys.path modifications before imports",
+                      "validation_required": false
+                    },
+                    "2b_5_bare_except": {
+                      "status": "BLOCKED",
+                      "name": "Fix Bare Except Clauses",
+                      "priority": "MEDIUM",
+                      "estimated_hours": 1.5,
+                      "risk_level": "MEDIUM",
+                      "issues_to_fix": 12,
+                      "dependencies": ["2b_4_import_order"],
+                      "description": "Replace bare except with specific exception types",
+                      "acceptance_criteria": [
+                        "✅ 12 E722 violations fixed",
+                        "✅ All except clauses specify exception type",
+                        "✅ Error logging improved with exception details",
+                        "✅ No functionality regressions"
+                      ],
+                      "approach": "Manual fixes with proper exception handling",
+                      "validation_required": true
+                    },
+                    "2b_6_unused_variables": {
+                      "status": "BLOCKED",
+                      "name": "Remove Unused Local Variables",
+                      "priority": "LOW",
+                      "estimated_hours": 1,
+                      "risk_level": "LOW",
+                      "issues_to_fix": 15,
+                      "dependencies": ["2b_5_bare_except"],
+                      "description": "Remove or properly use assigned but unused variables",
+                      "acceptance_criteria": [
+                        "✅ 15 F841 violations fixed",
+                        "✅ Variables either removed or used appropriately",
+                        "✅ Code clarity improved",
+                        "✅ Static analysis remains at 100%"
+                      ],
+                      "approach": "Manual review and removal/usage decision",
+                      "validation_required": true
+                    },
+                    "2b_7_function_redefinitions": {
+                      "status": "BLOCKED",
+                      "name": "Fix Function Redefinitions",
+                      "priority": "MEDIUM",
+                      "estimated_hours": 0.5,
+                      "risk_level": "MEDIUM",
+                      "issues_to_fix": 5,
+                      "dependencies": ["2b_6_unused_variables"],
+                      "description": "Refactor chromadb_config.py to eliminate 3 versions of get_chromadb_client",
+                      "acceptance_criteria": [
+                        "✅ 5 F811 violations fixed",
+                        "✅ Single get_chromadb_client function with version detection",
+                        "✅ ChromaDB functionality preserved",
+                        "✅ Tests pass"
+                      ],
+                      "files_affected": ["app/database/chromadb_config.py"],
+                      "validation_required": true
+                    },
+                    "2b_8_fasthtml_documentation": {
+                      "status": "BLOCKED",
+                      "name": "Document FastHTML Star Import Pattern",
+                      "priority": "HIGH",
+                      "estimated_hours": 0.5,
+                      "risk_level": "LOW",
+                      "issues_to_fix": 2163,
+                      "dependencies": ["2b_7_function_redefinitions"],
+                      "description": "Document FastHTML star imports as accepted pattern, configure flake8",
+                      "acceptance_criteria": [
+                        "✅ 2,163 F405/F403 violations documented as accepted pattern",
+                        "✅ .flake8 config created with per-file-ignores",
+                        "✅ CODE_STYLE_GUIDE.md section on FastHTML patterns",
+                        "✅ Flake8 violations reduced significantly"
+                      ],
+                      "approach": "Configuration + documentation",
+                      "validation_required": false
+                    },
+                    "2b_9_complexity_c_documentation": {
+                      "status": "BLOCKED",
+                      "name": "Document Moderate Complexity Functions",
+                      "priority": "MEDIUM",
+                      "estimated_hours": 1,
+                      "risk_level": "LOW",
+                      "issues_to_fix": 41,
+                      "dependencies": ["2b_8_fasthtml_documentation"],
+                      "description": "Create technical debt register for 41 C-level complexity functions",
+                      "acceptance_criteria": [
+                        "✅ 41 functions documented in TECHNICAL_DEBT_REGISTER.md",
+                        "✅ Each has refactoring plan with priority and estimate",
+                        "✅ Rationale documented for complexity",
+                        "✅ Target dates assigned"
+                      ],
+                      "deliverable": "docs/TECHNICAL_DEBT_REGISTER.md",
+                      "validation_required": false
+                    },
+                    "2b_10_code_style_guide": {
+                      "status": "BLOCKED",
+                      "name": "Create Comprehensive Code Style Guide",
+                      "priority": "HIGH",
+                      "estimated_hours": 0.5,
+                      "risk_level": "LOW",
+                      "issues_to_fix": 0,
+                      "dependencies": ["2b_9_complexity_c_documentation"],
+                      "description": "Create comprehensive style guide documenting all standards",
+                      "acceptance_criteria": [
+                        "✅ CODE_STYLE_GUIDE.md created",
+                        "✅ Import conventions documented",
+                        "✅ Exception handling standards defined",
+                        "✅ Boolean comparison patterns specified",
+                        "✅ Complexity targets documented",
+                        "✅ Type hint requirements specified"
+                      ],
+                      "deliverable": "docs/CODE_STYLE_GUIDE.md",
+                      "validation_required": false
+                    },
+                    "2b_11_refactor_complexity_e1": {
+                      "status": "BLOCKED",
+                      "name": "Refactor feature_toggle_service._evaluate_feature (E: 32)",
+                      "priority": "CRITICAL",
+                      "estimated_hours": 3,
+                      "risk_level": "HIGH",
+                      "issues_to_fix": 1,
+                      "dependencies": ["2b_10_code_style_guide"],
+                      "description": "Reduce complexity from 32 to <10 per method through extraction",
+                      "target_file": "app/services/feature_toggle_service.py:661",
+                      "current_complexity": 32,
+                      "target_complexity": "<10 per method",
+                      "acceptance_criteria": [
+                        "✅ Complexity reduced from 32 to <10 per extracted method",
+                        "✅ Unit tests written for each extracted method",
+                        "✅ All existing tests pass",
+                        "✅ Feature toggle functionality preserved 100%",
+                        "✅ Code coverage maintained or improved"
+                      ],
+                      "approach": "Extract to: _is_feature_active, _check_user_eligibility, _check_conditions, _apply_feature_rules",
+                      "validation_required": true,
+                      "testing_strategy": "Unit tests before refactoring, integration tests after"
+                    },
+                    "2b_12_refactor_complexity_e2": {
+                      "status": "BLOCKED",
+                      "name": "Refactor progress_analytics_service.get_conversation_analytics (E: 33)",
+                      "priority": "CRITICAL",
+                      "estimated_hours": 3,
+                      "risk_level": "HIGH",
+                      "issues_to_fix": 1,
+                      "dependencies": ["2b_11_refactor_complexity_e1"],
+                      "description": "Reduce complexity from 33 to <10 per method through extraction",
+                      "target_file": "app/services/progress_analytics_service.py:564",
+                      "current_complexity": 33,
+                      "target_complexity": "<10 per method",
+                      "acceptance_criteria": [
+                        "✅ Complexity reduced from 33 to <10 per extracted method",
+                        "✅ Analytics calculations split into focused methods",
+                        "✅ All existing tests pass",
+                        "✅ Analytics functionality preserved 100%",
+                        "✅ Performance not degraded"
+                      ],
+                      "approach": "Extract to: _calculate_overview, _calculate_trends, _calculate_skills, _generate_recommendations",
+                      "validation_required": true,
+                      "testing_strategy": "Comprehensive analytics validation"
+                    },
+                    "2b_13_refactor_complexity_d1": {
+                      "status": "BLOCKED",
+                      "name": "Refactor progress_analytics_service.get_multi_skill_analytics (D: 28)",
+                      "priority": "HIGH",
+                      "estimated_hours": 2,
+                      "risk_level": "MEDIUM",
+                      "issues_to_fix": 1,
+                      "dependencies": ["2b_12_refactor_complexity_e2"],
+                      "description": "Reduce complexity from 28 to <10 per method",
+                      "target_file": "app/services/progress_analytics_service.py:922",
+                      "current_complexity": 28,
+                      "target_complexity": "<10 per method",
+                      "acceptance_criteria": [
+                        "✅ Complexity reduced from 28 to <10 per extracted method",
+                        "✅ Skill analytics split by skill type",
+                        "✅ All tests pass",
+                        "✅ Functionality preserved 100%"
+                      ],
+                      "approach": "Split by skill type with strategy pattern",
+                      "validation_required": true
+                    },
+                    "2b_14_refactor_complexity_d2": {
+                      "status": "BLOCKED",
+                      "name": "Refactor ai_model_manager.get_model_performance_report (D: 23)",
+                      "priority": "HIGH",
+                      "estimated_hours": 1.5,
+                      "risk_level": "MEDIUM",
+                      "issues_to_fix": 1,
+                      "dependencies": ["2b_13_refactor_complexity_d1"],
+                      "description": "Reduce complexity from 23 to <10 per method",
+                      "target_file": "app/services/ai_model_manager.py:693",
+                      "current_complexity": 23,
+                      "target_complexity": "<10 per method",
+                      "acceptance_criteria": [
+                        "✅ Complexity reduced from 23 to <10 per extracted method",
+                        "✅ Report generation split into helper methods",
+                        "✅ All tests pass",
+                        "✅ AI model reporting functionality preserved"
+                      ],
+                      "approach": "Extract report sections to separate methods",
+                      "validation_required": true
+                    },
+                    "2b_15_refactor_complexity_d3": {
+                      "status": "BLOCKED",
+                      "name": "Refactor feature_toggle_service.get_feature_statistics (D: 21)",
+                      "priority": "HIGH",
+                      "estimated_hours": 1.5,
+                      "risk_level": "MEDIUM",
+                      "issues_to_fix": 1,
+                      "dependencies": ["2b_14_refactor_complexity_d2"],
+                      "description": "Reduce complexity from 21 to <10 per method",
+                      "target_file": "app/services/feature_toggle_service.py:854",
+                      "current_complexity": 21,
+                      "target_complexity": "<10 per method",
+                      "acceptance_criteria": [
+                        "✅ Complexity reduced from 21 to <10 per extracted method",
+                        "✅ Statistics calculation logic extracted",
+                        "✅ All tests pass",
+                        "✅ Feature statistics preserved"
+                      ],
+                      "approach": "Extract statistics calculators",
+                      "validation_required": true
+                    },
+                    "2b_16_refactor_complexity_d4": {
+                      "status": "BLOCKED",
+                      "name": "Refactor Remaining 3 D-level Complexity Functions",
+                      "priority": "HIGH",
+                      "estimated_hours": 4,
+                      "risk_level": "MEDIUM",
+                      "issues_to_fix": 3,
+                      "dependencies": ["2b_15_refactor_complexity_d3"],
+                      "description": "Reduce complexity for final 3 D-level functions (20-23 complexity)",
+                      "target_files": [
+                        "app/services/ai_model_manager.py:878 - optimize_model_selection (17)",
+                        "app/services/deepseek_service.py:150 - generate_response (16)",
+                        "app/api/feature_toggles.py:335 - check_user_feature_status (16)"
+                      ],
+                      "acceptance_criteria": [
+                        "✅ All 3 functions reduced to <10 complexity per method",
+                        "✅ Comprehensive tests for each",
+                        "✅ All integration tests pass",
+                        "✅ Functionality preserved 100%"
+                      ],
+                      "approach": "Method extraction and focused refactoring",
+                      "validation_required": true
+                    },
+                    "2b_17_final_validation": {
+                      "status": "BLOCKED",
+                      "name": "Final Comprehensive Validation",
+                      "priority": "CRITICAL",
+                      "estimated_hours": 1,
+                      "risk_level": "LOW",
+                      "issues_to_fix": 0,
+                      "dependencies": ["2b_16_refactor_complexity_d4"],
+                      "description": "Run all validation gates and create final report",
+                      "acceptance_criteria": [
+                        "✅ Static analysis: 100% (181/181 modules)",
+                        "✅ Integration tests: 8/8 passing",
+                        "✅ Flake8 violations: <50 (documented exceptions only)",
+                        "✅ Average complexity: <12",
+                        "✅ High complexity functions: 0",
+                        "✅ Environment validation: 5/5 passing"
+                      ],
+                      "validation_commands": [
+                        "python scripts/validate_environment.py",
+                        "python scripts/static_analysis_audit.py",
+                        "pytest test_phase4_integration.py -v",
+                        "flake8 app/ scripts/ --statistics",
+                        "radon cc app/ -s -a -nc"
+                      ],
+                      "deliverable": "validation_artifacts/4.2.6/PHASE_2B_FINAL_REPORT.md"
+                    }
+                  },
+                  "acceptance_criteria": [
+                    "✅ All 3,180 issues resolved or documented",
+                    "✅ Zero high-complexity functions (E/D level)",
+                    "✅ All C-level complexity functions documented",
+                    "✅ FastHTML patterns documented and accepted",
+                    "✅ Code style guide created",
+                    "✅ Technical debt register created",
+                    "✅ Static analysis: 100%",
+                    "✅ Integration tests: 8/8",
+                    "✅ Zero regressions introduced"
+                  ],
+                  "validation_artifacts": [
+                    "validation_artifacts/4.2.6/PHASE_2B_COMPREHENSIVE_CLEANUP_PLAN.md",
+                    "validation_artifacts/4.2.6/PHASE_2B_FINAL_REPORT.md",
+                    "docs/CODE_STYLE_GUIDE.md",
+                    "docs/TECHNICAL_DEBT_REGISTER.md",
+                    ".flake8"
                   ]
                 },
                 "phase_3_dependency_audit": {
-                  "status": "PENDING",
+                  "status": "BLOCKED",
                   "description": "External dependency audit for deprecations and updates",
                   "estimated_hours": 2,
+                  "dependencies": ["phase_2b_comprehensive_cleanup"],
+                  "blocker_reason": "Phase 2B comprehensive cleanup must complete first",
                   "objectives": [
                     "Audit all external libraries for deprecation warnings",
                     "Identify outdated packages needing updates",

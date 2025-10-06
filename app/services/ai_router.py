@@ -17,9 +17,8 @@ Features:
 - Graceful degradation
 """
 
-import asyncio
 import logging
-from typing import Dict, List, Any, Optional, AsyncGenerator, Tuple
+from typing import Dict, List, Any, Optional, AsyncGenerator
 from datetime import datetime, timedelta
 from enum import Enum
 from dataclasses import dataclass
@@ -35,8 +34,7 @@ from app.services.ollama_service import ollama_service
 from app.services.claude_service import claude_service
 from app.services.mistral_service import mistral_service
 from app.services.deepseek_service import deepseek_service
-from app.services.response_cache import response_cache, CacheEntry
-from app.core.config import get_settings
+from app.services.response_cache import response_cache
 
 logger = logging.getLogger(__name__)
 

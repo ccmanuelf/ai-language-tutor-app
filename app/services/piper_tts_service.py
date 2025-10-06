@@ -7,17 +7,13 @@ a local neural TTS engine with ONNX models.
 
 import asyncio
 import os
-import sys
 import tempfile
 import logging
 from pathlib import Path
 from typing import Optional, Dict, List, Any, Tuple
 from dataclasses import dataclass
-from io import BytesIO
 import json
-import wave
 
-import numpy as np
 from piper import PiperVoice
 
 

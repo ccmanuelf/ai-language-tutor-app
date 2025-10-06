@@ -8,8 +8,7 @@ Task 3.1.3 - Language Configuration Panel
 """
 
 from fasthtml.common import *
-from typing import List, Dict, Any, Optional
-import json
+from typing import List, Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)

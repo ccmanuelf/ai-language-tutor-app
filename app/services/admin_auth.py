@@ -17,7 +17,7 @@ from functools import wraps
 
 from app.services.auth import auth_service, get_current_user
 from app.models.schemas import UserRoleEnum
-from app.database.config import get_db_session, get_db_session_context
+from app.database.config import get_db_session_context
 from app.models.database import User, UserRole
 
 logger = logging.getLogger(__name__)

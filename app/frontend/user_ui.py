@@ -13,16 +13,14 @@ from fasthtml.common import *
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
-from app.models.schemas import UserResponse, UserProfile, LearningProgressResponse
-from app.services.user_management import user_service
-from app.services.auth import auth_service
+from app.models.schemas import UserResponse, UserProfile
 
 
 def user_profile_page(user_data: UserProfile) -> Div:
     """Create user profile page"""
     return Div(
         H1("User Profile", cls="text-3xl font-bold mb-6"),
-        
+
         # Profile Overview Card
         Div(
             H2("Profile Information", cls="text-xl font-semibold mb-4"),
@@ -43,24 +41,24 @@ def user_profile_page(user_data: UserProfile) -> Div:
             ),
             cls="bg-white p-6 rounded-lg shadow-md mb-6"
         ),
-        
+
         # Learning Progress Section
         learning_progress_section(user_data.learning_progress) if user_data.learning_progress else None,
-        
+
         # Statistics Section
         statistics_section(user_data),
-        
+
         # Actions
         Div(
-            Button("Edit Profile", 
+            Button("Edit Profile",
                    hx_get=f"/users/{user_data.user_id}/edit",
                    cls="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"),
             Button("View Settings",
-                   hx_get=f"/users/{user_data.user_id}/settings", 
+                   hx_get=f"/users/{user_data.user_id}/settings",
                    cls="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"),
             cls="mt-6"
         ),
-        
+
         cls="container mx-auto px-4 py-8"
     )
 
@@ -80,10 +78,10 @@ def learning_progress_section(progress_data: List[Dict[str, Any]]) -> Div:
 def progress_card(progress: Dict[str, Any]) -> Div:
     """Create individual progress card"""
     progress_percentage = progress.get("progress_percentage", 0)
-    
+
     return Div(
         Div(
-            H3(f"{progress['language'].upper()} - {progress['skill_type'].title()}", 
+            H3(f"{progress['language'].upper()} - {progress['skill_type'].title()}",
                cls="font-semibold text-gray-800"),
             Div(
                 Div(
@@ -135,7 +133,7 @@ def user_edit_form(user_data: UserResponse) -> Form:
     """Create user edit form"""
     return Form(
         H1("Edit Profile", cls="text-2xl font-bold mb-6"),
-        
+
         Div(
             Label("Username", cls="block text-sm font-medium text-gray-700"),
             Input(
@@ -147,7 +145,7 @@ def user_edit_form(user_data: UserResponse) -> Form:
             ),
             cls="mb-4"
         ),
-        
+
         Div(
             Label("Email", cls="block text-sm font-medium text-gray-700"),
             Input(
@@ -158,7 +156,7 @@ def user_edit_form(user_data: UserResponse) -> Form:
             ),
             cls="mb-4"
         ),
-        
+
         Div(
             Label("First Name", cls="block text-sm font-medium text-gray-700"),
             Input(
@@ -169,7 +167,7 @@ def user_edit_form(user_data: UserResponse) -> Form:
             ),
             cls="mb-4"
         ),
-        
+
         Div(
             Label("Last Name", cls="block text-sm font-medium text-gray-700"),
             Input(
@@ -180,7 +178,7 @@ def user_edit_form(user_data: UserResponse) -> Form:
             ),
             cls="mb-4"
         ),
-        
+
         Div(
             Label("UI Language", cls="block text-sm font-medium text-gray-700"),
             Select(
@@ -194,7 +192,7 @@ def user_edit_form(user_data: UserResponse) -> Form:
             ),
             cls="mb-6"
         ),
-        
+
         Div(
             Button("Save Changes",
                    type="submit",
@@ -205,7 +203,7 @@ def user_edit_form(user_data: UserResponse) -> Form:
                    cls="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"),
             cls="flex space-x-2"
         ),
-        
+
         hx_put=f"/users/{user_data.user_id}",
         hx_target="#main-content",
         cls="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md"
@@ -216,7 +214,7 @@ def login_form() -> Form:
     """Create login form"""
     return Form(
         H1("Login", cls="text-2xl font-bold mb-6 text-center"),
-        
+
         Div(
             Label("User ID", cls="block text-sm font-medium text-gray-700"),
             Input(
@@ -228,7 +226,7 @@ def login_form() -> Form:
             ),
             cls="mb-4"
         ),
-        
+
         Div(
             Label("Password", cls="block text-sm font-medium text-gray-700"),
             Input(
@@ -240,16 +238,16 @@ def login_form() -> Form:
             ),
             cls="mb-6"
         ),
-        
+
         Button("Login",
                type="submit",
                cls="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"),
-        
+
         Div(
             A("Create Account", href="/register", cls="text-blue-500 hover:text-blue-700"),
             cls="text-center mt-4"
         ),
-        
+
         hx_post="/auth/login",
         hx_target="#main-content",
         cls="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md"
@@ -260,7 +258,7 @@ def child_pin_form() -> Form:
     """Create child PIN login form"""
     return Form(
         H1("Enter Your PIN", cls="text-2xl font-bold mb-6 text-center"),
-        
+
         Div(
             Input(
                 type="password",
@@ -272,11 +270,11 @@ def child_pin_form() -> Form:
             ),
             cls="mb-6"
         ),
-        
+
         Button("Continue",
                type="submit",
                cls="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"),
-        
+
         hx_post="/auth/pin-login",
         hx_target="#main-content",
         cls="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md"
@@ -287,7 +285,7 @@ def registration_form() -> Form:
     """Create user registration form"""
     return Form(
         H1("Create Account", cls="text-2xl font-bold mb-6 text-center"),
-        
+
         Div(
             Label("User ID", cls="block text-sm font-medium text-gray-700"),
             Input(
@@ -300,7 +298,7 @@ def registration_form() -> Form:
             P("This will be your login identifier", cls="text-sm text-gray-500 mt-1"),
             cls="mb-4"
         ),
-        
+
         Div(
             Label("Username", cls="block text-sm font-medium text-gray-700"),
             Input(
@@ -312,7 +310,7 @@ def registration_form() -> Form:
             ),
             cls="mb-4"
         ),
-        
+
         Div(
             Label("Email", cls="block text-sm font-medium text-gray-700"),
             Input(
@@ -323,7 +321,7 @@ def registration_form() -> Form:
             ),
             cls="mb-4"
         ),
-        
+
         Div(
             Label("Account Type", cls="block text-sm font-medium text-gray-700"),
             Select(
@@ -334,7 +332,7 @@ def registration_form() -> Form:
             ),
             cls="mb-4"
         ),
-        
+
         Div(
             Label("Password", cls="block text-sm font-medium text-gray-700"),
             Input(
@@ -343,20 +341,20 @@ def registration_form() -> Form:
                 placeholder="Enter a secure password",
                 cls="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
             ),
-            P("Leave blank for child accounts (PIN will be generated)", 
+            P("Leave blank for child accounts (PIN will be generated)",
               cls="text-sm text-gray-500 mt-1"),
             cls="mb-6"
         ),
-        
+
         Button("Create Account",
                type="submit",
                cls="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"),
-        
+
         Div(
             A("Already have an account?", href="/login", cls="text-blue-500 hover:text-blue-700"),
             cls="text-center mt-4"
         ),
-        
+
         hx_post="/auth/register",
         hx_target="#main-content",
         cls="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md"
@@ -372,34 +370,34 @@ def user_dashboard(user_data: UserProfile) -> Div:
             P(f"Role: {user_data.role.title()}", cls="text-gray-600"),
             cls="mb-8"
         ),
-        
+
         # Quick Stats
         Div(
             H2("Your Progress", cls="text-xl font-semibold mb-4"),
             statistics_section(user_data),
             cls="mb-8"
         ),
-        
+
         # Recent Activity or Learning Progress
         learning_progress_section(user_data.learning_progress) if user_data.learning_progress else Div(
             H2("Get Started", cls="text-xl font-semibold mb-4"),
-            P("Welcome to your language learning journey! Set up your first language to begin.", 
+            P("Welcome to your language learning journey! Set up your first language to begin.",
               cls="text-gray-600 mb-4"),
-            Button("Add Language", 
+            Button("Add Language",
                    hx_get=f"/users/{user_data.user_id}/languages/add",
                    cls="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"),
             cls="bg-white p-6 rounded-lg shadow-md"
         ),
-        
+
         # Quick Actions
         Div(
             H2("Quick Actions", cls="text-xl font-semibold mb-4"),
             Div(
-                Button("Start Conversation", 
+                Button("Start Conversation",
                        hx_get="/chat/new",
                        cls="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2"),
                 Button("Upload Document",
-                       hx_get="/documents/upload", 
+                       hx_get="/documents/upload",
                        cls="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded mr-2"),
                 Button("View Progress",
                        hx_get=f"/users/{user_data.user_id}/progress",
@@ -408,7 +406,7 @@ def user_dashboard(user_data: UserProfile) -> Div:
             ),
             cls="bg-white p-6 rounded-lg shadow-md"
         ),
-        
+
         cls="container mx-auto px-4 py-8"
     )
 
@@ -417,11 +415,11 @@ def error_message(message: str, error_type: str = "error") -> Div:
     """Create error message component"""
     colors = {
         "error": "bg-red-100 border-red-400 text-red-700",
-        "warning": "bg-yellow-100 border-yellow-400 text-yellow-700", 
+        "warning": "bg-yellow-100 border-yellow-400 text-yellow-700",
         "success": "bg-green-100 border-green-400 text-green-700",
         "info": "bg-blue-100 border-blue-400 text-blue-700"
     }
-    
+
     return Div(
         P(message),
         cls=f"border px-4 py-3 rounded {colors.get(error_type, colors['error'])}"
@@ -451,17 +449,17 @@ def main_layout(content: Any, user_data: Optional[UserResponse] = None) -> Html:
         Body(
             # Navigation
             nav_bar(user_data) if user_data else None,
-            
+
             # Main Content
             Div(
                 content,
                 id="main-content",
                 cls="min-h-screen bg-gray-50"
             ),
-            
+
             # Footer
             footer(),
-            
+
             cls="bg-gray-50"
         )
     )
@@ -476,7 +474,7 @@ def nav_bar(user_data: UserResponse) -> Nav:
                 A("AI Language Tutor", href="/dashboard", cls="text-xl font-bold text-white"),
                 cls="flex-shrink-0"
             ),
-            
+
             # Navigation Links
             Div(
                 A("Dashboard", href="/dashboard", cls="text-white hover:text-gray-300 px-3 py-2"),
@@ -485,14 +483,14 @@ def nav_bar(user_data: UserResponse) -> Nav:
                 A("Progress", href=f"/users/{user_data.user_id}/progress", cls="text-white hover:text-gray-300 px-3 py-2"),
                 cls="hidden md:flex space-x-1"
             ),
-            
+
             # User Menu
             Div(
                 A(user_data.username, href=f"/users/{user_data.user_id}", cls="text-white hover:text-gray-300 px-3 py-2"),
                 A("Logout", href="/auth/logout", cls="text-white hover:text-gray-300 px-3 py-2"),
                 cls="flex space-x-1"
             ),
-            
+
             cls="flex items-center justify-between px-4"
         ),
         cls="bg-blue-600 shadow-lg"

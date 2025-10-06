@@ -11,7 +11,7 @@ This module provides database migration functionality including:
 
 import os
 import logging
-from typing import Dict, List, Any, Optional, Callable
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 from pathlib import Path
 from alembic import command
@@ -19,12 +19,11 @@ from alembic.config import Config
 from alembic.script import ScriptDirectory
 from alembic.migration import MigrationContext
 from sqlalchemy import text, inspect
-from sqlalchemy.orm import Session
 
-from app.database.config import db_manager, get_db_session
+from app.database.config import db_manager
 from app.database.local_config import local_db_manager
 from app.database.chromadb_config import chroma_manager
-from app.models.database import Base, User, Language, UserRole, LanguageCode
+from app.models.database import Base, User, Language, UserRole
 
 
 logger = logging.getLogger(__name__)

@@ -3,11 +3,10 @@ FastAPI Backend Server Entry Point
 AI Language Tutor App - Personal Family Educational Tool
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
-import os
 from pathlib import Path
 
 # Import core configuration

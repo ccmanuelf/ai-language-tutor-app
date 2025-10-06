@@ -8,12 +8,9 @@ learning analytics, gamification, and progress tracking systems.
 """
 
 import sqlite3
-import json
 import logging
 from pathlib import Path
 import sys
-import os
-from datetime import datetime, timedelta
 
 # Add the app directory to the path
 sys.path.append(str(Path(__file__).parent.parent))

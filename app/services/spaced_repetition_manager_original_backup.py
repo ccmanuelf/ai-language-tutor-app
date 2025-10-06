@@ -11,11 +11,9 @@ import logging
 import sqlite3
 from datetime import datetime, timedelta, date
 from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from enum import Enum
 import uuid
-import math
-import statistics
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

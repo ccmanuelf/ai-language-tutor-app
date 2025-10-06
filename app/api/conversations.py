@@ -2,11 +2,10 @@
 Conversation API endpoints for AI chat functionality
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List, Dict
-import asyncio
 import uuid
 from datetime import datetime
 
@@ -54,18 +53,18 @@ async def chat_with_ai(
     db: Session = Depends(get_primary_db_session)
 ):
     """Send message to AI and get response"""
-    
+
     # Parse language and AI provider early to ensure they're defined
     language_parts = request.language.split("-")
     language_code = language_parts[0] if language_parts else "en"
     ai_provider = language_parts[1] if len(language_parts) > 1 else "claude"
-    
+
     # Generate conversation and message IDs
     conversation_id = f"conv_{current_user.user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     message_id = str(uuid.uuid4())
-    
+
     try:
-        
+
         # Route to appropriate AI service
         try:
             # Select the best provider for this language
@@ -73,7 +72,7 @@ async def chat_with_ai(
                 language=language_code,
                 use_case="conversation"
             )
-            
+
             if provider_selection.service and hasattr(provider_selection.service, 'generate_response'):
                 # Format message properly for AI service
                 ai_response = await provider_selection.service.generate_response(
@@ -87,7 +86,7 @@ async def chat_with_ai(
                 cost_estimate = ai_response.cost if hasattr(ai_response, 'cost') else 0.01
             else:
                 raise Exception("No AI service available")
-                
+
         except Exception as ai_error:
             print(f"AI Service Error: {ai_error}")
             # Use more natural fallback response based on language
@@ -100,7 +99,7 @@ async def chat_with_ai(
             }
             response_text = fallback_texts.get(language_code, fallback_texts["en"])
             cost_estimate = 0.0
-        
+
         # Generate speech if requested
         audio_url = None
         if request.use_speech:
@@ -115,7 +114,7 @@ async def chat_with_ai(
             except Exception as e:
                 print(f"TTS Error: {e}")
                 # Continue without audio
-        
+
         return ChatResponse(
             response=response_text,
             message_id=message_id,
@@ -125,11 +124,11 @@ async def chat_with_ai(
             ai_provider=ai_provider,
             estimated_cost=cost_estimate
         )
-        
+
     except Exception as e:
         # Fallback to simulated response for demo
         print(f"AI Service Error: {e}")
-        
+
         # Fallback responses by language/provider - Natural and conversational
         fallback_responses = {
             "en": f"Hey there! I heard you say '{request.message}' - that's great practice! I'm Alex, your English conversation partner. I love chatting about anything - hobbies, travel, food, movies, you name it! What's something interesting that happened to you recently?",
@@ -138,9 +137,9 @@ async def chat_with_ai(
             "zh": f"你好！我听到你说了'{request.message}' - 很棒！私は小李，你的中文对话伙伴。我喜欢聊各种话题 - 美食、旅行、电影、音乐，什么都可以！你今天过得怎么样？有什么有趣的事情想分享吗？",
             "ja": f"こんにちは！'{request.message}'と言ったのを聞きました - 素晴らしいです！私は優子、あなたの日本語会話パートナーです。趣味、旅行、食べ物、映画など、何でも話すのが大好きです！最近何か面白いことがありましたか？"
         }
-        
+
         fallback_response = fallback_responses.get(language_code, fallback_responses["en"])
-        
+
         return ChatResponse(
             response=f"[Demo Mode] {fallback_response}",
             message_id=str(uuid.uuid4()),
@@ -183,14 +182,14 @@ async def speech_to_text(
         # Get audio data from request
         audio_data_base64 = request.get('audio_data')
         language = request.get('language', 'en')
-        
+
         if not audio_data_base64:
             return {"text": "No audio data provided"}
-        
+
         # Decode base64 audio data
         import base64
         audio_data = base64.b64decode(audio_data_base64)
-        
+
         # Process speech-to-text using IBM Watson
         from app.services.speech_processor import speech_processor, AudioFormat
         recognition_result, _ = await speech_processor.process_speech_to_text(
@@ -198,13 +197,13 @@ async def speech_to_text(
             language=language,
             audio_format=AudioFormat.WAV
         )
-        
+
         return {
             "text": recognition_result.transcript,
             "confidence": recognition_result.confidence,
             "language": recognition_result.language
         }
-        
+
     except Exception as e:
         print(f"Speech-to-text error: {e}")
         # Return fallback text
@@ -222,10 +221,10 @@ async def text_to_speech(
         text = request.get('text')
         language = request.get('language', 'en')
         voice_type = request.get('voice_type', 'neural')
-        
+
         if not text:
             raise HTTPException(status_code=400, detail="No text provided")
-        
+
         # Process text-to-speech using IBM Watson
         from app.services.speech_processor import speech_processor
         tts_result = await speech_processor.process_text_to_speech(
@@ -233,18 +232,18 @@ async def text_to_speech(
             language=language,
             voice_type=voice_type
         )
-        
+
         # Encode audio data as base64 for transmission
         import base64
         audio_base64 = base64.b64encode(tts_result.audio_data).decode('utf-8')
-        
+
         return {
             "audio_data": audio_base64,
             "audio_format": tts_result.audio_format.value,
             "sample_rate": tts_result.sample_rate,
             "duration": tts_result.duration_seconds
         }
-        
+
     except Exception as e:
         print(f"Text-to-speech error: {e}")
         raise HTTPException(status_code=500, detail=f"Text-to-speech failed: {str(e)}")

@@ -17,13 +17,11 @@ Features:
 
 import asyncio
 import logging
-from typing import Dict, List, Any, Optional, Tuple, Set
+from typing import Dict, List, Any
 from datetime import datetime, timedelta
 from enum import Enum
 from dataclasses import dataclass
-from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, text
-import json
+from sqlalchemy import and_
 
 from app.database.config import db_manager
 from app.database.local_config import local_db_manager
@@ -33,8 +31,6 @@ from app.models.database import (
     Conversation,
     ConversationMessage,
     Document,
-    LearningProgress,
-    VocabularyItem,
 )
 
 

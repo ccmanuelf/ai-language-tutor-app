@@ -14,9 +14,6 @@ Features:
 """
 
 from fasthtml.common import *
-from typing import Dict, List, Any, Optional
-import json
-from datetime import datetime
 
 
 def scenario_management_styles():

@@ -267,7 +267,7 @@ class QualityGateValidator:
         readme_files = list(Path(".").glob("README*")) + list(
             Path("docs").glob("*README*")
         )
-        readme_exists = len(readme_files) > 0
+        len(readme_files) > 0
         print(f"📖 README files: {len(readme_files)}")
 
         reproducibility_passed = script_exists and docs_exist

@@ -11,7 +11,6 @@ from datetime import datetime, date
 from typing import Dict, List, Any
 
 from app.services.sr_database import DatabaseManager
-from app.services.sr_models import LearningGoal
 
 logger = logging.getLogger(__name__)
 

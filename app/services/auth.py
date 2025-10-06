@@ -9,7 +9,6 @@ This module provides secure authentication features including:
 - Security utilities and validation
 """
 
-import os
 import secrets
 import hashlib
 from datetime import datetime, timedelta, timezone

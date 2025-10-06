@@ -1573,7 +1573,7 @@ def _create_chat_scripts():
                     .slice(-10)
                     .map(msg => ({
                         role: msg.classList.contains('message-user') ? 'user' : 'assistant',
-                        content: msg.textContent.replace(/^(You|AI Tutor):\s*/, '')
+                        content: msg.textContent.replace(/^(You|AI Tutor):\\s*/, '')
                     }));
                 return messages;
             }

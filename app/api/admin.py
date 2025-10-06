@@ -10,19 +10,16 @@ This module provides RESTful API endpoints for admin operations including:
 """
 
 from fastapi import APIRouter, HTTPException, Depends, status
-from fastapi.responses import JSONResponse
 from typing import Dict, List, Any, Optional
 from pydantic import BaseModel, EmailStr
 from datetime import datetime, timezone
 import logging
 
 from app.services.admin_auth import (
-    admin_auth_service,
-    require_admin_access,
     require_permission,
     AdminPermission,
 )
-from app.services.auth import auth_service, hash_password
+from app.services.auth import hash_password
 from app.models.database import User, UserRole
 from app.models.schemas import UserRoleEnum
 from app.database.config import get_db_session_context

@@ -8,7 +8,6 @@ system configuration, and administrative controls.
 
 from fasthtml.common import *
 from typing import Dict, List, Any, Optional
-import json
 from datetime import datetime
 
 from app.frontend.styles import load_styles

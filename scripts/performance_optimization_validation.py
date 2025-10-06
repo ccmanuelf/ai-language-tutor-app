@@ -14,7 +14,6 @@ This script validates all performance optimizations implemented including:
 Generates comprehensive validation artifacts for quality gates.
 """
 
-import os
 import sys
 import json
 import time
@@ -22,7 +21,7 @@ import asyncio
 import logging
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))

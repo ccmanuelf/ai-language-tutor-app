@@ -20,22 +20,15 @@ Features:
 
 import asyncio
 import logging
-import io
-import wave
-import json
-import base64
 import time
-from typing import Dict, List, Any, Optional, Tuple, Union
+from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
-import tempfile
-import os
 from functools import lru_cache
 
 # Audio processing libraries
 try:
-    import pyaudio
     import numpy as np
 
     AUDIO_LIBS_AVAILABLE = True
@@ -51,10 +44,7 @@ WATSON_SDK_AVAILABLE = False
 
 # Mistral Speech Services
 try:
-    from app.services.mistral_stt_service import (
-        MistralSTTService,
-        mistral_speech_to_text,
-    )
+    pass
 
     MISTRAL_STT_AVAILABLE = True
 except ImportError:
@@ -63,14 +53,13 @@ except ImportError:
 
 # Piper TTS Services
 try:
-    from app.services.piper_tts_service import PiperTTSService
+    pass
 
     PIPER_TTS_AVAILABLE = True
 except ImportError:
     PIPER_TTS_AVAILABLE = False
     logging.warning("Piper TTS service not available.")
 
-from app.services.ai_router import ai_router
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -1152,7 +1141,7 @@ class SpeechProcessor:
         word_accuracy = correct_words / len(reference_words) if reference_words else 0.0
 
         # Combine with recognition confidence
-        overall_score = word_accuracy * 0.7 + confidence * 0.3
+        word_accuracy * 0.7 + confidence * 0.3
 
         # Generate analysis similar to _analyze_pronunciation
         return await self._analyze_pronunciation(
@@ -1307,7 +1296,6 @@ class SpeechProcessor:
         enhanced_text = text.strip()
 
         # Build SSML structure for Watson TTS
-        ssml_elements = []
 
         # Add speaking rate adjustment if different from default
         if speaking_rate != 1.0:
