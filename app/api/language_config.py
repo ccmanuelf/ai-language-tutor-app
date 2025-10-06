@@ -162,7 +162,7 @@ async def get_all_language_configurations(
                     metadata = {}
                     try:
                         metadata = json.loads(vm.metadata) if vm.metadata else {}
-                    except:
+                    except (json.JSONDecodeError, TypeError, ValueError):
                         pass
 
                     voice_models.append(
@@ -249,7 +249,7 @@ async def get_feature_toggles(
                     configuration = (
                         json.loads(ft.configuration) if ft.configuration else {}
                     )
-                except:
+                except (json.JSONDecodeError, TypeError, ValueError):
                     pass
 
                 feature_toggles.append(

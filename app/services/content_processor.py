@@ -311,7 +311,7 @@ class ContentProcessor:
                     try:
                         transcript = transcript_list.find_transcript([lang_code])
                         break
-                    except:
+                    except Exception:
                         continue
 
                 if not transcript:

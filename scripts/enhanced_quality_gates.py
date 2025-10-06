@@ -70,7 +70,7 @@ class EnhancedQualityGatesValidator:
                     ):
                         production_testing = True
                         break
-                except:
+                except Exception:
                     pass
 
             result["checks"]["production_database_testing"] = production_testing
@@ -118,7 +118,7 @@ class EnhancedQualityGatesValidator:
                     production_usage = True
                 if "tmp" in content.lower() or "temp" in content.lower():
                     temp_db_usage = True
-            except:
+            except Exception:
                 pass
 
         # Check for production-realistic test files specifically
@@ -295,7 +295,7 @@ class EnhancedQualityGatesValidator:
                 if "safe_mean" in content or "statistics.mean" not in content:
                     error_handling_evidence["safe_statistics"] = True
 
-            except:
+            except Exception:
                 pass
 
         result["checks"] = error_handling_evidence
@@ -322,7 +322,7 @@ class EnhancedQualityGatesValidator:
                         unsafe_statistics_usage += 1
                 if "safe_mean(" in content or "def safe_mean" in content:
                     safe_mean_implementations += 1
-            except:
+            except Exception:
                 pass
 
         result["checks"]["unsafe_statistics_usage"] = unsafe_statistics_usage

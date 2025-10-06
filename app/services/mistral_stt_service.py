@@ -247,7 +247,7 @@ class MistralSTTService:
             return error_data.get("error", {}).get(
                 "message", f"HTTP {response.status_code}"
             )
-        except:
+        except (json.JSONDecodeError, ValueError):
             return f"HTTP {response.status_code}: {response.text[:200]}"
 
     async def health_check(self) -> Dict[str, Any]:
