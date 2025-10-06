@@ -1107,7 +1107,7 @@ class SpacedRepetitionTestSuite:
         """Generate comprehensive test report"""
 
         # Create validation artifacts directory
-        artifacts_dir = Path(f"validation_artifacts/3.1.4")
+        artifacts_dir = Path("validation_artifacts/3.1.4")
         artifacts_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate detailed test report
@@ -1212,7 +1212,7 @@ class SpacedRepetitionTestSuite:
 
         summary = report["test_summary"]
 
-        md_content = f"""# Spaced Repetition & Learning Analytics System Validation Report
+        md_content = """# Spaced Repetition & Learning Analytics System Validation Report
 **Task 3.1.4 - Complete System Testing**
 
 ## Test Summary
@@ -1251,7 +1251,7 @@ class SpacedRepetitionTestSuite:
         for rec in report["recommendations"]:
             md_content += f"- {rec}\n"
 
-        md_content += f"\n## System Ready for Production\n"
+        md_content += "\n## System Ready for Production\n"
         if summary["success_rate"] >= 90:
             md_content += "🎉 **YES** - System passed comprehensive validation with excellent results!\n"
         elif summary["success_rate"] >= 80:
@@ -1270,7 +1270,7 @@ def main():
     print("🚀 SPACED REPETITION & LEARNING ANALYTICS SYSTEM VALIDATION")
     print("=" * 80)
     print(f"📅 Test Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"🎯 Task: 3.1.4 - Spaced Repetition & Progress Tracking Implementation")
+    print("🎯 Task: 3.1.4 - Spaced Repetition & Progress Tracking Implementation")
     print("=" * 80)
 
     # Initialize test suite

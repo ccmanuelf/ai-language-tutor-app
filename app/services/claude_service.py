@@ -128,7 +128,7 @@ class ClaudeService(BaseAIService):
             "neutral": "Have a warm, engaging conversation. Be naturally curious about them as a person."
         }
 
-        prompt = f"""{lang_context['persona']}
+        prompt = """{lang_context['persona']}
 
 {lang_context['style']}
 
@@ -233,7 +233,7 @@ Respond naturally as if you're their {language} friend:"""
             logger.error(f"Claude API error: {e}")
 
             return AIResponse(
-                content=f"I'm having trouble connecting right now. Let's try again! What would you like to talk about?",
+                content="I'm having trouble connecting right now. Let's try again! What would you like to talk about?",
                 model=model or "claude-3-haiku-20240307",
                 provider="claude",
                 language=language,

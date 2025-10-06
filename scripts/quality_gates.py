@@ -197,13 +197,13 @@ class QualityGateValidator:
         missing_languages = set(mandatory_languages.keys()) - found_languages
 
         if missing_languages:
-            print(f"❌ CRITICAL: Missing mandatory languages:")
+            print("❌ CRITICAL: Missing mandatory languages:")
             for lang in missing_languages:
                 print(f"   ❌ {mandatory_languages[lang]} ({lang})")
-            print(f"\\n✅ Found languages:")
+            print("\\n✅ Found languages:")
             for lang in found_languages:
                 print(f"   ✅ {mandatory_languages[lang]} ({lang})")
-            print(f"\\n🚨 ALL 5 core languages must be validated for completion")
+            print("\\n🚨 ALL 5 core languages must be validated for completion")
 
             self.results["gates"]["language_validation"] = {
                 "passed": False,
@@ -221,12 +221,12 @@ class QualityGateValidator:
         print(f"✅ Total language files: {len(language_files)}")
 
         # 🔊 CRITICAL AUDIO PLAYBACK WARNING
-        print(f"\\n🔊 CRITICAL AUDIO PLAYBACK REQUIREMENT:")
-        print(f"   ⚠️  FILE GENERATION ALONE IS INSUFFICIENT")
-        print(f"   🎵 Each language MUST be played through speakers")
-        print(f"   👂 Human auditory verification REQUIRED")
-        print(f"   ⏭️  Sequential playback to prevent system timeouts")
-        print(f"   🚨 Audio playback failures block task completion")
+        print("\\n🔊 CRITICAL AUDIO PLAYBACK REQUIREMENT:")
+        print("   ⚠️  FILE GENERATION ALONE IS INSUFFICIENT")
+        print("   🎵 Each language MUST be played through speakers")
+        print("   👂 Human auditory verification REQUIRED")
+        print("   ⏭️  Sequential playback to prevent system timeouts")
+        print("   🚨 Audio playback failures block task completion")
 
         self.results["gates"]["language_validation"] = {
             "passed": True,
@@ -337,14 +337,14 @@ class QualityGateValidator:
             json.dump(self.results, f, indent=2)
 
         if self.results["overall_passed"]:
-            print(f"\\n🎉 ALL QUALITY GATES PASSED")
+            print("\\n🎉 ALL QUALITY GATES PASSED")
             print(f"🎉 Task {self.task_id} is ready for COMPLETION")
             print(f"📁 Results saved: {results_file}")
             return True
         else:
-            print(f"\\n🚨 QUALITY GATES FAILED")
+            print("\\n🚨 QUALITY GATES FAILED")
             print(f"🚨 Task {self.task_id} is NOT ready for completion")
-            print(f"🚨 Fix failing gates before marking as COMPLETED")
+            print("🚨 Fix failing gates before marking as COMPLETED")
             print(f"📁 Results saved: {results_file}")
             return False
 

@@ -2449,7 +2449,7 @@ class ScenarioManagementTester:
             total_tests = total_passed + total_failed
             success_rate = (total_passed / total_tests * 100) if total_tests > 0 else 0
 
-            summary_content = f"""# Task 3.1.6 - Scenario & Content Management Tools - Validation Report
+            summary_content = """# Task 3.1.6 - Scenario & Content Management Tools - Validation Report
 
 ## Test Execution Summary
 
@@ -2468,7 +2468,7 @@ class ScenarioManagementTester:
                 failed = results["failed"]
                 status = "✅ PASSED" if failed == 0 else "❌ FAILED"
 
-                summary_content += f"""### {category.replace("_", " ").title()}
+                summary_content += """### {category.replace("_", " ").title()}
 - **Status**: {status}
 - **Passed**: {passed}
 - **Failed**: {failed}
@@ -2482,7 +2482,7 @@ class ScenarioManagementTester:
                             summary_content += f"- {test['name']}: {test['status']}\n"
                     summary_content += "\n"
 
-            summary_content += f"""## Quality Gates Assessment
+            summary_content += """## Quality Gates Assessment
 
 """
 
@@ -2521,7 +2521,7 @@ All scenario management functionality has been implemented and validated:
 4. Proceed to Task 3.1.7 - Feature Toggle System
 """
             else:
-                summary_content += f"""⚠️ **ISSUES IDENTIFIED** ({success_rate:.1f}% success rate)
+                summary_content += """⚠️ **ISSUES IDENTIFIED** ({success_rate:.1f}% success rate)
 ❌ **Quality Gates**: <5/5 PASSED
 🚨 **Production Status**: NOT READY
 

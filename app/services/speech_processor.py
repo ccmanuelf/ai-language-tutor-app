@@ -551,7 +551,7 @@ class SpeechProcessor:
                         voice_type=voice_type,
                         speaking_rate=speaking_rate,
                     )
-                    logger.info(f"TTS synthesis successful using Piper (cost: $0.00)")
+                    logger.info("TTS synthesis successful using Piper (cost: $0.00)")
                     return result
                 except Exception as e:
                     logger.error(f"Piper TTS failed: {e}")
@@ -573,7 +573,7 @@ class SpeechProcessor:
                         voice_type=voice_type,
                         speaking_rate=speaking_rate,
                     )
-                    logger.info(f"TTS synthesis successful using Piper (cost: $0.00)")
+                    logger.info("TTS synthesis successful using Piper (cost: $0.00)")
                     return result
                 except Exception as e:
                     logger.warning(
@@ -594,7 +594,7 @@ class SpeechProcessor:
                         speaking_rate=speaking_rate,
                     )
                     logger.info(
-                        f"TTS synthesis successful using deprecated Watson fallback"
+                        "TTS synthesis successful using deprecated Watson fallback"
                     )
                     return result
                 except Exception as e:

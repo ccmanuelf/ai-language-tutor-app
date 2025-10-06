@@ -235,7 +235,7 @@ class PiperTTSService:
         try:
             audio_data, metadata = await self.synthesize_speech(test_text)
 
-            logger.info(f"TTS test successful:")
+            logger.info("TTS test successful:")
             logger.info(f"  Voice: {metadata['voice']}")
             logger.info(f"  Audio size: {len(audio_data)} bytes")
             logger.info(f"  Sample rate: {metadata['sample_rate']} Hz")

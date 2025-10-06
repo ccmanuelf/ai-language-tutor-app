@@ -869,7 +869,7 @@ class FeatureToggleSystemTests:
         print("🎯 FEATURE TOGGLE SYSTEM TEST RESULTS")
         print("=" * 60)
 
-        print(f"📊 Overall Results:")
+        print("📊 Overall Results:")
         print(f"   Total Tests: {results['total_tests']}")
         print(f"   Passed: {results['passed_tests']} ✅")
         print(f"   Failed: {results['failed_tests']} ❌")
@@ -877,7 +877,7 @@ class FeatureToggleSystemTests:
             f"   Success Rate: {(results['passed_tests'] / results['total_tests'] * 100):.1f}%"
         )
 
-        print(f"\n📋 Category Breakdown:")
+        print("\n📋 Category Breakdown:")
         for category, category_results in results["test_categories"].items():
             status = "✅" if category_results["failed"] == 0 else "❌"
             print(
@@ -898,7 +898,7 @@ class FeatureToggleSystemTests:
         # Determine overall status
         if results["failed_tests"] == 0:
             print(
-                f"\n🎉 ALL TESTS PASSED! Feature Toggle System is ready for production."
+                "\n🎉 ALL TESTS PASSED! Feature Toggle System is ready for production."
             )
             return True
         else:

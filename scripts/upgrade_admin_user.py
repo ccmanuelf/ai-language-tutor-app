@@ -36,7 +36,7 @@ def check_current_admin_status():
 
     admin_info = get_admin_user_info()
     if admin_info:
-        logger.info(f"Admin user found:")
+        logger.info("Admin user found:")
         logger.info(f"  User ID: {admin_info['user_id']}")
         logger.info(f"  Username: {admin_info['username']}")
         logger.info(f"  Email: {admin_info['email']}")

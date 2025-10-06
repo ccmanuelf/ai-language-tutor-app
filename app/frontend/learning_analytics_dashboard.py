@@ -497,7 +497,7 @@ def analytics_dashboard_page(user_data: Dict = None, analytics_data: Dict = None
         Div(
             # Header Section
             Div(
-                H1(f"Learning Analytics Dashboard", cls="analytics-title fade-in"),
+                H1("Learning Analytics Dashboard", cls="analytics-title fade-in"),
                 P(
                     f"Progress tracking for {user_data['username']} in {user_data.get('language_name', 'English')}",
                     cls="analytics-subtitle",
