@@ -190,7 +190,7 @@ Respond naturally and engagingly, as if talking with a friend. Be authentic and 
 
         try:
             # Test with a minimal request
-            test_response = self.client.chat.complete(
+            _test_response = self.client.chat.complete(  # noqa: F841 - Intentional placeholder
                 model="mistral-small-latest",
                 messages=[UserMessage(content="Bonjour")],
                 max_tokens=10

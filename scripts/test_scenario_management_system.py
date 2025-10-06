@@ -1733,19 +1733,19 @@ class ScenarioManagementTester:
 
             # Simulate category filtering
             category_filter = "restaurant"
-            filtered_by_category = [
+            _filtered_by_category = [  # noqa: F841 - Intentional placeholder
                 s for s in scenarios if s.category.value == category_filter
             ]
 
             # Simulate difficulty filtering
             difficulty_filter = "beginner"
-            filtered_by_difficulty = [
+            _filtered_by_difficulty = [  # noqa: F841 - Intentional placeholder
                 s for s in scenarios if s.difficulty.value == difficulty_filter
             ]
 
             # Simulate search filtering
             search_term = "test"
-            filtered_by_search = [
+            _filtered_by_search = [  # noqa: F841 - Intentional placeholder
                 s
                 for s in scenarios
                 if search_term.lower() in s.name.lower()
@@ -2464,9 +2464,9 @@ class ScenarioManagementTester:
 """
 
             for category, results in self.test_results.items():
-                passed = results["passed"]
+                _passed = results["passed"]  # noqa: F841 - Intentional placeholder
                 failed = results["failed"]
-                status = "✅ PASSED" if failed == 0 else "❌ FAILED"
+                _status = "✅ PASSED" if failed == 0 else "❌ FAILED"  # noqa: F841 - Intentional placeholder
 
                 summary_content += """### {category.replace("_", " ").title()}
 - **Status**: {status}

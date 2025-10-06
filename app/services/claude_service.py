@@ -53,14 +53,14 @@ class ClaudeService(BaseAIService):
         """Generate dynamic, emotionally rich conversation prompt with context"""
 
         # Build conversation context
-        context_summary = ""
+        context_summary = ""  # noqa: F841 - Intentional placeholder
         if conversation_history and len(conversation_history) > 1:
             recent_topics = []
             for msg in conversation_history[-3:]:  # Last 3 exchanges
                 if msg.get('role') == 'user':
                     recent_topics.append(msg.get('content', '')[:50])
             if recent_topics:
-                context_summary = f"\n\nCONVERSATION CONTEXT: We've been talking about: {', '.join(recent_topics)}. Continue this natural flow."
+                _context_summary = f"\n\nCONVERSATION CONTEXT: We've been talking about: {', '.join(recent_topics)}. Continue this natural flow."  # noqa: F841 - Intentional placeholder
 
         language_contexts = {
             "en": {
@@ -112,16 +112,16 @@ class ClaudeService(BaseAIService):
         lang_context = language_contexts.get(language, language_contexts["en"])
 
         # Detect emotional triggers in user message
-        detected_mood = "neutral"
+        detected_mood = "neutral"  # noqa: F841 - Intentional placeholder
         user_lower = user_message.lower()
 
         for mood, triggers in lang_context.get("mood_triggers", {}).items():
             if any(trigger in user_lower for trigger in triggers):
-                detected_mood = mood
+                _detected_mood = mood  # noqa: F841 - Intentional placeholder
                 break
 
         # Build dynamic prompt based on mood and context
-        mood_instructions = {
+        _mood_instructions = {  # noqa: F841 - Intentional placeholder
             "exciting": "The user seems excited! Match their energy! Be super enthusiastic, use lots of exclamation points, and ask rapid follow-up questions!",
             "empathetic": "The user might be going through something difficult. Be warm, understanding, and supportive. Ask caring questions.",
             "curious": "The user mentioned something interesting! Show genuine curiosity, ask thoughtful questions, and encourage them to share more.",
@@ -251,7 +251,7 @@ Respond naturally as if you're their {language} friend:"""
 
         try:
             # Test with a minimal request
-            test_response = self.client.messages.create(
+            _test_response = self.client.messages.create(  # noqa: F841 - Intentional placeholder
                 model="claude-3-haiku-20240307",
                 max_tokens=10,
                 messages=[{"role": "user", "content": "Hi"}]

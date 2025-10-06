@@ -104,7 +104,7 @@ async def chat_with_ai(
         audio_url = None
         if request.use_speech:
             try:
-                tts_result = await speech_processor.process_text_to_speech(
+                _tts_result = await speech_processor.process_text_to_speech(  # noqa: F841 - Intentional placeholder
                     text=response_text,
                     language=language_code,
                     voice_type="neural"

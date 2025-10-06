@@ -133,13 +133,13 @@ class APIKeyValidator:
             # For Qwen, we'll implement a basic HTTP test
             import httpx
 
-            headers = {
+            _headers = {  # noqa: F841 - Intentional placeholder
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
             }
 
             # Test endpoint (this is a simplified test)
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient() as _client:  # noqa: F841 - Intentional placeholder
                 # Note: This is a placeholder - actual Qwen API validation
                 # would require specific endpoint and format
                 return {

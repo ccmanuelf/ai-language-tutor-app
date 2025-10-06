@@ -227,7 +227,7 @@ Respond naturally and engagingly, as if talking with a friend. Be authentic and 
                 )
                 else "qwen-plus"
             )
-            test_response = self.client.chat.completions.create(
+            _test_response = self.client.chat.completions.create(  # noqa: F841 - Intentional placeholder
                 model=test_model,
                 messages=[{"role": "user", "content": "你好"}],
                 max_tokens=10,

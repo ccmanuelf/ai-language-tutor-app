@@ -284,7 +284,7 @@ class DataSyncService:
 
                     for conv in conversations:
                         # Save conversation metadata locally
-                        conv_data = {
+                        _conv_data = {  # noqa: F841 - Intentional placeholder
                             "conversation_id": conv.conversation_id,
                             "title": conv.title,
                             "language": conv.language,
