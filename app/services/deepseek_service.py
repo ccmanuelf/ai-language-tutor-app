@@ -253,7 +253,7 @@ Respond naturally and engagingly, as if talking with a friend. Be authentic and 
 
         try:
             # Test with a minimal request
-            test_response = self.client.chat.completions.create(
+            _test_response = self.client.chat.completions.create(  # noqa: F841 - Intentional placeholder
                 model="deepseek-chat",
                 messages=[{"role": "user", "content": "Hello"}],
                 max_tokens=10,

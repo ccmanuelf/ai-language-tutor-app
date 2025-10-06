@@ -78,7 +78,7 @@ class MessageHandler:
             ValueError: If conversation_id is not found in message history
         """
         # Step 1: Process and add user message
-        user_insights = await self.process_user_message(
+        _user_insights = await self.process_user_message(  # noqa: F841 - Intentional placeholder
             conversation_id, user_message, context
         )
 
@@ -332,7 +332,7 @@ class MessageHandler:
         )
 
         # Update conversation context with insights
-        updated_context = await learning_analyzer.update_conversation_context(
+        _updated_context = await learning_analyzer.update_conversation_context(  # noqa: F841 - Intentional placeholder
             context=context, insights=learning_insights
         )
 

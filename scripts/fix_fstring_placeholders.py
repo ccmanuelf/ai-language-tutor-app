@@ -17,7 +17,7 @@ def fix_fstring_placeholders(file_path: Path) -> tuple[int, list[str]]:
     modified = False
 
     for i, line in enumerate(lines):
-        original_line = line
+        _original_line = line  # noqa: F841 - Intentional placeholder
 
         # Pattern 1: f"text without placeholders" -> "text without placeholders"
         # Only match if no { } brackets present

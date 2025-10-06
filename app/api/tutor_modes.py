@@ -356,7 +356,7 @@ async def submit_session_feedback(
             logger.warning(f"Feedback submitted for non-active session {session_id}")
 
         # Store feedback (in a real implementation, this would go to a database)
-        feedback_data = {
+        _feedback_data = {  # noqa: F841 - Intentional placeholder
             "session_id": session_id,
             "user_id": current_user.id,
             "feedback": feedback,

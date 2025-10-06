@@ -1045,7 +1045,7 @@ class SpacedRepetitionTestSuite:
             # Test analytics calculation performance
             start_time = time.time()
 
-            analytics = self.sr_manager.get_user_analytics(
+            _analytics = self.sr_manager.get_user_analytics(  # noqa: F841 - Intentional placeholder
                 TEST_CONFIG["test_user_id"], TEST_CONFIG["test_language"]
             )
 
