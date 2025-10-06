@@ -18,7 +18,6 @@ Architecture:
 """
 
 import uvicorn
-from datetime import datetime
 
 # Import the modular frontend application
 from app.frontend.main import create_frontend_app

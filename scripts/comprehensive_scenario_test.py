@@ -9,10 +9,6 @@ import sys
 import json
 import uuid
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-import aiohttp
-import tempfile
-import shutil
 from datetime import datetime
 
 # Add project root to Python path

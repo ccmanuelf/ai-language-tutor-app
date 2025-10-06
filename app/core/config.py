@@ -94,7 +94,7 @@ def get_settings() -> Settings:
 # Create directories if they don't exist
 def ensure_directories():
     """Ensure required directories exist"""
-    settings = get_settings()
+    get_settings()
     directories = [
         "./data",
         "./data/local",

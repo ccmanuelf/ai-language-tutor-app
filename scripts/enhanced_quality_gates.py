@@ -13,10 +13,9 @@ import json
 import os
 import sqlite3
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 
 class EnhancedQualityGatesValidator:

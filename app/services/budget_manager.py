@@ -10,14 +10,11 @@ This module manages the $30/month budget constraint by:
 """
 
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 from enum import Enum
 from dataclasses import dataclass
-from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
-import json
-import asyncio
+from sqlalchemy import func
 
 from app.database.config import get_primary_db_session
 from app.models.database import APIUsage, User

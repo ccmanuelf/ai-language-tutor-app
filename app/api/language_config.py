@@ -10,7 +10,7 @@ Task 3.1.3 - Language Configuration Panel
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy import text
 from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from datetime import datetime
 import json
 import logging

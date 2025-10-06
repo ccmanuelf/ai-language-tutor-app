@@ -15,14 +15,12 @@ RESTful API endpoints for AI model configuration and management:
 Provides comprehensive API for admin model management interface.
 """
 
-import asyncio
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Optional
 from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends, Query, Path, Body
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-import json
 
 from app.services.ai_model_manager import ai_model_manager, ModelCategory, ModelStatus
 from app.services.ai_router import ai_router

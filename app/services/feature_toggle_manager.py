@@ -12,12 +12,13 @@ import sqlite3
 import json
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
 import threading
 
 logger = logging.getLogger(__name__)
+
 
 class FeatureCategory(Enum):
     """Feature categories for organization"""
@@ -28,11 +29,13 @@ class FeatureCategory(Enum):
     PERFORMANCE = "performance"
     GENERAL = "general"
 
+
 class UserRole(Enum):
     """User roles for permission checking"""
     CHILD = "CHILD"
     PARENT = "PARENT"
     ADMIN = "ADMIN"
+
 
 @dataclass
 class FeatureToggle:
@@ -51,6 +54,7 @@ class FeatureToggle:
     def __post_init__(self):
         if self.configuration is None:
             self.configuration = {}
+
 
 class FeatureToggleManager:
     """
@@ -489,17 +493,22 @@ class FeatureToggleManager:
             logger.error(f"Error importing configuration: {e}")
             return {}
 
+
 # Global instance for application use
 feature_toggle_manager = FeatureToggleManager()
 
 # Convenience functions for easy access
+
+
 def is_feature_enabled(feature_name: str, user_role: str = "CHILD") -> bool:
     """Convenience function to check if feature is enabled"""
     return feature_toggle_manager.is_feature_enabled(feature_name, user_role)
 
+
 def get_feature(feature_name: str) -> Optional[FeatureToggle]:
     """Convenience function to get feature configuration"""
     return feature_toggle_manager.get_feature(feature_name)
+
 
 def get_features_by_category(user_role: str = "CHILD") -> Dict[str, List[FeatureToggle]]:
     """Convenience function to get features by category"""

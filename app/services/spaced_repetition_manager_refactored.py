@@ -13,17 +13,11 @@ This manager coordinates between specialized modules:
 
 import logging
 from typing import Dict, List, Optional, Any
-from datetime import datetime
 
-from .sr_database import get_db_manager, DatabaseManager
+from .sr_database import get_db_manager
 from .sr_models import (
     SpacedRepetitionItem,
-    LearningSession,
-    LearningGoal,
-    ItemType,
-    SessionType,
     ReviewResult,
-    AchievementType,
 )
 from .sr_algorithm import SM2Algorithm
 from .sr_sessions import SessionManager

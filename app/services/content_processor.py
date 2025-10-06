@@ -18,9 +18,9 @@ import tempfile
 import hashlib
 import json
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Union, AsyncGenerator
+from typing import Dict, List, Any, Optional
 from pathlib import Path
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from enum import Enum
 import aiohttp
 import aiofiles
@@ -430,7 +430,7 @@ class ContentProcessor:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, timeout=30) as response:
-                    html_content = await response.text()
+                    await response.text()
 
             # TODO: Implement HTML parsing and content extraction
             # For now, return basic structure

@@ -17,11 +17,8 @@ Follows YouLearn design patterns with modern responsive layout.
 
 from fasthtml import *
 from fasthtml.common import *
-from typing import Dict, List, Any, Optional
-import json
-from datetime import datetime
+from typing import Dict, List, Any
 
-from app.services.ai_model_manager import ai_model_manager, ModelCategory, ModelStatus
 from app.frontend.layout import create_admin_sidebar, create_admin_header
 
 

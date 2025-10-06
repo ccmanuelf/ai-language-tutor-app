@@ -16,10 +16,8 @@ Features:
 """
 
 from fasthtml.common import *
-from typing import Dict, List, Optional, Any
-import json
-from datetime import datetime, timedelta
-import statistics
+from typing import Dict, List
+from datetime import datetime
 
 
 def progress_analytics_styles():

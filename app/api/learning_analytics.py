@@ -9,9 +9,9 @@ gamification, and learning analytics management.
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
-from fastapi import APIRouter, HTTPException, Depends, Query, Body
+from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 from enum import Enum
 
 from app.services.spaced_repetition_manager import (
@@ -19,7 +19,6 @@ from app.services.spaced_repetition_manager import (
     ItemType,
     SessionType,
     ReviewResult,
-    AchievementType,
 )
 from app.services.admin_auth import get_current_admin_user
 from app.models.database import User

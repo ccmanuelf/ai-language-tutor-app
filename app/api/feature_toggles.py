@@ -4,7 +4,7 @@ Provides REST API for dynamic feature control and management.
 """
 
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, Query, Path, status
 from fastapi.security import HTTPBearer
 from pydantic import ValidationError

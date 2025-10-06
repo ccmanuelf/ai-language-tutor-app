@@ -19,17 +19,15 @@ Features:
 - Integration with existing speech processing pipeline
 """
 
-import asyncio
 import logging
 import json
-import re
 import time
 from typing import Dict, List, Any, Optional, Tuple, Union
-from datetime import datetime, timedelta
+from datetime import datetime
 from dataclasses import dataclass, asdict
 from enum import Enum
 import statistics
-from collections import defaultdict, deque
+from collections import deque
 
 
 def safe_mean(values: List[Union[int, float]], default: float = 0.0) -> float:
@@ -41,7 +39,7 @@ def safe_mean(values: List[Union[int, float]], default: float = 0.0) -> float:
 
 # Audio analysis libraries
 try:
-    import numpy as np
+    pass
 
     AUDIO_ANALYSIS_AVAILABLE = True
 except ImportError:

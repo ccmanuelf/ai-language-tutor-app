@@ -9,11 +9,9 @@ MIGRATION NOTE: This service replaces the previous Qwen implementation
 for improved cost efficiency and performance.
 """
 
-import asyncio
 import logging
 from typing import Dict, List, Any, Optional
 from datetime import datetime
-import json
 
 try:
     import openai  # DeepSeek uses OpenAI-compatible API

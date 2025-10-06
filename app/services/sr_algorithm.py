@@ -10,14 +10,13 @@ import json
 import logging
 import uuid
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Tuple, Any
 
 from app.services.sr_database import DatabaseManager
 from app.services.sr_models import (
     ItemType,
     ReviewResult,
     SpacedRepetitionItem,
-    AchievementType,
 )
 
 logger = logging.getLogger(__name__)

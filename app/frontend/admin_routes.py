@@ -8,18 +8,15 @@ integrating with the admin authentication system and dashboard frontend.
 
 from fasthtml.common import *
 from fastapi import HTTPException, Depends, status
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any
 import logging
-import json
 
 from app.services.admin_auth import (
     admin_auth_service,
-    require_admin_access,
-    require_permission,
     AdminPermission,
 )
 from app.services.auth import get_current_user
-from app.models.database import User, UserRole
+from app.models.database import User
 from app.database.config import get_db_session_context
 from app.frontend.admin_dashboard import create_user_management_page
 from app.frontend.admin_language_config import (

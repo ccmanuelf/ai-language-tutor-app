@@ -17,19 +17,16 @@ All 6 tutor modes supported:
 6. Open session talking
 """
 
-import asyncio
 import logging
 from typing import Dict, List, Any, Optional
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, Query, Body
+from fastapi import APIRouter, HTTPException, Depends, Body
 from pydantic import BaseModel, Field
-from uuid import UUID
 
 from app.services.tutor_mode_manager import (
     tutor_mode_manager,
     TutorMode,
     DifficultyLevel,
-    TutorModeCategory,
 )
 from app.services.auth import get_current_user
 from app.models.database import User

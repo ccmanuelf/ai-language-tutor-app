@@ -12,7 +12,6 @@ This script provides comprehensive performance analysis including:
 6. Algorithm complexity assessment
 """
 
-import os
 import sys
 import time
 import psutil
@@ -26,7 +25,7 @@ import tracemalloc
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from dataclasses import dataclass, asdict
 
 # Add project root to path
@@ -35,10 +34,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from sqlalchemy import text
 from app.database.config import db_manager
 from app.services.response_cache import response_cache
-from app.services.ai_router import EnhancedAIRouter
 from app.services.scenario_manager import scenario_manager
-from app.services.conversation_manager import conversation_manager
-from app.core.config import get_settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -204,7 +200,7 @@ class PerformanceProfiler:
         def load_scenarios():
             return scenario_manager.get_all_scenarios()
 
-        scenarios = load_scenarios()
+        load_scenarios()
 
         # Snapshot after operations
         snapshot_after = tracemalloc.take_snapshot()
@@ -484,7 +480,7 @@ async def main():
     profiler = PerformanceProfiler()
 
     try:
-        report = await profiler.run_full_analysis()
+        await profiler.run_full_analysis()
 
         # Exit with success
         sys.exit(0)

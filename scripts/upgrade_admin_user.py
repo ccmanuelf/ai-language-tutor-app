@@ -7,7 +7,6 @@ and initializes the admin system.
 """
 
 import sys
-import os
 import logging
 from pathlib import Path
 
@@ -20,7 +19,7 @@ from app.services.admin_auth import (
     initialize_admin_system,
     get_admin_user_info,
 )
-from app.database.config import get_db_session, get_db_session_context
+from app.database.config import get_db_session_context
 from app.models.database import User, UserRole
 from app.models.schemas import UserRoleEnum
 
@@ -150,7 +149,7 @@ def main():
 
     # Step 1: Check current status
     logger.info("STEP 1: Checking current admin status")
-    current_status = check_current_admin_status()
+    check_current_admin_status()
 
     # Step 2: Upgrade user if needed
     logger.info("\nSTEP 2: Upgrading admin user")

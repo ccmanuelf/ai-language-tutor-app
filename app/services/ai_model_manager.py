@@ -15,14 +15,12 @@ Comprehensive AI model configuration and management system that provides:
 This service extends the existing AI router with advanced management capabilities.
 """
 
-import asyncio
 import logging
 import json
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 from enum import Enum
-from dataclasses import dataclass, asdict
-from pathlib import Path
+from dataclasses import dataclass
 import sqlite3
 from threading import Lock
 
@@ -31,7 +29,7 @@ from app.utils.sqlite_adapters import register_sqlite_adapters
 
 register_sqlite_adapters()
 
-from app.services.ai_router import ai_router, RouterMode, ProviderSelection
+from app.services.ai_router import ai_router
 from app.services.budget_manager import budget_manager
 from app.core.config import get_settings
 

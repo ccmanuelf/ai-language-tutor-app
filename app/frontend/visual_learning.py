@@ -13,7 +13,6 @@ Modern, interactive, mobile-responsive design.
 
 from fasthtml.common import *
 from .layout import create_layout, create_card, create_grid
-from .styles import load_styles
 
 
 def create_visual_learning_routes(app):

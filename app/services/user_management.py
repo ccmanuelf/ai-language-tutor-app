@@ -10,22 +10,17 @@ This module provides comprehensive user management functionality including:
 """
 
 import logging
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta, timezone
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import and_, or_, func
-import json
+from sqlalchemy import and_, func
 
 from app.database.config import get_db_session
 from app.database.local_config import local_db_manager
 from app.models.database import (
     User,
-    Language,
     LearningProgress,
-    VocabularyItem,
     UserRole,
-    LanguageCode,
     LearningStatus,
     user_languages,
 )
@@ -38,8 +33,6 @@ from app.models.schemas import (
     LearningProgressUpdate,
     LearningProgressResponse,
     UserRoleEnum,
-    LanguageEnum,
-    LearningStatusEnum,
 )
 from app.services.auth import auth_service
 

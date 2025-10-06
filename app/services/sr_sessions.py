@@ -7,7 +7,7 @@ import json
 import logging
 import uuid
 from datetime import datetime, timedelta, date
-from typing import Dict, Optional
+from typing import Dict
 
 from app.services.sr_database import DatabaseManager
 from app.services.sr_models import LearningSession, SessionType

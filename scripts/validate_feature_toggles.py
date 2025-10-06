@@ -10,8 +10,7 @@ import time
 import sys
 import os
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from datetime import datetime
 import tempfile
 import shutil
 
@@ -596,12 +595,12 @@ class FeatureToggleValidator:
 
             # Test batch operations performance
             batch_start = time.time()
-            user_features = await self.test_service.get_user_features("batch_user")
+            await self.test_service.get_user_features("batch_user")
             batch_time = time.time() - batch_start
 
             # Test statistics generation performance
             stats_start = time.time()
-            stats = await self.test_service.get_feature_statistics()
+            await self.test_service.get_feature_statistics()
             stats_time = time.time() - stats_start
 
             self.results["performance_metrics"] = {

@@ -5,11 +5,9 @@ This service provides natural Chinese conversation using Alibaba's Qwen API
 with optimized prompts for Chinese language learning.
 """
 
-import asyncio
 import logging
 from typing import Dict, List, Any, Optional
 from datetime import datetime
-import json
 
 try:
     import openai  # Qwen uses OpenAI-compatible API

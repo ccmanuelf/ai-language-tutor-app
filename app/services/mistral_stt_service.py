@@ -14,18 +14,12 @@ Features:
 - Performance benchmarking capabilities
 """
 
-import asyncio
 import logging
 import io
-import json
-import base64
 import time
-from typing import Dict, List, Any, Optional, Tuple, Union
-from datetime import datetime
+from typing import Dict, List, Any, Tuple
 from dataclasses import dataclass
 import httpx
-import tempfile
-import os
 
 from app.core.config import get_settings
 

@@ -12,7 +12,6 @@ import json
 import logging
 from pathlib import Path
 import sys
-import os
 
 # Add the app directory to the path
 sys.path.append(str(Path(__file__).parent.parent))

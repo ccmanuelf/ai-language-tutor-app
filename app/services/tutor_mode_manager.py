@@ -18,20 +18,15 @@ Features:
 - Adaptive difficulty and personalization
 """
 
-import asyncio
 import logging
-import json
-import os
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Union
-from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional
+from datetime import datetime
 from enum import Enum
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from uuid import uuid4
 import random
 
-from app.services.ai_router import ai_router, generate_ai_response
-from app.services.budget_manager import budget_manager
+from app.services.ai_router import generate_ai_response
 
 logger = logging.getLogger(__name__)
 

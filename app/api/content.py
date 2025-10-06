@@ -11,7 +11,6 @@ Provides:
 - Real-time processing status
 """
 
-import asyncio
 import tempfile
 import shutil
 from datetime import datetime
@@ -23,20 +22,15 @@ from fastapi import (
     UploadFile,
     File,
     Form,
-    BackgroundTasks,
     Depends,
 )
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, HttpUrl
 from enum import Enum
 
 from app.services.content_processor import (
     content_processor,
-    ContentType,
     ProcessingStatus,
     LearningMaterialType,
-    ProcessingProgress,
-    ProcessedContent,
 )
 from app.core.security import get_current_user
 from app.models.simple_user import SimpleUser as User
@@ -340,7 +334,7 @@ async def get_content_library(
             library = [item for item in library if item.get("language") == language]
 
         # Apply pagination
-        total_items = len(library)
+        len(library)
         library = library[offset : offset + limit]
 
         # Convert to response format

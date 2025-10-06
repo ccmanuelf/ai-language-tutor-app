@@ -3,14 +3,12 @@ Feature Toggle Service
 Manages dynamic feature control and user-specific access.
 """
 
-import asyncio
 import json
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Set
+from typing import Dict, List, Optional, Any
 import logging
-from functools import lru_cache
 
 from app.models.feature_toggle import (
     FeatureToggle,

@@ -13,7 +13,6 @@ This script performs comprehensive security testing including:
 7. Rate limiting verification
 """
 
-import os
 import sys
 import json
 import re

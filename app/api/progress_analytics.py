@@ -9,8 +9,8 @@ This API complements the existing Learning Analytics API with advanced features.
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
-from fastapi import APIRouter, HTTPException, Depends, Query, Body
+from typing import Dict, List, Optional
+from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum
@@ -21,9 +21,7 @@ from app.services.progress_analytics_service import (
     SkillProgressMetrics,
     LearningPathRecommendation,
     MemoryRetentionAnalysis,
-    SkillType,
     LearningPathType,
-    ConfidenceLevel,
 )
 from app.services.admin_auth import get_current_admin_user
 from app.models.database import User

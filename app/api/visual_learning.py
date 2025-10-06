@@ -14,7 +14,6 @@ Integrates with existing admin authentication system.
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
-from datetime import datetime
 
 from app.services.visual_learning_service import (
     get_visual_learning_service,
@@ -22,14 +21,8 @@ from app.services.visual_learning_service import (
     GrammarConceptType,
     VisualizationType,
     VocabularyVisualizationType,
-    FlowchartNode,
-    GrammarFlowchart,
-    ProgressVisualization,
-    VocabularyVisual,
-    PronunciationGuide,
 )
 from app.services.auth import get_current_user
-from app.services.admin_auth import require_admin_access
 
 router = APIRouter(prefix="/api/visual-learning", tags=["visual_learning"])
 

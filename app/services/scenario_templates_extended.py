@@ -10,12 +10,10 @@ Tier 3: Extended Core Activities (16-25)
 Tier 4: Advanced Topics (26-32)
 """
 
-from typing import List, Dict, Any
+from typing import List
 from app.services.scenario_models import (
     UniversalScenarioTemplate,
     ScenarioCategory,
-    ScenarioDifficulty,
-    ConversationRole,
 )
 
 
