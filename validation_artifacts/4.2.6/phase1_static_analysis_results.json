@@ -1,7 +1,7 @@
 {
-  "timestamp": "2025-10-06T11:34:32.738516",
-  "total_modules": 188,
-  "successful_imports": 188,
+  "timestamp": "2025-10-06T16:03:22.082068",
+  "total_modules": 189,
+  "successful_imports": 189,
   "failed_imports": 0,
   "warnings_found": 0,
   "modules_with_warnings": [],
@@ -760,6 +760,12 @@
     {
       "file": "scripts/test_spaced_repetition_system.py",
       "module": "scripts.test_spaced_repetition_system",
+      "status": "success",
+      "warning_count": 0
+    },
+    {
+      "file": "scripts/update_phase_2b_progress.py",
+      "module": "scripts.update_phase_2b_progress",
       "status": "success",
       "warning_count": 0
     },
