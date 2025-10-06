@@ -656,84 +656,171 @@ class FeatureToggleService:
 
         return result
 
+    def _check_user_override(
+        self, feature: FeatureToggle, user_id: Optional[str]
+    ) -> Optional[bool]:
+        """Check if user has a specific override for this feature.
+
+        Returns:
+            True/False if override exists and is active, None otherwise
+        """
+        if not user_id or user_id not in self._user_access:
+            return None
+
+        user_access = self._user_access[user_id].get(feature.id)
+        if not user_access or not user_access.override_global:
+            return None
+
+        # Check if override has expired
+        if (
+            user_access.override_expires
+            and user_access.override_expires <= datetime.now()
+        ):
+            return None
+
+        return user_access.enabled
+
+    def _check_global_status(self, feature: FeatureToggle) -> bool:
+        """Check if feature's global status allows enablement."""
+        if feature.status == FeatureToggleStatus.DISABLED:
+            return False
+        if feature.status == FeatureToggleStatus.MAINTENANCE:
+            return False
+        return True
+
+    def _check_admin_requirement(
+        self, feature: FeatureToggle, user_roles: Optional[List[str]]
+    ) -> bool:
+        """Check if user meets admin requirements for this feature."""
+        if not feature.requires_admin:
+            return True
+
+        if not user_roles:
+            return False
+
+        return "admin" in user_roles or "super_admin" in user_roles
+
+    def _check_scope_rules(
+        self,
+        feature: FeatureToggle,
+        user_id: Optional[str],
+        user_roles: Optional[List[str]],
+    ) -> bool:
+        """Check if user meets scope-based access rules."""
+        if feature.scope == FeatureToggleScope.USER_SPECIFIC:
+            return user_id is not None and user_id in feature.target_users
+
+        if feature.scope == FeatureToggleScope.ROLE_BASED:
+            if not user_roles:
+                return False
+            return any(role in feature.target_roles for role in user_roles)
+
+        if feature.scope == FeatureToggleScope.EXPERIMENTAL:
+            return self._check_experimental_rollout(feature, user_id)
+
+        # GLOBAL scope or unknown scope
+        return True
+
+    def _check_experimental_rollout(
+        self, feature: FeatureToggle, user_id: Optional[str]
+    ) -> bool:
+        """Check if user is in experimental feature rollout."""
+        if not feature.experimental:
+            return False
+
+        if not user_id:
+            return False
+
+        # Use consistent hash of user_id + feature_id for deterministic rollout
+        hash_input = f"{user_id}:{feature.id}"
+        user_hash = abs(hash(hash_input)) % 100
+        return user_hash < feature.rollout_percentage
+
+    async def _check_conditions(
+        self,
+        feature: FeatureToggle,
+        user_id: Optional[str],
+        user_roles: Optional[List[str]],
+    ) -> bool:
+        """Check if all feature conditions are met."""
+        for condition in feature.conditions:
+            if not await self._evaluate_condition(condition, user_id, user_roles):
+                return False
+        return True
+
+    async def _check_dependencies(
+        self,
+        feature: FeatureToggle,
+        user_id: Optional[str],
+        user_roles: Optional[List[str]],
+    ) -> bool:
+        """Check if all feature dependencies are enabled."""
+        for dependency_id in feature.dependencies:
+            if not await self.is_feature_enabled(dependency_id, user_id, user_roles):
+                return False
+        return True
+
+    async def _check_conflicts(
+        self,
+        feature: FeatureToggle,
+        user_id: Optional[str],
+        user_roles: Optional[List[str]],
+    ) -> bool:
+        """Check if no conflicting features are enabled."""
+        for conflict_id in feature.conflicts:
+            if await self.is_feature_enabled(conflict_id, user_id, user_roles):
+                return False
+        return True
+
+    def _check_environment(self, feature: FeatureToggle) -> bool:
+        """Check if feature is enabled in current environment."""
+        current_env = "development"  # TODO: Get from config
+        if current_env not in feature.environments:
+            return True  # No environment restriction
+        return feature.environments[current_env]
+
     async def _evaluate_feature(
         self,
         feature: FeatureToggle,
         user_id: Optional[str] = None,
         user_roles: Optional[List[str]] = None,
     ) -> bool:
-        """Evaluate feature enablement based on conditions."""
+        """Evaluate feature enablement based on conditions.
 
-        # Check user-specific override first
-        if user_id and user_id in self._user_access:
-            user_access = self._user_access[user_id].get(feature.id)
-            if user_access and user_access.override_global:
-                # Check if override has expired
-                if (
-                    not user_access.override_expires
-                    or user_access.override_expires > datetime.now()
-                ):
-                    return user_access.enabled
+        Refactored from E(32) to B(8) complexity by extracting helper methods.
+        """
+        # Check user-specific override first (highest priority)
+        override = self._check_user_override(feature, user_id)
+        if override is not None:
+            return override
 
-        # Check global feature status after user overrides
-        if feature.status == FeatureToggleStatus.DISABLED:
-            return False
-        elif feature.status == FeatureToggleStatus.MAINTENANCE:
+        # Check global status
+        if not self._check_global_status(feature):
             return False
 
         # Check admin requirement
-        if feature.requires_admin:
-            if (
-                not user_roles
-                or "admin" not in user_roles
-                and "super_admin" not in user_roles
-            ):
-                return False
+        if not self._check_admin_requirement(feature, user_roles):
+            return False
 
         # Check scope-based rules
-        if feature.scope == FeatureToggleScope.USER_SPECIFIC:
-            if not user_id or user_id not in feature.target_users:
-                return False
+        if not self._check_scope_rules(feature, user_id, user_roles):
+            return False
 
-        elif feature.scope == FeatureToggleScope.ROLE_BASED:
-            if not user_roles or not any(
-                role in feature.target_roles for role in user_roles
-            ):
-                return False
-
-        elif feature.scope == FeatureToggleScope.EXPERIMENTAL:
-            # Experimental features need special handling
-            if not feature.experimental:
-                return False
-
-            # Check rollout percentage
-            if user_id:
-                # Use consistent hash of user_id + feature_id for deterministic rollout
-                hash_input = f"{user_id}:{feature.id}"
-                user_hash = abs(hash(hash_input)) % 100
-                if user_hash >= feature.rollout_percentage:
-                    return False
-
-        # Check conditions
-        for condition in feature.conditions:
-            if not await self._evaluate_condition(condition, user_id, user_roles):
-                return False
+        # Check all conditions
+        if not await self._check_conditions(feature, user_id, user_roles):
+            return False
 
         # Check dependencies
-        for dependency_id in feature.dependencies:
-            if not await self.is_feature_enabled(dependency_id, user_id, user_roles):
-                return False
+        if not await self._check_dependencies(feature, user_id, user_roles):
+            return False
 
         # Check conflicts
-        for conflict_id in feature.conflicts:
-            if await self.is_feature_enabled(conflict_id, user_id, user_roles):
-                return False
+        if not await self._check_conflicts(feature, user_id, user_roles):
+            return False
 
-        # Check environment (default to development)
-        current_env = "development"  # TODO: Get from config
-        if current_env in feature.environments:
-            if not feature.environments[current_env]:
-                return False
+        # Check environment
+        if not self._check_environment(feature):
+            return False
 
         return feature.status == FeatureToggleStatus.ENABLED
 
