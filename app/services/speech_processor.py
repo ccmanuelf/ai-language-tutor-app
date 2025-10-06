@@ -1414,7 +1414,7 @@ class SpeechProcessor:
         # Get settings for API key checks
         try:
             settings = get_settings()
-        except:
+        except Exception:
             settings = None
 
         return {

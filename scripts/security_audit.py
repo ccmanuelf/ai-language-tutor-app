@@ -201,7 +201,7 @@ class SecurityAuditor:
                 if "limiter" in content.lower() or "rate_limit" in content.lower():
                     findings["has_rate_limiting"] = True
                     break
-            except:
+            except Exception:
                 pass
 
         if not findings["has_rate_limiting"]:
@@ -364,7 +364,7 @@ class SecurityAuditor:
                 if "os.getenv" in content or "os.environ" in content:
                     findings["uses_env_vars"] = True
                     break
-            except:
+            except Exception:
                 pass
 
         return findings

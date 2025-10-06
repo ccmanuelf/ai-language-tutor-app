@@ -152,7 +152,7 @@ class OllamaService(BaseAIService):
                             progress = json.loads(line.decode().strip())
                             if "status" in progress:
                                 logger.info(f"Pull progress: {progress['status']}")
-                        except:
+                        except (json.JSONDecodeError, TypeError, ValueError):
                             continue
                     return True
                 return False
