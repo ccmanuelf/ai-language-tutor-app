@@ -1291,114 +1291,136 @@ class SpeechProcessor:
         speaking_rate: float,
     ) -> str:
         """Prepare text for optimal speech synthesis with SSML markup"""
-
-        # Start with basic text cleaning
         enhanced_text = text.strip()
+        enhanced_text = self._apply_speaking_rate(enhanced_text, speaking_rate)
+        enhanced_text = self._apply_word_emphasis(enhanced_text, emphasis_words)
+        enhanced_text = self._apply_language_specific_enhancements(
+            enhanced_text, language
+        )
+        enhanced_text = self._add_comprehension_pauses(enhanced_text)
+        enhanced_text = self._wrap_in_ssml_if_needed(enhanced_text)
+        return enhanced_text
 
-        # Build SSML structure for Watson TTS
+    def _apply_speaking_rate(self, text: str, speaking_rate: float) -> str:
+        """Apply speaking rate adjustment to text - A(3)"""
+        if speaking_rate == 1.0:
+            return text
 
-        # Add speaking rate adjustment if different from default
-        if speaking_rate != 1.0:
-            # Watson accepts rate as percentage (-50% to +100%)
-            rate_percentage = int((speaking_rate - 1.0) * 50)
-            rate_percentage = max(
-                -50, min(100, rate_percentage)
-            )  # Clamp to Watson limits
-            enhanced_text = (
-                f'<prosody rate="{rate_percentage:+d}%">{enhanced_text}</prosody>'
-            )
+        # Watson accepts rate as percentage (-50% to +100%)
+        rate_percentage = int((speaking_rate - 1.0) * 50)
+        rate_percentage = max(-50, min(100, rate_percentage))  # Clamp to Watson limits
+        return f'<prosody rate="{rate_percentage:+d}%">{text}</prosody>'
 
-        # Add emphasis to specific words if provided
-        if emphasis_words:
-            for word in emphasis_words:
-                if word.lower() in enhanced_text.lower():
-                    # Use case-insensitive replacement with emphasis
-                    import re
+    def _apply_word_emphasis(
+        self, text: str, emphasis_words: Optional[List[str]]
+    ) -> str:
+        """Add emphasis markup to specific words - A(4)"""
+        if not emphasis_words:
+            return text
 
-                    pattern = re.compile(re.escape(word), re.IGNORECASE)
-                    enhanced_text = pattern.sub(
-                        f'<emphasis level="strong">{word}</emphasis>',
-                        enhanced_text,
-                        count=1,
-                    )
+        import re
 
-        # Language-specific SSML enhancements for pronunciation learning
+        enhanced_text = text
+        for word in emphasis_words:
+            if word.lower() in enhanced_text.lower():
+                pattern = re.compile(re.escape(word), re.IGNORECASE)
+                enhanced_text = pattern.sub(
+                    f'<emphasis level="strong">{word}</emphasis>',
+                    enhanced_text,
+                    count=1,
+                )
+        return enhanced_text
+
+    def _apply_language_specific_enhancements(self, text: str, language: str) -> str:
+        """Apply language-specific SSML enhancements - B(6)"""
         if language == "zh":
-            # For Chinese, optimize for pronunciation learning with English voice compatibility
-            # Since native Chinese voices may not be available, use compatible SSML
-            # Add pauses between characters for learning and slow down speech
-            chinese_chars = [
-                "你",
-                "好",
-                "世",
-                "界",
-                "是",
-                "这",
-                "一",
-                "个",
-                "测",
-                "试",
-                "谢",
-                "叫",
-                "小",
-                "明",
-                "今",
-                "天",
-                "天",
-                "气",
-                "很",
-                "在",
-                "学",
-                "习",
-                "中",
-                "文",
-            ]
-            if any(char in enhanced_text for char in chinese_chars):
-                # Slow down speech for Chinese pronunciation learning
-                if "<prosody rate=" not in enhanced_text:
-                    enhanced_text = f'<prosody rate="-30%">{enhanced_text}</prosody>'
-                # Add pauses between characters for learning (but not too many to avoid errors)
-                for i, char in enumerate(
-                    chinese_chars[:10]
-                ):  # Limit to prevent too much markup
-                    if char in enhanced_text and i < 5:  # Limit replacements
-                        enhanced_text = enhanced_text.replace(
-                            char, f'{char}<break time="150ms"/>', 1
-                        )
-
+            return self._enhance_chinese_text(text)
         elif language == "fr":
-            # For French, enhance liaison and nasal sounds with emphasis
-            enhanced_text = enhanced_text.replace(
-                "les ", '<emphasis level="moderate">les</emphasis> '
-            )
-            enhanced_text = enhanced_text.replace(
-                "un ", '<emphasis level="moderate">un</emphasis> '
-            )
-
+            return self._enhance_french_text(text)
         elif language == "es":
-            # For Spanish, emphasize rolled R sounds and stress patterns
-            enhanced_text = enhanced_text.replace(
-                "rr", '<emphasis level="strong">rr</emphasis>'
-            )
-
+            return self._enhance_spanish_text(text)
         elif language == "en":
-            # For English, help with common pronunciation challenges using emphasis
-            # Use emphasis instead of complex phonemes to avoid API errors
-            enhanced_text = enhanced_text.replace(
-                " th", ' <emphasis level="moderate">th</emphasis>'
-            )
+            return self._enhance_english_text(text)
+        return text
 
-        # Add pauses for better comprehension in language learning
+    def _enhance_chinese_text(self, text: str) -> str:
+        """Enhance Chinese text for pronunciation learning - B(7)"""
+        chinese_chars = [
+            "你",
+            "好",
+            "世",
+            "界",
+            "是",
+            "这",
+            "一",
+            "个",
+            "测",
+            "试",
+            "谢",
+            "叫",
+            "小",
+            "明",
+            "今",
+            "天",
+            "天",
+            "气",
+            "很",
+            "在",
+            "学",
+            "习",
+            "中",
+            "文",
+        ]
+
+        if not any(char in text for char in chinese_chars):
+            return text
+
+        enhanced_text = text
+        # Slow down speech for Chinese pronunciation learning
+        if "<prosody rate=" not in enhanced_text:
+            enhanced_text = f'<prosody rate="-30%">{enhanced_text}</prosody>'
+
+        # Add pauses between characters for learning (limited to prevent errors)
+        for i, char in enumerate(chinese_chars[:10]):
+            if char in enhanced_text and i < 5:
+                enhanced_text = enhanced_text.replace(
+                    char, f'{char}<break time="150ms"/>', 1
+                )
+
+        return enhanced_text
+
+    def _enhance_french_text(self, text: str) -> str:
+        """Enhance French text for liaison and nasal sounds - A(2)"""
+        enhanced_text = text.replace(
+            "les ", '<emphasis level="moderate">les</emphasis> '
+        )
+        enhanced_text = enhanced_text.replace(
+            "un ", '<emphasis level="moderate">un</emphasis> '
+        )
+        return enhanced_text
+
+    def _enhance_spanish_text(self, text: str) -> str:
+        """Enhance Spanish text for rolled R sounds - A(1)"""
+        return text.replace("rr", '<emphasis level="strong">rr</emphasis>')
+
+    def _enhance_english_text(self, text: str) -> str:
+        """Enhance English text for common pronunciation challenges - A(1)"""
+        return text.replace(" th", ' <emphasis level="moderate">th</emphasis>')
+
+    def _add_comprehension_pauses(self, text: str) -> str:
+        """Add pauses for better comprehension in language learning - A(3)"""
+        enhanced_text = text
         if "." in enhanced_text:
             enhanced_text = enhanced_text.replace(". ", '.<break time="500ms"/> ')
         if "," in enhanced_text:
             enhanced_text = enhanced_text.replace(", ", ',<break time="200ms"/> ')
-
-        # Wrap in SSML speak tag if we added any SSML markup
-        if "<" in enhanced_text and ">" in enhanced_text:
-            enhanced_text = f'<speak version="1.0">{enhanced_text}</speak>'
-
         return enhanced_text
+
+    def _wrap_in_ssml_if_needed(self, text: str) -> str:
+        """Wrap text in SSML speak tag if markup is present - A(2)"""
+        if "<" in text and ">" in text:
+            return f'<speak version="1.0">{text}</speak>'
+        return text
 
     async def get_speech_pipeline_status(self) -> Dict[str, Any]:
         """Get status of speech processing pipeline"""
