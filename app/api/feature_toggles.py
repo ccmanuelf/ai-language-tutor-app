@@ -339,58 +339,15 @@ async def check_user_feature_status(
     current_user: User = Depends(get_current_admin_user),
 ):
     """Check if a feature is enabled for a specific user."""
-
-    # Check permissions
     await check_admin_permission(current_user, AdminPermission.MANAGE_FEATURES)
 
     try:
         service = await get_feature_toggle_service()
-
-        # Parse user roles
-        roles_list = user_roles.split(",") if user_roles else None
-
+        roles_list = _parse_user_roles(user_roles)
         enabled = await service.is_feature_enabled(feature_id, user_id, roles_list)
-
-        # Get feature for additional context
-        feature = await service.get_feature(feature_id)
-        if not feature:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Feature toggle '{feature_id}' not found",
-            )
-
-        # Determine reason
-        reason = "enabled" if enabled else "disabled"
-        if feature.status == FeatureToggleStatus.DISABLED:
-            reason = "globally disabled"
-        elif feature.requires_admin and (not roles_list or "admin" not in roles_list):
-            reason = "requires admin role"
-        elif (
-            feature.scope == FeatureToggleScope.USER_SPECIFIC
-            and user_id not in feature.target_users
-        ):
-            reason = "not in target users"
-        elif feature.scope == FeatureToggleScope.ROLE_BASED and (
-            not roles_list
-            or not any(role in feature.target_roles for role in roles_list)
-        ):
-            reason = "role not targeted"
-
-        return UserFeatureStatusResponse(
-            user_id=user_id,
-            feature_id=feature_id,
-            enabled=enabled,
-            reason=reason,
-            metadata={
-                "feature_name": feature.name,
-                "feature_category": feature.category.value,
-                "feature_scope": feature.scope.value,
-                "feature_status": feature.status.value,
-                "requires_admin": feature.requires_admin,
-                "experimental": feature.experimental,
-            },
-        )
-
+        feature = await _get_feature_or_404(service, feature_id)
+        reason = _determine_status_reason(feature, enabled, user_id, roles_list)
+        return _build_status_response(user_id, feature_id, enabled, reason, feature)
     except HTTPException:
         raise
     except Exception as e:
@@ -398,6 +355,65 @@ async def check_user_feature_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to check user feature status: {str(e)}",
         )
+
+
+def _parse_user_roles(user_roles: Optional[str]) -> Optional[list]:
+    """Parse comma-separated user roles - A(1)"""
+    return user_roles.split(",") if user_roles else None
+
+
+async def _get_feature_or_404(service, feature_id: str):
+    """Get feature or raise 404 - A(2)"""
+    feature = await service.get_feature(feature_id)
+    if not feature:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Feature toggle '{feature_id}' not found",
+        )
+    return feature
+
+
+def _determine_status_reason(
+    feature, enabled: bool, user_id: str, roles_list: Optional[list]
+) -> str:
+    """Determine the reason for feature status - B(8)"""
+    reason = "enabled" if enabled else "disabled"
+
+    if feature.status == FeatureToggleStatus.DISABLED:
+        reason = "globally disabled"
+    elif feature.requires_admin and (not roles_list or "admin" not in roles_list):
+        reason = "requires admin role"
+    elif (
+        feature.scope == FeatureToggleScope.USER_SPECIFIC
+        and user_id not in feature.target_users
+    ):
+        reason = "not in target users"
+    elif feature.scope == FeatureToggleScope.ROLE_BASED and (
+        not roles_list or not any(role in feature.target_roles for role in roles_list)
+    ):
+        reason = "role not targeted"
+
+    return reason
+
+
+def _build_status_response(
+    user_id: str, feature_id: str, enabled: bool, reason: str, feature
+) -> UserFeatureStatusResponse:
+    """Build user feature status response - A(1)"""
+    return UserFeatureStatusResponse(
+        user_id=user_id,
+        feature_id=feature_id,
+        enabled=enabled,
+        reason=reason,
+        metadata={
+            "feature_name": feature.name,
+            "feature_category": feature.category.value,
+            "feature_scope": feature.scope.value,
+            "feature_status": feature.status.value,
+            "requires_admin": feature.requires_admin,
+            "experimental": feature.experimental,
+        },
+    )
 
 
 @router.post(
