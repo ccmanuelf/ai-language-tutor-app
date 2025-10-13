@@ -191,66 +191,82 @@ async def list_scenarios(
     try:
         sm = await ensure_scenario_manager_initialized()
         scenarios = await sm.get_all_scenarios()
-
-        # Apply filters
-        if category:
-            scenarios = [s for s in scenarios if s.category.value == category]
-        if difficulty:
-            scenarios = [s for s in scenarios if s.difficulty.value == difficulty]
-        if active_only:
-            scenarios = [s for s in scenarios if getattr(s, "is_active", True)]
-
-        # Apply pagination
+        scenarios = _apply_scenario_filters(
+            scenarios, category, difficulty, active_only
+        )
         paginated = scenarios[offset : offset + limit]
-
-        # Convert to response models
-        result = []
-        for scenario in paginated:
-            scenario_dict = {
-                "scenario_id": scenario.scenario_id,
-                "name": scenario.name,
-                "category": scenario.category.value,
-                "difficulty": scenario.difficulty.value,
-                "description": scenario.description,
-                "user_role": scenario.user_role.value,
-                "ai_role": scenario.ai_role.value,
-                "setting": scenario.setting,
-                "duration_minutes": scenario.duration_minutes,
-                "phases": [
-                    {
-                        "phase_id": phase.phase_id,
-                        "name": phase.name,
-                        "description": phase.description,
-                        "expected_duration_minutes": phase.expected_duration_minutes,
-                        "key_vocabulary": phase.key_vocabulary,
-                        "essential_phrases": phase.essential_phrases,
-                        "learning_objectives": phase.learning_objectives,
-                        "cultural_notes": phase.cultural_notes,
-                        "success_criteria": phase.success_criteria or [],
-                    }
-                    for phase in scenario.phases
-                ],
-                "prerequisites": getattr(scenario, "prerequisites", []),
-                "learning_outcomes": getattr(scenario, "learning_outcomes", []),
-                "vocabulary_focus": getattr(scenario, "vocabulary_focus", []),
-                "cultural_context": getattr(scenario, "cultural_context", None),
-                "is_active": getattr(scenario, "is_active", True),
-                "created_at": getattr(scenario, "created_at", None),
-                "updated_at": getattr(scenario, "updated_at", None),
-            }
-            result.append(ScenarioModel(**scenario_dict))
-
+        result = _convert_scenarios_to_models(paginated)
         logger.info(
             f"Listed {len(result)} scenarios (filtered from {len(scenarios)} total)"
         )
         return result
-
     except Exception as e:
         logger.error(f"Error listing scenarios: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to list scenarios: {str(e)}",
         )
+
+
+def _apply_scenario_filters(
+    scenarios: list,
+    category: Optional[str],
+    difficulty: Optional[str],
+    active_only: bool,
+) -> list:
+    """Apply filtering to scenarios - A(4)"""
+    if category:
+        scenarios = [s for s in scenarios if s.category.value == category]
+    if difficulty:
+        scenarios = [s for s in scenarios if s.difficulty.value == difficulty]
+    if active_only:
+        scenarios = [s for s in scenarios if getattr(s, "is_active", True)]
+    return scenarios
+
+
+def _convert_scenarios_to_models(scenarios: list) -> list:
+    """Convert scenario objects to response models - A(2)"""
+    result = []
+    for scenario in scenarios:
+        scenario_dict = _build_scenario_dict(scenario)
+        result.append(ScenarioModel(**scenario_dict))
+    return result
+
+
+def _build_scenario_dict(scenario) -> dict:
+    """Build scenario dictionary from scenario object - A(1)"""
+    return {
+        "scenario_id": scenario.scenario_id,
+        "name": scenario.name,
+        "category": scenario.category.value,
+        "difficulty": scenario.difficulty.value,
+        "description": scenario.description,
+        "user_role": scenario.user_role.value,
+        "ai_role": scenario.ai_role.value,
+        "setting": scenario.setting,
+        "duration_minutes": scenario.duration_minutes,
+        "phases": [
+            {
+                "phase_id": phase.phase_id,
+                "name": phase.name,
+                "description": phase.description,
+                "expected_duration_minutes": phase.expected_duration_minutes,
+                "key_vocabulary": phase.key_vocabulary,
+                "essential_phrases": phase.essential_phrases,
+                "learning_objectives": phase.learning_objectives,
+                "cultural_notes": phase.cultural_notes,
+                "success_criteria": phase.success_criteria or [],
+            }
+            for phase in scenario.phases
+        ],
+        "prerequisites": getattr(scenario, "prerequisites", []),
+        "learning_outcomes": getattr(scenario, "learning_outcomes", []),
+        "vocabulary_focus": getattr(scenario, "vocabulary_focus", []),
+        "cultural_context": getattr(scenario, "cultural_context", None),
+        "is_active": getattr(scenario, "is_active", True),
+        "created_at": getattr(scenario, "created_at", None),
+        "updated_at": getattr(scenario, "updated_at", None),
+    }
 
 
 @router.get("/scenarios/{scenario_id}", response_model=ScenarioModel)
@@ -420,90 +436,14 @@ async def update_scenario(
     """Update an existing scenario"""
     try:
         sm = await ensure_scenario_manager_initialized()
-
-        # Get existing scenario
-        existing_scenario = await sm.get_scenario_by_id(scenario_id)
-        if not existing_scenario:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Scenario with ID {scenario_id} not found",
-            )
-
-        # Update fields that were provided
+        existing_scenario = await _get_scenario_or_404(sm, scenario_id)
         updates = scenario_data.dict(exclude_unset=True)
-
-        for field, value in updates.items():
-            if field == "phases" and value is not None:
-                # Convert phase data to ScenarioPhase objects
-                phases = []
-                for phase_data in value:
-                    phase = ScenarioPhase(
-                        phase_id=phase_data.phase_id,
-                        name=phase_data.name,
-                        description=phase_data.description,
-                        expected_duration_minutes=phase_data.expected_duration_minutes,
-                        key_vocabulary=phase_data.key_vocabulary,
-                        essential_phrases=phase_data.essential_phrases,
-                        learning_objectives=phase_data.learning_objectives,
-                        cultural_notes=phase_data.cultural_notes,
-                        success_criteria=phase_data.success_criteria,
-                    )
-                    phases.append(phase)
-                setattr(existing_scenario, field, phases)
-            elif field in ["category", "difficulty", "user_role", "ai_role"]:
-                # Convert enum values
-                if field == "category":
-                    setattr(existing_scenario, field, ScenarioCategory(value))
-                elif field == "difficulty":
-                    setattr(existing_scenario, field, ScenarioDifficulty(value))
-                elif field in ["user_role", "ai_role"]:
-                    setattr(existing_scenario, field, ConversationRole(value))
-            else:
-                setattr(existing_scenario, field, value)
-
-        # Update timestamp
+        _apply_scenario_updates(existing_scenario, updates)
         existing_scenario.updated_at = datetime.now()
-
-        # Save updated scenario
         await sm.save_scenario(existing_scenario)
-
-        # Convert to response model
-        scenario_dict = {
-            "scenario_id": existing_scenario.scenario_id,
-            "name": existing_scenario.name,
-            "category": existing_scenario.category.value,
-            "difficulty": existing_scenario.difficulty.value,
-            "description": existing_scenario.description,
-            "user_role": existing_scenario.user_role.value,
-            "ai_role": existing_scenario.ai_role.value,
-            "setting": existing_scenario.setting,
-            "duration_minutes": existing_scenario.duration_minutes,
-            "phases": [
-                {
-                    "phase_id": phase.phase_id,
-                    "name": phase.name,
-                    "description": phase.description,
-                    "expected_duration_minutes": phase.expected_duration_minutes,
-                    "key_vocabulary": phase.key_vocabulary,
-                    "essential_phrases": phase.essential_phrases,
-                    "learning_objectives": phase.learning_objectives,
-                    "cultural_notes": phase.cultural_notes,
-                    "success_criteria": phase.success_criteria or [],
-                }
-                for phase in existing_scenario.phases
-            ],
-            "prerequisites": getattr(existing_scenario, "prerequisites", []),
-            "learning_outcomes": getattr(existing_scenario, "learning_outcomes", []),
-            "vocabulary_focus": getattr(existing_scenario, "vocabulary_focus", []),
-            "cultural_context": getattr(existing_scenario, "cultural_context", None),
-            "is_active": getattr(existing_scenario, "is_active", True),
-            "created_at": getattr(existing_scenario, "created_at", None),
-            "updated_at": existing_scenario.updated_at,
-        }
-
+        scenario_dict = _build_scenario_dict(existing_scenario)
         logger.info(f"Updated scenario: {existing_scenario.name} ({scenario_id})")
         return ScenarioModel(**scenario_dict)
-
     except HTTPException:
         raise
     except Exception as e:
@@ -512,6 +452,58 @@ async def update_scenario(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update scenario: {str(e)}",
         )
+
+
+async def _get_scenario_or_404(sm, scenario_id: str):
+    """Get scenario or raise 404 - A(2)"""
+    existing_scenario = await sm.get_scenario_by_id(scenario_id)
+    if not existing_scenario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Scenario with ID {scenario_id} not found",
+        )
+    return existing_scenario
+
+
+def _apply_scenario_updates(scenario, updates: dict) -> None:
+    """Apply updates to scenario object - B(8)"""
+    for field, value in updates.items():
+        if field == "phases" and value is not None:
+            phases = _convert_phase_data_to_objects(value)
+            setattr(scenario, field, phases)
+        elif field in ["category", "difficulty", "user_role", "ai_role"]:
+            _update_enum_field(scenario, field, value)
+        else:
+            setattr(scenario, field, value)
+
+
+def _convert_phase_data_to_objects(phase_data_list: list) -> list:
+    """Convert phase data to ScenarioPhase objects - A(2)"""
+    phases = []
+    for phase_data in phase_data_list:
+        phase = ScenarioPhase(
+            phase_id=phase_data.phase_id,
+            name=phase_data.name,
+            description=phase_data.description,
+            expected_duration_minutes=phase_data.expected_duration_minutes,
+            key_vocabulary=phase_data.key_vocabulary,
+            essential_phrases=phase_data.essential_phrases,
+            learning_objectives=phase_data.learning_objectives,
+            cultural_notes=phase_data.cultural_notes,
+            success_criteria=phase_data.success_criteria,
+        )
+        phases.append(phase)
+    return phases
+
+
+def _update_enum_field(scenario, field: str, value: str) -> None:
+    """Update enum field with proper conversion - A(5)"""
+    if field == "category":
+        setattr(scenario, field, ScenarioCategory(value))
+    elif field == "difficulty":
+        setattr(scenario, field, ScenarioDifficulty(value))
+    elif field in ["user_role", "ai_role"]:
+        setattr(scenario, field, ConversationRole(value))
 
 
 @router.delete("/scenarios/{scenario_id}")
