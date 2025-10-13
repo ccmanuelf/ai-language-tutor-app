@@ -563,128 +563,29 @@ class ProgressAnalyticsService:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
 
-                # Date range for analysis
-                end_date = datetime.now()
-                start_date = end_date - timedelta(days=period_days)
-
-                # Get conversation sessions
-                cursor.execute(
-                    """
-                    SELECT * FROM conversation_metrics
-                    WHERE user_id = ? AND language_code = ?
-                    AND started_at BETWEEN ? AND ?
-                    ORDER BY started_at DESC
-                """,
-                    (user_id, language_code, start_date, end_date),
+                # Fetch conversation sessions
+                sessions = self._fetch_conversation_sessions(
+                    user_id, language_code, period_days, cursor
                 )
-
-                sessions = [dict(row) for row in cursor.fetchall()]
 
                 if not sessions:
                     return self._get_empty_conversation_analytics()
 
-                # Calculate analytics
+                # Build analytics from extracted sections
                 analytics = {
-                    "overview": {
-                        "total_conversations": len(sessions),
-                        "total_conversation_time": sum(
-                            s["duration_minutes"] for s in sessions
-                        ),
-                        "average_session_length": safe_mean(
-                            [
-                                s["duration_minutes"]
-                                for s in sessions
-                                if s["duration_minutes"] > 0
-                            ]
-                        ),
-                        "total_exchanges": sum(s["total_exchanges"] for s in sessions),
-                        "average_exchanges_per_session": safe_mean(
-                            [
-                                s["total_exchanges"]
-                                for s in sessions
-                                if s["total_exchanges"] > 0
-                            ]
-                        ),
-                    },
-                    "performance_metrics": {
-                        "average_fluency_score": safe_mean(
-                            [
-                                s["fluency_score"]
-                                for s in sessions
-                                if s["fluency_score"] > 0
-                            ]
-                        ),
-                        "average_grammar_accuracy": safe_mean(
-                            [
-                                s["grammar_accuracy_score"]
-                                for s in sessions
-                                if s["grammar_accuracy_score"] > 0
-                            ]
-                        ),
-                        "average_pronunciation_clarity": safe_mean(
-                            [
-                                s["pronunciation_clarity_score"]
-                                for s in sessions
-                                if s["pronunciation_clarity_score"] > 0
-                            ]
-                        ),
-                        "average_vocabulary_complexity": safe_mean(
-                            [
-                                s["vocabulary_complexity_score"]
-                                for s in sessions
-                                if s["vocabulary_complexity_score"] > 0
-                            ]
-                        ),
-                        "average_confidence_level": safe_mean(
-                            [
-                                s["average_confidence_score"]
-                                for s in sessions
-                                if s["average_confidence_score"] > 0
-                            ]
-                        ),
-                    },
-                    "learning_progress": {
-                        "total_new_vocabulary": sum(
-                            s["new_vocabulary_encountered"] for s in sessions
-                        ),
-                        "total_grammar_patterns": sum(
-                            s["grammar_patterns_practiced"] for s in sessions
-                        ),
-                        "total_cultural_contexts": sum(
-                            s["cultural_context_learned"] for s in sessions
-                        ),
-                        "average_improvement_trend": safe_mean(
-                            [
-                                s["improvement_from_last_session"]
-                                for s in sessions
-                                if s["improvement_from_last_session"] != 0
-                            ]
-                        ),
-                    },
-                    "engagement_analysis": {
-                        "average_engagement_score": safe_mean(
-                            [
-                                s["engagement_score"]
-                                for s in sessions
-                                if s["engagement_score"] > 0
-                            ]
-                        ),
-                        "total_hesitations": sum(
-                            s["hesitation_count"] for s in sessions
-                        ),
-                        "total_self_corrections": sum(
-                            s["self_correction_count"] for s in sessions
-                        ),
-                        "hesitation_rate": sum(s["hesitation_count"] for s in sessions)
-                        / sum(s["total_exchanges"] for s in sessions)
-                        if sum(s["total_exchanges"] for s in sessions) > 0
-                        else 0,
-                    },
+                    "overview": self._calculate_overview_metrics(sessions),
+                    "performance_metrics": self._calculate_performance_metrics(
+                        sessions
+                    ),
+                    "learning_progress": self._calculate_learning_progress(sessions),
+                    "engagement_analysis": self._calculate_engagement_analysis(
+                        sessions
+                    ),
                     "trends": self._calculate_conversation_trends(sessions),
                     "recommendations": self._generate_conversation_recommendations(
                         sessions
                     ),
-                    "recent_sessions": sessions[:5],  # Most recent 5 sessions
+                    "recent_sessions": sessions[:5],
                 }
 
                 return analytics
@@ -692,6 +593,112 @@ class ProgressAnalyticsService:
         except Exception as e:
             logger.error(f"Error getting conversation analytics: {e}")
             return self._get_empty_conversation_analytics()
+
+    def _fetch_conversation_sessions(
+        self, user_id: int, language_code: str, period_days: int, cursor
+    ) -> List[Dict[str, Any]]:
+        """Fetch conversation sessions for the specified period"""
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=period_days)
+
+        cursor.execute(
+            """
+            SELECT * FROM conversation_metrics
+            WHERE user_id = ? AND language_code = ?
+            AND started_at BETWEEN ? AND ?
+            ORDER BY started_at DESC
+        """,
+            (user_id, language_code, start_date, end_date),
+        )
+
+        return [dict(row) for row in cursor.fetchall()]
+
+    def _calculate_overview_metrics(self, sessions: List[Dict]) -> Dict[str, Any]:
+        """Calculate overview metrics from conversation sessions"""
+        return {
+            "total_conversations": len(sessions),
+            "total_conversation_time": sum(s["duration_minutes"] for s in sessions),
+            "average_session_length": safe_mean(
+                [s["duration_minutes"] for s in sessions if s["duration_minutes"] > 0]
+            ),
+            "total_exchanges": sum(s["total_exchanges"] for s in sessions),
+            "average_exchanges_per_session": safe_mean(
+                [s["total_exchanges"] for s in sessions if s["total_exchanges"] > 0]
+            ),
+        }
+
+    def _calculate_performance_metrics(self, sessions: List[Dict]) -> Dict[str, Any]:
+        """Calculate performance metrics from conversation sessions"""
+        return {
+            "average_fluency_score": safe_mean(
+                [s["fluency_score"] for s in sessions if s["fluency_score"] > 0]
+            ),
+            "average_grammar_accuracy": safe_mean(
+                [
+                    s["grammar_accuracy_score"]
+                    for s in sessions
+                    if s["grammar_accuracy_score"] > 0
+                ]
+            ),
+            "average_pronunciation_clarity": safe_mean(
+                [
+                    s["pronunciation_clarity_score"]
+                    for s in sessions
+                    if s["pronunciation_clarity_score"] > 0
+                ]
+            ),
+            "average_vocabulary_complexity": safe_mean(
+                [
+                    s["vocabulary_complexity_score"]
+                    for s in sessions
+                    if s["vocabulary_complexity_score"] > 0
+                ]
+            ),
+            "average_confidence_level": safe_mean(
+                [
+                    s["average_confidence_score"]
+                    for s in sessions
+                    if s["average_confidence_score"] > 0
+                ]
+            ),
+        }
+
+    def _calculate_learning_progress(self, sessions: List[Dict]) -> Dict[str, Any]:
+        """Calculate learning progress metrics from conversation sessions"""
+        return {
+            "total_new_vocabulary": sum(
+                s["new_vocabulary_encountered"] for s in sessions
+            ),
+            "total_grammar_patterns": sum(
+                s["grammar_patterns_practiced"] for s in sessions
+            ),
+            "total_cultural_contexts": sum(
+                s["cultural_context_learned"] for s in sessions
+            ),
+            "average_improvement_trend": safe_mean(
+                [
+                    s["improvement_from_last_session"]
+                    for s in sessions
+                    if s["improvement_from_last_session"] != 0
+                ]
+            ),
+        }
+
+    def _calculate_engagement_analysis(self, sessions: List[Dict]) -> Dict[str, Any]:
+        """Calculate engagement analysis metrics from conversation sessions"""
+        total_exchanges = sum(s["total_exchanges"] for s in sessions)
+        total_hesitations = sum(s["hesitation_count"] for s in sessions)
+
+        return {
+            "average_engagement_score": safe_mean(
+                [s["engagement_score"] for s in sessions if s["engagement_score"] > 0]
+            ),
+            "total_hesitations": total_hesitations,
+            "total_self_corrections": sum(s["self_correction_count"] for s in sessions),
+            "hesitation_rate": total_hesitations / total_exchanges
+            if total_exchanges > 0
+            else 0,
+        }
 
     def _get_empty_conversation_analytics(self) -> Dict[str, Any]:
         """Return empty conversation analytics structure"""
