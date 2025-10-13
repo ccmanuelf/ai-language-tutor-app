@@ -269,9 +269,21 @@ class EnhancedQualityGatesValidator:
             "details": [],
         }
 
-        # Check test files for error handling validation
+        # Check test files and source code
+        error_handling_evidence = self._check_test_files_for_error_handling()
+        statistics_checks = self._check_source_code_for_safe_statistics()
+
+        result["checks"] = {**error_handling_evidence, **statistics_checks}
+        result["status"], result["details"] = self._determine_error_handling_status(
+            error_handling_evidence, statistics_checks
+        )
+
+        return result
+
+    def _check_test_files_for_error_handling(self) -> Dict[str, bool]:
+        """Check test files for error handling validation"""
         test_files = list(Path(self.artifacts_path).glob("*test*"))
-        error_handling_evidence = {
+        evidence = {
             "empty_data_tests": False,
             "error_recovery_tests": False,
             "graceful_degradation": False,
@@ -284,23 +296,23 @@ class EnhancedQualityGatesValidator:
                 content_lower = content.lower()
 
                 if "empty data" in content_lower or "empty_data" in content_lower:
-                    error_handling_evidence["empty_data_tests"] = True
+                    evidence["empty_data_tests"] = True
                 if (
                     "error recovery" in content_lower
                     or "error_recovery" in content_lower
                 ):
-                    error_handling_evidence["error_recovery_tests"] = True
+                    evidence["error_recovery_tests"] = True
                 if "graceful" in content_lower or "degradation" in content_lower:
-                    error_handling_evidence["graceful_degradation"] = True
+                    evidence["graceful_degradation"] = True
                 if "safe_mean" in content or "statistics.mean" not in content:
-                    error_handling_evidence["safe_statistics"] = True
-
+                    evidence["safe_statistics"] = True
             except Exception:
                 pass
 
-        result["checks"] = error_handling_evidence
+        return evidence
 
-        # Check source code for safe_mean usage
+    def _check_source_code_for_safe_statistics(self) -> Dict[str, Any]:
+        """Check source code for safe statistics usage"""
         source_files = list(Path("app").glob("**/*.py"))
         unsafe_statistics_usage = 0
         safe_mean_implementations = 0
@@ -308,7 +320,6 @@ class EnhancedQualityGatesValidator:
         for source_file in source_files:
             try:
                 content = source_file.read_text()
-                # Only count statistics.mean() that are NOT inside safe_mean function definitions
                 lines = content.split("\n")
                 in_safe_mean_function = False
 
@@ -320,32 +331,33 @@ class EnhancedQualityGatesValidator:
                         in_safe_mean_function = False
                     elif "statistics.mean(" in line and not in_safe_mean_function:
                         unsafe_statistics_usage += 1
+
                 if "safe_mean(" in content or "def safe_mean" in content:
                     safe_mean_implementations += 1
             except Exception:
                 pass
 
-        result["checks"]["unsafe_statistics_usage"] = unsafe_statistics_usage
-        result["checks"]["safe_mean_implementations"] = safe_mean_implementations
-        result["checks"]["statistics_handling_safe"] = (
-            unsafe_statistics_usage == 0 and safe_mean_implementations > 0
-        )
+        return {
+            "unsafe_statistics_usage": unsafe_statistics_usage,
+            "safe_mean_implementations": safe_mean_implementations,
+            "statistics_handling_safe": unsafe_statistics_usage == 0
+            and safe_mean_implementations > 0,
+        }
 
-        # Overall status
+    def _determine_error_handling_status(
+        self, error_evidence: Dict[str, bool], stats_checks: Dict[str, Any]
+    ) -> tuple:
+        """Determine overall error handling status"""
         critical_checks = [
-            error_handling_evidence["empty_data_tests"],
-            error_handling_evidence["error_recovery_tests"],
-            result["checks"]["statistics_handling_safe"],
+            error_evidence["empty_data_tests"],
+            error_evidence["error_recovery_tests"],
+            stats_checks["statistics_handling_safe"],
         ]
 
         if all(critical_checks):
-            result["status"] = "PASSED"
-            result["details"].append("✅ Error handling verification passed")
+            return "PASSED", ["✅ Error handling verification passed"]
         else:
-            result["status"] = "FAILED"
-            result["details"].append("❌ Error handling verification failed")
-
-        return result
+            return "FAILED", ["❌ Error handling verification failed"]
 
     def run_enhanced_validation(self) -> Dict[str, Any]:
         """Run all enhanced quality gates"""
