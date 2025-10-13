@@ -928,105 +928,20 @@ class ProgressAnalyticsService:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
 
-                cursor.execute(
-                    """
-                    SELECT * FROM skill_progress_metrics
-                    WHERE user_id = ? AND language_code = ?
-                    ORDER BY current_level DESC
-                """,
-                    (user_id, language_code),
-                )
-
-                skills = [dict(row) for row in cursor.fetchall()]
+                # Fetch and parse skill data
+                skills = self._fetch_and_parse_skills(user_id, language_code, cursor)
 
                 if not skills:
                     return self._get_empty_skill_analytics()
 
-                # Parse JSON fields
-                for skill in skills:
-                    skill["forgetting_curve_analysis"] = json.loads(
-                        skill.get("forgetting_curve_analysis", "{}")
-                    )
-                    skill["optimal_review_intervals"] = json.loads(
-                        skill.get("optimal_review_intervals", "{}")
-                    )
-                    skill["recommended_focus_areas"] = json.loads(
-                        skill.get("recommended_focus_areas", "[]")
-                    )
-                    skill["suggested_exercises"] = json.loads(
-                        skill.get("suggested_exercises", "[]")
-                    )
-
-                # Calculate overall analytics
+                # Build analytics from extracted sections
                 analytics = {
-                    "skill_overview": {
-                        "total_skills_tracked": len(skills),
-                        "average_skill_level": safe_mean(
-                            [s["current_level"] for s in skills]
-                        ),
-                        "overall_mastery_percentage": safe_mean(
-                            [s["mastery_percentage"] for s in skills]
-                        ),
-                        "strongest_skill": max(
-                            skills, key=lambda x: x["current_level"]
-                        )["skill_type"]
-                        if skills
-                        else None,
-                        "weakest_skill": min(skills, key=lambda x: x["current_level"])[
-                            "skill_type"
-                        ]
-                        if skills
-                        else None,
-                    },
-                    "progress_trends": {
-                        "average_improvement_rate": safe_mean(
-                            [
-                                s["improvement_rate"]
-                                for s in skills
-                                if s["improvement_rate"] > 0
-                            ]
-                        ),
-                        "total_practice_time": sum(
-                            s["total_practice_time_minutes"] for s in skills
-                        ),
-                        "average_consistency_score": safe_mean(
-                            [s["consistency_score"] for s in skills]
-                        ),
-                        "skills_improving": len(
-                            [s for s in skills if s["improvement_rate"] > 0]
-                        ),
-                        "skills_stable": len(
-                            [s for s in skills if s["improvement_rate"] == 0]
-                        ),
-                        "skills_declining": len(
-                            [s for s in skills if s["improvement_rate"] < 0]
-                        ),
-                    },
-                    "difficulty_analysis": {
-                        "comfort_with_easy_items": safe_mean(
-                            [s["easy_items_percentage"] for s in skills]
-                        ),
-                        "comfort_with_moderate_items": safe_mean(
-                            [s["moderate_items_percentage"] for s in skills]
-                        ),
-                        "comfort_with_hard_items": safe_mean(
-                            [s["hard_items_percentage"] for s in skills]
-                        ),
-                        "average_challenge_comfort": safe_mean(
-                            [s["challenge_comfort_level"] for s in skills]
-                        ),
-                    },
-                    "retention_performance": {
-                        "average_retention_rate": safe_mean(
-                            [s["retention_rate"] for s in skills]
-                        ),
-                        "skills_with_good_retention": len(
-                            [s for s in skills if s["retention_rate"] > 0.7]
-                        ),
-                        "skills_needing_review_improvement": len(
-                            [s for s in skills if s["retention_rate"] < 0.5]
-                        ),
-                    },
+                    "skill_overview": self._calculate_skill_overview(skills),
+                    "progress_trends": self._calculate_progress_trends(skills),
+                    "difficulty_analysis": self._calculate_difficulty_analysis(skills),
+                    "retention_performance": self._calculate_retention_performance(
+                        skills
+                    ),
                     "individual_skills": skills,
                     "recommendations": self._generate_skill_recommendations(skills),
                     "next_actions": self._generate_next_actions(skills),
@@ -1037,6 +952,102 @@ class ProgressAnalyticsService:
         except Exception as e:
             logger.error(f"Error getting multi-skill analytics: {e}")
             return self._get_empty_skill_analytics()
+
+    def _fetch_and_parse_skills(
+        self, user_id: int, language_code: str, cursor
+    ) -> List[Dict[str, Any]]:
+        """Fetch and parse skill progress data with JSON fields"""
+        cursor.execute(
+            """
+            SELECT * FROM skill_progress_metrics
+            WHERE user_id = ? AND language_code = ?
+            ORDER BY current_level DESC
+        """,
+            (user_id, language_code),
+        )
+
+        skills = [dict(row) for row in cursor.fetchall()]
+
+        # Parse JSON fields
+        for skill in skills:
+            skill["forgetting_curve_analysis"] = json.loads(
+                skill.get("forgetting_curve_analysis", "{}")
+            )
+            skill["optimal_review_intervals"] = json.loads(
+                skill.get("optimal_review_intervals", "{}")
+            )
+            skill["recommended_focus_areas"] = json.loads(
+                skill.get("recommended_focus_areas", "[]")
+            )
+            skill["suggested_exercises"] = json.loads(
+                skill.get("suggested_exercises", "[]")
+            )
+
+        return skills
+
+    def _calculate_skill_overview(self, skills: List[Dict]) -> Dict[str, Any]:
+        """Calculate skill overview metrics"""
+        return {
+            "total_skills_tracked": len(skills),
+            "average_skill_level": safe_mean([s["current_level"] for s in skills]),
+            "overall_mastery_percentage": safe_mean(
+                [s["mastery_percentage"] for s in skills]
+            ),
+            "strongest_skill": max(skills, key=lambda x: x["current_level"])[
+                "skill_type"
+            ]
+            if skills
+            else None,
+            "weakest_skill": min(skills, key=lambda x: x["current_level"])["skill_type"]
+            if skills
+            else None,
+        }
+
+    def _calculate_progress_trends(self, skills: List[Dict]) -> Dict[str, Any]:
+        """Calculate progress trend metrics"""
+        return {
+            "average_improvement_rate": safe_mean(
+                [s["improvement_rate"] for s in skills if s["improvement_rate"] > 0]
+            ),
+            "total_practice_time": sum(
+                s["total_practice_time_minutes"] for s in skills
+            ),
+            "average_consistency_score": safe_mean(
+                [s["consistency_score"] for s in skills]
+            ),
+            "skills_improving": len([s for s in skills if s["improvement_rate"] > 0]),
+            "skills_stable": len([s for s in skills if s["improvement_rate"] == 0]),
+            "skills_declining": len([s for s in skills if s["improvement_rate"] < 0]),
+        }
+
+    def _calculate_difficulty_analysis(self, skills: List[Dict]) -> Dict[str, Any]:
+        """Calculate difficulty analysis metrics"""
+        return {
+            "comfort_with_easy_items": safe_mean(
+                [s["easy_items_percentage"] for s in skills]
+            ),
+            "comfort_with_moderate_items": safe_mean(
+                [s["moderate_items_percentage"] for s in skills]
+            ),
+            "comfort_with_hard_items": safe_mean(
+                [s["hard_items_percentage"] for s in skills]
+            ),
+            "average_challenge_comfort": safe_mean(
+                [s["challenge_comfort_level"] for s in skills]
+            ),
+        }
+
+    def _calculate_retention_performance(self, skills: List[Dict]) -> Dict[str, Any]:
+        """Calculate retention performance metrics"""
+        return {
+            "average_retention_rate": safe_mean([s["retention_rate"] for s in skills]),
+            "skills_with_good_retention": len(
+                [s for s in skills if s["retention_rate"] > 0.7]
+            ),
+            "skills_needing_review_improvement": len(
+                [s for s in skills if s["retention_rate"] < 0.5]
+            ),
+        }
 
     def _get_empty_skill_analytics(self) -> Dict[str, Any]:
         """Return empty skill analytics structure"""
