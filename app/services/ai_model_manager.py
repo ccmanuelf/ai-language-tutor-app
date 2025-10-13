@@ -695,12 +695,42 @@ class AIModelManager:
         if model_id not in self.models:
             return None
 
-        # Calculate date range
+        # Fetch performance data
+        perf_data = self._fetch_performance_data(model_id, days)
+        if not perf_data:
+            return None
+
+        model = self.models[model_id]
+        stats = self.usage_stats.get(model_id)
+
+        # Calculate metrics
+        efficiency = self._calculate_efficiency_metrics(model, perf_data)
+        rankings = await self._calculate_model_rankings(model_id)
+        recommendations = self._generate_model_recommendations(model)
+        suggestions = self._generate_optimization_suggestions(model, stats)
+
+        return ModelPerformanceReport(
+            model_id=model_id,
+            report_date=datetime.now(),
+            cost_efficiency=efficiency["cost"],
+            speed_efficiency=efficiency["speed"],
+            reliability_score=model.reliability_score,
+            rank_by_cost=rankings["cost"],
+            rank_by_speed=rankings["speed"],
+            rank_by_quality=rankings["quality"],
+            rank_overall=rankings["overall"],
+            recommended_for=recommendations,
+            optimization_suggestions=suggestions,
+            performance_trend="stable",
+            usage_trend="stable",
+        )
+
+    def _fetch_performance_data(self, model_id: str, days: int) -> Optional[tuple]:
+        """Fetch performance data from database"""
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
 
         with sqlite3.connect(self.db_path) as conn:
-            # Get performance data
             cursor = conn.execute(
                 """
                 SELECT
@@ -714,16 +744,16 @@ class AIModelManager:
             """,
                 (model_id, start_date),
             )
-
             perf_data = cursor.fetchone()
 
-            if not perf_data or perf_data[0] == 0:
-                return None
+        if not perf_data or perf_data[0] == 0:
+            return None
+        return perf_data
 
-        model = self.models[model_id]
-        stats = self.usage_stats.get(model_id)
-
-        # Calculate efficiency metrics
+    def _calculate_efficiency_metrics(
+        self, model, perf_data: tuple
+    ) -> Dict[str, float]:
+        """Calculate cost and speed efficiency metrics"""
         avg_quality = perf_data[2] or model.quality_score
         avg_cost = perf_data[3] or model.cost_per_1k_tokens
         avg_response_time = perf_data[1] or model.avg_response_time_ms
@@ -731,10 +761,12 @@ class AIModelManager:
         cost_efficiency = avg_quality / max(avg_cost, 0.0001)
         speed_efficiency = avg_quality / max(avg_response_time / 1000, 0.1)
 
-        # Get rankings (simplified - compare against other active models)
+        return {"cost": cost_efficiency, "speed": speed_efficiency}
+
+    async def _calculate_model_rankings(self, model_id: str) -> Dict[str, int]:
+        """Calculate model rankings across different metrics"""
         all_models = await self.get_all_models(enabled_only=True)
 
-        # Sort by different metrics for ranking
         cost_ranked = sorted(all_models, key=lambda x: x["cost_per_1k_tokens"])
         speed_ranked = sorted(all_models, key=lambda x: x["avg_response_time_ms"])
         quality_ranked = sorted(
@@ -750,15 +782,21 @@ class AIModelManager:
         rank_by_quality = next(
             (i + 1 for i, m in enumerate(quality_ranked) if m["id"] == model_id), 999
         )
-
-        # Overall rank (weighted average)
         rank_overall = int((rank_by_cost + rank_by_speed + rank_by_quality * 2) / 4)
 
-        # Generate recommendations
+        return {
+            "cost": rank_by_cost,
+            "speed": rank_by_speed,
+            "quality": rank_by_quality,
+            "overall": rank_overall,
+        }
+
+    def _generate_model_recommendations(self, model) -> List[str]:
+        """Generate use case recommendations for model"""
         recommendations = []
+
         if model.category == ModelCategory.CONVERSATION:
-            recommendations.append("conversation")
-            recommendations.append("chat")
+            recommendations.extend(["conversation", "chat"])
         if model.cost_per_1k_tokens < 0.001:
             recommendations.append("high_volume")
         if model.quality_score > 0.8:
@@ -768,34 +806,22 @@ class AIModelManager:
         if "fr" in model.primary_languages:
             recommendations.append("french_language")
 
-        # Optimization suggestions
+        return recommendations
+
+    def _generate_optimization_suggestions(self, model, stats) -> List[str]:
+        """Generate optimization suggestions for model"""
         suggestions = []
+
         if model.cost_per_1k_tokens > 0.01:
             suggestions.append("Consider for cost-sensitive workloads")
         if model.avg_response_time_ms > 2000:
             suggestions.append("Monitor response time for time-critical applications")
-        if (
-            stats
-            and stats.total_requests > 100
-            and stats.successful_requests / stats.total_requests < 0.95
-        ):
-            suggestions.append("Investigate reliability issues")
+        if stats and stats.total_requests > 100:
+            success_rate = stats.successful_requests / stats.total_requests
+            if success_rate < 0.95:
+                suggestions.append("Investigate reliability issues")
 
-        return ModelPerformanceReport(
-            model_id=model_id,
-            report_date=datetime.now(),
-            cost_efficiency=cost_efficiency,
-            speed_efficiency=speed_efficiency,
-            reliability_score=model.reliability_score,
-            rank_by_cost=rank_by_cost,
-            rank_by_speed=rank_by_speed,
-            rank_by_quality=rank_by_quality,
-            rank_overall=rank_overall,
-            recommended_for=recommendations,
-            optimization_suggestions=suggestions,
-            performance_trend="stable",  # Would need historical data for real trend analysis
-            usage_trend="stable",
-        )
+        return suggestions
 
     async def get_system_overview(self) -> Dict[str, Any]:
         """Get comprehensive system overview"""
