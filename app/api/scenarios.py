@@ -99,48 +99,57 @@ async def list_scenarios(
         List of available scenarios with metadata
     """
     try:
-        # Validate category and difficulty if provided
-        if category and category not in [cat.value for cat in ScenarioCategory]:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid category. Available: {[cat.value for cat in ScenarioCategory]}",
-            )
-
-        if difficulty and difficulty not in [diff.value for diff in ScenarioDifficulty]:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid difficulty. Available: {[diff.value for diff in ScenarioDifficulty]}",
-            )
-
-        # Get scenarios
+        _validate_scenario_filters(category, difficulty)
         scenarios = await get_available_scenarios(
             category=category, difficulty=difficulty
         )
-
-        # Add user-specific recommendations
-        for scenario in scenarios:
-            scenario["recommended"] = scenario["difficulty"] == user_level or (
-                user_level == "beginner" and scenario["difficulty"] == "intermediate"
-            )
-
+        scenarios = _add_user_recommendations(scenarios, user_level)
         logger.info(f"Retrieved {len(scenarios)} scenarios for user {current_user.id}")
-
-        return ScenarioResponse(
-            success=True,
-            data={
-                "scenarios": scenarios,
-                "total_count": len(scenarios),
-                "categories": [cat.value for cat in ScenarioCategory],
-                "difficulties": [diff.value for diff in ScenarioDifficulty],
-            },
-            message=f"Found {len(scenarios)} available scenarios",
-        )
-
+        return _build_scenarios_response(scenarios)
     except Exception as e:
         logger.error(f"Failed to list scenarios for user {current_user.id}: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve scenarios: {str(e)}"
         )
+
+
+def _validate_scenario_filters(
+    category: Optional[str], difficulty: Optional[str]
+) -> None:
+    """Validate category and difficulty filters - B(6)"""
+    if category and category not in [cat.value for cat in ScenarioCategory]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid category. Available: {[cat.value for cat in ScenarioCategory]}",
+        )
+    if difficulty and difficulty not in [diff.value for diff in ScenarioDifficulty]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid difficulty. Available: {[diff.value for diff in ScenarioDifficulty]}",
+        )
+
+
+def _add_user_recommendations(scenarios: List[Dict], user_level: str) -> List[Dict]:
+    """Add user-specific recommendations to scenarios - A(4)"""
+    for scenario in scenarios:
+        scenario["recommended"] = scenario["difficulty"] == user_level or (
+            user_level == "beginner" and scenario["difficulty"] == "intermediate"
+        )
+    return scenarios
+
+
+def _build_scenarios_response(scenarios: List[Dict]) -> ScenarioResponse:
+    """Build formatted response with scenarios and metadata - A(1)"""
+    return ScenarioResponse(
+        success=True,
+        data={
+            "scenarios": scenarios,
+            "total_count": len(scenarios),
+            "categories": [cat.value for cat in ScenarioCategory],
+            "difficulties": [diff.value for diff in ScenarioDifficulty],
+        },
+        message=f"Found {len(scenarios)} available scenarios",
+    )
 
 
 @router.get("/{scenario_id}", response_model=ScenarioResponse)
