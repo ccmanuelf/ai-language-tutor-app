@@ -232,85 +232,12 @@ async def update_user(
     """Update user details (admin permission required)"""
     try:
         with get_db_session_context() as session:
-            user = session.query(User).filter(User.user_id == user_id).first()
-
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-                )
-
-            # Prevent admins from demoting themselves
-            if (
-                user.email == current_user.get("email")
-                and user_data.role
-                and user_data.role != UserRoleEnum.ADMIN
-            ):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Cannot change your own admin role",
-                )
-
-            # Update fields if provided
-            if user_data.username:
-                # Check username uniqueness
-                existing = (
-                    session.query(User)
-                    .filter(
-                        User.username == user_data.username, User.user_id != user_id
-                    )
-                    .first()
-                )
-                if existing:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Username already exists",
-                    )
-                user.username = user_data.username
-
-            if user_data.email:
-                # Check email uniqueness
-                existing = (
-                    session.query(User)
-                    .filter(User.email == user_data.email, User.user_id != user_id)
-                    .first()
-                )
-                if existing:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Email already exists",
-                    )
-                user.email = user_data.email
-
-            if user_data.first_name is not None:
-                user.first_name = user_data.first_name
-
-            if user_data.last_name is not None:
-                user.last_name = user_data.last_name
-
-            if user_data.role:
-                role_mapping = {
-                    UserRoleEnum.ADMIN: UserRole.ADMIN,
-                    UserRoleEnum.PARENT: UserRole.PARENT,
-                    UserRoleEnum.CHILD: UserRole.CHILD,
-                }
-                user.role = role_mapping[user_data.role]
-
-            if user_data.is_active is not None:
-                # Prevent admins from deactivating themselves
-                if user.email == current_user.get("email") and not user_data.is_active:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Cannot deactivate your own account",
-                    )
-                user.is_active = user_data.is_active
-
+            user = _get_user_or_404(session, user_id)
+            _validate_self_modification(user, user_data, current_user)
+            _update_user_fields(session, user, user_data, user_id, current_user)
             user.updated_at = datetime.now(timezone.utc)
-            # Context manager handles commit
-
             logger.info(f"Admin {current_user.get('email')} updated user {user.email}")
-
             return StandardResponse(success=True, message="User updated successfully")
-
     except HTTPException:
         raise
     except Exception as e:
@@ -318,6 +245,104 @@ async def update_user(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update user",
+        )
+
+
+def _get_user_or_404(session, user_id: str) -> User:
+    """Get user or raise 404 - A(2)"""
+    user = session.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    return user
+
+
+def _validate_self_modification(
+    user: User, user_data: UpdateUserRequest, current_user: Dict
+) -> None:
+    """Validate that admin is not demoting themselves - A(3)"""
+    if (
+        user.email == current_user.get("email")
+        and user_data.role
+        and user_data.role != UserRoleEnum.ADMIN
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot change your own admin role",
+        )
+
+
+def _update_user_fields(
+    session, user: User, user_data: UpdateUserRequest, user_id: str, current_user: Dict
+) -> None:
+    """Update user fields with validation - B(10)"""
+    if user_data.username:
+        _check_username_uniqueness(session, user_data.username, user_id)
+        user.username = user_data.username
+
+    if user_data.email:
+        _check_email_uniqueness(session, user_data.email, user_id)
+        user.email = user_data.email
+
+    if user_data.first_name is not None:
+        user.first_name = user_data.first_name
+
+    if user_data.last_name is not None:
+        user.last_name = user_data.last_name
+
+    if user_data.role:
+        _update_user_role(user, user_data.role)
+
+    if user_data.is_active is not None:
+        _validate_self_deactivation(user, user_data.is_active, current_user)
+        user.is_active = user_data.is_active
+
+
+def _check_username_uniqueness(session, username: str, user_id: str) -> None:
+    """Check username uniqueness - A(2)"""
+    existing = (
+        session.query(User)
+        .filter(User.username == username, User.user_id != user_id)
+        .first()
+    )
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already exists",
+        )
+
+
+def _check_email_uniqueness(session, email: str, user_id: str) -> None:
+    """Check email uniqueness - A(2)"""
+    existing = (
+        session.query(User).filter(User.email == email, User.user_id != user_id).first()
+    )
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already exists",
+        )
+
+
+def _update_user_role(user: User, role: UserRoleEnum) -> None:
+    """Update user role with mapping - A(1)"""
+    role_mapping = {
+        UserRoleEnum.ADMIN: UserRole.ADMIN,
+        UserRoleEnum.PARENT: UserRole.PARENT,
+        UserRoleEnum.CHILD: UserRole.CHILD,
+    }
+    user.role = role_mapping[role]
+
+
+def _validate_self_deactivation(
+    user: User, is_active: bool, current_user: Dict
+) -> None:
+    """Prevent admin from deactivating themselves - A(2)"""
+    if user.email == current_user.get("email") and not is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot deactivate your own account",
         )
 
 

@@ -480,95 +480,115 @@ async def get_usage_statistics(
     model_id: Optional[str] = Query(None, description="Filter by specific model"),
     admin_user=Depends(require_admin_access),
 ):
-    """
-    Get detailed usage statistics across models and providers
-
-    Args:
-        start_date: Start of reporting period
-        end_date: End of reporting period
-        provider: Filter by provider
-        model_id: Filter by specific model
-
-    Returns:
-        Comprehensive usage analytics
-    """
+    """Get detailed usage statistics across models and providers"""
     try:
-        # Set default date range if not provided
-        if not end_date:
-            end_date = datetime.now()
-        if not start_date:
-            start_date = end_date - timedelta(days=30)
-
+        start_date, end_date = _set_default_date_range(start_date, end_date)
         models = await ai_model_manager.get_all_models()
-
-        # Filter models based on parameters
-        if provider:
-            models = [m for m in models if m.get("provider") == provider]
-        if model_id:
-            models = [m for m in models if m.get("id") == model_id]
-
-        # Calculate aggregated statistics
-        total_requests = sum(
-            m.get("usage_stats", {}).get("total_requests", 0) for m in models
+        models = _filter_models(models, provider, model_id)
+        summary = _calculate_summary_stats(models)
+        provider_stats = _calculate_provider_breakdown(models)
+        return _build_statistics_response(
+            start_date, end_date, summary, provider_stats, models
         )
-        total_cost = sum(m.get("usage_stats", {}).get("total_cost", 0) for m in models)
-        avg_success_rate = sum(
-            m.get("usage_stats", {}).get("success_rate", 0) for m in models
-        ) / max(len(models), 1)
-
-        # Provider breakdown
-        provider_stats = {}
-        for model in models:
-            provider_name = model.get("provider", "unknown")
-            if provider_name not in provider_stats:
-                provider_stats[provider_name] = {
-                    "models": 0,
-                    "total_requests": 0,
-                    "total_cost": 0.0,
-                    "avg_success_rate": 0.0,
-                }
-
-            stats = model.get("usage_stats", {})
-            provider_stats[provider_name]["models"] += 1
-            provider_stats[provider_name]["total_requests"] += stats.get(
-                "total_requests", 0
-            )
-            provider_stats[provider_name]["total_cost"] += stats.get("total_cost", 0)
-            provider_stats[provider_name]["avg_success_rate"] += stats.get(
-                "success_rate", 0
-            )
-
-        # Calculate averages for providers
-        for provider_name, stats in provider_stats.items():
-            if stats["models"] > 0:
-                stats["avg_success_rate"] /= stats["models"]
-
-        return JSONResponse(
-            content={
-                "period": {
-                    "start_date": start_date.isoformat(),
-                    "end_date": end_date.isoformat(),
-                    "days": (end_date - start_date).days,
-                },
-                "summary": {
-                    "total_models": len(models),
-                    "total_requests": total_requests,
-                    "total_cost": round(total_cost, 4),
-                    "avg_success_rate": round(avg_success_rate, 3),
-                    "avg_cost_per_request": round(
-                        total_cost / max(total_requests, 1), 6
-                    ),
-                },
-                "provider_breakdown": provider_stats,
-                "model_details": models,
-            }
-        )
-
     except Exception as e:
         logger.error(f"Failed to get usage statistics: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to get usage statistics: {str(e)}"
         )
+
+
+def _set_default_date_range(
+    start_date: Optional[datetime], end_date: Optional[datetime]
+) -> tuple:
+    """Set default date range if not provided - A(3)"""
+    if not end_date:
+        end_date = datetime.now()
+    if not start_date:
+        start_date = end_date - timedelta(days=30)
+    return start_date, end_date
+
+
+def _filter_models(
+    models: list, provider: Optional[str], model_id: Optional[str]
+) -> list:
+    """Filter models based on parameters - A(3)"""
+    if provider:
+        models = [m for m in models if m.get("provider") == provider]
+    if model_id:
+        models = [m for m in models if m.get("id") == model_id]
+    return models
+
+
+def _calculate_summary_stats(models: list) -> dict:
+    """Calculate aggregated statistics - A(4)"""
+    total_requests = sum(
+        m.get("usage_stats", {}).get("total_requests", 0) for m in models
+    )
+    total_cost = sum(m.get("usage_stats", {}).get("total_cost", 0) for m in models)
+    avg_success_rate = sum(
+        m.get("usage_stats", {}).get("success_rate", 0) for m in models
+    ) / max(len(models), 1)
+
+    return {
+        "total_models": len(models),
+        "total_requests": total_requests,
+        "total_cost": round(total_cost, 4),
+        "avg_success_rate": round(avg_success_rate, 3),
+        "avg_cost_per_request": round(total_cost / max(total_requests, 1), 6),
+    }
+
+
+def _calculate_provider_breakdown(models: list) -> dict:
+    """Calculate provider-level statistics - B(6)"""
+    provider_stats = {}
+    for model in models:
+        provider_name = model.get("provider", "unknown")
+        if provider_name not in provider_stats:
+            provider_stats[provider_name] = {
+                "models": 0,
+                "total_requests": 0,
+                "total_cost": 0.0,
+                "avg_success_rate": 0.0,
+            }
+
+        stats = model.get("usage_stats", {})
+        provider_stats[provider_name]["models"] += 1
+        provider_stats[provider_name]["total_requests"] += stats.get(
+            "total_requests", 0
+        )
+        provider_stats[provider_name]["total_cost"] += stats.get("total_cost", 0)
+        provider_stats[provider_name]["avg_success_rate"] += stats.get(
+            "success_rate", 0
+        )
+
+    # Calculate averages for providers
+    for provider_name, stats in provider_stats.items():
+        if stats["models"] > 0:
+            stats["avg_success_rate"] /= stats["models"]
+
+    return provider_stats
+
+
+def _build_statistics_response(
+    start_date: datetime,
+    end_date: datetime,
+    summary: dict,
+    provider_stats: dict,
+    models: list,
+) -> JSONResponse:
+    """Build statistics response - A(1)"""
+    return JSONResponse(
+        content={
+            "period": {
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "days": (end_date - start_date).days,
+            },
+            "summary": summary,
+            "provider_breakdown": provider_stats,
+            "model_details": models,
+        }
+    )
 
 
 @router.post("/reset-stats")
