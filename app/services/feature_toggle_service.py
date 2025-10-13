@@ -943,29 +943,50 @@ class FeatureToggleService:
 
         features = list(self._features.values())
 
-        # Basic counts
-        total_features = len(features)
-        enabled_features = len(
-            [f for f in features if f.status == FeatureToggleStatus.ENABLED]
-        )
-        disabled_features = len(
-            [f for f in features if f.status == FeatureToggleStatus.DISABLED]
-        )
-        experimental_features = len([f for f in features if f.experimental])
+        return {
+            **self._calculate_basic_counts(features),
+            "features_by_category": self._group_by_category(features),
+            "features_by_scope": self._group_by_scope(features),
+            "features_by_environment": self._group_by_environment(features),
+            "recent_changes": self._get_recent_changes(),
+            "cache_size": len(self._feature_cache),
+            "total_users_with_overrides": len(self._user_access),
+            "total_events": len(self._events),
+        }
 
-        # Group by category
+    def _calculate_basic_counts(self, features: List[FeatureToggle]) -> Dict[str, int]:
+        """Calculate basic feature counts."""
+        return {
+            "total_features": len(features),
+            "enabled_features": len(
+                [f for f in features if f.status == FeatureToggleStatus.ENABLED]
+            ),
+            "disabled_features": len(
+                [f for f in features if f.status == FeatureToggleStatus.DISABLED]
+            ),
+            "experimental_features": len([f for f in features if f.experimental]),
+        }
+
+    def _group_by_category(self, features: List[FeatureToggle]) -> Dict[str, int]:
+        """Group features by category."""
         by_category = {}
         for category in FeatureToggleCategory:
             by_category[category.value] = len(
                 [f for f in features if f.category == category]
             )
+        return by_category
 
-        # Group by scope
+    def _group_by_scope(self, features: List[FeatureToggle]) -> Dict[str, int]:
+        """Group features by scope."""
         by_scope = {}
         for scope in FeatureToggleScope:
             by_scope[scope.value] = len([f for f in features if f.scope == scope])
+        return by_scope
 
-        # Group by environment
+    def _group_by_environment(
+        self, features: List[FeatureToggle]
+    ) -> Dict[str, Dict[str, int]]:
+        """Group features by environment."""
         by_environment = {}
         environments = ["development", "staging", "production"]
         for env in environments:
@@ -975,23 +996,12 @@ class FeatureToggleService:
                     [f for f in features if not f.environments.get(env, False)]
                 ),
             }
+        return by_environment
 
-        # Recent changes (last 10 events)
+    def _get_recent_changes(self) -> List[Dict[str, Any]]:
+        """Get recent feature toggle changes."""
         recent_changes = self._events[-10:] if self._events else []
-
-        return {
-            "total_features": total_features,
-            "enabled_features": enabled_features,
-            "disabled_features": disabled_features,
-            "experimental_features": experimental_features,
-            "features_by_category": by_category,
-            "features_by_scope": by_scope,
-            "features_by_environment": by_environment,
-            "recent_changes": [event.model_dump() for event in recent_changes],
-            "cache_size": len(self._feature_cache),
-            "total_users_with_overrides": len(self._user_access),
-            "total_events": len(self._events),
-        }
+        return [event.model_dump() for event in recent_changes]
 
 
 # Global service instance
