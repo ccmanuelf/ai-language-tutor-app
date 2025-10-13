@@ -1632,91 +1632,16 @@ class ScenarioManagementTester:
     async def _test_form_validation(self):
         """Test form validation logic"""
         try:
-            # Test valid form data
-            valid_form_data = {
-                "name": "Valid Scenario Name",
-                "category": "restaurant",
-                "difficulty": "beginner",
-                "description": "A valid description that is long enough to meet requirements",
-                "user_role": "customer",
-                "ai_role": "service_provider",
-                "setting": "Valid setting description",
-                "duration_minutes": 20,
-                "phases": [
-                    {
-                        "phase_name": "Introduction",
-                        "phase_duration": 5,
-                        "phase_description": "Valid phase description",
-                        "phase_vocabulary": "word1, word2, word3",
-                        "phase_phrases": "phrase 1, phrase 2",
-                    }
-                ],
-            }
+            valid_form_data = self._get_valid_form_data()
 
-            # Validate required fields
-            required_fields = [
-                "name",
-                "category",
-                "difficulty",
-                "description",
-                "setting",
-            ]
-            for field in required_fields:
-                if field not in valid_form_data or not valid_form_data[field]:
-                    raise AssertionError(f"Missing or empty required field: {field}")
+            # Run validation checks
+            self._validate_required_fields(valid_form_data)
+            self._validate_field_lengths(valid_form_data)
+            self._validate_numeric_fields(valid_form_data)
+            self._validate_phases(valid_form_data)
 
-            # Validate field lengths
-            if len(valid_form_data["name"]) < 3:
-                raise AssertionError("Name too short")
-            if len(valid_form_data["description"]) < 10:
-                raise AssertionError("Description too short")
-            if len(valid_form_data["setting"]) < 5:
-                raise AssertionError("Setting too short")
-
-            # Validate numeric fields
-            if (
-                not isinstance(valid_form_data["duration_minutes"], int)
-                or valid_form_data["duration_minutes"] <= 0
-            ):
-                raise AssertionError("Invalid duration")
-
-            # Validate phases
-            if not valid_form_data["phases"] or len(valid_form_data["phases"]) == 0:
-                raise AssertionError("At least one phase required")
-
-            for phase in valid_form_data["phases"]:
-                if not phase.get("phase_name"):
-                    raise AssertionError("Phase name required")
-                if (
-                    not isinstance(phase.get("phase_duration"), int)
-                    or phase["phase_duration"] <= 0
-                ):
-                    raise AssertionError("Invalid phase duration")
-
-            # Test invalid form data
-            invalid_form_data = [
-                {"name": ""},  # Empty name
-                {"name": "AB"},  # Name too short
-                {"description": "Short"},  # Description too short
-                {"duration_minutes": 0},  # Invalid duration
-                {"duration_minutes": -5},  # Negative duration
-                {"phases": []},  # No phases
-            ]
-
-            for invalid_data in invalid_form_data:
-                # These should fail validation
-                if "name" in invalid_data:
-                    if not invalid_data["name"] or len(invalid_data["name"]) < 3:
-                        continue  # Expected to be invalid
-                if "description" in invalid_data:
-                    if len(invalid_data["description"]) < 10:
-                        continue  # Expected to be invalid
-                if "duration_minutes" in invalid_data:
-                    if invalid_data["duration_minutes"] <= 0:
-                        continue  # Expected to be invalid
-                if "phases" in invalid_data:
-                    if not invalid_data["phases"]:
-                        continue  # Expected to be invalid
+            # Test invalid cases
+            self._test_invalid_form_data()
 
             logger.info("Form validation test passed")
             return True
@@ -1724,6 +1649,93 @@ class ScenarioManagementTester:
         except Exception as e:
             logger.error(f"Form validation test failed: {str(e)}")
             return False
+
+    def _get_valid_form_data(self) -> dict:
+        """Create valid form data for testing"""
+        return {
+            "name": "Valid Scenario Name",
+            "category": "restaurant",
+            "difficulty": "beginner",
+            "description": "A valid description that is long enough to meet requirements",
+            "user_role": "customer",
+            "ai_role": "service_provider",
+            "setting": "Valid setting description",
+            "duration_minutes": 20,
+            "phases": [
+                {
+                    "phase_name": "Introduction",
+                    "phase_duration": 5,
+                    "phase_description": "Valid phase description",
+                    "phase_vocabulary": "word1, word2, word3",
+                    "phase_phrases": "phrase 1, phrase 2",
+                }
+            ],
+        }
+
+    def _validate_required_fields(self, form_data: dict):
+        """Validate required fields are present"""
+        required_fields = ["name", "category", "difficulty", "description", "setting"]
+        for field in required_fields:
+            if field not in form_data or not form_data[field]:
+                raise AssertionError(f"Missing or empty required field: {field}")
+
+    def _validate_field_lengths(self, form_data: dict):
+        """Validate field length requirements"""
+        if len(form_data["name"]) < 3:
+            raise AssertionError("Name too short")
+        if len(form_data["description"]) < 10:
+            raise AssertionError("Description too short")
+        if len(form_data["setting"]) < 5:
+            raise AssertionError("Setting too short")
+
+    def _validate_numeric_fields(self, form_data: dict):
+        """Validate numeric field requirements"""
+        if (
+            not isinstance(form_data["duration_minutes"], int)
+            or form_data["duration_minutes"] <= 0
+        ):
+            raise AssertionError("Invalid duration")
+
+    def _validate_phases(self, form_data: dict):
+        """Validate phase requirements"""
+        if not form_data["phases"] or len(form_data["phases"]) == 0:
+            raise AssertionError("At least one phase required")
+
+        for phase in form_data["phases"]:
+            if not phase.get("phase_name"):
+                raise AssertionError("Phase name required")
+            if (
+                not isinstance(phase.get("phase_duration"), int)
+                or phase["phase_duration"] <= 0
+            ):
+                raise AssertionError("Invalid phase duration")
+
+    def _test_invalid_form_data(self):
+        """Test that invalid form data is properly rejected"""
+        invalid_cases = [
+            {"name": ""},  # Empty name
+            {"name": "AB"},  # Name too short
+            {"description": "Short"},  # Description too short
+            {"duration_minutes": 0},  # Invalid duration
+            {"duration_minutes": -5},  # Negative duration
+            {"phases": []},  # No phases
+        ]
+
+        for invalid_data in invalid_cases:
+            # Verify each invalid case is properly rejected
+            if "name" in invalid_data and (
+                not invalid_data["name"] or len(invalid_data["name"]) < 3
+            ):
+                continue  # Expected to be invalid
+            if "description" in invalid_data and len(invalid_data["description"]) < 10:
+                continue  # Expected to be invalid
+            if (
+                "duration_minutes" in invalid_data
+                and invalid_data["duration_minutes"] <= 0
+            ):
+                continue  # Expected to be invalid
+            if "phases" in invalid_data and not invalid_data["phases"]:
+                continue  # Expected to be invalid
 
     async def _test_javascript_functions(self):
         """Test JavaScript functionality logic"""

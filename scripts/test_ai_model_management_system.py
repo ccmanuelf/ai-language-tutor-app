@@ -919,23 +919,46 @@ class AIModelManagementTestSuite:
         print("📊 AI MODEL MANAGEMENT SYSTEM TEST RESULTS")
         print("=" * 60)
 
+        stats = self._calculate_test_statistics()
+
+        self._print_summary(stats)
+        self._print_failed_tests()
+        self._print_categories_analysis()
+        passed_gates = self._print_quality_gates(stats)
+        self._print_final_verdict(stats["success_rate"])
+        self._save_detailed_results(stats, passed_gates)
+
+    def _calculate_test_statistics(self) -> dict:
+        """Calculate test statistics"""
         total_tests = len(self.test_results)
         passed_tests = len([r for r in self.test_results if r["success"]])
         failed_tests = total_tests - passed_tests
         success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"Total Tests: {total_tests}")
-        print(f"Passed: {passed_tests}")
-        print(f"Failed: {failed_tests}")
-        print(f"Success Rate: {success_rate:.1f}%")
+        return {
+            "total_tests": total_tests,
+            "passed_tests": passed_tests,
+            "failed_tests": failed_tests,
+            "success_rate": success_rate,
+        }
 
-        if failed_tests > 0:
-            print(f"\n❌ FAILED TESTS ({failed_tests}):")
-            for result in self.test_results:
-                if not result["success"]:
-                    print(f"  • {result['test_name']}: {result['error']}")
+    def _print_summary(self, stats: dict):
+        """Print test summary statistics"""
+        print(f"Total Tests: {stats['total_tests']}")
+        print(f"Passed: {stats['passed_tests']}")
+        print(f"Failed: {stats['failed_tests']}")
+        print(f"Success Rate: {stats['success_rate']:.1f}%")
 
-        # Detailed categories analysis
+    def _print_failed_tests(self):
+        """Print failed tests details"""
+        failed_tests = [r for r in self.test_results if not r["success"]]
+        if failed_tests:
+            print(f"\n❌ FAILED TESTS ({len(failed_tests)}):")
+            for result in failed_tests:
+                print(f"  • {result['test_name']}: {result['error']}")
+
+    def _print_categories_analysis(self):
+        """Print test categories analysis"""
         print("\n📋 TEST CATEGORIES ANALYSIS:")
 
         categories = {
@@ -970,23 +993,23 @@ class AIModelManagementTestSuite:
             category_rate = (
                 (category_passed / category_total * 100) if category_total > 0 else 0
             )
-
             print(
                 f"  {category}: {category_passed}/{category_total} ({category_rate:.1f}%)"
             )
 
-        # Quality gates assessment
+    def _print_quality_gates(self, stats: dict) -> int:
+        """Print quality gates assessment and return passed count"""
         print("\n🎯 QUALITY GATES ASSESSMENT:")
 
         gates = [
             (
                 "Database Operations",
-                success_rate >= 90,
+                stats["success_rate"] >= 90,
                 "All database operations must work correctly",
             ),
             (
                 "Model CRUD Operations",
-                passed_tests >= total_tests * 0.85,
+                stats["passed_tests"] >= stats["total_tests"] * 0.85,
                 "Core model operations must be functional",
             ),
             (
@@ -1007,7 +1030,7 @@ class AIModelManagementTestSuite:
             ),
             (
                 "Overall System Health",
-                success_rate >= 80,
+                stats["success_rate"] >= 80,
                 "Overall system must be stable and functional",
             ),
         ]
@@ -1020,8 +1043,10 @@ class AIModelManagementTestSuite:
                 passed_gates += 1
 
         print(f"\nQuality Gates: {passed_gates}/{len(gates)} PASSED")
+        return passed_gates
 
-        # Final verdict
+    def _print_final_verdict(self, success_rate: float):
+        """Print final verdict based on success rate"""
         print("\n🏆 FINAL VERDICT:")
         if success_rate >= 95:
             print("🌟 EXCELLENT: AI Model Management System is production-ready!")
@@ -1036,7 +1061,8 @@ class AIModelManagementTestSuite:
                 "❌ NEEDS WORK: AI Model Management System requires significant fixes"
             )
 
-        # Save detailed results
+    def _save_detailed_results(self, stats: dict, passed_gates: int):
+        """Save detailed test results to JSON file"""
         try:
             os.makedirs("./validation_artifacts/3.1.5", exist_ok=True)
 
@@ -1047,12 +1073,9 @@ class AIModelManagementTestSuite:
                 json.dump(
                     {
                         "summary": {
-                            "total_tests": total_tests,
-                            "passed_tests": passed_tests,
-                            "failed_tests": failed_tests,
-                            "success_rate": success_rate,
+                            **stats,
                             "quality_gates_passed": passed_gates,
-                            "quality_gates_total": len(gates),
+                            "quality_gates_total": 5,
                         },
                         "test_results": self.test_results,
                         "timestamp": datetime.now().isoformat(),
