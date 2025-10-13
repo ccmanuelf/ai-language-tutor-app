@@ -284,85 +284,16 @@ async def update_language_configuration(
     """Update language configuration"""
     try:
         with get_db_session_context() as session:
-            # Check if language exists
-            lang_check = session.execute(
-                text("SELECT code FROM languages WHERE code = ? AND is_active = 1"),
-                (language_code,),
-            )
-            if not lang_check.fetchone():
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Language '{language_code}' not found",
-                )
-
-            # Check if config exists, create if not
-            config_check = session.execute(
-                text(
-                    "SELECT language_code FROM admin_language_config WHERE language_code = ?"
-                ),
-                (language_code,),
-            )
-
-            update_fields = []
-            update_values = []
-
-            if update_data.is_enabled_globally is not None:
-                update_fields.append("is_enabled_globally = ?")
-                update_values.append(update_data.is_enabled_globally)
-
-            if update_data.speech_recognition_enabled is not None:
-                update_fields.append("speech_recognition_enabled = ?")
-                update_values.append(update_data.speech_recognition_enabled)
-
-            if update_data.text_to_speech_enabled is not None:
-                update_fields.append("text_to_speech_enabled = ?")
-                update_values.append(update_data.text_to_speech_enabled)
-
-            # Add other update fields...
+            _validate_language_exists(session, language_code)
+            config_exists = _check_config_exists(session, language_code)
+            update_fields, update_values = _build_update_fields(update_data)
 
             if update_fields:
-                update_fields.append("updated_at = CURRENT_TIMESTAMP")
+                _execute_config_update(
+                    session, language_code, config_exists, update_fields, update_values
+                )
 
-                if config_check.fetchone():
-                    # Update existing config
-                    query = f"""
-                        UPDATE admin_language_config
-                        SET {", ".join(update_fields)}
-                        WHERE language_code = ?
-                    """
-                    update_values.append(language_code)
-                else:
-                    # Insert new config
-                    query = f"""
-                        INSERT INTO admin_language_config
-                        (language_code, {", ".join(field.split(" = ")[0] for field in update_fields)})
-                        VALUES (?, {", ".join(["?" for _ in update_fields])})
-                    """
-                    update_values.insert(0, language_code)
-
-                session.execute(text(query), update_values)
-                session.commit()
-
-            # Return updated configuration (simplified)
-            return LanguageConfigResponse(
-                language_code=language_code,
-                language_name="Updated",
-                native_name="Updated",
-                is_enabled_globally=update_data.is_enabled_globally or True,
-                default_voice_model=None,
-                speech_recognition_enabled=update_data.speech_recognition_enabled
-                or True,
-                text_to_speech_enabled=update_data.text_to_speech_enabled or True,
-                pronunciation_analysis_enabled=True,
-                conversation_mode_enabled=True,
-                tutor_mode_enabled=True,
-                scenario_mode_enabled=True,
-                realtime_analysis_enabled=True,
-                difficulty_levels=["beginner", "intermediate", "advanced"],
-                voice_settings={},
-                available_voice_models=[],
-            )
-
+            return _build_config_response(language_code, update_data)
     except HTTPException:
         raise
     except Exception as e:
@@ -373,6 +304,102 @@ async def update_language_configuration(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update language configuration: {str(e)}",
         )
+
+
+def _validate_language_exists(session, language_code: str) -> None:
+    """Validate that language exists in database - A(2)"""
+    lang_check = session.execute(
+        text("SELECT code FROM languages WHERE code = ? AND is_active = 1"),
+        (language_code,),
+    )
+    if not lang_check.fetchone():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Language '{language_code}' not found",
+        )
+
+
+def _check_config_exists(session, language_code: str) -> bool:
+    """Check if language config already exists - A(2)"""
+    config_check = session.execute(
+        text("SELECT language_code FROM admin_language_config WHERE language_code = ?"),
+        (language_code,),
+    )
+    return config_check.fetchone() is not None
+
+
+def _build_update_fields(update_data: LanguageConfigUpdate) -> tuple:
+    """Build update fields and values from update data - A(4)"""
+    update_fields = []
+    update_values = []
+
+    if update_data.is_enabled_globally is not None:
+        update_fields.append("is_enabled_globally = ?")
+        update_values.append(update_data.is_enabled_globally)
+
+    if update_data.speech_recognition_enabled is not None:
+        update_fields.append("speech_recognition_enabled = ?")
+        update_values.append(update_data.speech_recognition_enabled)
+
+    if update_data.text_to_speech_enabled is not None:
+        update_fields.append("text_to_speech_enabled = ?")
+        update_values.append(update_data.text_to_speech_enabled)
+
+    return update_fields, update_values
+
+
+def _execute_config_update(
+    session,
+    language_code: str,
+    config_exists: bool,
+    update_fields: list,
+    update_values: list,
+) -> None:
+    """Execute UPDATE or INSERT query based on config existence - B(6)"""
+    update_fields.append("updated_at = CURRENT_TIMESTAMP")
+
+    if config_exists:
+        # Update existing config
+        query = f"""
+            UPDATE admin_language_config
+            SET {", ".join(update_fields)}
+            WHERE language_code = ?
+        """
+        update_values.append(language_code)
+    else:
+        # Insert new config
+        query = f"""
+            INSERT INTO admin_language_config
+            (language_code, {", ".join(field.split(" = ")[0] for field in update_fields)})
+            VALUES (?, {", ".join(["?" for _ in update_fields])})
+        """
+        update_values.insert(0, language_code)
+
+    session.execute(text(query), update_values)
+    session.commit()
+
+
+def _build_config_response(
+    language_code: str, update_data: LanguageConfigUpdate
+) -> LanguageConfigResponse:
+    """Build response object with updated configuration - A(1)"""
+    return LanguageConfigResponse(
+        language_code=language_code,
+        language_name="Updated",
+        native_name="Updated",
+        is_enabled_globally=update_data.is_enabled_globally or True,
+        default_voice_model=None,
+        speech_recognition_enabled=update_data.speech_recognition_enabled or True,
+        text_to_speech_enabled=update_data.text_to_speech_enabled or True,
+        pronunciation_analysis_enabled=True,
+        conversation_mode_enabled=True,
+        tutor_mode_enabled=True,
+        scenario_mode_enabled=True,
+        realtime_analysis_enabled=True,
+        difficulty_levels=["beginner", "intermediate", "advanced"],
+        voice_settings={},
+        available_voice_models=[],
+    )
 
 
 @router.post("/sync-voice-models")
