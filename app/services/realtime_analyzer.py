@@ -288,6 +288,72 @@ class RealTimeAnalyzer:
         )
         return session_id
 
+    def _validate_session(self, session_id: str) -> AnalysisSession:
+        """Validate and retrieve analysis session"""
+        if session_id not in self.active_sessions:
+            raise ValueError(f"Analysis session {session_id} not found")
+        return self.active_sessions[session_id]
+
+    def _get_analysis_types(
+        self, analysis_types: Optional[List[AnalysisType]]
+    ) -> List[AnalysisType]:
+        """Get analysis types with default"""
+        return (
+            analysis_types
+            if analysis_types is not None
+            else [AnalysisType.COMPREHENSIVE]
+        )
+
+    def _should_analyze_type(
+        self, target_type: AnalysisType, analysis_types: List[AnalysisType]
+    ) -> bool:
+        """Check if specific analysis type should be performed"""
+        return (
+            target_type in analysis_types
+            or AnalysisType.COMPREHENSIVE in analysis_types
+        )
+
+    async def _collect_feedback(
+        self,
+        audio_segment: AudioSegment,
+        session: AnalysisSession,
+        analysis_types: List[AnalysisType],
+    ) -> List[RealTimeFeedback]:
+        """Collect all requested feedback types"""
+        feedback_list = []
+
+        if self._should_analyze_type(AnalysisType.PRONUNCIATION, analysis_types):
+            pronunciation_feedback = await self._analyze_pronunciation(
+                audio_segment, session
+            )
+            if pronunciation_feedback:
+                feedback_list.extend(pronunciation_feedback)
+
+        if self._should_analyze_type(AnalysisType.GRAMMAR, analysis_types):
+            grammar_feedback = await self._analyze_grammar(audio_segment, session)
+            if grammar_feedback:
+                feedback_list.extend(grammar_feedback)
+
+        if self._should_analyze_type(AnalysisType.FLUENCY, analysis_types):
+            fluency_feedback = await self._analyze_fluency(audio_segment, session)
+            if fluency_feedback:
+                feedback_list.extend(fluency_feedback)
+
+        return feedback_list
+
+    def _cache_analysis_result(
+        self, session_id: str, audio_segment: AudioSegment, feedback_count: int
+    ) -> None:
+        """Cache analysis results for performance tracking"""
+        self.analysis_cache.append(
+            {
+                "session_id": session_id,
+                "timestamp": datetime.now(),
+                "feedback_count": feedback_count,
+                "audio_duration": audio_segment.duration,
+            }
+        )
+
     async def analyze_audio_segment(
         self,
         session_id: str,
@@ -295,67 +361,24 @@ class RealTimeAnalyzer:
         analysis_types: List[AnalysisType] = None,
     ) -> List[RealTimeFeedback]:
         """Analyze an audio segment in real-time"""
-
-        if session_id not in self.active_sessions:
-            raise ValueError(f"Analysis session {session_id} not found")
-
-        session = self.active_sessions[session_id]
-        feedback_list = []
-
-        if analysis_types is None:
-            analysis_types = [AnalysisType.COMPREHENSIVE]
+        session = self._validate_session(session_id)
+        analysis_types = self._get_analysis_types(analysis_types)
 
         try:
-            # Pronunciation Analysis
-            if (
-                AnalysisType.PRONUNCIATION in analysis_types
-                or AnalysisType.COMPREHENSIVE in analysis_types
-            ):
-                pronunciation_feedback = await self._analyze_pronunciation(
-                    audio_segment, session
-                )
-                if pronunciation_feedback:
-                    feedback_list.extend(pronunciation_feedback)
-
-            # Grammar Analysis
-            if (
-                AnalysisType.GRAMMAR in analysis_types
-                or AnalysisType.COMPREHENSIVE in analysis_types
-            ):
-                grammar_feedback = await self._analyze_grammar(audio_segment, session)
-                if grammar_feedback:
-                    feedback_list.extend(grammar_feedback)
-
-            # Fluency Analysis
-            if (
-                AnalysisType.FLUENCY in analysis_types
-                or AnalysisType.COMPREHENSIVE in analysis_types
-            ):
-                fluency_feedback = await self._analyze_fluency(audio_segment, session)
-                if fluency_feedback:
-                    feedback_list.extend(fluency_feedback)
-
-            # Update session metrics
-            await self._update_session_metrics(session, audio_segment, feedback_list)
-
-            # Cache results
-            self.analysis_cache.append(
-                {
-                    "session_id": session_id,
-                    "timestamp": datetime.now(),
-                    "feedback_count": len(feedback_list),
-                    "audio_duration": audio_segment.duration,
-                }
+            feedback_list = await self._collect_feedback(
+                audio_segment, session, analysis_types
             )
+            await self._update_session_metrics(session, audio_segment, feedback_list)
+            self._cache_analysis_result(session_id, audio_segment, len(feedback_list))
 
             logger.debug(
                 f"Analyzed audio segment for session {session_id}: {len(feedback_list)} feedback items"
             )
+            return feedback_list
 
         except Exception as e:
             logger.error(f"Error analyzing audio segment for session {session_id}: {e}")
-
-        return feedback_list
+            return []
 
     async def _analyze_pronunciation(
         self, audio_segment: AudioSegment, session: AnalysisSession
