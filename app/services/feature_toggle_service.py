@@ -844,6 +844,43 @@ class FeatureToggleService:
 
         return feature.status == FeatureToggleStatus.ENABLED
 
+    def _evaluate_user_role_condition(
+        self, condition: FeatureCondition, user_roles: Optional[List[str]]
+    ) -> bool:
+        """Evaluate user role condition"""
+        if not user_roles:
+            return False
+
+        if condition.operator == "equals":
+            return condition.value in user_roles
+        elif condition.operator == "not_equals":
+            return condition.value not in user_roles
+
+        return False
+
+    def _evaluate_date_range_condition(self, condition: FeatureCondition) -> bool:
+        """Evaluate date range condition"""
+        if condition.operator != "between":
+            return False
+
+        if not isinstance(condition.value, list) or len(condition.value) != 2:
+            return False
+
+        now = datetime.now()
+        start_date = datetime.fromisoformat(condition.value[0])
+        end_date = datetime.fromisoformat(condition.value[1])
+        return start_date <= now <= end_date
+
+    def _evaluate_percentage_condition(
+        self, condition: FeatureCondition, user_id: Optional[str]
+    ) -> bool:
+        """Evaluate percentage rollout condition"""
+        if condition.operator != "less_than" or not user_id:
+            return False
+
+        user_hash = hash(user_id) % 100
+        return user_hash < condition.value
+
     async def _evaluate_condition(
         self,
         condition: FeatureCondition,
@@ -851,36 +888,18 @@ class FeatureToggleService:
         user_roles: Optional[List[str]] = None,
     ) -> bool:
         """Evaluate a specific condition."""
-
         try:
             if condition.type == "user_role":
-                if not user_roles:
-                    return False
-                if condition.operator == "equals":
-                    return condition.value in user_roles
-                elif condition.operator == "not_equals":
-                    return condition.value not in user_roles
-
+                return self._evaluate_user_role_condition(condition, user_roles)
             elif condition.type == "date_range":
-                now = datetime.now()
-                if condition.operator == "between":
-                    if isinstance(condition.value, list) and len(condition.value) == 2:
-                        start_date = datetime.fromisoformat(condition.value[0])
-                        end_date = datetime.fromisoformat(condition.value[1])
-                        return start_date <= now <= end_date
-
+                return self._evaluate_date_range_condition(condition)
             elif condition.type == "percentage":
-                if condition.operator == "less_than" and user_id:
-                    user_hash = hash(user_id) % 100
-                    return user_hash < condition.value
-
+                return self._evaluate_percentage_condition(condition, user_id)
             # Add more condition types as needed
-
+            return True
         except Exception as e:
             logger.error(f"Error evaluating condition {condition.type}: {e}")
             return False
-
-        return True
 
     async def set_user_feature_access(
         self,
