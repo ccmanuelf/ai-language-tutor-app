@@ -827,7 +827,22 @@ class AIModelManager:
         """Get comprehensive system overview"""
         models = await self.get_all_models()
 
-        # Calculate totals
+        overview_stats = self._calculate_overview_stats(models)
+        budget_status = self._get_budget_status_dict()
+        provider_breakdown = self._calculate_provider_breakdown(models)
+        top_models = self._get_top_performing_models(models)
+        category_breakdown = self._calculate_category_breakdown(models)
+
+        return {
+            "overview": overview_stats,
+            "budget_status": budget_status,
+            "providers": provider_breakdown,
+            "top_models": top_models,
+            "categories": category_breakdown,
+        }
+
+    def _calculate_overview_stats(self, models: List[Dict]) -> Dict[str, Any]:
+        """Calculate overall system statistics"""
         total_models = len(models)
         active_models = len(
             [m for m in models if m["status"] == "active" and m["enabled"]]
@@ -835,10 +850,27 @@ class AIModelManager:
         total_requests = sum(m["usage_stats"]["total_requests"] for m in models)
         total_cost = sum(m["usage_stats"]["total_cost"] for m in models)
 
-        # Get budget status
-        budget_status = budget_manager.get_current_budget_status()
+        return {
+            "total_models": total_models,
+            "active_models": active_models,
+            "total_requests": total_requests,
+            "total_cost": round(total_cost, 4),
+            "avg_cost_per_request": round(total_cost / max(total_requests, 1), 6),
+        }
 
-        # Provider breakdown
+    def _get_budget_status_dict(self) -> Dict[str, Any]:
+        """Get formatted budget status dictionary"""
+        budget_status = budget_manager.get_current_budget_status()
+        return {
+            "remaining_budget": budget_status.remaining_budget,
+            "percentage_used": budget_status.percentage_used,
+            "alert_level": budget_status.alert_level.value
+            if budget_status.alert_level
+            else "green",
+        }
+
+    def _calculate_provider_breakdown(self, models: List[Dict]) -> Dict[str, Dict]:
+        """Calculate statistics breakdown by provider"""
         providers = {}
         for model in models:
             provider = model["provider"]
@@ -858,45 +890,34 @@ class AIModelManager:
             ]
             providers[provider]["total_cost"] += model["usage_stats"]["total_cost"]
 
-        # Top performing models
-        top_models = sorted(
+        return providers
+
+    def _get_top_performing_models(
+        self, models: List[Dict], limit: int = 5
+    ) -> List[Dict]:
+        """Get top performing models by requests and quality"""
+        sorted_models = sorted(
             models,
             key=lambda x: (x["usage_stats"]["total_requests"], x["quality_score"]),
             reverse=True,
-        )[:5]
+        )[:limit]
 
+        return [
+            {
+                "id": m["id"],
+                "display_name": m["display_name"],
+                "provider": m["provider"],
+                "total_requests": m["usage_stats"]["total_requests"],
+                "quality_score": m["quality_score"],
+            }
+            for m in sorted_models
+        ]
+
+    def _calculate_category_breakdown(self, models: List[Dict]) -> Dict[str, int]:
+        """Calculate model count breakdown by category"""
         return {
-            "overview": {
-                "total_models": total_models,
-                "active_models": active_models,
-                "total_requests": total_requests,
-                "total_cost": round(total_cost, 4),
-                "avg_cost_per_request": round(total_cost / max(total_requests, 1), 6),
-            },
-            "budget_status": {
-                "remaining_budget": budget_status.remaining_budget,
-                "percentage_used": budget_status.percentage_used,
-                "alert_level": budget_status.alert_level.value
-                if budget_status.alert_level
-                else "green",
-            },
-            "providers": providers,
-            "top_models": [
-                {
-                    "id": m["id"],
-                    "display_name": m["display_name"],
-                    "provider": m["provider"],
-                    "total_requests": m["usage_stats"]["total_requests"],
-                    "quality_score": m["quality_score"],
-                }
-                for m in top_models
-            ],
-            "categories": {
-                category.value: len(
-                    [m for m in models if m["category"] == category.value]
-                )
-                for category in ModelCategory
-            },
+            category.value: len([m for m in models if m["category"] == category.value])
+            for category in ModelCategory
         }
 
     async def optimize_model_selection(
