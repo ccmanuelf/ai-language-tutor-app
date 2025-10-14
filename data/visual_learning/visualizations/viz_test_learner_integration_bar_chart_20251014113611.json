@@ -1,0 +1,30 @@
+{
+  "visualization_id": "viz_test_learner_integration_bar_chart_20251014113611",
+  "user_id": "test_learner_integration",
+  "visualization_type": "bar_chart",
+  "title": "Weekly Progress",
+  "description": "Weekly learning progress",
+  "data_points": [
+    {
+      "label": "Mon",
+      "value": 10
+    },
+    {
+      "label": "Tue",
+      "value": 15
+    },
+    {
+      "label": "Wed",
+      "value": 20
+    }
+  ],
+  "x_axis_label": "",
+  "y_axis_label": "",
+  "color_scheme": [
+    "#6366f1",
+    "#0891b2",
+    "#f59e0b"
+  ],
+  "generated_at": "2025-10-14T11:36:11.367768",
+  "metadata": {}
+}
