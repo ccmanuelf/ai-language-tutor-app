@@ -1083,21 +1083,21 @@ class ProgressAnalyticsService:
             "next_actions": [],
         }
 
-    def _generate_skill_recommendations(self, skills: List[Dict]) -> List[str]:
-        """Generate personalized skill improvement recommendations"""
-        if not skills:
-            return ["Complete skill assessments to get personalized recommendations"]
-
-        recommendations = []
-
-        # Find weakest skills
+    def _add_weakest_skill_recommendations(
+        self, skills: List[Dict], recommendations: List[str]
+    ) -> None:
+        """Add recommendations for weakest skills"""
         weakest_skills = sorted(skills, key=lambda x: x["current_level"])[:2]
         for skill in weakest_skills:
             recommendations.append(
-                f"Focus on {skill['skill_type']}: current level {skill['current_level']:.1f}%, suggested exercises: {', '.join(skill['suggested_exercises'][:2])}"
+                f"Focus on {skill['skill_type']}: current level {skill['current_level']:.1f}%, "
+                f"suggested exercises: {', '.join(skill['suggested_exercises'][:2])}"
             )
 
-        # Check for skills with poor retention
+    def _add_retention_recommendations(
+        self, skills: List[Dict], recommendations: List[str]
+    ) -> None:
+        """Add recommendations for skills with poor retention"""
         poor_retention = [s for s in skills if s["retention_rate"] < 0.5]
         if poor_retention:
             skill_names = [s["skill_type"] for s in poor_retention[:2]]
@@ -1105,19 +1105,36 @@ class ProgressAnalyticsService:
                 f"Improve retention for {', '.join(skill_names)} with more frequent review sessions"
             )
 
-        # Check for low consistency
+    def _add_consistency_recommendations(
+        self, skills: List[Dict], recommendations: List[str]
+    ) -> None:
+        """Add recommendations for inconsistent practice"""
         inconsistent_skills = [s for s in skills if s["consistency_score"] < 0.6]
         if inconsistent_skills:
             recommendations.append(
                 "Maintain more consistent practice schedule to improve learning efficiency"
             )
 
-        # Challenge level recommendations
+    def _add_challenge_recommendations(
+        self, skills: List[Dict], recommendations: List[str]
+    ) -> None:
+        """Add recommendations for challenge level"""
         avoiding_challenge = [s for s in skills if s["challenge_comfort_level"] < 0.4]
         if avoiding_challenge:
             recommendations.append(
                 "Try more challenging exercises to accelerate skill development"
             )
+
+    def _generate_skill_recommendations(self, skills: List[Dict]) -> List[str]:
+        """Generate personalized skill improvement recommendations"""
+        if not skills:
+            return ["Complete skill assessments to get personalized recommendations"]
+
+        recommendations = []
+        self._add_weakest_skill_recommendations(skills, recommendations)
+        self._add_retention_recommendations(skills, recommendations)
+        self._add_consistency_recommendations(skills, recommendations)
+        self._add_challenge_recommendations(skills, recommendations)
 
         return recommendations[:5]
 
