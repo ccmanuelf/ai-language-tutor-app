@@ -908,62 +908,93 @@ class AIModelManager:
         """Get optimized model recommendations for specific use case"""
         models = await self.get_all_models(enabled_only=True)
 
-        # Filter by language support
-        suitable_models = [
+        suitable_models = self._filter_suitable_models(models, language, budget_limit)
+        scored_models = self._score_models(suitable_models, language, use_case)
+
+        return self._select_top_models(scored_models, limit=5)
+
+    def _filter_suitable_models(
+        self, models: List[Dict], language: str, budget_limit: Optional[float]
+    ) -> List[Dict]:
+        """Filter models by language support and budget constraints"""
+        suitable = [
             m
             for m in models
             if language in m["supported_languages"]
             or language in m["primary_languages"]
         ]
 
-        # Filter by budget if specified
         if budget_limit:
-            suitable_models = [
-                m for m in suitable_models if m["cost_per_1k_tokens"] <= budget_limit
-            ]
+            suitable = [m for m in suitable if m["cost_per_1k_tokens"] <= budget_limit]
 
-        # Score models based on use case
-        for model in suitable_models:
-            score = 0.0
+        return suitable
 
-            # Base quality score
-            score += model["quality_score"] * 40
-
-            # Reliability score
-            score += model["reliability_score"] * 20
-
-            # Language match bonus
-            if language in model["primary_languages"]:
-                score += 15
-            elif language in model["supported_languages"]:
-                score += 10
-
-            # Cost efficiency (lower cost = higher score)
-            cost_score = max(0, 20 - (model["cost_per_1k_tokens"] * 1000))
-            score += cost_score
-
-            # Speed bonus (lower response time = higher score)
-            speed_score = max(0, 10 - (model["avg_response_time_ms"] / 500))
-            score += speed_score
-
-            # Category match bonus
-            if use_case == "conversation" and model["category"] == "conversation":
-                score += 10
-            elif use_case == "translation" and model["category"] == "translation":
-                score += 10
-            elif use_case == "analysis" and model["category"] == "analysis":
-                score += 10
-
-            # Priority bonus (lower priority number = higher score)
-            score += 11 - model["priority"]
-
+    def _score_models(
+        self, models: List[Dict], language: str, use_case: str
+    ) -> List[Dict]:
+        """Calculate optimization score for each model"""
+        for model in models:
+            score = self._calculate_model_score(model, language, use_case)
             model["optimization_score"] = score
 
-        # Sort by optimization score
-        suitable_models.sort(key=lambda x: x["optimization_score"], reverse=True)
+        return models
 
-        # Return top 5 model IDs
-        return [m["id"] for m in suitable_models[:5]]
+    def _calculate_model_score(
+        self, model: Dict, language: str, use_case: str
+    ) -> float:
+        """Calculate comprehensive optimization score for a model"""
+        score = 0.0
+
+        score += self._get_quality_score(model)
+        score += self._get_reliability_score(model)
+        score += self._get_language_match_score(model, language)
+        score += self._get_cost_efficiency_score(model)
+        score += self._get_speed_score(model)
+        score += self._get_category_match_score(model, use_case)
+        score += self._get_priority_score(model)
+
+        return score
+
+    def _get_quality_score(self, model: Dict) -> float:
+        """Get base quality score contribution"""
+        return model["quality_score"] * 40
+
+    def _get_reliability_score(self, model: Dict) -> float:
+        """Get reliability score contribution"""
+        return model["reliability_score"] * 20
+
+    def _get_language_match_score(self, model: Dict, language: str) -> float:
+        """Get language match bonus score"""
+        if language in model["primary_languages"]:
+            return 15
+        elif language in model["supported_languages"]:
+            return 10
+        return 0
+
+    def _get_cost_efficiency_score(self, model: Dict) -> float:
+        """Get cost efficiency score (lower cost = higher score)"""
+        return max(0, 20 - (model["cost_per_1k_tokens"] * 1000))
+
+    def _get_speed_score(self, model: Dict) -> float:
+        """Get speed score (lower response time = higher score)"""
+        return max(0, 10 - (model["avg_response_time_ms"] / 500))
+
+    def _get_category_match_score(self, model: Dict, use_case: str) -> float:
+        """Get category match bonus score"""
+        if use_case == model["category"]:
+            return 10
+        return 0
+
+    def _get_priority_score(self, model: Dict) -> float:
+        """Get priority bonus score (lower priority number = higher score)"""
+        return 11 - model["priority"]
+
+    def _select_top_models(self, models: List[Dict], limit: int = 5) -> List[str]:
+        """Sort by score and return top model IDs"""
+        sorted_models = sorted(
+            models, key=lambda x: x["optimization_score"], reverse=True
+        )
+        return [m["id"] for m in sorted_models[:limit]]
 
     async def get_health_status(self) -> Dict[str, Any]:
         """Get health status of all models and providers"""
