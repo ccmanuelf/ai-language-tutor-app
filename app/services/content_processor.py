@@ -988,6 +988,60 @@ class ContentProcessor:
         library.sort(key=lambda x: x["created_at"], reverse=True)
         return library
 
+    def _matches_query(self, query_lower: str, processed: ProcessedContent) -> bool:
+        """Check if content matches search query"""
+        return (
+            query_lower in processed.metadata.title.lower()
+            or any(query_lower in topic.lower() for topic in processed.metadata.topics)
+            or query_lower in processed.processed_content.lower()
+        )
+
+    def _passes_filters(
+        self, processed: ProcessedContent, filters: Optional[Dict[str, Any]]
+    ) -> bool:
+        """Check if content passes all filters"""
+        if not filters:
+            return True
+
+        if (
+            filters.get("content_type")
+            and processed.metadata.content_type.value != filters["content_type"]
+        ):
+            return False
+
+        if (
+            filters.get("difficulty_level")
+            and processed.metadata.difficulty_level != filters["difficulty_level"]
+        ):
+            return False
+
+        if (
+            filters.get("language")
+            and processed.metadata.language != filters["language"]
+        ):
+            return False
+
+        return True
+
+    def _build_search_result(
+        self, content_id: str, processed: ProcessedContent, query: str
+    ) -> Dict[str, Any]:
+        """Build search result dictionary"""
+        return {
+            "content_id": content_id,
+            "title": processed.metadata.title,
+            "content_type": processed.metadata.content_type.value,
+            "topics": processed.metadata.topics,
+            "difficulty_level": processed.metadata.difficulty_level,
+            "relevance_score": self._calculate_relevance(query, processed),
+            "snippet": self._get_content_snippet(query, processed.processed_content),
+        }
+
+    def _sort_by_relevance(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Sort results by relevance score"""
+        results.sort(key=lambda x: x["relevance_score"], reverse=True)
+        return results
+
     async def search_content(
         self, query: str, filters: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
@@ -996,53 +1050,15 @@ class ContentProcessor:
         query_lower = query.lower()
 
         for content_id, processed in self.content_library.items():
-            # Search in title, topics, and content
-            matches = (
-                query_lower in processed.metadata.title.lower()
-                or any(
-                    query_lower in topic.lower() for topic in processed.metadata.topics
-                )
-                or query_lower in processed.processed_content.lower()
-            )
+            if not self._matches_query(query_lower, processed):
+                continue
 
-            if matches:
-                # Apply filters if provided
-                if filters:
-                    if (
-                        filters.get("content_type")
-                        and processed.metadata.content_type.value
-                        != filters["content_type"]
-                    ):
-                        continue
-                    if (
-                        filters.get("difficulty_level")
-                        and processed.metadata.difficulty_level
-                        != filters["difficulty_level"]
-                    ):
-                        continue
-                    if (
-                        filters.get("language")
-                        and processed.metadata.language != filters["language"]
-                    ):
-                        continue
+            if not self._passes_filters(processed, filters):
+                continue
 
-                results.append(
-                    {
-                        "content_id": content_id,
-                        "title": processed.metadata.title,
-                        "content_type": processed.metadata.content_type.value,
-                        "topics": processed.metadata.topics,
-                        "difficulty_level": processed.metadata.difficulty_level,
-                        "relevance_score": self._calculate_relevance(query, processed),
-                        "snippet": self._get_content_snippet(
-                            query, processed.processed_content
-                        ),
-                    }
-                )
+            results.append(self._build_search_result(content_id, processed, query))
 
-        # Sort by relevance score
-        results.sort(key=lambda x: x["relevance_score"], reverse=True)
-        return results
+        return self._sort_by_relevance(results)
 
     def _calculate_relevance(self, query: str, processed: ProcessedContent) -> float:
         """Calculate relevance score for search results"""
