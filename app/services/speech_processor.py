@@ -538,92 +538,139 @@ class SpeechProcessor:
         original_text: str = None,
     ) -> SpeechSynthesisResult:
         """Select TTS provider and process text-to-speech with fallback logic"""
-
-        # Auto provider selection: Piper TTS only (Watson TTS deprecated)
         if provider == "auto":
-            if self.piper_tts_available:
-                try:
-                    # Use original plain text for Piper (no SSML markup)
-                    piper_text = original_text if original_text else text
-                    result = await self._text_to_speech_piper(
-                        text=piper_text,
-                        language=language,
-                        voice_type=voice_type,
-                        speaking_rate=speaking_rate,
-                    )
-                    logger.info("TTS synthesis successful using Piper (cost: $0.00)")
-                    return result
-                except Exception as e:
-                    logger.error(f"Piper TTS failed: {e}")
-                    raise Exception(f"TTS synthesis failed: {e}")
-            else:
-                raise Exception(
-                    "Piper TTS not available. Watson TTS has been deprecated."
-                )
-
-        # Legacy fallback mode (with Watson TTS deprecated warning)
+            return await self._process_auto_provider(
+                text, original_text, language, voice_type, speaking_rate
+            )
         elif provider == "piper_fallback":
-            if self.piper_tts_available:
-                try:
-                    # Use original plain text for Piper (no SSML markup)
-                    piper_text = original_text if original_text else text
-                    result = await self._text_to_speech_piper(
-                        text=piper_text,
-                        language=language,
-                        voice_type=voice_type,
-                        speaking_rate=speaking_rate,
-                    )
-                    logger.info("TTS synthesis successful using Piper (cost: $0.00)")
-                    return result
-                except Exception as e:
-                    logger.warning(
-                        f"Piper TTS failed, attempting deprecated Watson fallback: {e}"
-                    )
-                    # Continue to Watson fallback
-
-            # DEPRECATED: Watson TTS fallback
-            if self.watson_tts_available:
-                logger.warning(
-                    "⚠️ DEPRECATED: Using Watson TTS fallback. Please migrate to Piper TTS."
-                )
-                try:
-                    result = await self._text_to_speech_watson(
-                        text=text,
-                        language=language,
-                        voice_type=voice_type,
-                        speaking_rate=speaking_rate,
-                    )
-                    logger.info(
-                        "TTS synthesis successful using deprecated Watson fallback"
-                    )
-                    return result
-                except Exception as e:
-                    logger.error(f"Watson TTS fallback also failed: {e}")
-                    raise Exception(
-                        f"All TTS providers failed. Piper: unavailable/failed, Watson: {e}"
-                    )
-            else:
-                raise Exception("Piper TTS failed and Watson TTS not available")
-
-        # Specific provider selection
+            return await self._process_piper_fallback(
+                text, original_text, language, voice_type, speaking_rate
+            )
         elif provider == "piper":
-            if not self.piper_tts_available:
-                raise Exception("Piper TTS provider requested but not available")
-            # Use original plain text for Piper (no SSML markup)
+            return await self._process_piper_provider(
+                text, original_text, language, voice_type, speaking_rate
+            )
+        elif provider == "watson":
+            raise Exception("Watson TTS deprecated - use 'auto' or 'piper' providers")
+        else:
+            raise Exception(f"Unknown TTS provider: {provider}")
+
+    async def _process_auto_provider(
+        self,
+        text: str,
+        original_text: str,
+        language: str,
+        voice_type: str,
+        speaking_rate: float,
+    ) -> SpeechSynthesisResult:
+        """Process TTS with auto provider selection (Piper only)"""
+        if not self.piper_tts_available:
+            raise Exception("Piper TTS not available. Watson TTS has been deprecated.")
+
+        try:
             piper_text = original_text if original_text else text
-            return await self._text_to_speech_piper(
+            result = await self._text_to_speech_piper(
                 text=piper_text,
                 language=language,
                 voice_type=voice_type,
                 speaking_rate=speaking_rate,
             )
+            logger.info("TTS synthesis successful using Piper (cost: $0.00)")
+            return result
+        except Exception as e:
+            logger.error(f"Piper TTS failed: {e}")
+            raise Exception(f"TTS synthesis failed: {e}")
 
-        elif provider == "watson":
-            # Watson TTS deprecated in Phase 2A migration
-            raise Exception("Watson TTS deprecated - use 'auto' or 'piper' providers")
+    async def _process_piper_fallback(
+        self,
+        text: str,
+        original_text: str,
+        language: str,
+        voice_type: str,
+        speaking_rate: float,
+    ) -> SpeechSynthesisResult:
+        """Process TTS with Piper and deprecated Watson fallback"""
+        if self.piper_tts_available:
+            result = await self._try_piper_with_fallback_warning(
+                text, original_text, language, voice_type, speaking_rate
+            )
+            if result:
+                return result
 
-        else:
-            raise Exception(f"Unknown TTS provider: {provider}")
+        return await self._try_watson_fallback(
+            text, language, voice_type, speaking_rate
+        )
+
+    async def _try_piper_with_fallback_warning(
+        self,
+        text: str,
+        original_text: str,
+        language: str,
+        voice_type: str,
+        speaking_rate: float,
+    ):
+        """Try Piper TTS with fallback warning on failure"""
+        try:
+            piper_text = original_text if original_text else text
+            result = await self._text_to_speech_piper(
+                text=piper_text,
+                language=language,
+                voice_type=voice_type,
+                speaking_rate=speaking_rate,
+            )
+            logger.info("TTS synthesis successful using Piper (cost: $0.00)")
+            return result
+        except Exception as e:
+            logger.warning(
+                f"Piper TTS failed, attempting deprecated Watson fallback: {e}"
+            )
+            return None
+
+    async def _try_watson_fallback(
+        self, text: str, language: str, voice_type: str, speaking_rate: float
+    ) -> SpeechSynthesisResult:
+        """Try deprecated Watson TTS fallback"""
+        if not self.watson_tts_available:
+            raise Exception("Piper TTS failed and Watson TTS not available")
+
+        logger.warning(
+            "⚠️ DEPRECATED: Using Watson TTS fallback. Please migrate to Piper TTS."
+        )
+
+        try:
+            result = await self._text_to_speech_watson(
+                text=text,
+                language=language,
+                voice_type=voice_type,
+                speaking_rate=speaking_rate,
+            )
+            logger.info("TTS synthesis successful using deprecated Watson fallback")
+            return result
+        except Exception as e:
+            logger.error(f"Watson TTS fallback also failed: {e}")
+            raise Exception(
+                f"All TTS providers failed. Piper: unavailable/failed, Watson: {e}"
+            )
+
+    async def _process_piper_provider(
+        self,
+        text: str,
+        original_text: str,
+        language: str,
+        voice_type: str,
+        speaking_rate: float,
+    ) -> SpeechSynthesisResult:
+        """Process TTS with Piper provider explicitly"""
+        if not self.piper_tts_available:
+            raise Exception("Piper TTS provider requested but not available")
+
+        piper_text = original_text if original_text else text
+        return await self._text_to_speech_piper(
+            text=piper_text,
+            language=language,
+            voice_type=voice_type,
+            speaking_rate=speaking_rate,
+        )
 
     async def analyze_pronunciation_quality(
         self, user_audio: bytes, reference_text: str, language: str = "en"
