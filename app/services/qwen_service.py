@@ -122,95 +122,131 @@ Respond naturally and engagingly, as if talking with a friend. Be authentic and 
         **kwargs,
     ) -> AIResponse:
         """Generate natural conversation response using Qwen"""
-
         start_time = datetime.now()
 
         if not self.is_available:
             raise Exception("Qwen service not available - check API key configuration")
 
         try:
-            # Handle single message input
-            if message and not messages:
-                user_message = message
-            elif messages:
-                user_message = messages[-1].get("content", "") if messages else ""
-            else:
-                user_message = "你好！我想练习中文对话。"
-
-            # Use specified model or default based on API provider
-            if (
-                hasattr(self.settings, "DEEPSEEK_API_KEY")
-                and self.settings.DEEPSEEK_API_KEY
-            ):
-                model_name = model or "deepseek-chat"  # DeepSeek's main model
-            else:
-                model_name = model or "qwen-plus"  # Qwen default
-
-            # Generate conversation prompt
+            user_message = self._extract_user_message(message, messages)
+            model_name = self._select_model(model)
             conversation_prompt = self._get_conversation_prompt(language, user_message)
 
-            # Make API call to Qwen
-            response = self.client.chat.completions.create(
-                model=model_name,
-                messages=[{"role": "user", "content": conversation_prompt}],
-                max_tokens=kwargs.get("max_tokens", 300),
-                temperature=kwargs.get("temperature", 0.8),
-            )
-
+            response = self._call_qwen_api(model_name, conversation_prompt, kwargs)
             processing_time = (datetime.now() - start_time).total_seconds()
 
-            # Calculate cost from usage
-            usage = response.usage
-            input_tokens = usage.prompt_tokens if usage else 0
-            output_tokens = usage.completion_tokens if usage else 0
-            cost = (input_tokens * self.cost_per_token_input) + (
-                output_tokens * self.cost_per_token_output
-            )
-
-            # Extract response content
-            response_content = (
-                response.choices[0].message.content
-                if response.choices
-                else "抱歉，我无法生成回应。"
-            )
-
-            return AIResponse(
-                content=response_content,
-                model=model_name,
-                provider="qwen",
-                language=language,
-                processing_time=processing_time,
-                cost=cost,
-                status=AIResponseStatus.SUCCESS,
-                metadata={
-                    "input_tokens": input_tokens,
-                    "output_tokens": output_tokens,
-                    "user_id": context.get("user_id") if context else None,
-                    "conversation_style": "natural_chinese_tutoring",
-                },
+            return self._build_success_response(
+                response, model_name, language, processing_time, context
             )
 
         except Exception as e:
             processing_time = (datetime.now() - start_time).total_seconds()
-            logger.error(f"Qwen API error: {e}")
+            return self._build_error_response(e, model, language, processing_time)
 
-            # Provide helpful fallback in appropriate language
-            if language.startswith("zh"):
-                fallback_msg = "我的网络连接有点问题。我们再试一次吧！你想聊什么？"
-            else:
-                fallback_msg = "I'm having connection trouble. Let's try again! What would you like to talk about?"
+    def _extract_user_message(
+        self, message: Optional[str], messages: Optional[List[Dict[str, str]]]
+    ) -> str:
+        """Extract user message from input parameters"""
+        if message and not messages:
+            return message
+        elif messages:
+            return messages[-1].get("content", "") if messages else ""
+        else:
+            return "你好！我想练习中文对话。"
 
-            return AIResponse(
-                content=fallback_msg,
-                model=model or "qwen-plus",
-                provider="qwen",
-                language=language,
-                processing_time=processing_time,
-                cost=0.0,
-                status=AIResponseStatus.ERROR,
-                error_message=str(e),
-                metadata={"fallback_response": True},
-            )
+    def _select_model(self, model: Optional[str]) -> str:
+        """Select appropriate model based on API provider"""
+        if (
+            hasattr(self.settings, "DEEPSEEK_API_KEY")
+            and self.settings.DEEPSEEK_API_KEY
+        ):
+            return model or "deepseek-chat"
+        else:
+            return model or "qwen-plus"
+
+    def _call_qwen_api(self, model_name: str, prompt: str, kwargs: dict):
+        """Make API call to Qwen service"""
+        return self.client.chat.completions.create(
+            model=model_name,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=kwargs.get("max_tokens", 300),
+            temperature=kwargs.get("temperature", 0.8),
+        )
+
+    def _calculate_cost(self, usage) -> tuple:
+        """Calculate cost and token counts from API usage"""
+        input_tokens = usage.prompt_tokens if usage else 0
+        output_tokens = usage.completion_tokens if usage else 0
+        cost = (input_tokens * self.cost_per_token_input) + (
+            output_tokens * self.cost_per_token_output
+        )
+        return cost, input_tokens, output_tokens
+
+    def _extract_response_content(self, response) -> str:
+        """Extract content from API response"""
+        return (
+            response.choices[0].message.content
+            if response.choices
+            else "抱歉，我无法生成回应。"
+        )
+
+    def _build_success_response(
+        self,
+        response,
+        model_name: str,
+        language: str,
+        processing_time: float,
+        context: Optional[Dict[str, Any]],
+    ) -> AIResponse:
+        """Build successful AIResponse from API response"""
+        cost, input_tokens, output_tokens = self._calculate_cost(response.usage)
+        response_content = self._extract_response_content(response)
+
+        return AIResponse(
+            content=response_content,
+            model=model_name,
+            provider="qwen",
+            language=language,
+            processing_time=processing_time,
+            cost=cost,
+            status=AIResponseStatus.SUCCESS,
+            metadata={
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "user_id": context.get("user_id") if context else None,
+                "conversation_style": "natural_chinese_tutoring",
+            },
+        )
+
+    def _build_error_response(
+        self,
+        error: Exception,
+        model: Optional[str],
+        language: str,
+        processing_time: float,
+    ) -> AIResponse:
+        """Build error AIResponse with language-appropriate fallback"""
+        logger.error(f"Qwen API error: {error}")
+        fallback_msg = self._get_fallback_message(language)
+
+        return AIResponse(
+            content=fallback_msg,
+            model=model or "qwen-plus",
+            provider="qwen",
+            language=language,
+            processing_time=processing_time,
+            cost=0.0,
+            status=AIResponseStatus.ERROR,
+            error_message=str(error),
+            metadata={"fallback_response": True},
+        )
+
+    def _get_fallback_message(self, language: str) -> str:
+        """Get language-appropriate fallback message"""
+        if language.startswith("zh"):
+            return "我的网络连接有点问题。我们再试一次吧！你想聊什么？"
+        else:
+            return "I'm having connection trouble. Let's try again! What would you like to talk about?"
 
     async def check_availability(self) -> bool:
         """Check if Qwen service is available"""
