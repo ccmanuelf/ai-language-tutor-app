@@ -149,6 +149,79 @@ class EnhancedAIRouter:
         """Check current budget status"""
         return budget_manager.get_current_budget_status()
 
+    def _should_use_local_only(
+        self, force_local: bool, user_preferences: Optional[Dict[str, Any]]
+    ) -> bool:
+        """Check if local-only mode is requested"""
+        return force_local or (user_preferences and user_preferences.get("local_only"))
+
+    def _should_use_budget_fallback(self, budget_status: Any) -> bool:
+        """Check if budget requires fallback to local"""
+        return budget_status.alert_level in [BudgetAlert.CRITICAL, BudgetAlert.RED]
+
+    def _get_cloud_providers(self, language: str) -> List[str]:
+        """Get cloud providers for language (filtering out Ollama)"""
+        preferred_providers = self.language_preferences.get(
+            language, ["claude", "ollama"]
+        )
+        return [p for p in preferred_providers if p != "ollama"]
+
+    async def _try_cloud_provider(
+        self, provider_name: str, language: str, use_case: str, budget_status: Any
+    ) -> Optional[ProviderSelection]:
+        """Try to select a specific cloud provider if healthy and affordable"""
+        if provider_name not in self.providers:
+            return None
+
+        try:
+            health = await self.check_provider_health(provider_name)
+
+            if not (
+                health.get("status") == "healthy" or health.get("available", False)
+            ):
+                return None
+
+            cost_estimate = await self._estimate_request_cost(
+                provider_name, language, use_case
+            )
+
+            if budget_status.remaining_budget < cost_estimate:
+                logger.info(
+                    f"Provider {provider_name} too expensive "
+                    f"(${cost_estimate:.4f} > ${budget_status.remaining_budget:.4f})"
+                )
+                return None
+
+            return ProviderSelection(
+                provider_name=provider_name,
+                service=self.providers[provider_name],
+                model=self._get_model_for_provider(provider_name, language),
+                reason=f"Best available provider for {language}",
+                confidence=0.9,
+                cost_estimate=cost_estimate,
+                is_fallback=False,
+            )
+
+        except Exception as e:
+            logger.warning(f"Provider {provider_name} check failed: {e}")
+            return None
+
+    async def _select_best_cloud_provider(
+        self,
+        cloud_providers: List[str],
+        language: str,
+        use_case: str,
+        budget_status: Any,
+    ) -> Optional[ProviderSelection]:
+        """Try to select the best available cloud provider"""
+        for provider_name in cloud_providers:
+            selection = await self._try_cloud_provider(
+                provider_name, language, use_case, budget_status
+            )
+            if selection:
+                return selection
+        return None
+
     async def select_provider(
         self,
         language: str = "en",
@@ -168,67 +241,32 @@ class EnhancedAIRouter:
         Returns:
             Provider selection with reasoning
         """
-
         # Check if user wants local-only mode
-        if force_local or (user_preferences and user_preferences.get("local_only")):
+        if self._should_use_local_only(force_local, user_preferences):
             return await self._select_local_provider(language, "user_preference")
 
         # Check budget status
         budget_status = await self.check_budget_status()
 
         # If budget exceeded, use local fallback
-        if budget_status.alert_level in [BudgetAlert.CRITICAL, BudgetAlert.RED]:
+        if self._should_use_budget_fallback(budget_status):
             logger.info(
                 f"Budget {budget_status.alert_level.value}, falling back to local models"
             )
             return await self._select_local_provider(language, "budget_exceeded")
 
-        # Get preferred providers for language
-        preferred_providers = self.language_preferences.get(
-            language, ["claude", "ollama"]
-        )
-
-        # Filter out Ollama for now (we'll use it as fallback)
-        cloud_providers = [p for p in preferred_providers if p != "ollama"]
-
-        # ENHANCED: Sort providers by cost efficiency for the use case
+        # Get cloud providers and sort by cost efficiency
+        cloud_providers = self._get_cloud_providers(language)
         cloud_providers = await self._sort_providers_by_cost_efficiency(
             cloud_providers, language, use_case, budget_status
         )
 
-        # Check cloud provider availability and health
-        for provider_name in cloud_providers:
-            if provider_name not in self.providers:
-                continue
-
-            try:
-                health = await self.check_provider_health(provider_name)
-
-                if health.get("status") == "healthy" or health.get("available", False):
-                    # Estimate cost for this request
-                    cost_estimate = await self._estimate_request_cost(
-                        provider_name, language, use_case
-                    )
-
-                    # Check if we can afford this request
-                    if budget_status.remaining_budget >= cost_estimate:
-                        return ProviderSelection(
-                            provider_name=provider_name,
-                            service=self.providers[provider_name],
-                            model=self._get_model_for_provider(provider_name, language),
-                            reason=f"Best available provider for {language}",
-                            confidence=0.9,
-                            cost_estimate=cost_estimate,
-                            is_fallback=False,
-                        )
-                    else:
-                        logger.info(
-                            f"Provider {provider_name} too expensive (${cost_estimate:.4f} > ${budget_status.remaining_budget:.4f})"
-                        )
-
-            except Exception as e:
-                logger.warning(f"Provider {provider_name} check failed: {e}")
-                continue
+        # Try to select best cloud provider
+        selection = await self._select_best_cloud_provider(
+            cloud_providers, language, use_case, budget_status
+        )
+        if selection:
+            return selection
 
         # All cloud providers failed or too expensive - use local fallback
         logger.info(
