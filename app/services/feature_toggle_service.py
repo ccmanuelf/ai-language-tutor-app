@@ -116,35 +116,55 @@ class FeatureToggleService:
     def _deserialize_datetime_recursive(self, obj):
         """Recursively convert ISO datetime strings back to datetime objects."""
         if isinstance(obj, str):
-            # Try to parse as datetime if it looks like ISO format
-            if (
-                len(obj) >= 19
-                and "T" in obj
-                and ":" in obj
-                and (
-                    obj.endswith("Z")
-                    or "+" in obj[-6:]
-                    or "-" in obj[-6:]
-                    or "." in obj
-                )
-            ):
-                try:
-                    # Handle various datetime formats
-                    if obj.endswith("Z"):
-                        obj = obj[:-1] + "+00:00"
-                    return datetime.fromisoformat(obj)
-                except ValueError:
-                    return obj
-            return obj
+            return self._try_parse_datetime_string(obj)
         elif isinstance(obj, dict):
-            return {
-                key: self._deserialize_datetime_recursive(value)
-                for key, value in obj.items()
-            }
+            return self._deserialize_dict(obj)
         elif isinstance(obj, list):
-            return [self._deserialize_datetime_recursive(item) for item in obj]
+            return self._deserialize_list(obj)
         else:
             return obj
+
+    def _try_parse_datetime_string(self, text: str):
+        """Try to parse a string as ISO datetime"""
+        if not self._looks_like_iso_datetime(text):
+            return text
+
+        try:
+            normalized = self._normalize_datetime_string(text)
+            return datetime.fromisoformat(normalized)
+        except ValueError:
+            return text
+
+    def _looks_like_iso_datetime(self, text: str) -> bool:
+        """Check if string looks like ISO datetime format"""
+        return (
+            len(text) >= 19
+            and "T" in text
+            and ":" in text
+            and (
+                text.endswith("Z")
+                or "+" in text[-6:]
+                or "-" in text[-6:]
+                or "." in text
+            )
+        )
+
+    def _normalize_datetime_string(self, text: str) -> str:
+        """Normalize datetime string for parsing"""
+        if text.endswith("Z"):
+            return text[:-1] + "+00:00"
+        return text
+
+    def _deserialize_dict(self, data: dict) -> dict:
+        """Recursively deserialize dictionary values"""
+        return {
+            key: self._deserialize_datetime_recursive(value)
+            for key, value in data.items()
+        }
+
+    def _deserialize_list(self, items: list) -> list:
+        """Recursively deserialize list items"""
+        return [self._deserialize_datetime_recursive(item) for item in items]
 
     async def _load_events(self):
         """Load feature toggle events from storage."""
