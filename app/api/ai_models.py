@@ -95,6 +95,48 @@ async def get_system_overview(admin_user=Depends(require_admin_access)):
 
 
 @router.get("/models")
+def _filter_by_provider(models: List[Dict], provider: Optional[str]) -> List[Dict]:
+    """Filter models by provider"""
+    if not provider:
+        return models
+    return [m for m in models if m.get("provider", "").lower() == provider.lower()]
+
+
+def _filter_by_status(models: List[Dict], status: Optional[str]) -> List[Dict]:
+    """Filter models by status"""
+    if not status:
+        return models
+    return [m for m in models if m.get("status", "").lower() == status.lower()]
+
+
+def _filter_by_search(models: List[Dict], search: Optional[str]) -> List[Dict]:
+    """Filter models by search term"""
+    if not search:
+        return models
+
+    search_lower = search.lower()
+    return [
+        m
+        for m in models
+        if search_lower in m.get("display_name", "").lower()
+        or search_lower in m.get("model_name", "").lower()
+        or search_lower in m.get("provider", "").lower()
+    ]
+
+
+def _apply_all_filters(
+    models: List[Dict],
+    provider: Optional[str],
+    status: Optional[str],
+    search: Optional[str],
+) -> List[Dict]:
+    """Apply all filters to model list"""
+    models = _filter_by_provider(models, provider)
+    models = _filter_by_status(models, status)
+    models = _filter_by_search(models, search)
+    return models
+
+
 async def get_models(
     category: Optional[str] = Query(None, description="Filter by model category"),
     provider: Optional[str] = Query(None, description="Filter by provider"),
@@ -120,28 +162,7 @@ async def get_models(
         models = await ai_model_manager.get_all_models(
             category=category, enabled_only=enabled_only
         )
-
-        # Apply additional filters
-        if provider:
-            models = [
-                m for m in models if m.get("provider", "").lower() == provider.lower()
-            ]
-
-        if status:
-            models = [
-                m for m in models if m.get("status", "").lower() == status.lower()
-            ]
-
-        if search:
-            search_lower = search.lower()
-            models = [
-                m
-                for m in models
-                if search_lower in m.get("display_name", "").lower()
-                or search_lower in m.get("model_name", "").lower()
-                or search_lower in m.get("provider", "").lower()
-            ]
-
+        models = _apply_all_filters(models, provider, status, search)
         return JSONResponse(content={"models": models, "total": len(models)})
 
     except Exception as e:
