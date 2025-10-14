@@ -260,143 +260,13 @@ class DataSyncService:
         result = SyncResult(True, 0, 0, 0, [], [], 0.0, datetime.now())
 
         try:
-            # Get last sync time for incremental sync
-            last_sync = self.last_sync_times.get(
-                f"{user_id}_conversations", datetime.min
-            )
+            last_sync = self._get_last_sync_time(user_id, "conversations")
 
             if direction in [SyncDirection.DOWN, SyncDirection.BIDIRECTIONAL]:
-                # Download recent conversations from server
-                with self.db_manager.mariadb_session_scope() as session:
-                    conversations = (
-                        session.query(Conversation)
-                        .filter(
-                            and_(
-                                Conversation.user_id
-                                == session.query(User.id)
-                                .filter(User.user_id == user_id)
-                                .scalar(),
-                                Conversation.last_message_at > last_sync,
-                            )
-                        )
-                        .all()
-                    )
-
-                    for conv in conversations:
-                        # Save conversation metadata locally
-                        _conv_data = {  # noqa: F841 - Intentional placeholder
-                            "conversation_id": conv.conversation_id,
-                            "title": conv.title,
-                            "language": conv.language,
-                            "ai_model": conv.ai_model,
-                            "started_at": conv.started_at.isoformat(),
-                            "last_message_at": conv.last_message_at.isoformat(),
-                        }
-
-                        # Get messages for this conversation
-                        messages = (
-                            session.query(ConversationMessage)
-                            .filter(ConversationMessage.conversation_id == conv.id)
-                            .order_by(ConversationMessage.created_at)
-                            .all()
-                        )
-
-                        for msg in messages:
-                            success = self.local_db_manager.save_conversation_locally(
-                                user_id=user_id,
-                                conversation_id=conv.conversation_id,
-                                message_type=msg.role.value,
-                                content=msg.content,
-                                language=msg.language,
-                                metadata={
-                                    "timestamp": msg.created_at.isoformat(),
-                                    "token_count": msg.token_count,
-                                    "pronunciation_score": msg.pronunciation_score,
-                                },
-                            )
-
-                            result.items_processed += 1
-                            if success:
-                                result.items_success += 1
-                            else:
-                                result.items_failed += 1
+                self._download_conversations_from_server(user_id, last_sync, result)
 
             if direction in [SyncDirection.UP, SyncDirection.BIDIRECTIONAL]:
-                # Upload recent local conversations to server
-                recent_conversations = self.local_db_manager.get_recent_conversations(
-                    user_id, limit=100
-                )
-
-                # Group messages by conversation
-                conversations_to_sync = {}
-                for msg in recent_conversations:
-                    conv_id = msg["conversation_id"]
-                    if conv_id not in conversations_to_sync:
-                        conversations_to_sync[conv_id] = []
-                    conversations_to_sync[conv_id].append(msg)
-
-                # Process each conversation
-                with self.db_manager.mariadb_session_scope() as session:
-                    server_user = (
-                        session.query(User).filter(User.user_id == user_id).first()
-                    )
-                    if not server_user:
-                        result.errors.append(f"User {user_id} not found on server")
-                        return result
-
-                    for conv_id, messages in conversations_to_sync.items():
-                        # Check if conversation exists on server
-                        server_conv = (
-                            session.query(Conversation)
-                            .filter(Conversation.conversation_id == conv_id)
-                            .first()
-                        )
-
-                        if not server_conv:
-                            # Create new conversation on server
-                            server_conv = Conversation(
-                                conversation_id=conv_id,
-                                user_id=server_user.id,
-                                language=messages[0].get("language", "en"),
-                                title=f"Conversation {conv_id[:8]}",
-                                started_at=datetime.fromisoformat(
-                                    messages[0]["timestamp"]
-                                ),
-                                last_message_at=datetime.fromisoformat(
-                                    messages[-1]["timestamp"]
-                                ),
-                            )
-                            session.add(server_conv)
-                            session.flush()
-
-                        # Add messages that don't exist on server
-                        for msg in messages:
-                            existing_msg = (
-                                session.query(ConversationMessage)
-                                .filter(
-                                    and_(
-                                        ConversationMessage.conversation_id
-                                        == server_conv.id,
-                                        ConversationMessage.content == msg["content"],
-                                        ConversationMessage.created_at
-                                        >= datetime.fromisoformat(msg["timestamp"])
-                                        - timedelta(seconds=1),
-                                    )
-                                )
-                                .first()
-                            )
-
-                            if not existing_msg:
-                                new_msg = ConversationMessage(
-                                    conversation_id=server_conv.id,
-                                    role=msg["message_type"],
-                                    content=msg["content"],
-                                    language=msg.get("language"),
-                                    created_at=datetime.fromisoformat(msg["timestamp"]),
-                                )
-                                session.add(new_msg)
-                                result.items_processed += 1
-                                result.items_success += 1
+                self._upload_conversations_to_server(user_id, result)
 
         except Exception as e:
             logger.error(f"Error syncing conversations: {e}")
@@ -404,6 +274,168 @@ class DataSyncService:
             result.success = False
 
         return result
+
+    def _get_last_sync_time(self, user_id: str, data_type: str) -> datetime:
+        """Get the last sync timestamp for incremental sync"""
+        return self.last_sync_times.get(f"{user_id}_{data_type}", datetime.min)
+
+    def _download_conversations_from_server(
+        self, user_id: str, last_sync: datetime, result: SyncResult
+    ) -> None:
+        """Download recent conversations from server to local storage"""
+        with self.db_manager.mariadb_session_scope() as session:
+            conversations = self._fetch_server_conversations(
+                session, user_id, last_sync
+            )
+
+            for conv in conversations:
+                messages = self._fetch_conversation_messages(session, conv.id)
+                self._save_messages_locally(user_id, conv, messages, result)
+
+    def _fetch_server_conversations(self, session, user_id: str, last_sync: datetime):
+        """Fetch conversations from server that were updated after last sync"""
+        return (
+            session.query(Conversation)
+            .filter(
+                and_(
+                    Conversation.user_id
+                    == session.query(User.id).filter(User.user_id == user_id).scalar(),
+                    Conversation.last_message_at > last_sync,
+                )
+            )
+            .all()
+        )
+
+    def _fetch_conversation_messages(self, session, conversation_id: int):
+        """Fetch all messages for a specific conversation"""
+        return (
+            session.query(ConversationMessage)
+            .filter(ConversationMessage.conversation_id == conversation_id)
+            .order_by(ConversationMessage.created_at)
+            .all()
+        )
+
+    def _save_messages_locally(
+        self, user_id: str, conv, messages, result: SyncResult
+    ) -> None:
+        """Save conversation messages to local storage"""
+        for msg in messages:
+            success = self.local_db_manager.save_conversation_locally(
+                user_id=user_id,
+                conversation_id=conv.conversation_id,
+                message_type=msg.role.value,
+                content=msg.content,
+                language=msg.language,
+                metadata={
+                    "timestamp": msg.created_at.isoformat(),
+                    "token_count": msg.token_count,
+                    "pronunciation_score": msg.pronunciation_score,
+                },
+            )
+
+            result.items_processed += 1
+            if success:
+                result.items_success += 1
+            else:
+                result.items_failed += 1
+
+    def _upload_conversations_to_server(self, user_id: str, result: SyncResult) -> None:
+        """Upload recent local conversations to server"""
+        recent_conversations = self.local_db_manager.get_recent_conversations(
+            user_id, limit=100
+        )
+        conversations_to_sync = self._group_messages_by_conversation(
+            recent_conversations
+        )
+
+        with self.db_manager.mariadb_session_scope() as session:
+            server_user = session.query(User).filter(User.user_id == user_id).first()
+            if not server_user:
+                result.errors.append(f"User {user_id} not found on server")
+                return
+
+            self._sync_conversations_to_server(
+                session, server_user, conversations_to_sync, result
+            )
+
+    def _group_messages_by_conversation(self, messages: list) -> dict:
+        """Group messages by conversation ID"""
+        conversations = {}
+        for msg in messages:
+            conv_id = msg["conversation_id"]
+            if conv_id not in conversations:
+                conversations[conv_id] = []
+            conversations[conv_id].append(msg)
+        return conversations
+
+    def _sync_conversations_to_server(
+        self, session, server_user, conversations_to_sync: dict, result: SyncResult
+    ) -> None:
+        """Sync each conversation and its messages to server"""
+        for conv_id, messages in conversations_to_sync.items():
+            server_conv = self._get_or_create_server_conversation(
+                session, server_user, conv_id, messages
+            )
+            self._sync_messages_to_server(session, server_conv, messages, result)
+
+    def _get_or_create_server_conversation(
+        self, session, server_user, conv_id: str, messages: list
+    ):
+        """Get existing conversation from server or create new one"""
+        server_conv = (
+            session.query(Conversation)
+            .filter(Conversation.conversation_id == conv_id)
+            .first()
+        )
+
+        if not server_conv:
+            server_conv = Conversation(
+                conversation_id=conv_id,
+                user_id=server_user.id,
+                language=messages[0].get("language", "en"),
+                title=f"Conversation {conv_id[:8]}",
+                started_at=datetime.fromisoformat(messages[0]["timestamp"]),
+                last_message_at=datetime.fromisoformat(messages[-1]["timestamp"]),
+            )
+            session.add(server_conv)
+            session.flush()
+
+        return server_conv
+
+    def _sync_messages_to_server(
+        self, session, server_conv, messages: list, result: SyncResult
+    ) -> None:
+        """Sync messages to server, avoiding duplicates"""
+        for msg in messages:
+            if not self._message_exists_on_server(session, server_conv.id, msg):
+                new_msg = ConversationMessage(
+                    conversation_id=server_conv.id,
+                    role=msg["message_type"],
+                    content=msg["content"],
+                    language=msg.get("language"),
+                    created_at=datetime.fromisoformat(msg["timestamp"]),
+                )
+                session.add(new_msg)
+                result.items_processed += 1
+                result.items_success += 1
+
+    def _message_exists_on_server(
+        self, session, conversation_id: int, msg: dict
+    ) -> bool:
+        """Check if a message already exists on server"""
+        existing_msg = (
+            session.query(ConversationMessage)
+            .filter(
+                and_(
+                    ConversationMessage.conversation_id == conversation_id,
+                    ConversationMessage.content == msg["content"],
+                    ConversationMessage.created_at
+                    >= datetime.fromisoformat(msg["timestamp"]) - timedelta(seconds=1),
+                )
+            )
+            .first()
+        )
+        return existing_msg is not None
 
     async def _sync_learning_progress(
         self, user_id: str, direction: SyncDirection
