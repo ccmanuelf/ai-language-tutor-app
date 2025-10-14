@@ -11,6 +11,7 @@ from datetime import datetime
 
 try:
     import anthropic
+
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
@@ -38,18 +39,31 @@ class ClaudeService(BaseAIService):
         self.settings = get_settings()
         self.client = None
 
-        if ANTHROPIC_AVAILABLE and hasattr(self.settings, 'ANTHROPIC_API_KEY') and self.settings.ANTHROPIC_API_KEY:
+        if (
+            ANTHROPIC_AVAILABLE
+            and hasattr(self.settings, "ANTHROPIC_API_KEY")
+            and self.settings.ANTHROPIC_API_KEY
+        ):
             try:
-                self.client = anthropic.Anthropic(api_key=self.settings.ANTHROPIC_API_KEY)
+                self.client = anthropic.Anthropic(
+                    api_key=self.settings.ANTHROPIC_API_KEY
+                )
                 self.is_available = True
             except Exception as e:
                 logger.error(f"Failed to initialize Claude client: {e}")
                 self.is_available = False
         else:
-            logger.warning("Claude API not available - missing API key or anthropic library")
+            logger.warning(
+                "Claude API not available - missing API key or anthropic library"
+            )
             self.is_available = False
 
-    def _get_conversation_prompt(self, language: str, user_message: str, conversation_history: Optional[List[Dict[str, str]]] = None) -> str:
+    def _get_conversation_prompt(
+        self,
+        language: str,
+        user_message: str,
+        conversation_history: Optional[List[Dict[str, str]]] = None,
+    ) -> str:
         """Generate dynamic, emotionally rich conversation prompt with context"""
 
         # Build conversation context
@@ -57,8 +71,8 @@ class ClaudeService(BaseAIService):
         if conversation_history and len(conversation_history) > 1:
             recent_topics = []
             for msg in conversation_history[-3:]:  # Last 3 exchanges
-                if msg.get('role') == 'user':
-                    recent_topics.append(msg.get('content', '')[:50])
+                if msg.get("role") == "user":
+                    recent_topics.append(msg.get("content", "")[:50])
             if recent_topics:
                 _context_summary = f"\n\nCONVERSATION CONTEXT: We've been talking about: {', '.join(recent_topics)}. Continue this natural flow."  # noqa: F841 - Intentional placeholder
 
@@ -67,35 +81,71 @@ class ClaudeService(BaseAIService):
                 "persona": "You are Alex, a genuinely enthusiastic and warm conversation partner who loves connecting with people. You have real emotions, get excited about interesting topics, and react naturally to what people tell you. You're like talking to your most engaging friend.",
                 "style": "BE GENUINELY CONVERSATIONAL - not an AI assistant! React emotionally, use casual speech patterns, interrupt yourself with excitement, ask follow-up questions that show you're really listening. Use contractions, filler words sometimes (like 'Oh!' 'Wow!' 'Really?'), and vary your sentence length dramatically.",
                 "mood_triggers": {
-                    "exciting": ["amazing", "incredible", "awesome", "love", "fantastic"],
+                    "exciting": [
+                        "amazing",
+                        "incredible",
+                        "awesome",
+                        "love",
+                        "fantastic",
+                    ],
                     "empathetic": ["difficult", "hard", "sad", "problem", "worried"],
-                    "curious": ["interesting", "never", "first time", "different", "new"]
+                    "curious": [
+                        "interesting",
+                        "never",
+                        "first time",
+                        "different",
+                        "new",
+                    ],
                 },
                 "response_styles": [
                     "Get excited and ask 2-3 rapid follow-up questions",
                     "Share a brief relatable experience then redirect conversation",
                     "Express genuine surprise/interest and dig deeper",
                     "Be encouraging and build on what they said",
-                    "Challenge them playfully to elaborate"
-                ]
+                    "Challenge them playfully to elaborate",
+                ],
             },
             "es": {
                 "persona": "Eres María, una persona súper expresiva y cálida de México. Te emocionas genuinamente con las conversaciones, usas mucha expresión, y reaccionas como una amiga real que ama platicar.",
                 "style": "¡SÉ SÚPER NATURAL Y EXPRESIVA! Usa expresiones mexicanas auténticas, interrumpete con emoción, haz preguntas que muestren que realmente estás escuchando. Varía dramáticamente la longitud de tus frases y usa interjecciones como '¡Órale!' '¡No manches!' '¿En serio?'",
                 "mood_triggers": {
-                    "exciting": ["increíble", "genial", "amor", "fantástico", "padrísimo"],
+                    "exciting": [
+                        "increíble",
+                        "genial",
+                        "amor",
+                        "fantástico",
+                        "padrísimo",
+                    ],
                     "empathetic": ["difícil", "triste", "problema", "preocupado"],
-                    "curious": ["interesante", "nunca", "primera vez", "diferente", "nuevo"]
-                }
+                    "curious": [
+                        "interesante",
+                        "nunca",
+                        "primera vez",
+                        "diferente",
+                        "nuevo",
+                    ],
+                },
             },
             "fr": {
                 "persona": "Tu es Sophie, une Parisienne passionnée et expressive qui adore les vraies conversations. Tu réagis avec émotion, tu t'enthousiasmes, et tu parles comme une vraie amie française.",
                 "style": "SOIS VRAIMENT FRANÇAISE ET EXPRESSIVE! Utilise des expressions parisiennes authentiques, interromps-toi avec enthousiasme, pose des questions qui montrent que tu écoutes vraiment. Utilise 'Oh là là!' 'Dis donc!' 'C'est dingue!' et varie énormément tes phrases.",
                 "mood_triggers": {
-                    "exciting": ["incroyable", "génial", "adore", "fantastique", "dingue"],
+                    "exciting": [
+                        "incroyable",
+                        "génial",
+                        "adore",
+                        "fantastique",
+                        "dingue",
+                    ],
                     "empathetic": ["difficile", "triste", "problème", "inquiet"],
-                    "curious": ["intéressant", "jamais", "première fois", "différent", "nouveau"]
-                }
+                    "curious": [
+                        "intéressant",
+                        "jamais",
+                        "première fois",
+                        "différent",
+                        "nouveau",
+                    ],
+                },
             },
             "zh": {
                 "persona": "你是小李，一个超级热情和真诚的北京人。你对对话充满热情，会真实地表达情感，像真正的朋友一样反应自然。",
@@ -103,9 +153,9 @@ class ClaudeService(BaseAIService):
                 "mood_triggers": {
                     "exciting": ["太棒了", "不可思议", "厉害", "爱", "精彩"],
                     "empathetic": ["困难", "难过", "问题", "担心"],
-                    "curious": ["有趣", "从来没有", "第一次", "不同", "新的"]
-                }
-            }
+                    "curious": ["有趣", "从来没有", "第一次", "不同", "新的"],
+                },
+            },
         }
 
         # Get language-specific context
@@ -125,7 +175,7 @@ class ClaudeService(BaseAIService):
             "exciting": "The user seems excited! Match their energy! Be super enthusiastic, use lots of exclamation points, and ask rapid follow-up questions!",
             "empathetic": "The user might be going through something difficult. Be warm, understanding, and supportive. Ask caring questions.",
             "curious": "The user mentioned something interesting! Show genuine curiosity, ask thoughtful questions, and encourage them to share more.",
-            "neutral": "Have a warm, engaging conversation. Be naturally curious about them as a person."
+            "neutral": "Have a warm, engaging conversation. Be naturally curious about them as a person.",
         }
 
         prompt = """{lang_context['persona']}
@@ -149,6 +199,113 @@ Respond naturally as if you're their {language} friend:"""
 
         return prompt
 
+    def _validate_claude_request(self) -> None:
+        """Validate Claude service is available"""
+        if not self.is_available:
+            raise Exception(
+                "Claude service not available - check API key configuration"
+            )
+
+    def _extract_user_message(
+        self, messages: Optional[List[Dict[str, str]]], message: Optional[str]
+    ) -> str:
+        """Extract user message from messages or message parameter"""
+        if message and not messages:
+            return message
+        elif messages:
+            return messages[-1].get("content", "") if messages else ""
+        else:
+            return "Hello! I'd like to practice conversation."
+
+    def _get_model_name(self, model: Optional[str]) -> str:
+        """Get model name with default fallback"""
+        return model or "claude-3-haiku-20240307"
+
+    def _build_claude_request(
+        self, model_name: str, conversation_prompt: str, kwargs: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Build Claude API request parameters"""
+        return {
+            "model": model_name,
+            "max_tokens": kwargs.get("max_tokens", 300),
+            "temperature": kwargs.get("temperature", 0.8),
+            "messages": [{"role": "user", "content": conversation_prompt}],
+        }
+
+    async def _execute_claude_request(self, request_params: Dict[str, Any]) -> Any:
+        """Execute Claude API request"""
+        return self.client.messages.create(**request_params)
+
+    def _calculate_claude_cost(self, response: Any) -> float:
+        """Calculate cost based on token usage"""
+        input_tokens = response.usage.input_tokens
+        output_tokens = response.usage.output_tokens
+        return (input_tokens * self.cost_per_token_input) + (
+            output_tokens * self.cost_per_token_output
+        )
+
+    def _extract_response_content(self, response: Any) -> str:
+        """Extract text content from Claude response"""
+        response_content = ""
+        if response.content:
+            for content_block in response.content:
+                if hasattr(content_block, "text"):
+                    response_content += content_block.text
+                    break
+
+        if not response_content:
+            response_content = "I'm sorry, I couldn't generate a response."
+
+        return response_content
+
+    def _build_success_response(
+        self,
+        response_content: str,
+        model_name: str,
+        language: str,
+        processing_time: float,
+        cost: float,
+        response: Any,
+        context: Optional[Dict[str, Any]],
+    ) -> AIResponse:
+        """Build successful AI response object"""
+        return AIResponse(
+            content=response_content,
+            model=model_name,
+            provider="claude",
+            language=language,
+            processing_time=processing_time,
+            cost=cost,
+            status=AIResponseStatus.SUCCESS,
+            metadata={
+                "input_tokens": response.usage.input_tokens,
+                "output_tokens": response.usage.output_tokens,
+                "user_id": context.get("user_id") if context else None,
+                "conversation_style": "natural_tutoring",
+            },
+        )
+
+    def _build_error_response(
+        self,
+        error: Exception,
+        model: Optional[str],
+        language: str,
+        processing_time: float,
+    ) -> AIResponse:
+        """Build error AI response object"""
+        logger.error(f"Claude API error: {error}")
+        return AIResponse(
+            content="I'm having trouble connecting right now. Let's try again! What would you like to talk about?",
+            model=model or "claude-3-haiku-20240307",
+            provider="claude",
+            language=language,
+            processing_time=processing_time,
+            cost=0.0,
+            status=AIResponseStatus.ERROR,
+            error_message=str(error),
+            metadata={"fallback_response": True},
+        )
+
     async def generate_response(
         self,
         messages: Optional[List[Dict[str, str]]] = None,
@@ -157,92 +314,42 @@ Respond naturally as if you're their {language} friend:"""
         message: Optional[str] = None,
         context: Optional[Dict[str, Any]] = None,
         conversation_history: Optional[List[Dict[str, str]]] = None,
-        **kwargs
+        **kwargs,
     ) -> AIResponse:
         """Generate natural conversation response using Claude"""
-
         start_time = datetime.now()
 
-        if not self.is_available:
-            raise Exception("Claude service not available - check API key configuration")
+        self._validate_claude_request()
 
         try:
-            # Handle single message input (from conversation API)
-            if message and not messages:
-                user_message = message
-            elif messages:
-                user_message = messages[-1].get("content", "") if messages else ""
-            else:
-                user_message = "Hello! I'd like to practice conversation."
-
-            # Use specified model or default
-            model_name = model or "claude-3-haiku-20240307"
-
-            # Generate natural conversation prompt with history
-            conversation_prompt = self._get_conversation_prompt(language, user_message, conversation_history)
-
-            # Make API call to Claude
-            response = self.client.messages.create(
-                model=model_name,
-                max_tokens=kwargs.get("max_tokens", 300),
-                temperature=kwargs.get("temperature", 0.8),  # Higher temperature for more natural responses
-                messages=[
-                    {
-                        "role": "user",
-                        "content": conversation_prompt
-                    }
-                ]
+            user_message = self._extract_user_message(messages, message)
+            model_name = self._get_model_name(model)
+            conversation_prompt = self._get_conversation_prompt(
+                language, user_message, conversation_history
             )
 
+            request_params = self._build_claude_request(
+                model_name, conversation_prompt, kwargs
+            )
+            response = await self._execute_claude_request(request_params)
+
             processing_time = (datetime.now() - start_time).total_seconds()
+            cost = self._calculate_claude_cost(response)
+            response_content = self._extract_response_content(response)
 
-            # Calculate cost
-            input_tokens = response.usage.input_tokens
-            output_tokens = response.usage.output_tokens
-            cost = (input_tokens * self.cost_per_token_input) + (output_tokens * self.cost_per_token_output)
-
-            # Extract response content safely
-            response_content = ""
-            if response.content:
-                for content_block in response.content:
-                    if hasattr(content_block, 'text'):
-                        response_content += content_block.text
-                        break
-
-            if not response_content:
-                response_content = "I'm sorry, I couldn't generate a response."
-
-            return AIResponse(
-                content=response_content,
-                model=model_name,
-                provider="claude",
-                language=language,
-                processing_time=processing_time,
-                cost=cost,
-                status=AIResponseStatus.SUCCESS,
-                metadata={
-                    "input_tokens": input_tokens,
-                    "output_tokens": output_tokens,
-                    "user_id": context.get("user_id") if context else None,
-                    "conversation_style": "natural_tutoring"
-                }
+            return self._build_success_response(
+                response_content,
+                model_name,
+                language,
+                processing_time,
+                cost,
+                response,
+                context,
             )
 
         except Exception as e:
             processing_time = (datetime.now() - start_time).total_seconds()
-            logger.error(f"Claude API error: {e}")
-
-            return AIResponse(
-                content="I'm having trouble connecting right now. Let's try again! What would you like to talk about?",
-                model=model or "claude-3-haiku-20240307",
-                provider="claude",
-                language=language,
-                processing_time=processing_time,
-                cost=0.0,
-                status=AIResponseStatus.ERROR,
-                error_message=str(e),
-                metadata={"fallback_response": True}
-            )
+            return self._build_error_response(e, model, language, processing_time)
 
     async def check_availability(self) -> bool:
         """Check if Claude service is available"""
@@ -254,7 +361,7 @@ Respond naturally as if you're their {language} friend:"""
             _test_response = self.client.messages.create(  # noqa: F841 - Intentional placeholder
                 model="claude-3-haiku-20240307",
                 max_tokens=10,
-                messages=[{"role": "user", "content": "Hi"}]
+                messages=[{"role": "user", "content": "Hi"}],
             )
             return True
         except Exception as e:
@@ -274,7 +381,7 @@ Respond naturally as if you're their {language} friend:"""
             "cost_per_1k_input_tokens": self.cost_per_token_input * 1000,
             "cost_per_1k_output_tokens": self.cost_per_token_output * 1000,
             "api_configured": bool(self.client),
-            "last_check": datetime.now().isoformat()
+            "last_check": datetime.now().isoformat(),
         }
 
 

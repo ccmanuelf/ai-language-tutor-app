@@ -1,0 +1,15 @@
+{
+  "flowchart_id": "flowchart_es_verb_conjugation_20251014171022",
+  "concept": "verb_conjugation",
+  "title": "Integration Test: Present Tense",
+  "description": "Testing flowchart integration",
+  "language": "es",
+  "difficulty_level": 1,
+  "nodes": [],
+  "connections": [],
+  "learning_outcomes": [],
+  "created_at": "2025-10-14T17:10:22.394223",
+  "metadata": {
+    "version": "1.0"
+  }
+}
