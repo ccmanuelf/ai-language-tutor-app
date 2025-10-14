@@ -1471,100 +1471,140 @@ class SpeechProcessor:
 
     async def get_speech_pipeline_status(self) -> Dict[str, Any]:
         """Get status of speech processing pipeline"""
-
-        # Check if Watson clients are actually working
         watson_stt_functional = bool(
             self.watson_stt_client and self.watson_stt_available
         )
         watson_tts_functional = bool(
             self.watson_tts_client and self.watson_tts_available
         )
-
-        # Get settings for API key checks
-        try:
-            settings = get_settings()
-        except Exception:
-            settings = None
+        settings = self._get_settings_safely()
 
         return {
-            "status": "operational"
-            if (watson_stt_functional or watson_tts_functional)
-            else "limited",
+            "status": self._get_overall_status(
+                watson_stt_functional, watson_tts_functional
+            ),
             "watson_sdk_available": self.watson_sdk_available,
-            "watson_stt": {
-                "status": "operational" if watson_stt_functional else "unavailable",
-                "configured": self.watson_stt_available,
-                "client_initialized": bool(self.watson_stt_client),
-                "api_key_configured": bool(
-                    getattr(settings, "IBM_WATSON_STT_API_KEY", None)
-                )
-                if settings
-                else False,
-                "service_url": getattr(settings, "IBM_WATSON_STT_URL", "not_configured")
-                if settings
-                else "not_configured",
-            },
-            "watson_tts": {
-                "status": "operational" if watson_tts_functional else "unavailable",
-                "configured": self.watson_tts_available,
-                "client_initialized": bool(self.watson_tts_client),
-                "api_key_configured": bool(
-                    getattr(settings, "IBM_WATSON_TTS_API_KEY", None)
-                )
-                if settings
-                else False,
-                "service_url": getattr(settings, "IBM_WATSON_TTS_URL", "not_configured")
-                if settings
-                else "not_configured",
-            },
+            "watson_stt": self._build_watson_stt_status(
+                watson_stt_functional, settings
+            ),
+            "watson_tts": self._build_watson_tts_status(
+                watson_tts_functional, settings
+            ),
             "watson_stt_available": watson_stt_functional,
             "watson_tts_available": watson_tts_functional,
             "audio_libs_available": self.audio_libs_available,
             "supported_formats": [fmt.value for fmt in AudioFormat],
             "supported_languages": list(self.pronunciation_models.keys()),
-            "features": {
-                "speech_recognition": watson_stt_functional,
-                "speech_synthesis": watson_tts_functional,
-                "pronunciation_analysis": True,
-                "audio_enhancement": self.audio_libs_available,
-                "real_time_processing": self.audio_libs_available
-                and self.watson_sdk_available,
-            },
-            "configuration": {
-                "default_sample_rate": self.default_sample_rate,
-                "default_channels": self.default_channels,
-                "chunk_size": self.chunk_size,
-            },
-            "api_models": {
-                "watson_stt_models": [
-                    "en-US_BroadbandModel",
-                    "fr-FR_BroadbandModel",
-                    "es-ES_BroadbandModel",
-                    "de-DE_BroadbandModel",
-                    "zh-CN_BroadbandModel",
-                    "ja-JP_BroadbandModel",
-                ],
-                "watson_tts_voices": [
-                    "en-US_AllisonV3Voice",
-                    "fr-FR_ReneeV3Voice",
-                    "es-ES_LauraV3Voice",
-                    "de-DE_BirgitV3Voice",
-                    "ja-JP_EmiV3Voice",
-                    "ko-KR_YoungmiVoice",
-                ],
-            },
-            "chinese_support": {
-                "stt_available": True,  # Chinese STT (zh-CN_BroadbandModel) is available
-                "tts_native_voice": False,  # No native Chinese voice in current plan
-                "tts_fallback": "en-US_AllisonV3Voice",  # English fallback for Chinese
-                "pronunciation_learning": True,  # Enhanced SSML for Chinese learning
-                "note": "Chinese STT fully supported. TTS uses English voice with Chinese-optimized SSML.",
-            },
-            "spanish_support": {
-                "stt_model": "es-MX_BroadbandModel",  # Mexican Spanish STT as requested
-                "tts_voice": "es-LA_SofiaV3Voice",  # Latin American Spanish (closest to es-MX)
-                "note": "Using Mexican Spanish STT and Latin American Spanish TTS (closest to es-MX preference)",
-            },
+            "features": self._build_features_status(
+                watson_stt_functional, watson_tts_functional
+            ),
+            "configuration": self._build_configuration_dict(),
+            "api_models": self._build_api_models_dict(),
+            "chinese_support": self._build_chinese_support_dict(),
+            "spanish_support": self._build_spanish_support_dict(),
+        }
+
+    def _get_settings_safely(self):
+        """Get settings with exception handling"""
+        try:
+            return get_settings()
+        except Exception:
+            return None
+
+    def _get_overall_status(self, stt_functional: bool, tts_functional: bool) -> str:
+        """Determine overall pipeline status"""
+        return "operational" if (stt_functional or tts_functional) else "limited"
+
+    def _build_watson_stt_status(self, functional: bool, settings) -> Dict[str, Any]:
+        """Build Watson STT status dictionary"""
+        return {
+            "status": "operational" if functional else "unavailable",
+            "configured": self.watson_stt_available,
+            "client_initialized": bool(self.watson_stt_client),
+            "api_key_configured": bool(
+                getattr(settings, "IBM_WATSON_STT_API_KEY", None)
+            )
+            if settings
+            else False,
+            "service_url": getattr(settings, "IBM_WATSON_STT_URL", "not_configured")
+            if settings
+            else "not_configured",
+        }
+
+    def _build_watson_tts_status(self, functional: bool, settings) -> Dict[str, Any]:
+        """Build Watson TTS status dictionary"""
+        return {
+            "status": "operational" if functional else "unavailable",
+            "configured": self.watson_tts_available,
+            "client_initialized": bool(self.watson_tts_client),
+            "api_key_configured": bool(
+                getattr(settings, "IBM_WATSON_TTS_API_KEY", None)
+            )
+            if settings
+            else False,
+            "service_url": getattr(settings, "IBM_WATSON_TTS_URL", "not_configured")
+            if settings
+            else "not_configured",
+        }
+
+    def _build_features_status(
+        self, stt_functional: bool, tts_functional: bool
+    ) -> Dict[str, Any]:
+        """Build features availability dictionary"""
+        return {
+            "speech_recognition": stt_functional,
+            "speech_synthesis": tts_functional,
+            "pronunciation_analysis": True,
+            "audio_enhancement": self.audio_libs_available,
+            "real_time_processing": self.audio_libs_available
+            and self.watson_sdk_available,
+        }
+
+    def _build_configuration_dict(self) -> Dict[str, Any]:
+        """Build configuration settings dictionary"""
+        return {
+            "default_sample_rate": self.default_sample_rate,
+            "default_channels": self.default_channels,
+            "chunk_size": self.chunk_size,
+        }
+
+    def _build_api_models_dict(self) -> Dict[str, list]:
+        """Build API models and voices dictionary"""
+        return {
+            "watson_stt_models": [
+                "en-US_BroadbandModel",
+                "fr-FR_BroadbandModel",
+                "es-ES_BroadbandModel",
+                "de-DE_BroadbandModel",
+                "zh-CN_BroadbandModel",
+                "ja-JP_BroadbandModel",
+            ],
+            "watson_tts_voices": [
+                "en-US_AllisonV3Voice",
+                "fr-FR_ReneeV3Voice",
+                "es-ES_LauraV3Voice",
+                "de-DE_BirgitV3Voice",
+                "ja-JP_EmiV3Voice",
+                "ko-KR_YoungmiVoice",
+            ],
+        }
+
+    def _build_chinese_support_dict(self) -> Dict[str, Any]:
+        """Build Chinese language support dictionary"""
+        return {
+            "stt_available": True,
+            "tts_native_voice": False,
+            "tts_fallback": "en-US_AllisonV3Voice",
+            "pronunciation_learning": True,
+            "note": "Chinese STT fully supported. TTS uses English voice with Chinese-optimized SSML.",
+        }
+
+    def _build_spanish_support_dict(self) -> Dict[str, Any]:
+        """Build Spanish language support dictionary"""
+        return {
+            "stt_model": "es-MX_BroadbandModel",
+            "tts_voice": "es-LA_SofiaV3Voice",
+            "note": "Using Mexican Spanish STT and Latin American Spanish TTS (closest to es-MX preference)",
         }
 
     async def check_watson_health(self) -> Dict[str, Any]:
