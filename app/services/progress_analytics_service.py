@@ -235,29 +235,37 @@ class LearningPathRecommendation:
     generated_at: datetime = None
     expires_at: Optional[datetime] = None
 
-    def __post_init__(self):
-        if self.recommendation_reasons is None:
-            self.recommendation_reasons = []
-        if self.user_strengths is None:
-            self.user_strengths = []
-        if self.user_weaknesses is None:
-            self.user_weaknesses = []
-        if self.learning_style_preferences is None:
-            self.learning_style_preferences = []
-        if self.primary_goals is None:
-            self.primary_goals = []
-        if self.weekly_milestones is None:
-            self.weekly_milestones = []
-        if self.success_metrics is None:
-            self.success_metrics = []
-        if self.optimal_practice_times is None:
-            self.optimal_practice_times = []
-        if self.adaptation_triggers is None:
-            self.adaptation_triggers = []
+    def _initialize_list_field(self, field_name: str) -> None:
+        """Initialize a list field if it's None"""
+        if getattr(self, field_name) is None:
+            setattr(self, field_name, [])
+
+    def _initialize_list_fields(self) -> None:
+        """Initialize all list fields"""
+        list_fields = [
+            "recommendation_reasons",
+            "user_strengths",
+            "user_weaknesses",
+            "learning_style_preferences",
+            "primary_goals",
+            "weekly_milestones",
+            "success_metrics",
+            "optimal_practice_times",
+            "adaptation_triggers",
+        ]
+        for field_name in list_fields:
+            self._initialize_list_field(field_name)
+
+    def _initialize_timestamps(self) -> None:
+        """Initialize timestamp fields"""
         if self.generated_at is None:
             self.generated_at = datetime.now()
         if self.expires_at is None:
             self.expires_at = datetime.now() + timedelta(weeks=4)
+
+    def __post_init__(self):
+        self._initialize_list_fields()
+        self._initialize_timestamps()
 
 
 @dataclass
