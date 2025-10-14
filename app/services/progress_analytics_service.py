@@ -1138,14 +1138,8 @@ class ProgressAnalyticsService:
 
         return recommendations[:5]
 
-    def _generate_next_actions(self, skills: List[Dict]) -> List[str]:
-        """Generate specific next actions for skill improvement"""
-        if not skills:
-            return ["Take skill assessments to determine current levels"]
-
-        actions = []
-
-        # Skills needing immediate attention
+    def _add_urgent_skill_actions(self, skills: List[Dict], actions: List[str]) -> None:
+        """Add actions for skills needing immediate attention"""
         urgent_skills = [s for s in skills if s["current_level"] < 30]
         if urgent_skills:
             skill = urgent_skills[0]
@@ -1153,7 +1147,8 @@ class ProgressAnalyticsService:
                 f"Priority: Complete {skill['skill_type']} fundamentals assessment"
             )
 
-        # Skills ready for advancement
+    def _add_advancement_actions(self, skills: List[Dict], actions: List[str]) -> None:
+        """Add actions for skills ready for advancement"""
         advancing_skills = [
             s
             for s in skills
@@ -1165,7 +1160,10 @@ class ProgressAnalyticsService:
                 f"Level up: Take advanced {skill['skill_type']} challenge exercises"
             )
 
-        # Overdue assessments
+    def _add_overdue_assessment_actions(
+        self, skills: List[Dict], actions: List[str]
+    ) -> None:
+        """Add actions for overdue assessments"""
         overdue_assessments = [
             s
             for s in skills
@@ -1177,6 +1175,16 @@ class ProgressAnalyticsService:
             actions.append(
                 f"Schedule overdue assessment for {overdue_assessments[0]['skill_type']}"
             )
+
+    def _generate_next_actions(self, skills: List[Dict]) -> List[str]:
+        """Generate specific next actions for skill improvement"""
+        if not skills:
+            return ["Take skill assessments to determine current levels"]
+
+        actions = []
+        self._add_urgent_skill_actions(skills, actions)
+        self._add_advancement_actions(skills, actions)
+        self._add_overdue_assessment_actions(skills, actions)
 
         return actions[:3]
 
