@@ -204,37 +204,15 @@ class BudgetManager:
             Cost estimate
         """
         try:
-            cost = 0.0
-            confidence = 0.8
-
-            if provider in self.provider_costs:
-                provider_pricing = self.provider_costs[provider]
-
-                if model in provider_pricing:
-                    model_pricing = provider_pricing[model]
-
-                    if service_type == "llm":
-                        # Calculate token-based costs
-                        if "input" in model_pricing and input_tokens > 0:
-                            cost += (input_tokens / 1000) * model_pricing["input"]
-                        if "output" in model_pricing and output_tokens > 0:
-                            cost += (output_tokens / 1000) * model_pricing["output"]
-                        confidence = 0.9
-
-                    elif service_type == "stt" and "per_minute" in model_pricing:
-                        cost = audio_minutes * model_pricing["per_minute"]
-                        confidence = 0.85
-
-                    elif service_type == "tts" and "per_character" in model_pricing:
-                        cost = characters * model_pricing["per_character"]
-                        confidence = 0.85
-
-            # If no specific pricing found, use fallback estimates
-            if cost == 0.0:
-                cost = self._fallback_cost_estimate(
-                    service_type, input_tokens, output_tokens, audio_minutes, characters
-                )
-                confidence = 0.5
+            cost, confidence = self._calculate_cost_from_pricing(
+                provider,
+                model,
+                service_type,
+                input_tokens,
+                output_tokens,
+                audio_minutes,
+                characters,
+            )
 
             return CostEstimate(
                 estimated_cost=cost,
@@ -246,13 +224,109 @@ class BudgetManager:
 
         except Exception as e:
             logger.error(f"Error estimating cost: {e}")
-            return CostEstimate(
-                estimated_cost=0.01,  # Conservative fallback
-                provider=provider,
-                service_type=service_type,
-                tokens_estimated=input_tokens + output_tokens,
-                confidence=0.1,
+            return self._build_fallback_estimate(
+                provider, service_type, input_tokens, output_tokens
             )
+
+    def _calculate_cost_from_pricing(
+        self,
+        provider: str,
+        model: str,
+        service_type: str,
+        input_tokens: int,
+        output_tokens: int,
+        audio_minutes: float,
+        characters: int,
+    ) -> tuple:
+        """Calculate cost from provider pricing data"""
+        if provider not in self.provider_costs:
+            return self._use_fallback_pricing(
+                service_type, input_tokens, output_tokens, audio_minutes, characters
+            )
+
+        provider_pricing = self.provider_costs[provider]
+        if model not in provider_pricing:
+            return self._use_fallback_pricing(
+                service_type, input_tokens, output_tokens, audio_minutes, characters
+            )
+
+        model_pricing = provider_pricing[model]
+        return self._calculate_service_cost(
+            service_type,
+            model_pricing,
+            input_tokens,
+            output_tokens,
+            audio_minutes,
+            characters,
+        )
+
+    def _calculate_service_cost(
+        self,
+        service_type: str,
+        pricing: dict,
+        input_tokens: int,
+        output_tokens: int,
+        audio_minutes: float,
+        characters: int,
+    ) -> tuple:
+        """Calculate cost for specific service type"""
+        if service_type == "llm":
+            return self._calculate_llm_cost(pricing, input_tokens, output_tokens)
+        elif service_type == "stt":
+            return self._calculate_stt_cost(pricing, audio_minutes)
+        elif service_type == "tts":
+            return self._calculate_tts_cost(pricing, characters)
+        else:
+            return 0.0, 0.5
+
+    def _calculate_llm_cost(
+        self, pricing: dict, input_tokens: int, output_tokens: int
+    ) -> tuple:
+        """Calculate cost for LLM service"""
+        cost = 0.0
+        if "input" in pricing and input_tokens > 0:
+            cost += (input_tokens / 1000) * pricing["input"]
+        if "output" in pricing and output_tokens > 0:
+            cost += (output_tokens / 1000) * pricing["output"]
+        return cost, 0.9 if cost > 0 else 0.5
+
+    def _calculate_stt_cost(self, pricing: dict, audio_minutes: float) -> tuple:
+        """Calculate cost for STT service"""
+        if "per_minute" in pricing:
+            return audio_minutes * pricing["per_minute"], 0.85
+        return 0.0, 0.5
+
+    def _calculate_tts_cost(self, pricing: dict, characters: int) -> tuple:
+        """Calculate cost for TTS service"""
+        if "per_character" in pricing:
+            return characters * pricing["per_character"], 0.85
+        return 0.0, 0.5
+
+    def _use_fallback_pricing(
+        self,
+        service_type: str,
+        input_tokens: int,
+        output_tokens: int,
+        audio_minutes: float,
+        characters: int,
+    ) -> tuple:
+        """Use fallback pricing when specific pricing unavailable"""
+        cost = self._fallback_cost_estimate(
+            service_type, input_tokens, output_tokens, audio_minutes, characters
+        )
+        return cost, 0.5
+
+    def _build_fallback_estimate(
+        self, provider: str, service_type: str, input_tokens: int, output_tokens: int
+    ) -> CostEstimate:
+        """Build conservative fallback cost estimate"""
+        return CostEstimate(
+            estimated_cost=0.01,
+            provider=provider,
+            service_type=service_type,
+            tokens_estimated=input_tokens + output_tokens,
+            confidence=0.1,
+        )
 
     def _fallback_cost_estimate(
         self,
