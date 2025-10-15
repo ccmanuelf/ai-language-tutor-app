@@ -772,44 +772,64 @@ class ProgressAnalyticsService:
             "recent_sessions": [],
         }
 
-    def _calculate_conversation_trends(self, sessions: List[Dict]) -> Dict[str, Any]:
-        """Calculate conversation performance trends"""
-        if len(sessions) < 2:
-            return {}
+    def _sort_sessions_by_date(self, sessions: List[Dict]) -> List[Dict]:
+        """Sort sessions by started_at date"""
+        return sorted(sessions, key=lambda x: x["started_at"])
 
-        # Sort by date for trend analysis
-        sorted_sessions = sorted(sessions, key=lambda x: x["started_at"])
+    def _extract_sorted_fluency_scores(
+        self, sorted_sessions: List[Dict]
+    ) -> List[float]:
+        """Extract fluency scores from sorted sessions"""
+        return [s["fluency_score"] for s in sorted_sessions if s["fluency_score"] > 0]
 
-        # Calculate trends for key metrics
-        fluency_scores = [
-            s["fluency_score"] for s in sorted_sessions if s["fluency_score"] > 0
-        ]
-        confidence_scores = [
+    def _extract_sorted_confidence_scores(
+        self, sorted_sessions: List[Dict]
+    ) -> List[float]:
+        """Extract confidence scores from sorted sessions"""
+        return [
             s["average_confidence_score"]
             for s in sorted_sessions
             if s["average_confidence_score"] > 0
         ]
-        vocabulary_scores = [
+
+    def _extract_sorted_vocabulary_scores(
+        self, sorted_sessions: List[Dict]
+    ) -> List[float]:
+        """Extract vocabulary complexity scores from sorted sessions"""
+        return [
             s["vocabulary_complexity_score"]
             for s in sorted_sessions
             if s["vocabulary_complexity_score"] > 0
         ]
 
+    def _build_trends_dict(
+        self,
+        fluency_scores: List[float],
+        confidence_scores: List[float],
+        vocabulary_scores: List[float],
+    ) -> Dict[str, Any]:
+        """Build trends dictionary from score lists"""
         trends = {}
-
-        # Fluency trend
         if len(fluency_scores) >= 2:
             trends["fluency_trend"] = self._calculate_linear_trend(fluency_scores)
-
-        # Confidence trend
         if len(confidence_scores) >= 2:
             trends["confidence_trend"] = self._calculate_linear_trend(confidence_scores)
-
-        # Vocabulary complexity trend
         if len(vocabulary_scores) >= 2:
             trends["vocabulary_trend"] = self._calculate_linear_trend(vocabulary_scores)
-
         return trends
+
+    def _calculate_conversation_trends(self, sessions: List[Dict]) -> Dict[str, Any]:
+        """Calculate conversation performance trends"""
+        if len(sessions) < 2:
+            return {}
+
+        sorted_sessions = self._sort_sessions_by_date(sessions)
+        fluency_scores = self._extract_sorted_fluency_scores(sorted_sessions)
+        confidence_scores = self._extract_sorted_confidence_scores(sorted_sessions)
+        vocabulary_scores = self._extract_sorted_vocabulary_scores(sorted_sessions)
+        return self._build_trends_dict(
+            fluency_scores, confidence_scores, vocabulary_scores
+        )
 
     def _calculate_linear_trend(self, values: List[float]) -> Dict[str, float]:
         """Calculate linear trend for a series of values"""
