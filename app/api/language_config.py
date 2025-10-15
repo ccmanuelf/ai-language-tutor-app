@@ -403,84 +403,115 @@ def _build_config_response(
 
 
 @router.post("/sync-voice-models")
+def _validate_voices_directory() -> Path:
+    """Validate voices directory exists"""
+    voices_dir = Path("app/data/piper_voices")
+    if not voices_dir.exists():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Piper voices directory not found",
+        )
+    return voices_dir
+
+
+def _get_existing_models(session) -> Dict[str, str]:
+    """Get existing voice models from database"""
+    existing_models = {}
+    result = session.execute(text("SELECT model_name, file_path FROM voice_models"))
+    for row in result.fetchall():
+        existing_models[row.model_name] = row.file_path
+    return existing_models
+
+
+def _get_language_mapping() -> Dict[str, str]:
+    """Get language code mapping"""
+    return {
+        "en_US": "en",
+        "es_AR": "es",
+        "es_ES": "es",
+        "es_MX": "es",
+        "fr_FR": "fr",
+        "de_DE": "de",
+        "it_IT": "it",
+        "pt_BR": "pt",
+        "zh_CN": "zh",
+    }
+
+
+def _determine_quality_level(model_name: str) -> str:
+    """Determine quality level from model name"""
+    if "high" in model_name:
+        return "high"
+    elif "low" in model_name:
+        return "low"
+    return "medium"
+
+
+def _insert_voice_model(
+    session, onnx_file: Path, model_name: str, language_mapping: Dict[str, str]
+):
+    """Insert new voice model into database"""
+    config_file = onnx_file.with_suffix(".onnx.json")
+    lang_prefix = model_name.split("-")[0]
+    language_code = language_mapping.get(lang_prefix, "en")
+    quality_level = _determine_quality_level(model_name)
+    file_size_mb = round(onnx_file.stat().st_size / (1024 * 1024), 2)
+
+    session.execute(
+        text("""
+        INSERT INTO voice_models
+        (model_name, language_code, file_path, config_path, quality_level,
+         sample_rate, file_size_mb, is_active, is_default, metadata)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """),
+        (
+            model_name,
+            language_code,
+            str(onnx_file),
+            str(config_file) if config_file.exists() else "",
+            quality_level,
+            22050,
+            file_size_mb,
+            True,
+            False,
+            "{}",
+        ),
+    )
+
+
+def _process_voice_models(
+    session,
+    voices_dir: Path,
+    existing_models: Dict[str, str],
+    language_mapping: Dict[str, str],
+) -> List[str]:
+    """Process and insert new voice models"""
+    new_models = []
+    for onnx_file in voices_dir.glob("*.onnx"):
+        if onnx_file.stat().st_size < 1000:  # Skip corrupt files
+            continue
+
+        model_name = onnx_file.stem
+        if model_name not in existing_models:
+            _insert_voice_model(session, onnx_file, model_name, language_mapping)
+            new_models.append(model_name)
+
+    return new_models
+
+
 async def sync_voice_models(
     current_admin: User = Depends(require_permission("manage_languages")),
 ):
     """Synchronize voice models with filesystem"""
     try:
-        voices_dir = Path("app/data/piper_voices")
-        if not voices_dir.exists():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Piper voices directory not found",
-            )
+        voices_dir = _validate_voices_directory()
 
         with get_db_session_context() as session:
-            # Get existing models
-            existing_models = {}
-            result = session.execute(
-                text("SELECT model_name, file_path FROM voice_models")
+            existing_models = _get_existing_models(session)
+            language_mapping = _get_language_mapping()
+            new_models = _process_voice_models(
+                session, voices_dir, existing_models, language_mapping
             )
-            for row in result.fetchall():
-                existing_models[row.model_name] = row.file_path
-
-            # Language mapping
-            language_mapping = {
-                "en_US": "en",
-                "es_AR": "es",
-                "es_ES": "es",
-                "es_MX": "es",
-                "fr_FR": "fr",
-                "de_DE": "de",
-                "it_IT": "it",
-                "pt_BR": "pt",
-                "zh_CN": "zh",
-            }
-
-            new_models = []
-
-            for onnx_file in voices_dir.glob("*.onnx"):
-                if onnx_file.stat().st_size < 1000:  # Skip corrupt files
-                    continue
-
-                model_name = onnx_file.stem
-
-                if model_name not in existing_models:
-                    # Add new model
-                    config_file = onnx_file.with_suffix(".onnx.json")
-                    lang_prefix = model_name.split("-")[0]
-                    language_code = language_mapping.get(lang_prefix, "en")
-
-                    quality_level = "medium"
-                    if "high" in model_name:
-                        quality_level = "high"
-                    elif "low" in model_name:
-                        quality_level = "low"
-
-                    file_size_mb = round(onnx_file.stat().st_size / (1024 * 1024), 2)
-
-                    session.execute(
-                        text("""
-                        INSERT INTO voice_models
-                        (model_name, language_code, file_path, config_path, quality_level,
-                         sample_rate, file_size_mb, is_active, is_default, metadata)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """),
-                        (
-                            model_name,
-                            language_code,
-                            str(onnx_file),
-                            str(config_file) if config_file.exists() else "",
-                            quality_level,
-                            22050,
-                            file_size_mb,
-                            True,
-                            False,
-                            "{}",
-                        ),
-                    )
-
-                    new_models.append(model_name)
 
             session.commit()
 
