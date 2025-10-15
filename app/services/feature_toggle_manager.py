@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class FeatureCategory(Enum):
     """Feature categories for organization"""
+
     LEARNING = "learning"
     SPEECH = "speech"
     ADMIN = "admin"
@@ -32,6 +33,7 @@ class FeatureCategory(Enum):
 
 class UserRole(Enum):
     """User roles for permission checking"""
+
     CHILD = "CHILD"
     PARENT = "PARENT"
     ADMIN = "ADMIN"
@@ -40,6 +42,7 @@ class UserRole(Enum):
 @dataclass
 class FeatureToggle:
     """Feature toggle data model"""
+
     id: Optional[int] = None
     feature_name: str = ""
     is_enabled: bool = True
@@ -80,7 +83,9 @@ class FeatureToggleManager:
         # Initialize cache
         self._refresh_cache()
 
-        logger.info(f"FeatureToggleManager initialized with {len(self._cache)} features")
+        logger.info(
+            f"FeatureToggleManager initialized with {len(self._cache)} features"
+        )
 
     def _get_connection(self) -> sqlite3.Connection:
         """Get database connection with proper configuration"""
@@ -109,13 +114,15 @@ class FeatureToggleManager:
 
                     # Parse JSON configuration
                     try:
-                        row_dict['configuration'] = json.loads(row_dict['configuration'] or '{}')
+                        row_dict["configuration"] = json.loads(
+                            row_dict["configuration"] or "{}"
+                        )
                     except json.JSONDecodeError:
-                        row_dict['configuration'] = {}
+                        row_dict["configuration"] = {}
 
                     # Convert to boolean
-                    row_dict['is_enabled'] = bool(row_dict['is_enabled'])
-                    row_dict['requires_restart'] = bool(row_dict['requires_restart'])
+                    row_dict["is_enabled"] = bool(row_dict["is_enabled"])
+                    row_dict["requires_restart"] = bool(row_dict["requires_restart"])
 
                     feature = FeatureToggle(**row_dict)
                     self._cache[feature.feature_name] = feature
@@ -156,7 +163,9 @@ class FeatureToggleManager:
                 feature = self._cache.get(feature_name)
 
                 if not feature:
-                    logger.warning(f"Feature '{feature_name}' not found, defaulting to disabled")
+                    logger.warning(
+                        f"Feature '{feature_name}' not found, defaulting to disabled"
+                    )
                     return False
 
                 # Check if feature is enabled
@@ -172,11 +181,7 @@ class FeatureToggleManager:
 
     def _check_role_permission(self, user_role: str, min_required_role: str) -> bool:
         """Check if user role meets minimum required role"""
-        role_hierarchy = {
-            "CHILD": 1,
-            "PARENT": 2,
-            "ADMIN": 3
-        }
+        role_hierarchy = {"CHILD": 1, "PARENT": 2, "ADMIN": 3}
 
         user_level = role_hierarchy.get(user_role.upper(), 0)
         required_level = role_hierarchy.get(min_required_role.upper(), 1)
@@ -196,8 +201,9 @@ class FeatureToggleManager:
             logger.error(f"Error getting feature '{feature_name}': {e}")
             return None
 
-    def get_all_features(self, category: Optional[str] = None,
-                        user_role: str = "CHILD") -> Dict[str, FeatureToggle]:
+    def get_all_features(
+        self, category: Optional[str] = None, user_role: str = "CHILD"
+    ) -> Dict[str, FeatureToggle]:
         """
         Get all features, optionally filtered by category and user role
 
@@ -232,7 +238,9 @@ class FeatureToggleManager:
             logger.error(f"Error getting features: {e}")
             return {}
 
-    def get_features_by_category(self, user_role: str = "CHILD") -> Dict[str, List[FeatureToggle]]:
+    def get_features_by_category(
+        self, user_role: str = "CHILD"
+    ) -> Dict[str, List[FeatureToggle]]:
         """Get features organized by category"""
         try:
             all_features = self.get_all_features(user_role=user_role)
@@ -254,9 +262,13 @@ class FeatureToggleManager:
             logger.error(f"Error organizing features by category: {e}")
             return {}
 
-    def update_feature(self, feature_name: str, is_enabled: Optional[bool] = None,
-                      description: Optional[str] = None,
-                      configuration: Optional[Dict[str, Any]] = None) -> bool:
+    def update_feature(
+        self,
+        feature_name: str,
+        is_enabled: Optional[bool] = None,
+        description: Optional[str] = None,
+        configuration: Optional[Dict[str, Any]] = None,
+    ) -> bool:
         """
         Update feature toggle configuration
 
@@ -314,7 +326,7 @@ class FeatureToggleManager:
             logger.error(f"Error updating feature '{feature_name}': {e}")
             return False
         finally:
-            if 'conn' in locals():
+            if "conn" in locals():
                 conn.close()
 
     def create_feature(self, feature: FeatureToggle) -> bool:
@@ -323,22 +335,25 @@ class FeatureToggleManager:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO admin_feature_toggles
                 (feature_name, is_enabled, description, category, requires_restart,
                  min_role, configuration, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                feature.feature_name,
-                feature.is_enabled,
-                feature.description,
-                feature.category,
-                feature.requires_restart,
-                feature.min_role,
-                json.dumps(feature.configuration),
-                datetime.now().isoformat(),
-                datetime.now().isoformat()
-            ))
+            """,
+                (
+                    feature.feature_name,
+                    feature.is_enabled,
+                    feature.description,
+                    feature.category,
+                    feature.requires_restart,
+                    feature.min_role,
+                    json.dumps(feature.configuration),
+                    datetime.now().isoformat(),
+                    datetime.now().isoformat(),
+                ),
+            )
 
             conn.commit()
 
@@ -352,7 +367,7 @@ class FeatureToggleManager:
             logger.error(f"Error creating feature '{feature.feature_name}': {e}")
             return False
         finally:
-            if 'conn' in locals():
+            if "conn" in locals():
                 conn.close()
 
     def delete_feature(self, feature_name: str) -> bool:
@@ -361,7 +376,10 @@ class FeatureToggleManager:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            cursor.execute("DELETE FROM admin_feature_toggles WHERE feature_name = ?", (feature_name,))
+            cursor.execute(
+                "DELETE FROM admin_feature_toggles WHERE feature_name = ?",
+                (feature_name,),
+            )
             conn.commit()
 
             if cursor.rowcount > 0:
@@ -377,41 +395,57 @@ class FeatureToggleManager:
             logger.error(f"Error deleting feature '{feature_name}': {e}")
             return False
         finally:
-            if 'conn' in locals():
+            if "conn" in locals():
                 conn.close()
+
+    def _calculate_basic_stats(self, features: Dict[str, Any]) -> Dict[str, int]:
+        """Calculate basic feature statistics"""
+        return {
+            "total_features": len(features),
+            "enabled_features": sum(1 for f in features.values() if f.is_enabled),
+            "disabled_features": sum(1 for f in features.values() if not f.is_enabled),
+        }
+
+    def _build_category_breakdown(
+        self, features: Dict[str, Any]
+    ) -> Dict[str, Dict[str, int]]:
+        """Build category breakdown statistics"""
+        categories = {}
+        for feature in features.values():
+            category = feature.category
+            if category not in categories:
+                categories[category] = {"total": 0, "enabled": 0}
+
+            categories[category]["total"] += 1
+            if feature.is_enabled:
+                categories[category]["enabled"] += 1
+
+        return categories
+
+    def _build_role_breakdown(
+        self, features: Dict[str, Any]
+    ) -> Dict[str, Dict[str, int]]:
+        """Build role breakdown statistics"""
+        roles = {}
+        for feature in features.values():
+            role = feature.min_role
+            if role not in roles:
+                roles[role] = {"total": 0, "enabled": 0}
+
+            roles[role]["total"] += 1
+            if feature.is_enabled:
+                roles[role]["enabled"] += 1
+
+        return roles
 
     def get_feature_statistics(self) -> Dict[str, Any]:
         """Get statistics about feature toggles"""
         try:
             features = self.get_all_features(user_role="ADMIN")
 
-            stats = {
-                "total_features": len(features),
-                "enabled_features": sum(1 for f in features.values() if f.is_enabled),
-                "disabled_features": sum(1 for f in features.values() if not f.is_enabled),
-                "categories": {},
-                "roles": {}
-            }
-
-            # Category breakdown
-            for feature in features.values():
-                category = feature.category
-                if category not in stats["categories"]:
-                    stats["categories"][category] = {"total": 0, "enabled": 0}
-
-                stats["categories"][category]["total"] += 1
-                if feature.is_enabled:
-                    stats["categories"][category]["enabled"] += 1
-
-            # Role breakdown
-            for feature in features.values():
-                role = feature.min_role
-                if role not in stats["roles"]:
-                    stats["roles"][role] = {"total": 0, "enabled": 0}
-
-                stats["roles"][role]["total"] += 1
-                if feature.is_enabled:
-                    stats["roles"][role]["enabled"] += 1
+            stats = self._calculate_basic_stats(features)
+            stats["categories"] = self._build_category_breakdown(features)
+            stats["roles"] = self._build_role_breakdown(features)
 
             return stats
 
@@ -432,7 +466,9 @@ class FeatureToggleManager:
         results = {}
 
         for feature_name, enabled in updates.items():
-            results[feature_name] = self.update_feature(feature_name, is_enabled=enabled)
+            results[feature_name] = self.update_feature(
+                feature_name, is_enabled=enabled
+            )
 
         return results
 
@@ -444,7 +480,7 @@ class FeatureToggleManager:
             export_data = {
                 "export_timestamp": datetime.now().isoformat(),
                 "total_features": len(features),
-                "features": {}
+                "features": {},
             }
 
             for name, feature in features.items():
@@ -454,7 +490,7 @@ class FeatureToggleManager:
                     "category": feature.category,
                     "requires_restart": feature.requires_restart,
                     "min_role": feature.min_role,
-                    "configuration": feature.configuration
+                    "configuration": feature.configuration,
                 }
 
             return export_data
@@ -483,7 +519,7 @@ class FeatureToggleManager:
                     feature_name,
                     is_enabled=feature_config.get("is_enabled"),
                     description=feature_config.get("description"),
-                    configuration=feature_config.get("configuration")
+                    configuration=feature_config.get("configuration"),
                 )
                 results[feature_name] = success
 
@@ -510,6 +546,8 @@ def get_feature(feature_name: str) -> Optional[FeatureToggle]:
     return feature_toggle_manager.get_feature(feature_name)
 
 
-def get_features_by_category(user_role: str = "CHILD") -> Dict[str, List[FeatureToggle]]:
+def get_features_by_category(
+    user_role: str = "CHILD",
+) -> Dict[str, List[FeatureToggle]]:
     """Convenience function to get features by category"""
     return feature_toggle_manager.get_features_by_category(user_role)
