@@ -209,24 +209,94 @@ async def start_analysis_session(
 
 
 @router.post("/analyze", response_model=List[FeedbackResponse])
+def _decode_audio_data(audio_data: str) -> bytes:
+    """Decode base64 audio data"""
+    try:
+        return base64.b64decode(audio_data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid audio data: {e}")
+
+
+def _get_session_data(session_id: str):
+    """Get and validate session data"""
+    session_data = realtime_analyzer.active_sessions.get(session_id)
+    if not session_data:
+        raise HTTPException(status_code=404, detail="Analysis session not found")
+    return session_data
+
+
+def _create_base_feedback_response(feedback) -> FeedbackResponse:
+    """Create base feedback response object"""
+    return FeedbackResponse(
+        feedback_id=feedback.feedback_id,
+        timestamp=feedback.timestamp,
+        analysis_type=feedback.analysis_type.value,
+        priority=feedback.priority.value,
+        message=feedback.message,
+        correction=feedback.correction,
+        explanation=feedback.explanation,
+        confidence=feedback.confidence,
+        actionable=feedback.actionable,
+    )
+
+
+def _add_specific_feedback_data(feedback_response: FeedbackResponse, feedback):
+    """Add specific analysis data to feedback response"""
+    if feedback.pronunciation_data:
+        feedback_response.pronunciation_score = feedback.pronunciation_data.score
+
+    if feedback.grammar_data:
+        feedback_response.grammar_errors = [
+            {
+                "error_type": feedback.grammar_data.error_type,
+                "correction": feedback.grammar_data.correction,
+                "explanation": feedback.grammar_data.explanation,
+                "confidence": feedback.grammar_data.confidence,
+            }
+        ]
+
+    if feedback.fluency_data:
+        feedback_response.fluency_metrics = {
+            "speech_rate": feedback.fluency_data.speech_rate,
+            "confidence_score": feedback.fluency_data.confidence_score,
+            "hesitation_count": feedback.fluency_data.hesitation_count,
+        }
+
+
+def _convert_feedback_to_responses(feedback_list) -> List[FeedbackResponse]:
+    """Convert feedback list to response format"""
+    response_list = []
+    for feedback in feedback_list:
+        feedback_response = _create_base_feedback_response(feedback)
+        _add_specific_feedback_data(feedback_response, feedback)
+        response_list.append(feedback_response)
+    return response_list
+
+
+async def _send_websocket_feedback(
+    session_id: str, response_list: List[FeedbackResponse]
+):
+    """Send feedback via WebSocket if connected"""
+    if response_list:
+        websocket_data = {
+            "type": "realtime_feedback",
+            "session_id": session_id,
+            "timestamp": datetime.now().isoformat(),
+            "feedback": [
+                feedback_response.dict() for feedback_response in response_list
+            ],
+        }
+        await websocket_manager.send_feedback(session_id, websocket_data)
+
+
 async def analyze_audio_segment(
     request: AnalyzeAudioRequest, current_user: User = Depends(get_current_user)
 ):
     """Analyze an audio segment and return real-time feedback"""
-
     try:
-        # Decode audio data
-        try:
-            audio_data = base64.b64decode(request.audio_data)
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Invalid audio data: {e}")
+        audio_data = _decode_audio_data(request.audio_data)
+        session_data = _get_session_data(request.session_id)
 
-        # Get session language (would normally be stored in session state)
-        session_data = realtime_analyzer.active_sessions.get(request.session_id)
-        if not session_data:
-            raise HTTPException(status_code=404, detail="Analysis session not found")
-
-        # Analyze speech
         feedback_list = await analyze_speech_realtime(
             session_id=request.session_id,
             audio_data=audio_data,
@@ -235,57 +305,8 @@ async def analyze_audio_segment(
             language=session_data.language,
         )
 
-        # Convert to response format
-        response_list = []
-        for feedback in feedback_list:
-            feedback_response = FeedbackResponse(
-                feedback_id=feedback.feedback_id,
-                timestamp=feedback.timestamp,
-                analysis_type=feedback.analysis_type.value,
-                priority=feedback.priority.value,
-                message=feedback.message,
-                correction=feedback.correction,
-                explanation=feedback.explanation,
-                confidence=feedback.confidence,
-                actionable=feedback.actionable,
-            )
-
-            # Add specific analysis data
-            if feedback.pronunciation_data:
-                feedback_response.pronunciation_score = (
-                    feedback.pronunciation_data.score
-                )
-
-            if feedback.grammar_data:
-                feedback_response.grammar_errors = [
-                    {
-                        "error_type": feedback.grammar_data.error_type,
-                        "correction": feedback.grammar_data.correction,
-                        "explanation": feedback.grammar_data.explanation,
-                        "confidence": feedback.grammar_data.confidence,
-                    }
-                ]
-
-            if feedback.fluency_data:
-                feedback_response.fluency_metrics = {
-                    "speech_rate": feedback.fluency_data.speech_rate,
-                    "confidence_score": feedback.fluency_data.confidence_score,
-                    "hesitation_count": feedback.fluency_data.hesitation_count,
-                }
-
-            response_list.append(feedback_response)
-
-        # Send feedback via WebSocket if connected
-        if feedback_list:
-            websocket_data = {
-                "type": "realtime_feedback",
-                "session_id": request.session_id,
-                "timestamp": datetime.now().isoformat(),
-                "feedback": [
-                    feedback_response.dict() for feedback_response in response_list
-                ],
-            }
-            await websocket_manager.send_feedback(request.session_id, websocket_data)
+        response_list = _convert_feedback_to_responses(feedback_list)
+        await _send_websocket_feedback(request.session_id, response_list)
 
         logger.debug(
             f"Analyzed audio for session {request.session_id}: {len(response_list)} feedback items"
