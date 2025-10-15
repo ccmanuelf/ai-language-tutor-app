@@ -159,6 +159,67 @@ class AnalyticsEngine:
             logger.error(f"Error getting user analytics: {e}")
             return {}
 
+    def _check_due_items(
+        self, cursor, user_id: int, language_code: str, recommendations: List[str]
+    ) -> None:
+        """Check for due items and add recommendation if found"""
+        cursor.execute(
+            """
+            SELECT COUNT(*) as due_count FROM spaced_repetition_items
+            WHERE user_id = ? AND language_code = ? AND next_review_date <= datetime('now')
+        """,
+            (user_id, language_code),
+        )
+
+        due_count = cursor.fetchone()["due_count"]
+        if due_count > 0:
+            recommendations.append(f"You have {due_count} items ready for review!")
+
+    def _check_streak_status(
+        self, cursor, user_id: int, language_code: str, recommendations: List[str]
+    ) -> None:
+        """Check streak status and add recommendation if applicable"""
+        cursor.execute(
+            """
+            SELECT current_streak, last_activity_date FROM learning_streaks
+            WHERE user_id = ? AND language_code = ?
+        """,
+            (user_id, language_code),
+        )
+
+        streak_row = cursor.fetchone()
+        if streak_row and streak_row["last_activity_date"]:
+            last_activity = date.fromisoformat(streak_row["last_activity_date"])
+            days_since = (date.today() - last_activity).days
+            if days_since == 1:
+                recommendations.append("Study today to maintain your streak!")
+            elif days_since > 1:
+                recommendations.append("Start a new learning streak today!")
+
+    def _check_mastery_levels(
+        self, cursor, user_id: int, language_code: str, recommendations: List[str]
+    ) -> None:
+        """Check mastery levels and add appropriate recommendation"""
+        cursor.execute(
+            """
+            SELECT AVG(mastery_level) as avg_mastery FROM spaced_repetition_items
+            WHERE user_id = ? AND language_code = ?
+        """,
+            (user_id, language_code),
+        )
+
+        mastery_row = cursor.fetchone()
+        if mastery_row and mastery_row["avg_mastery"]:
+            avg_mastery = mastery_row["avg_mastery"]
+            if avg_mastery < 0.5:
+                recommendations.append(
+                    "Focus on reviewing previously learned items to improve retention."
+                )
+            elif avg_mastery > 0.8:
+                recommendations.append(
+                    "Great progress! Consider learning new vocabulary."
+                )
+
     def _get_learning_recommendations(
         self, user_id: int, language_code: str
     ) -> List[str]:
@@ -181,59 +242,13 @@ class AnalyticsEngine:
             with self.db.get_connection() as conn:
                 cursor = conn.cursor()
 
-                # Check for due items
-                cursor.execute(
-                    """
-                    SELECT COUNT(*) as due_count FROM spaced_repetition_items
-                    WHERE user_id = ? AND language_code = ? AND next_review_date <= datetime('now')
-                """,
-                    (user_id, language_code),
+                self._check_due_items(cursor, user_id, language_code, recommendations)
+                self._check_streak_status(
+                    cursor, user_id, language_code, recommendations
                 )
-
-                due_count = cursor.fetchone()["due_count"]
-                if due_count > 0:
-                    recommendations.append(
-                        f"You have {due_count} items ready for review!"
-                    )
-
-                # Check streak status
-                cursor.execute(
-                    """
-                    SELECT current_streak, last_activity_date FROM learning_streaks
-                    WHERE user_id = ? AND language_code = ?
-                """,
-                    (user_id, language_code),
+                self._check_mastery_levels(
+                    cursor, user_id, language_code, recommendations
                 )
-
-                streak_row = cursor.fetchone()
-                if streak_row and streak_row["last_activity_date"]:
-                    last_activity = date.fromisoformat(streak_row["last_activity_date"])
-                    days_since = (date.today() - last_activity).days
-                    if days_since == 1:
-                        recommendations.append("Study today to maintain your streak!")
-                    elif days_since > 1:
-                        recommendations.append("Start a new learning streak today!")
-
-                # Check mastery levels
-                cursor.execute(
-                    """
-                    SELECT AVG(mastery_level) as avg_mastery FROM spaced_repetition_items
-                    WHERE user_id = ? AND language_code = ?
-                """,
-                    (user_id, language_code),
-                )
-
-                mastery_row = cursor.fetchone()
-                if mastery_row and mastery_row["avg_mastery"]:
-                    avg_mastery = mastery_row["avg_mastery"]
-                    if avg_mastery < 0.5:
-                        recommendations.append(
-                            "Focus on reviewing previously learned items to improve retention."
-                        )
-                    elif avg_mastery > 0.8:
-                        recommendations.append(
-                            "Great progress! Consider learning new vocabulary."
-                        )
 
         except Exception as e:
             logger.error(f"Error generating recommendations: {e}")
