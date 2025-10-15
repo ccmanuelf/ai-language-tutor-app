@@ -1073,6 +1073,77 @@ class SpeechProcessor:
             logger.warning(f"Speech enhancement failed: {e}")
             return audio_data
 
+    def _calculate_pronunciation_scores(
+        self, words: List[str], word_count: int, audio_metadata: AudioMetadata
+    ) -> tuple[float, float, float]:
+        """Calculate phonetic accuracy, fluency, and overall scores"""
+        phonetic_accuracy = min(audio_metadata.quality_score + 0.2, 1.0)
+        fluency_score = min(
+            word_count / audio_metadata.duration_seconds / 3.0, 1.0
+        )  # ~3 words per second
+        overall_score = phonetic_accuracy * 0.6 + fluency_score * 0.4
+        return phonetic_accuracy, fluency_score, overall_score
+
+    def _determine_pronunciation_level(
+        self, overall_score: float
+    ) -> PronunciationLevel:
+        """Determine pronunciation level from overall score"""
+        if overall_score >= 0.9:
+            return PronunciationLevel.EXCELLENT
+        elif overall_score >= 0.75:
+            return PronunciationLevel.GOOD
+        elif overall_score >= 0.6:
+            return PronunciationLevel.FAIR
+        elif overall_score >= 0.4:
+            return PronunciationLevel.NEEDS_IMPROVEMENT
+        else:
+            return PronunciationLevel.UNCLEAR
+
+    def _generate_word_scores(
+        self, words: List[str], overall_score: float
+    ) -> List[Dict[str, Any]]:
+        """Generate word-level pronunciation scores"""
+        word_scores = []
+        for word in words:
+            word_score = overall_score + (hash(word) % 20 - 10) / 100
+            word_score = max(0.0, min(1.0, word_score))
+            word_scores.append(
+                {
+                    "word": word,
+                    "score": word_score,
+                    "phonetic": f"/{word}/",
+                    "issues": [],
+                }
+            )
+        return word_scores
+
+    def _generate_improvement_suggestions(
+        self, overall_score: float, fluency_score: float, language: str
+    ) -> List[str]:
+        """Generate pronunciation improvement suggestions"""
+        suggestions = []
+        if overall_score < 0.7:
+            suggestions.extend(
+                [
+                    f"Focus on clear pronunciation of {language} sounds",
+                    "Speak more slowly for better clarity",
+                    "Practice tongue twisters for better articulation",
+                ]
+            )
+        if fluency_score < 0.6:
+            suggestions.append("Work on speaking rhythm and pacing")
+        return suggestions
+
+    def _detect_language_issues(
+        self, words: List[str], language_model: Dict[str, Any]
+    ) -> List[str]:
+        """Detect language-specific pronunciation issues"""
+        detected_issues = []
+        for issue in language_model["common_issues"]:
+            if any(word in language_model["difficulty_words"] for word in words):
+                detected_issues.append(issue)
+        return detected_issues
+
     async def _analyze_pronunciation(
         self,
         audio_data: bytes,
@@ -1081,72 +1152,22 @@ class SpeechProcessor:
         audio_metadata: AudioMetadata,
     ) -> PronunciationAnalysis:
         """Analyze pronunciation quality from audio and transcript"""
-
         try:
             language_model = self.pronunciation_models.get(
                 language, self.pronunciation_models["en"]
             )
-
-            # Simple pronunciation analysis based on transcript and language
             words = transcript.lower().split()
             word_count = len(words)
 
-            # Calculate basic scores
-            phonetic_accuracy = min(audio_metadata.quality_score + 0.2, 1.0)
-            fluency_score = min(
-                word_count / audio_metadata.duration_seconds / 3.0, 1.0
-            )  # ~3 words per second
-
-            # Overall score combining factors
-            overall_score = phonetic_accuracy * 0.6 + fluency_score * 0.4
-
-            # Determine pronunciation level
-            if overall_score >= 0.9:
-                level = PronunciationLevel.EXCELLENT
-            elif overall_score >= 0.75:
-                level = PronunciationLevel.GOOD
-            elif overall_score >= 0.6:
-                level = PronunciationLevel.FAIR
-            elif overall_score >= 0.4:
-                level = PronunciationLevel.NEEDS_IMPROVEMENT
-            else:
-                level = PronunciationLevel.UNCLEAR
-
-            # Generate word-level scores
-            word_scores = []
-            for word in words:
-                word_score = (
-                    overall_score + (hash(word) % 20 - 10) / 100
-                )  # Add some variation
-                word_score = max(0.0, min(1.0, word_score))
-                word_scores.append(
-                    {
-                        "word": word,
-                        "score": word_score,
-                        "phonetic": f"/{word}/",  # Simplified phonetic
-                        "issues": [],
-                    }
-                )
-
-            # Generate improvement suggestions
-            suggestions = []
-            if overall_score < 0.7:
-                suggestions.extend(
-                    [
-                        f"Focus on clear pronunciation of {language} sounds",
-                        "Speak more slowly for better clarity",
-                        "Practice tongue twisters for better articulation",
-                    ]
-                )
-
-            if fluency_score < 0.6:
-                suggestions.append("Work on speaking rhythm and pacing")
-
-            # Check for language-specific issues
-            detected_issues = []
-            for issue in language_model["common_issues"]:
-                if any(word in language_model["difficulty_words"] for word in words):
-                    detected_issues.append(issue)
+            phonetic_accuracy, fluency_score, overall_score = (
+                self._calculate_pronunciation_scores(words, word_count, audio_metadata)
+            )
+            level = self._determine_pronunciation_level(overall_score)
+            word_scores = self._generate_word_scores(words, overall_score)
+            suggestions = self._generate_improvement_suggestions(
+                overall_score, fluency_score, language
+            )
+            detected_issues = self._detect_language_issues(words, language_model)
 
             return PronunciationAnalysis(
                 overall_score=overall_score,
