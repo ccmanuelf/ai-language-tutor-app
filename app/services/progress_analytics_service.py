@@ -310,25 +310,37 @@ class MemoryRetentionAnalysis:
     analysis_date: datetime = None
     next_analysis_due: Optional[datetime] = None
 
-    def __post_init__(self):
+    def _initialize_dict_fields(self) -> None:
+        """Initialize dictionary fields if None"""
         if self.optimal_review_timing is None:
             self.optimal_review_timing = {}
-        if self.interference_patterns is None:
-            self.interference_patterns = []
-        if self.most_retained_item_types is None:
-            self.most_retained_item_types = []
-        if self.least_retained_item_types is None:
-            self.least_retained_item_types = []
         if self.retention_by_difficulty is None:
             self.retention_by_difficulty = {}
         if self.retention_by_context is None:
             self.retention_by_context = {}
         if self.optimal_study_schedule is None:
             self.optimal_study_schedule = {}
+
+    def _initialize_list_fields(self) -> None:
+        """Initialize list fields if None"""
+        if self.interference_patterns is None:
+            self.interference_patterns = []
+        if self.most_retained_item_types is None:
+            self.most_retained_item_types = []
+        if self.least_retained_item_types is None:
+            self.least_retained_item_types = []
         if self.retention_improvement_strategies is None:
             self.retention_improvement_strategies = []
+
+    def _initialize_timestamp_fields(self) -> None:
+        """Initialize timestamp fields if None"""
         if self.analysis_date is None:
             self.analysis_date = datetime.now()
+
+    def __post_init__(self):
+        self._initialize_dict_fields()
+        self._initialize_list_fields()
+        self._initialize_timestamp_fields()
 
 
 class ProgressAnalyticsService:
