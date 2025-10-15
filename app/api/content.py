@@ -306,6 +306,60 @@ async def get_processed_content(
 
 
 @router.get("/library", response_model=List[ContentLibraryItem])
+def _apply_content_type_filter(
+    library: List[Dict[str, Any]], content_type: Optional[ContentTypeEnum]
+) -> List[Dict[str, Any]]:
+    """Apply content type filter to library"""
+    if content_type:
+        return [item for item in library if item["content_type"] == content_type.value]
+    return library
+
+
+def _apply_difficulty_filter(
+    library: List[Dict[str, Any]], difficulty: Optional[str]
+) -> List[Dict[str, Any]]:
+    """Apply difficulty filter to library"""
+    if difficulty:
+        return [item for item in library if item["difficulty_level"] == difficulty]
+    return library
+
+
+def _apply_language_filter(
+    library: List[Dict[str, Any]], language: Optional[str]
+) -> List[Dict[str, Any]]:
+    """Apply language filter to library"""
+    if language:
+        return [item for item in library if item.get("language") == language]
+    return library
+
+
+def _apply_pagination(
+    library: List[Dict[str, Any]], offset: int, limit: int
+) -> List[Dict[str, Any]]:
+    """Apply pagination to library"""
+    return library[offset : offset + limit]
+
+
+def _convert_to_response_items(
+    library: List[Dict[str, Any]],
+) -> List[ContentLibraryItem]:
+    """Convert library items to response format"""
+    return [
+        ContentLibraryItem(
+            content_id=item["content_id"],
+            title=item["title"],
+            content_type=item["content_type"],
+            topics=item["topics"],
+            difficulty_level=item["difficulty_level"],
+            created_at=datetime.fromisoformat(item["created_at"]),
+            material_count=item["material_count"],
+            word_count=item["word_count"],
+            estimated_study_time=item["estimated_study_time"],
+        )
+        for item in library
+    ]
+
+
 async def get_content_library(
     limit: int = 50,
     offset: int = 0,
@@ -316,44 +370,14 @@ async def get_content_library(
 ):
     """Get user's content library with filtering and pagination"""
     try:
-        # Get all content
         library = await content_processor.get_content_library()
 
-        # Apply filters
-        if content_type:
-            library = [
-                item for item in library if item["content_type"] == content_type.value
-            ]
+        library = _apply_content_type_filter(library, content_type)
+        library = _apply_difficulty_filter(library, difficulty)
+        library = _apply_language_filter(library, language)
+        library = _apply_pagination(library, offset, limit)
 
-        if difficulty:
-            library = [
-                item for item in library if item["difficulty_level"] == difficulty
-            ]
-
-        if language:
-            library = [item for item in library if item.get("language") == language]
-
-        # Apply pagination
-        len(library)
-        library = library[offset : offset + limit]
-
-        # Convert to response format
-        response_items = [
-            ContentLibraryItem(
-                content_id=item["content_id"],
-                title=item["title"],
-                content_type=item["content_type"],
-                topics=item["topics"],
-                difficulty_level=item["difficulty_level"],
-                created_at=datetime.fromisoformat(item["created_at"]),
-                material_count=item["material_count"],
-                word_count=item["word_count"],
-                estimated_study_time=item["estimated_study_time"],
-            )
-            for item in library
-        ]
-
-        return response_items
+        return _convert_to_response_items(library)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get library: {str(e)}")
