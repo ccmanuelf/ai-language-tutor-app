@@ -1,231 +1,454 @@
 # Daily Project Resumption Prompt Template
+## AI Language Tutor App - Phase 2C Refactoring
+
+**Last Updated**: 2025-10-14 (Session 3 Complete)  
+**Current Phase**: Phase 2C - High-Complexity Function Refactoring  
+**Current Status**: TIER 3A COMPLETE (60% overall, 27/45 functions)  
+**Next Milestone**: TIER 3B (6 functions, C:12 complexity)
+
+---
 
 ## Standardized Daily Startup Prompt
 
-Use this exact prompt to resume work each day:
+**⚡ COPY AND PASTE THIS INTO NEW CHAT SESSION:**
 
 ---
 
-**DAILY PROJECT RESUMPTION - AI Language Tutor App Implementation**
+**DAILY PROJECT RESUMPTION - AI Language Tutor App Phase 2C Refactoring**
 
-Hello! I'm resuming work on the AI Language Tutor App comprehensive implementation project. Please help me continue from where we left off yesterday.
+Hello! I'm resuming work on the AI Language Tutor App Phase 2C refactoring project. Please help me continue from where we left off.
 
 **PROJECT CONTEXT**:
-- Building comprehensive language learning platform combining YouLearn AI, Pingo AI, Fluently AI, and Airlearn features
-- Personal, non-commercial, educational tool for family use
-- Must remain flexible, configurable, and adaptable
-- Current foundation: FastAPI backend + FastHTML frontend + multi-LLM routing + Mistral STT + Piper TTS + SQLite/ChromaDB/DuckDB
+- **Phase**: Phase 2C - High-Complexity Function Refactoring
+- **Goal**: Refactor all C-level complexity functions (C:11-14) to A-level using Extract Method pattern
+- **Status**: TIER 3A COMPLETE ✅ (27/45 functions, 60% complete)
+- **Next**: TIER 3B - 6 functions with C:12 complexity
+- **Tech Stack**: FastAPI + FastHTML + multi-LLM routing + Mistral STT + Piper TTS + SQLite/ChromaDB/DuckDB
 
-**🚨 MANDATORY FIRST STEP - ENVIRONMENT VALIDATION**:
-Before proceeding with ANY work, you MUST run the environment validation:
+**🔥 CRITICAL PROJECT PHILOSOPHY**:
+> "Quality and reliability is our goal by whatever it takes. Time is not a constraint."
+> "Do not omit or skip anything - production ready system, fully reliable and maintainable."
+> "No need to run at full speed - quality and reliability is our priority, not speed."
 
-```bash
-cd ai-language-tutor-app
-source ai-tutor-env/bin/activate
-python scripts/validate_environment.py
-```
+**🚨 MANDATORY FIRST STEP - READ STATUS FILES**:
+Before ANY work, you MUST read these files IN THIS ORDER:
 
-**If environment validation FAILS, STOP and fix issues before continuing.**
+1. **`docs/PROJECT_STATUS.md`** ⭐ START HERE
+   - Current status overview and quick reference
+   - Next session plan and immediate actions
+   - All critical metrics and file references
 
-**PLEASE PERFORM THESE STEPS IN ORDER**:
+2. **`validation_artifacts/4.2.6/SESSION_3_HANDOVER.md`** ⭐ MOST IMPORTANT
+   - Complete Session 3 summary and accomplishments
+   - TIER 3B detailed plan (6 functions to refactor)
+   - Validation commands and reference examples
+   - Critical DO/DON'T reminders
+   - Proven refactoring patterns with examples
 
-1. **Environment Validation** ✅ MANDATORY
-   - Run `python scripts/validate_environment.py`
-   - Verify 5/5 checks pass (Python, dependencies, directory, models, services)
-   - If any failures, fix before proceeding
+3. **`validation_artifacts/4.2.6/PHASE_2C_PROGRESS_TRACKER.md`**
+   - Real-time progress tracker for all tiers
+   - Function-by-function refactoring results
+   - Git commit log and cumulative statistics
 
-2. **Read Current Status**: Load and analyze `docs/TASK_TRACKER.json` and `validation_artifacts/4.2.6/PHASE_2B_PROGRESS_REPORT.md` and `validation_artifacts/4.2.6/PHASE_2B_PROGRESS_REPORT_SESSION2.md` and `validation_artifacts/4.2.6/PHASE_2B_FINAL_COMPLETION_REPORT.md` and `validation_artifacts/4.2.6/PHASE_2C_SESSION_1_PROGRESS_REPORT.md` and `validation_artifacts/4.2.6/PHASE_2C_PROGRESS_TRACKER.md` to understand current phase, task, and progress
+**📋 PLEASE PERFORM THESE STEPS IN ORDER**:
 
-3. **Check Previous Session Handover**: Review `docs/SESSION_HANDOVER_TASK_4_2_6_PHASE_2.md` and `docs/SESSION_HANDOVER_TASK_4_2_6_PHASE_2B_PROGRESS.md` and `docs/SESSION_HANDOVER_TASK_4_2_6_PHASE_2B_FINAL.md` and `docs/RESUMPTION_GUIDE_PHASE_2B.md` and `docs/COMPLEXITY_C_FUNCTIONS_DOCUMENTATION.md` and `validation_artifacts/4.2.6/SUBTASK_2B_12_REFACTORING_SUMMARY.md` and `docs/SESSION_HANDOVER_PHASE_2C_SESSION_1.md` and `validation_artifacts/4.2.6/PHASE_2C_REALITY_CHECK_REPORT.md` and `validation_artifacts/4.2.6/PHASE_2C_REVISED_EXECUTION_PLAN.md` if these exists from the last session
+1. **Load Current Status** (5-10 minutes)
+   - Read `docs/PROJECT_STATUS.md` - Get high-level overview
+   - Read `validation_artifacts/4.2.6/SESSION_3_HANDOVER.md` - Get detailed context
+   - Read `validation_artifacts/4.2.6/PHASE_2C_PROGRESS_TRACKER.md` - Verify exact progress
+   - Review `validation_artifacts/4.2.6/TIER_3A_COMPLETION_REPORT.md` - See latest patterns
 
-4. **Validate Previous Work**:
-   - Check if the previous session's work was completed and validated according to quality gates
-   - Run `python scripts/quality_gates.py <last_task_id>` if needed
-   - Verify validation artifacts exist in `validation_artifacts/`
+2. **Verify Environment** (2-3 minutes)
+   - Run `python scripts/validate_environment.py` (5/5 checks must pass)
+   - Check git status: `git status` (should be clean)
+   - Verify C-level count: `radon cc app/ -s -n C | wc -l` (should show 18)
+   - Verify no D/E level: `radon cc app/ -s -n D | wc -l` and `radon cc app/ -s -n E | wc -l` (should be 0)
 
-5. **Identify Current Task**: Determine what specific task/subtask should be worked on today
+3. **Confirm Next Task** (1-2 minutes)
+   - Next tier: TIER 3B (6 functions, C:12 complexity)
+   - First function: `app/services/mistral_service.py`: `MistralService.generate_response` - C(12)
+   - Reference similar refactoring: `app/services/claude_service.py:309` (already refactored C:14→A:2)
 
-6. **Check Blockers**: Verify no dependencies are blocking progress on current task
+4. **Execute Refactoring** (following proven pattern from SESSION_3_HANDOVER.md)
+   - Read entire function before refactoring
+   - Identify logical sections and decision points
+   - Extract helpers using Extract Method pattern
+   - Keep main function as orchestrator (target A-level, ≤5 complexity)
+   - Ensure all helpers are A-B level (≤10 complexity)
+   - Run integration tests: `python -m pytest tests/integration/ -v` (8/8 must pass)
+   - Commit atomically with descriptive message
+   - Push immediately to GitHub
 
-7. **Resume Execution**: Continue with the appropriate task based on current status
+5. **Track Progress**
+   - Update `validation_artifacts/4.2.6/PHASE_2C_PROGRESS_TRACKER.md` after every 2-3 functions
+   - Create TIER 3B completion report when tier is done
+   - Maintain real-time todo list during session
 
 **CRITICAL REQUIREMENTS**:
-- 🚨 **NEVER** skip environment validation step
-- ❌ DO NOT advance to next task unless current task has passed ALL quality gates
-- ❌ DO NOT skip validation steps or testing requirements
-- ❌ DO NOT proceed if any blockers exist
-- ❌ DO NOT mark tasks complete without running `python scripts/quality_gates.py <task_id>`
-- ✅ DO document all changes, issues, and decisions
-- ✅ DO update task tracker with progress
-- ✅ DO maintain GitHub sync workflow
-- ✅ DO generate validation artifacts for any completed work
+- 🚨 **NEVER** skip reading the 3 mandatory status files (PROJECT_STATUS.md, SESSION_3_HANDOVER.md, PHASE_2C_PROGRESS_TRACKER.md)
+- 🚨 **ALWAYS** run integration tests after each refactoring (8/8 must pass, zero tolerance for regressions)
+- 🚨 **ALWAYS** verify complexity reduction with radon after refactoring
+- ❌ DO NOT batch multiple refactorings without testing between them
+- ❌ DO NOT skip git commit/push after each function
+- ❌ DO NOT create helpers with complexity > 10
+- ✅ DO follow proven Extract Method pattern from TIER 3A examples
+- ✅ DO use descriptive helper function names (_validate_*, _extract_*, _build_*, etc.)
+- ✅ DO cross-reference similar already-refactored functions
+- ✅ DO maintain atomic git commits with emoji prefixes (✅ TIER 3B (X/6): ...)
+
+**SUCCESS CRITERIA (Per Function)**:
+- ✅ Main function reduced to A-level (complexity ≤5)
+- ✅ All helper functions at A-B level (complexity ≤10)
+- ✅ Integration tests: 8/8 PASSING (no regressions)
+- ✅ Radon complexity verified
+- ✅ Git commit with descriptive message
+- ✅ Pushed to GitHub origin/main
 
 **OUTPUT EXPECTED**:
-1. Environment validation results (5/5 checks status)
-2. Current project status summary
-3. Today's specific task and acceptance criteria
-4. Validation requirements for task completion
-5. Previous session artifacts status
-6. Recommended next actions
-7. Any blockers or issues requiring attention
+1. Confirmation that all 3 mandatory status files have been read
+2. Current environment validation results (5/5 checks)
+3. Current C-level function count verification (should be 18)
+4. Next function to refactor identified (MistralService.generate_response)
+5. Reference to similar already-refactored function (ClaudeService.generate_response)
+6. Proposed refactoring approach based on proven patterns
+7. Confirmation ready to begin refactoring
 
-**REFERENCE FILES**:
-- **Environment Check**: `scripts/validate_environment.py` (MANDATORY)
-- **Quality Gates**: `scripts/quality_gates.py` (before task completion)
-- **Main plan**: `PROJECT_IMPLEMENTATION_PLAN.md`
-- **Task tracking**: `docs/TASK_TRACKER.json`
-- **Prevention guide**: `docs/VALIDATION_PREVENTION_GUIDE.md`
-- **Validation standards**: `docs/VALIDATION_STANDARDS.md`
-- **Session handover**: `docs/SESSION_HANDOVER.md` (if exists)
+**REFERENCE FILES HIERARCHY**:
 
-**VALIDATION EVIDENCE LOCATIONS**:
-- **Environment results**: `validation_results/last_environment_validation.json`
-- **Quality gates results**: `validation_results/quality_gates_*.json`
-- **Generated artifacts**: `validation_artifacts/[task_id]/`
+**Tier 1 - MUST READ FIRST** (Critical for resumption):
+- `docs/PROJECT_STATUS.md` - Current status dashboard
+- `validation_artifacts/4.2.6/SESSION_3_HANDOVER.md` - Latest session handover
+- `validation_artifacts/4.2.6/PHASE_2C_PROGRESS_TRACKER.md` - Real-time progress tracker
 
-Ready to continue! Please load the current status and provide today's work plan.
+**Tier 2 - READ FOR CONTEXT** (Deep understanding):
+- `validation_artifacts/4.2.6/TIER_3A_COMPLETION_REPORT.md` - Latest tier completion report
+- `validation_artifacts/4.2.6/PHASE_2C_REVISED_EXECUTION_PLAN.md` - Full execution plan (45 functions)
+- `validation_artifacts/4.2.6/PHASE_2C_REALITY_CHECK_REPORT.md` - Documentation verification
+
+**Tier 3 - READ FOR HISTORY** (Background context):
+- `validation_artifacts/4.2.6/PHASE_2C_SESSION_1_PROGRESS_REPORT.md` - Session 1 details
+- `validation_artifacts/4.2.6/PHASE_2C_SESSION_2_PROGRESS_REPORT.md` - Session 2 details
+- `validation_artifacts/4.2.6/PHASE_2B_FINAL_COMPLETION_REPORT.md` - Phase 2B completion
+- `docs/COMPLEXITY_C_FUNCTIONS_DOCUMENTATION.md` - C-level function documentation
+
+**CODE REFERENCE EXAMPLES** (Best refactoring patterns):
+- `app/services/claude_service.py:309` - Best Extract Method example (C:14→A:2, 9 helpers, 86% reduction)
+- `app/api/ai_models.py:140` - Best filter chain example (C:13→A:2, 4 helpers, 85% reduction)
+- `app/services/progress_analytics_service.py:199` - Best dataclass example (C:13→A:3, 2 helpers, 77% reduction)
+
+**VALIDATION COMMANDS**:
+```bash
+# Environment validation (MANDATORY at session start)
+python scripts/validate_environment.py
+
+# Verify C-level function count (should be 18)
+radon cc app/ -s -n C | wc -l
+
+# Verify no D/E level functions (should be 0)
+radon cc app/ -s -n D | wc -l
+radon cc app/ -s -n E | wc -l
+
+# Check specific function complexity (after refactoring)
+radon cc app/services/mistral_service.py -s | grep generate_response
+
+# Run integration tests (8/8 must pass)
+python -m pytest tests/integration/ -v
+
+# Git workflow (after each function)
+git add .
+git commit -m "✅ TIER 3B (1/6): Refactor MistralService.generate_response C(12)→A(X) - XX% reduction"
+git push origin main
+```
+
+Ready to continue! Please confirm you've read the status files and provide today's execution plan.
 
 ---
 
-## Daily Completion Template
+## Daily Session Completion Template
 
-Use this template at end of each work session:
+**⚡ USE THIS AT END OF EACH SESSION:**
 
 ---
 
-**DAILY SESSION COMPLETION - Status Update Required**
+**DAILY SESSION COMPLETION - Phase 2C Refactoring**
 
-Please help me properly close today's work session and prepare for tomorrow.
+Please help me properly close today's work session and prepare for next session.
 
-**TODAY'S WORK COMPLETED**:
-[Summarize what was accomplished]
+**SESSION SUMMARY**:
+- **Date**: [Today's date]
+- **Duration**: [Hours worked]
+- **Tier Worked On**: [TIER 3B, 3C, etc.]
+- **Functions Completed**: [X/6 or X/12]
 
-**CURRENT TASK STATUS**:
-[Current task completion percentage and status]
+**FUNCTIONS REFACTORED TODAY**:
+| Function | File | Before | After | Reduction | Helpers | Status |
+|----------|------|--------|-------|-----------|---------|--------|
+| [name] | [path:line] | C(X) | A(X) | XX% | X | ✅/⏳ |
 
-**VALIDATION COMPLETED**:
-[What testing/validation was performed - include quality gates results]
+**VALIDATION RESULTS**:
+- **Integration Tests**: [X/8 passing]
+- **Radon C-level Count**: [Current count]
+- **Radon D/E-level Count**: [Should be 0]
+- **Regressions**: [Count, should be 0]
+- **Git Commits**: [Number of commits made]
+- **GitHub Sync**: [✅ synchronized / ❌ pending]
+
+**QUALITY METRICS**:
+- **Average Complexity Reduction**: [XX%]
+- **Helper Functions Created**: [Total count]
+- **Average Helper Complexity**: [X.X]
+- **Test Pass Rate**: [XX%]
 
 **ISSUES ENCOUNTERED**:
-[Any problems, blockers, or concerns]
+- [List any problems, blockers, or concerns]
+- [None if session went smoothly]
 
-**ARTIFACTS GENERATED**:
-[List files created in validation_artifacts/]
+**NEXT SESSION PLAN**:
+- **Resume At**: [Next function to refactor]
+- **Remaining in Current Tier**: [X functions]
+- **Estimated Time**: [X-Y hours]
+- **Reference Function**: [Similar already-refactored function for pattern reference]
 
-**NEXT SESSION PREPARATION**:
-[What should be tackled next]
+**🚨 MANDATORY SESSION CLOSURE TASKS**:
+- [ ] All refactored functions committed and pushed to GitHub
+- [ ] `validation_artifacts/4.2.6/PHASE_2C_PROGRESS_TRACKER.md` updated with today's progress
+- [ ] Integration tests verified: 8/8 passing
+- [ ] Radon complexity verified: C-level count correct
+- [ ] Session handover document created/updated (if tier complete)
+- [ ] `docs/PROJECT_STATUS.md` updated (if significant milestone reached)
+- [ ] Git working tree clean (no uncommitted changes)
 
-**🚨 MANDATORY SESSION CLOSURE ACTIONS**:
-1. **Run Quality Gates** (if any task completed): `python scripts/quality_gates.py <task_id>`
-2. **Update Task Tracker**: Update `docs/TASK_TRACKER.json` with today's progress
-3. **Create Session Handover**: Fill out `docs/SESSION_HANDOVER.md` for next session
-4. **Commit Validation Artifacts**: Ensure all evidence files are committed to GitHub
-5. **Environment Status**: Save current environment validation state
+**TIER COMPLETION CHECKLIST** (if tier complete):
+- [ ] Create `TIER_XX_COMPLETION_REPORT.md` with detailed results
+- [ ] Update overall statistics in `PHASE_2C_PROGRESS_TRACKER.md`
+- [ ] Create session handover document for next session
+- [ ] Update `docs/PROJECT_STATUS.md` with new milestone
+- [ ] Git commit documentation updates
+- [ ] Push all changes to GitHub
 
-**REQUIRED FILE UPDATES**:
-- [ ] `docs/TASK_TRACKER.json` updated with progress
-- [ ] `docs/SESSION_HANDOVER.md` created/updated for next session
-- [ ] `validation_artifacts/[task_id]/` populated with evidence
-- [ ] GitHub repository synchronized with all changes
+**FILES TO UPDATE**:
+1. `validation_artifacts/4.2.6/PHASE_2C_PROGRESS_TRACKER.md` - Add today's functions to appropriate tier section
+2. `docs/PROJECT_STATUS.md` - Update completion percentage and next milestone (if changed)
+3. `validation_artifacts/4.2.6/SESSION_X_HANDOVER.md` - Create new handover document
 
-Please update all tracking files and provide tomorrow's starting context.
+Please execute all mandatory session closure tasks and provide next session's starting context.
 
 ---
 
 ## Emergency Recovery Template
 
-Use this if project state is unclear or corrupted:
+**⚡ USE THIS IF PROJECT STATE IS UNCLEAR:**
 
 ---
 
 **PROJECT RECOVERY - Status Assessment Required**
 
-The project state appears unclear or potentially corrupted. Please help me assess and recover.
+The project state appears unclear or I'm unsure how to proceed. Please help me assess and recover.
 
 **🚨 RECOVERY STEPS**:
-1. **Environment Check**: Run `python scripts/validate_environment.py`
-2. **Analyze Validation State**: Check `validation_results/` and `validation_artifacts/`
-3. **Review Task Tracker**: Assess `docs/TASK_TRACKER.json` for last known state
-4. **Check Git History**: Review recent commits for last working state
-5. **Validate Last Completed Task**: Run quality gates on last supposedly completed task
-6. **Assess Current Codebase**: Check if application still functions
-7. **Recovery Recommendations**: Provide safe path forward
 
-**CRITICAL QUESTION**: What is the current state of the project and how do we safely proceed?
+1. **Read Status Files** (CRITICAL)
+   - Read `docs/PROJECT_STATUS.md` - Get current status overview
+   - Read latest session handover in `validation_artifacts/4.2.6/SESSION_X_HANDOVER.md`
+   - Read `validation_artifacts/4.2.6/PHASE_2C_PROGRESS_TRACKER.md` - Verify exact progress
+
+2. **Verify Environment**
+   ```bash
+   python scripts/validate_environment.py
+   radon cc app/ -s -n C | wc -l  # Should match documented count
+   radon cc app/ -s -n D | wc -l  # Should be 0
+   radon cc app/ -s -n E | wc -l  # Should be 0
+   python -m pytest tests/integration/ -v  # Should be 8/8 passing
+   git status  # Check for uncommitted changes
+   ```
+
+3. **Cross-Verify Progress**
+   - Compare `PHASE_2C_PROGRESS_TRACKER.md` claimed progress vs actual radon output
+   - Verify claimed completed functions actually have reduced complexity
+   - Check git log matches documented commits
+
+4. **Identify Discrepancies**
+   - List any mismatches between documentation and actual code
+   - Identify any uncommitted changes
+   - Note any failing tests
+
+5. **Recovery Actions**
+   - If documentation is ahead of code: Review recent commits, identify missing work
+   - If code is ahead of documentation: Update progress tracker and status files
+   - If tests are failing: Investigate last commit that passed tests
+   - If complexity counts don't match: Run fresh radon analysis and update documentation
+
+**CRITICAL QUESTIONS**:
+1. What is the current C-level function count according to radon?
+2. What is the current C-level function count according to PHASE_2C_PROGRESS_TRACKER.md?
+3. Do integration tests pass? (8/8 expected)
+4. What is the last git commit message?
+5. Are there uncommitted changes?
+6. What tier should we be working on according to documentation?
+
+**EXPECTED RECOVERY OUTPUT**:
+- Current verified state of the codebase (radon analysis)
+- Discrepancies between documentation and code (if any)
+- Recommended safe path forward
+- Which files need updating to synchronize state
+- Confirmation of what the next task should be
 
 ---
 
-## Quality Gate Validation Template
+## Quick Reference: Validation Commands
 
-Use this before marking any task as complete:
-
----
-
-**TASK COMPLETION VALIDATION REQUIRED**
-
-Task: [Task ID and Name]
-
-**🚨 MANDATORY QUALITY GATES CHECK**:
+### Session Start Validation
 ```bash
-python scripts/quality_gates.py [task_id]
+# Environment check (5/5 must pass)
+python scripts/validate_environment.py
+
+# Complexity analysis (verify starting state)
+radon cc app/ -s -n C | wc -l  # Expected: 18 (or current documented count)
+radon cc app/ -s -n D | wc -l  # Expected: 0
+radon cc app/ -s -n E | wc -l  # Expected: 0
+
+# Get detailed list of C-level functions
+radon cc app/ -s -n C
+
+# Test suite verification (8/8 expected)
+python -m pytest tests/integration/ -v
+
+# Git status check
+git status
+git log --oneline -10
 ```
 
-Please validate this task meets ALL completion criteria:
+### Per-Function Validation (After Each Refactoring)
+```bash
+# Check specific function complexity
+radon cc app/services/[file_name].py -s | grep [function_name]
 
-**ACCEPTANCE CRITERIA CHECKLIST**:
-- [ ] [Criterion 1]
-- [ ] [Criterion 2]
-- [ ] [etc.]
+# Run full integration test suite (8/8 must pass)
+python -m pytest tests/integration/ -v
 
-**VALIDATION REQUIREMENTS**:
-- [ ] Environment validation passes (5/5 checks)
-- [ ] Quality gates pass (4/4 gates)
-- [ ] Validation artifacts generated (>3 files >1KB)
-- [ ] Functionality tested with actual output files
-- [ ] Documentation updated
-- [ ] Code committed to GitHub
-- [ ] No regressions in existing functionality
+# Static analysis check
+python -m pyflakes app/services/[file_name].py
 
-**EVIDENCE REQUIREMENTS**:
-- [ ] Real output files generated (not just "no errors")
-- [ ] Quantitative measurements documented
-- [ ] Performance benchmarks recorded
-- [ ] Error handling tested
+# Git commit
+git add app/services/[file_name].py
+git commit -m "✅ TIER XB (X/6): Refactor [FunctionName] C(12)→A(X) - XX% reduction"
+git push origin main
+```
 
-**BLOCKING ISSUES**: [List any issues preventing completion]
+### Session End Validation
+```bash
+# Verify final C-level count
+radon cc app/ -s -n C | wc -l
 
-**TESTING EVIDENCE**: [Describe testing performed and results with file locations]
+# Verify no regressions (D/E should still be 0)
+radon cc app/ -s -n D | wc -l
+radon cc app/ -s -n E | wc -l
 
-**If ALL criteria are met and quality gates pass, update task status to COMPLETED with validation notes. Otherwise, keep as IN_PROGRESS and list remaining work.**
+# Final test suite run
+python -m pytest tests/integration/ -v
+
+# Verify all changes pushed
+git status  # Should be clean
+git log --oneline -5  # Verify recent commits
+
+# Check remote sync
+git fetch origin
+git status  # Should show "up to date with origin/main"
+```
 
 ---
 
 ## Notes for Effective Daily Usage
 
-### Best Practices
-1. **Always start with environment validation** - this prevents 90% of validation issues
-2. **Never skip quality gates before task completion** - they catch validation methodology failures
-3. **Generate actual evidence files** - validation requires tangible proof
-4. **Document everything** - especially when things don't work as expected
-5. **Commit validation artifacts frequently** - maintain progress history
-6. **Use session handover** - preserve context between sessions
+### Pre-Session Checklist (EVERY SESSION)
+- [ ] Read `docs/PROJECT_STATUS.md` (2-3 min)
+- [ ] Read latest session handover (5-7 min)
+- [ ] Read `PHASE_2C_PROGRESS_TRACKER.md` (2-3 min)
+- [ ] Run environment validation (1 min)
+- [ ] Verify radon counts match documentation (1 min)
+- [ ] Run integration tests to confirm baseline (2 min)
+- [ ] Review reference examples for today's work (3-5 min)
+
+**Total Pre-Session Time**: ~15-20 minutes (MANDATORY, not optional)
+
+### During Session Best Practices
+1. **One Function at a Time**: Complete full cycle before moving to next
+2. **Test After Each Function**: Never batch multiple refactorings without testing
+3. **Commit Immediately**: Don't accumulate uncommitted changes
+4. **Reference Similar Functions**: Use already-refactored functions as templates
+5. **Track Progress**: Update mental/written todo list as you work
+6. **Take Breaks**: 5-10 min break after every 2-3 functions
+
+### Post-Session Checklist (EVERY SESSION)
+- [ ] All functions committed and pushed (0 min - should be already done)
+- [ ] Update `PHASE_2C_PROGRESS_TRACKER.md` (5-10 min)
+- [ ] Create/update session handover if tier complete (15-20 min)
+- [ ] Update `PROJECT_STATUS.md` if milestone reached (5-10 min)
+- [ ] Final integration test run (2 min)
+- [ ] Final radon verification (2 min)
+- [ ] Git working tree clean verification (1 min)
+
+**Total Post-Session Time**: ~10-45 minutes (depending on milestone)
 
 ### Common Pitfalls to Avoid
-1. **Starting work without environment validation** - leads to inconsistent results
-2. **Marking tasks complete without quality gates** - creates validation methodology failures
-3. **Skipping evidence generation** - makes validation impossible to verify
-4. **Not testing with realistic data** - toy examples hide real issues
-5. **Losing track of artifacts** - breaks reproducibility
+1. **Starting without reading status files** - Leads to duplicate work or wrong task
+2. **Batching multiple refactorings** - Makes debugging regressions harder
+3. **Skipping integration tests** - Regressions go unnoticed
+4. **Generic helper names** - Reduces code readability
+5. **Creating high-complexity helpers** - Defeats purpose of refactoring
+6. **Not pushing frequently** - Risk of losing work
+7. **Skipping documentation updates** - State becomes unclear for next session
 
 ### Project Principles Reminder
-- **Quality over Speed**: Better to do one task perfectly with full validation than many tasks poorly
-- **Evidence-Based Validation**: Every test must produce measurable, tangible results
-- **Environment Consistency**: Same environment, same results - always
-- **Incremental Progress**: Small, fully validated steps lead to reliable big results
-- **Family Focus**: Remember this is for educational family use - reliability matters
+- **Quality over Speed**: "Time is not a constraint, quality and reliability is our goal"
+- **Zero Regressions**: Every refactoring must maintain 8/8 test pass rate
+- **Complete Refactoring**: No TODOs, no shortcuts - full production-ready code
+- **Proven Patterns**: Extract Method pattern has 100% success rate across 27 functions
+- **Evidence-Based Progress**: All claims verified with radon and test results
+- **Family Focus**: Personal educational tool requiring absolute reliability
 
-### Prevention Framework Integration
-- **Environment Scripts**: `scripts/validate_environment.py` and `scripts/quality_gates.py`
-- **Documentation**: `docs/VALIDATION_PREVENTION_GUIDE.md` for quick reference
-- **Evidence Storage**: `validation_artifacts/` for organized proof storage
-- **Results Tracking**: `validation_results/` for automated validation history
+### Refactoring Pattern Quick Reference
+
+**Extract Method Pattern** (Used in all 27 successful refactorings):
+1. Read entire function
+2. Identify 3-6 logical sections
+3. Extract each section as helper with descriptive name
+4. Keep main function as orchestrator (5-10 lines, just calls helpers)
+5. Verify each helper is ≤10 complexity
+6. Run tests, verify, commit
+
+**Helper Naming Conventions**:
+- `_validate_*()` - Precondition checks
+- `_extract_*()`, `_get_*()` - Data retrieval
+- `_build_*()`, `_create_*()` - Object construction
+- `_process_*()`, `_analyze_*()` - Core operations
+- `_should_*()` - Boolean decision helpers
+- `_add_*()` - List/collection modification
+
+**Target Complexity Goals**:
+- Main function: A-level (1-5 complexity)
+- Helpers: A-B level (1-10 complexity)
+- Overall reduction: 70-90% (average 81% achieved so far)
+
+---
+
+## Document Version History
+
+- **v1.0** (2025-10-14): Updated for Phase 2C Session 3 completion
+  - Added PROJECT_STATUS.md as primary reference
+  - Reorganized file hierarchy (Tier 1/2/3 reading priority)
+  - Expanded validation commands with expected outputs
+  - Added session checklists with time estimates
+  - Included proven patterns and reference examples
+  - Updated for TIER 3B as next milestone
+
+- **v0.9** (Previous): Original template for Phase 2C start
+- **v0.8**: Phase 2B completion template
+- **Earlier versions**: Phase 2 and earlier templates
+
+---
+
+**Template Last Updated**: 2025-10-14 (Session 3 Complete)  
+**Next Review Required**: Session 4 Start  
+**Template Owner**: AI Language Tutor App Development  
+**Status**: CURRENT ✅
