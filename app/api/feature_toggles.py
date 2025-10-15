@@ -373,27 +373,57 @@ async def _get_feature_or_404(service, feature_id: str):
     return feature
 
 
-def _determine_status_reason(
-    feature, enabled: bool, user_id: str, roles_list: Optional[list]
-) -> str:
-    """Determine the reason for feature status - B(8)"""
-    reason = "enabled" if enabled else "disabled"
-
+def _check_global_disabled(feature) -> Optional[str]:
+    """Check if feature is globally disabled"""
     if feature.status == FeatureToggleStatus.DISABLED:
-        reason = "globally disabled"
-    elif feature.requires_admin and (not roles_list or "admin" not in roles_list):
-        reason = "requires admin role"
-    elif (
+        return "globally disabled"
+    return None
+
+
+def _check_admin_required(feature, roles_list: Optional[list]) -> Optional[str]:
+    """Check if admin role is required but not present"""
+    if feature.requires_admin and (not roles_list or "admin" not in roles_list):
+        return "requires admin role"
+    return None
+
+
+def _check_user_specific_access(feature, user_id: str) -> Optional[str]:
+    """Check if user-specific access is denied"""
+    if (
         feature.scope == FeatureToggleScope.USER_SPECIFIC
         and user_id not in feature.target_users
     ):
-        reason = "not in target users"
-    elif feature.scope == FeatureToggleScope.ROLE_BASED and (
+        return "not in target users"
+    return None
+
+
+def _check_role_based_access(feature, roles_list: Optional[list]) -> Optional[str]:
+    """Check if role-based access is denied"""
+    if feature.scope == FeatureToggleScope.ROLE_BASED and (
         not roles_list or not any(role in feature.target_roles for role in roles_list)
     ):
-        reason = "role not targeted"
+        return "role not targeted"
+    return None
 
-    return reason
+
+def _get_default_status(enabled: bool) -> str:
+    """Get default status reason"""
+    return "enabled" if enabled else "disabled"
+
+
+def _determine_status_reason(
+    feature, enabled: bool, user_id: str, roles_list: Optional[list]
+) -> str:
+    """Determine the reason for feature status"""
+    # Check all denial reasons in priority order
+    reason = (
+        _check_global_disabled(feature)
+        or _check_admin_required(feature, roles_list)
+        or _check_user_specific_access(feature, user_id)
+        or _check_role_based_access(feature, roles_list)
+    )
+
+    return reason or _get_default_status(enabled)
 
 
 def _build_status_response(
