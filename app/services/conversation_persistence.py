@@ -212,6 +212,95 @@ class ConversationPersistence:
             if session:
                 session.close()
 
+    def _extract_user_id(self, context: ConversationContext) -> int:
+        """Extract user ID from context with fallback"""
+        return int(context.user_id) if context.user_id.isdigit() else 1
+
+    def _update_vocabulary_progress(
+        self, session: Session, user_id: int, context: ConversationContext
+    ) -> None:
+        """Update vocabulary learning progress"""
+        if not context.vocabulary_introduced:
+            return
+
+        vocabulary_progress = (
+            session.query(LearningProgress)
+            .filter(
+                LearningProgress.user_id == user_id,
+                LearningProgress.language == context.language,
+                LearningProgress.skill_type == "vocabulary",
+            )
+            .first()
+        )
+
+        if vocabulary_progress:
+            vocabulary_progress.words_learned += len(context.vocabulary_introduced)
+            vocabulary_progress.last_activity = datetime.now()
+            vocabulary_progress.sessions_completed += 1
+
+    def _update_conversation_progress(
+        self, session: Session, user_id: int, context: ConversationContext
+    ) -> None:
+        """Update conversation progress"""
+        conversation_progress = (
+            session.query(LearningProgress)
+            .filter(
+                LearningProgress.user_id == user_id,
+                LearningProgress.language == context.language,
+                LearningProgress.skill_type == "conversation",
+            )
+            .first()
+        )
+
+        if conversation_progress:
+            conversation_progress.conversations_completed += 1
+            conversation_progress.last_activity = datetime.now()
+            conversation_progress.sessions_completed += 1
+
+    def _save_vocabulary_items(
+        self, session: Session, user_id: int, context: ConversationContext
+    ) -> None:
+        """Save new vocabulary items to database"""
+        for word in context.vocabulary_introduced:
+            if not self._vocabulary_exists(session, user_id, context.language, word):
+                vocab_item = VocabularyItem(
+                    user_id=user_id,
+                    language=context.language,
+                    word=word,
+                    difficulty_level=self._estimate_difficulty(
+                        context.vocabulary_level
+                    ),
+                    first_learned=datetime.now(),
+                )
+                session.add(vocab_item)
+
+    def _vocabulary_exists(
+        self, session: Session, user_id: int, language: str, word: str
+    ) -> bool:
+        """Check if vocabulary item already exists"""
+        return (
+            session.query(VocabularyItem)
+            .filter(
+                VocabularyItem.user_id == user_id,
+                VocabularyItem.language == language,
+                VocabularyItem.word == word,
+            )
+            .first()
+            is not None
+        )
+
+    def _handle_save_error(
+        self, session: Optional[Session], conversation_id: str, error: Exception
+    ) -> bool:
+        """Handle errors during save operation"""
+        error_type = "Database" if isinstance(error, SQLAlchemyError) else "Unexpected"
+        logger.error(
+            f"{error_type} error saving learning progress for {conversation_id}: {error}"
+        )
+        if session:
+            session.rollback()
+        return False
+
     async def save_learning_progress(
         self, conversation_id: str, context: ConversationContext
     ) -> bool:
@@ -228,86 +317,18 @@ class ConversationPersistence:
         session: Optional[Session] = None
         try:
             session = next(get_db_session())
+            user_id = self._extract_user_id(context)
 
-            user_id = int(context.user_id) if context.user_id.isdigit() else 1
-
-            # Update vocabulary progress
-            if context.vocabulary_introduced:
-                vocabulary_progress = (
-                    session.query(LearningProgress)
-                    .filter(
-                        LearningProgress.user_id == user_id,
-                        LearningProgress.language == context.language,
-                        LearningProgress.skill_type == "vocabulary",
-                    )
-                    .first()
-                )
-
-                if vocabulary_progress:
-                    vocabulary_progress.words_learned += len(
-                        context.vocabulary_introduced
-                    )
-                    vocabulary_progress.last_activity = datetime.now()
-                    vocabulary_progress.sessions_completed += 1
-
-            # Update conversation progress
-            conversation_progress = (
-                session.query(LearningProgress)
-                .filter(
-                    LearningProgress.user_id == user_id,
-                    LearningProgress.language == context.language,
-                    LearningProgress.skill_type == "conversation",
-                )
-                .first()
-            )
-
-            if conversation_progress:
-                conversation_progress.conversations_completed += 1
-                conversation_progress.last_activity = datetime.now()
-                conversation_progress.sessions_completed += 1
-
-            # Save new vocabulary items
-            for word in context.vocabulary_introduced:
-                existing_vocab = (
-                    session.query(VocabularyItem)
-                    .filter(
-                        VocabularyItem.user_id == user_id,
-                        VocabularyItem.language == context.language,
-                        VocabularyItem.word == word,
-                    )
-                    .first()
-                )
-
-                if not existing_vocab:
-                    vocab_item = VocabularyItem(
-                        user_id=user_id,
-                        language=context.language,
-                        word=word,
-                        difficulty_level=self._estimate_difficulty(
-                            context.vocabulary_level
-                        ),
-                        first_learned=datetime.now(),
-                    )
-                    session.add(vocab_item)
+            self._update_vocabulary_progress(session, user_id, context)
+            self._update_conversation_progress(session, user_id, context)
+            self._save_vocabulary_items(session, user_id, context)
 
             session.commit()
             logger.info(f"Saved learning progress for conversation {conversation_id}")
             return True
 
-        except SQLAlchemyError as e:
-            logger.error(
-                f"Database error saving learning progress for {conversation_id}: {e}"
-            )
-            if session:
-                session.rollback()
-            return False
-        except Exception as e:
-            logger.error(
-                f"Unexpected error saving learning progress for {conversation_id}: {e}"
-            )
-            if session:
-                session.rollback()
-            return False
+        except (SQLAlchemyError, Exception) as e:
+            return self._handle_save_error(session, conversation_id, e)
         finally:
             if session:
                 session.close()
