@@ -256,8 +256,8 @@ class TestUserProfileManagement:
             preferences={"theme": "light"},
         )
 
-    @patch("app.database.config.DatabaseManager.get_primary_engine")
-    def test_user_creation_validation(self, mock_session):
+    @patch("app.database.config.db_manager")
+    def test_user_creation_validation(self, mock_db_manager):
         """Test user creation with validation"""
         # Mock database session
         mock_session_instance = Mock()
@@ -529,7 +529,7 @@ class TestIntegrationScenarios:
 
         # Mock database operations
         with (
-            patch("app.database.config.DatabaseManager.get_primary_engine"),
+            patch("app.database.config.db_manager"),
             patch("app.services.user_management.local_db_manager"),
         ):
             # Registration would involve multiple steps
@@ -645,7 +645,7 @@ def test_user_data():
 @pytest.fixture
 def mock_database_session():
     """Fixture for mocked database session"""
-    with patch("app.database.config.DatabaseManager.get_primary_engine") as mock:
+    with patch("app.database.config.db_manager") as mock:
         session_mock = Mock()
         mock.return_value.__enter__.return_value = session_mock
         mock.return_value.__exit__.return_value = None
