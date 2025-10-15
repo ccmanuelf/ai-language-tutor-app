@@ -723,6 +723,67 @@ class SpeechProcessor:
 
     # Private implementation methods
 
+    def _validate_provider_not_watson(self, provider: str) -> None:
+        """Validate that Watson provider is not requested (deprecated)"""
+        if provider == "watson":
+            raise Exception("Watson STT deprecated - use 'auto' or 'mistral' providers")
+
+    async def _process_with_mistral_explicit(
+        self, audio_data: bytes, language: str, audio_format: AudioFormat
+    ) -> SpeechRecognitionResult:
+        """Process audio with Mistral STT when explicitly requested"""
+        if not self.mistral_stt_available:
+            raise Exception("Mistral STT not available but explicitly requested")
+        return await self._speech_to_text_mistral(audio_data, language, audio_format)
+
+    def _is_result_acceptable(self, result: SpeechRecognitionResult) -> bool:
+        """Check if STT result meets quality threshold"""
+        return result.confidence > 0.1 and result.transcript.strip() != ""
+
+    async def _try_mistral_stt(
+        self, audio_data: bytes, language: str, audio_format: AudioFormat, provider: str
+    ) -> SpeechRecognitionResult:
+        """Try to process audio with Mistral STT"""
+        logger.info(f"Using Mistral STT for cost optimization (provider: {provider})")
+        result = await self._speech_to_text_mistral(audio_data, language, audio_format)
+
+        if self._is_result_acceptable(result):
+            return result
+
+        logger.warning(
+            f"Mistral STT low quality result (confidence: {result.confidence})"
+        )
+        if provider == "auto":
+            return result  # Accept even low quality in auto mode
+        raise Exception("Mistral result not acceptable, need fallback")
+
+    async def _process_with_watson_fallback(
+        self, audio_data: bytes, language: str, audio_format: AudioFormat
+    ) -> SpeechRecognitionResult:
+        """Fallback to Watson STT if available"""
+        if self.watson_stt_available:
+            logger.info("Using Watson STT as fallback")
+            return await self._speech_to_text_watson(audio_data, language, audio_format)
+        raise Exception(
+            "No STT providers available (Mistral and Watson both unavailable)"
+        )
+
+    async def _process_with_auto_or_fallback(
+        self, audio_data: bytes, language: str, audio_format: AudioFormat, provider: str
+    ) -> SpeechRecognitionResult:
+        """Process with auto or mistral_fallback provider mode"""
+        if self.mistral_stt_available:
+            try:
+                return await self._try_mistral_stt(
+                    audio_data, language, audio_format, provider
+                )
+            except Exception as e:
+                logger.warning(f"Mistral STT failed, attempting Watson fallback: {e}")
+
+        return await self._process_with_watson_fallback(
+            audio_data, language, audio_format
+        )
+
     async def _select_stt_provider_and_process(
         self,
         audio_data: bytes,
@@ -738,67 +799,21 @@ class SpeechProcessor:
         - "mistral": Use Mistral STT explicitly
         Note: Watson deprecated in Phase 2A migration
         """
+        self._validate_provider_not_watson(provider)
 
-        # Provider selection logic
-        if provider == "watson":
-            # Watson STT deprecated in Phase 2A migration
-            raise Exception("Watson STT deprecated - use 'auto' or 'mistral' providers")
-
-        elif provider == "mistral":
-            # Explicit Mistral request
-            if not self.mistral_stt_available:
-                raise Exception("Mistral STT not available but explicitly requested")
-            return await self._speech_to_text_mistral(
+        if provider == "mistral":
+            return await self._process_with_mistral_explicit(
                 audio_data, language, audio_format
             )
 
-        elif provider in ["auto", "mistral_fallback"]:
-            # Auto or fallback mode - prefer Mistral for cost savings
-
-            # Try Mistral first if available
-            if self.mistral_stt_available:
-                try:
-                    logger.info(
-                        f"Using Mistral STT for cost optimization (provider: {provider})"
-                    )
-                    result = await self._speech_to_text_mistral(
-                        audio_data, language, audio_format
-                    )
-
-                    # Check if result is acceptable
-                    if result.confidence > 0.1 and result.transcript.strip():
-                        return result
-                    else:
-                        logger.warning(
-                            f"Mistral STT low quality result (confidence: {result.confidence})"
-                        )
-                        if provider == "auto":
-                            # Auto mode: accept even low quality to save costs
-                            return result
-                        # mistral_fallback: continue to Watson fallback
-
-                except Exception as e:
-                    logger.warning(
-                        f"Mistral STT failed, attempting Watson fallback: {e}"
-                    )
-                    # Continue to Watson fallback
-
-            # Fallback to Watson if Mistral failed or not available
-            if self.watson_stt_available:
-                logger.info("Using Watson STT as fallback")
-                return await self._speech_to_text_watson(
-                    audio_data, language, audio_format
-                )
-
-            # Neither provider available
-            raise Exception(
-                "No STT providers available (Mistral and Watson both unavailable)"
+        if provider in ["auto", "mistral_fallback"]:
+            return await self._process_with_auto_or_fallback(
+                audio_data, language, audio_format, provider
             )
 
-        else:
-            raise ValueError(
-                f"Unknown STT provider: {provider}. Use 'auto' or 'mistral' (Watson deprecated in Phase 2A)"
-            )
+        raise ValueError(
+            f"Unknown STT provider: {provider}. Use 'auto' or 'mistral' (Watson deprecated in Phase 2A)"
+        )
 
     # Watson STT methods removed - deprecated in Phase 2A migration
 
