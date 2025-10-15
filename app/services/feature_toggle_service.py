@@ -535,6 +535,36 @@ class FeatureToggleService:
             await self.initialize()
         return self._features.get(feature_id)
 
+    def _apply_category_filter(
+        self, features: List[FeatureToggle], category: Optional[FeatureToggleCategory]
+    ) -> List[FeatureToggle]:
+        """Apply category filter to features list."""
+        if category:
+            return [f for f in features if f.category == category]
+        return features
+
+    def _apply_scope_filter(
+        self, features: List[FeatureToggle], scope: Optional[FeatureToggleScope]
+    ) -> List[FeatureToggle]:
+        """Apply scope filter to features list."""
+        if scope:
+            return [f for f in features if f.scope == scope]
+        return features
+
+    def _apply_status_filter(
+        self, features: List[FeatureToggle], status: Optional[FeatureToggleStatus]
+    ) -> List[FeatureToggle]:
+        """Apply status filter to features list."""
+        if status:
+            return [f for f in features if f.status == status]
+        return features
+
+    def _sort_features_by_creation(
+        self, features: List[FeatureToggle]
+    ) -> List[FeatureToggle]:
+        """Sort features by creation date, newest first."""
+        return sorted(features, key=lambda f: f.created_at, reverse=True)
+
     async def get_all_features(
         self,
         category: Optional[FeatureToggleCategory] = None,
@@ -546,15 +576,10 @@ class FeatureToggleService:
             await self.initialize()
 
         features = list(self._features.values())
-
-        if category:
-            features = [f for f in features if f.category == category]
-        if scope:
-            features = [f for f in features if f.scope == scope]
-        if status:
-            features = [f for f in features if f.status == status]
-
-        return sorted(features, key=lambda f: f.created_at, reverse=True)
+        features = self._apply_category_filter(features, category)
+        features = self._apply_scope_filter(features, scope)
+        features = self._apply_status_filter(features, status)
+        return self._sort_features_by_creation(features)
 
     async def update_feature(
         self,
