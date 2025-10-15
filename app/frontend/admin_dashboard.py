@@ -57,103 +57,140 @@ def create_admin_header(current_user: Dict[str, Any]) -> Div:
     )
 
 
-def create_user_card(user: Dict[str, Any]) -> Div:
-    """Create a user card for the user management interface"""
-
-    # Role-specific styling
+def _get_role_styling(user: Dict[str, Any]) -> tuple[str, str]:
+    """Get role and color for styling"""
     role_colors = {
-        "ADMIN": "#dc2626",  # Red
-        "PARENT": "#2563eb",  # Blue
-        "CHILD": "#16a34a",  # Green
-        "GUEST": "#6b7280",  # Gray
+        "ADMIN": "#dc2626",
+        "PARENT": "#2563eb",
+        "CHILD": "#16a34a",
+        "GUEST": "#6b7280",
     }
-
     role = user.get("role", "CHILD")
     role_color = role_colors.get(role, "#6b7280")
+    return role, role_color
 
-    # Status indicator
-    status_color = "#16a34a" if user.get("is_active", True) else "#dc2626"
-    status_text = "Active" if user.get("is_active", True) else "Inactive"
+
+def _get_status_styling(user: Dict[str, Any]) -> tuple[str, str]:
+    """Get status color and text"""
+    is_active = user.get("is_active", True)
+    status_color = "#16a34a" if is_active else "#dc2626"
+    status_text = "Active" if is_active else "Inactive"
+    return status_color, status_text
+
+
+def _create_user_header(
+    user: Dict[str, Any],
+    role: str,
+    role_color: str,
+    status_color: str,
+    status_text: str,
+) -> Div:
+    """Create user card header section"""
+    full_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
+    display_name = full_name or user.get("username", "Unknown User")
 
     return Div(
-        # User header
         Div(
-            Div(
-                H3(
-                    f"{user.get('first_name', '')} {user.get('last_name', '')}"
-                    or user.get("username", "Unknown User"),
-                    style="margin: 0; color: #1f2937; font-size: 1.1rem; font-weight: 600;",
-                ),
-                P(
-                    user.get("email", "No email"),
-                    style="margin: 4px 0 0 0; color: #6b7280; font-size: 0.9rem;",
-                ),
-                style="flex: 1;",
+            H3(
+                display_name,
+                style="margin: 0; color: #1f2937; font-size: 1.1rem; font-weight: 600;",
             ),
-            Div(
-                Span(
-                    role,
-                    style=f"background: {role_color}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 500; margin-right: 8px;",
-                ),
-                Span(
-                    status_text,
-                    style=f"background: {status_color}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 500;",
-                ),
-                style="display: flex; align-items: center;",
+            P(
+                user.get("email", "No email"),
+                style="margin: 4px 0 0 0; color: #6b7280; font-size: 0.9rem;",
             ),
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;",
+            style="flex: 1;",
         ),
-        # User details
         Div(
-            Div(
-                Strong("User ID: "),
-                user.get("user_id", "N/A"),
-                style="margin-bottom: 8px; color: #4b5563; font-size: 0.9rem;",
+            Span(
+                role,
+                style=f"background: {role_color}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 500; margin-right: 8px;",
             ),
-            Div(
-                Strong("Created: "),
-                datetime.fromisoformat(
-                    user.get("created_at", "").replace("Z", "+00:00")
-                ).strftime("%Y-%m-%d %H:%M")
-                if user.get("created_at")
-                else "Unknown",
-                style="margin-bottom: 8px; color: #4b5563; font-size: 0.9rem;",
+            Span(
+                status_text,
+                style=f"background: {status_color}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 500;",
             ),
-            Div(
-                Strong("Last Login: "),
-                datetime.fromisoformat(
-                    user.get("last_login", "").replace("Z", "+00:00")
-                ).strftime("%Y-%m-%d %H:%M")
-                if user.get("last_login")
-                else "Never",
-                style="margin-bottom: 16px; color: #4b5563; font-size: 0.9rem;",
-            )
+            style="display: flex; align-items: center;",
+        ),
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;",
+    )
+
+
+def _format_datetime(dt_string: Optional[str]) -> str:
+    """Format datetime string for display"""
+    if not dt_string:
+        return "Unknown"
+    try:
+        return datetime.fromisoformat(dt_string.replace("Z", "+00:00")).strftime(
+            "%Y-%m-%d %H:%M"
+        )
+    except (ValueError, AttributeError):
+        return "Unknown"
+
+
+def _create_user_details(user: Dict[str, Any]) -> Div:
+    """Create user details section"""
+    return Div(
+        Div(
+            Strong("User ID: "),
+            user.get("user_id", "N/A"),
+            style="margin-bottom: 8px; color: #4b5563; font-size: 0.9rem;",
+        ),
+        Div(
+            Strong("Created: "),
+            _format_datetime(user.get("created_at")),
+            style="margin-bottom: 8px; color: #4b5563; font-size: 0.9rem;",
+        ),
+        Div(
+            Strong("Last Login: "),
+            _format_datetime(user.get("last_login"))
             if user.get("last_login")
-            else None,
-            style="margin-bottom: 16px;",
+            else "Never",
+            style="margin-bottom: 16px; color: #4b5563; font-size: 0.9rem;",
+        )
+        if user.get("last_login")
+        else None,
+        style="margin-bottom: 16px;",
+    )
+
+
+def _create_action_buttons(user: Dict[str, Any], role: str) -> Div:
+    """Create action buttons section"""
+    user_id = user.get("user_id")
+    is_admin = role == "ADMIN"
+
+    return Div(
+        Button(
+            "Edit",
+            onclick=f"editUser('{user_id}')",
+            style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-size: 0.9rem;",
         ),
-        # Action buttons
-        Div(
-            Button(
-                "Edit",
-                onclick=f"editUser('{user.get('user_id')}')",
-                style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-size: 0.9rem;",
-            ),
-            Button(
-                "Toggle Status",
-                onclick=f"toggleUserStatus('{user.get('user_id')}')",
-                style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-size: 0.9rem;",
-            ),
-            Button(
-                "Delete" if role != "ADMIN" else "Protected",
-                onclick=f"deleteUser('{user.get('user_id')}')"
-                if role != "ADMIN"
-                else "alert('Admin users cannot be deleted')",
-                disabled=role == "ADMIN",
-                style=f"background: {'#dc2626' if role != 'ADMIN' else '#9ca3af'}; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: {'pointer' if role != 'ADMIN' else 'not-allowed'}; font-size: 0.9rem;",
-            ),
-            style="display: flex; justify-content: flex-end;",
+        Button(
+            "Toggle Status",
+            onclick=f"toggleUserStatus('{user_id}')",
+            style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-size: 0.9rem;",
         ),
+        Button(
+            "Protected" if is_admin else "Delete",
+            onclick="alert('Admin users cannot be deleted')"
+            if is_admin
+            else f"deleteUser('{user_id}')",
+            disabled=is_admin,
+            style=f"background: {'#9ca3af' if is_admin else '#dc2626'}; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: {'not-allowed' if is_admin else 'pointer'}; font-size: 0.9rem;",
+        ),
+        style="display: flex; justify-content: flex-end;",
+    )
+
+
+def create_user_card(user: Dict[str, Any]) -> Div:
+    """Create a user card for the user management interface"""
+    role, role_color = _get_role_styling(user)
+    status_color, status_text = _get_status_styling(user)
+
+    return Div(
+        _create_user_header(user, role, role_color, status_color, status_text),
+        _create_user_details(user),
+        _create_action_buttons(user, role),
         style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb; margin-bottom: 16px;",
     )
 
