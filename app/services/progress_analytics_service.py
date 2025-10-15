@@ -647,39 +647,57 @@ class ProgressAnalyticsService:
             ),
         }
 
+    def _extract_fluency_scores(self, sessions: List[Dict]) -> List[float]:
+        """Extract non-zero fluency scores from sessions"""
+        return [s["fluency_score"] for s in sessions if s["fluency_score"] > 0]
+
+    def _extract_grammar_scores(self, sessions: List[Dict]) -> List[float]:
+        """Extract non-zero grammar accuracy scores from sessions"""
+        return [
+            s["grammar_accuracy_score"]
+            for s in sessions
+            if s["grammar_accuracy_score"] > 0
+        ]
+
+    def _extract_pronunciation_scores(self, sessions: List[Dict]) -> List[float]:
+        """Extract non-zero pronunciation clarity scores from sessions"""
+        return [
+            s["pronunciation_clarity_score"]
+            for s in sessions
+            if s["pronunciation_clarity_score"] > 0
+        ]
+
+    def _extract_vocabulary_scores(self, sessions: List[Dict]) -> List[float]:
+        """Extract non-zero vocabulary complexity scores from sessions"""
+        return [
+            s["vocabulary_complexity_score"]
+            for s in sessions
+            if s["vocabulary_complexity_score"] > 0
+        ]
+
+    def _extract_confidence_scores(self, sessions: List[Dict]) -> List[float]:
+        """Extract non-zero confidence scores from sessions"""
+        return [
+            s["average_confidence_score"]
+            for s in sessions
+            if s["average_confidence_score"] > 0
+        ]
+
     def _calculate_performance_metrics(self, sessions: List[Dict]) -> Dict[str, Any]:
         """Calculate performance metrics from conversation sessions"""
         return {
-            "average_fluency_score": safe_mean(
-                [s["fluency_score"] for s in sessions if s["fluency_score"] > 0]
-            ),
+            "average_fluency_score": safe_mean(self._extract_fluency_scores(sessions)),
             "average_grammar_accuracy": safe_mean(
-                [
-                    s["grammar_accuracy_score"]
-                    for s in sessions
-                    if s["grammar_accuracy_score"] > 0
-                ]
+                self._extract_grammar_scores(sessions)
             ),
             "average_pronunciation_clarity": safe_mean(
-                [
-                    s["pronunciation_clarity_score"]
-                    for s in sessions
-                    if s["pronunciation_clarity_score"] > 0
-                ]
+                self._extract_pronunciation_scores(sessions)
             ),
             "average_vocabulary_complexity": safe_mean(
-                [
-                    s["vocabulary_complexity_score"]
-                    for s in sessions
-                    if s["vocabulary_complexity_score"] > 0
-                ]
+                self._extract_vocabulary_scores(sessions)
             ),
             "average_confidence_level": safe_mean(
-                [
-                    s["average_confidence_score"]
-                    for s in sessions
-                    if s["average_confidence_score"] > 0
-                ]
+                self._extract_confidence_scores(sessions)
             ),
         }
 
