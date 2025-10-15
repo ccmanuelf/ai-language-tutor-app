@@ -1061,21 +1061,43 @@ class ProgressAnalyticsService:
             else None,
         }
 
+    def _extract_positive_improvement_rates(self, skills: List[Dict]) -> List[float]:
+        """Extract improvement rates greater than zero"""
+        return [s["improvement_rate"] for s in skills if s["improvement_rate"] > 0]
+
+    def _calculate_total_practice_time(self, skills: List[Dict]) -> int:
+        """Calculate total practice time across all skills"""
+        return sum(s["total_practice_time_minutes"] for s in skills)
+
+    def _extract_consistency_scores(self, skills: List[Dict]) -> List[float]:
+        """Extract consistency scores from all skills"""
+        return [s["consistency_score"] for s in skills]
+
+    def _count_improving_skills(self, skills: List[Dict]) -> int:
+        """Count skills with positive improvement rate"""
+        return len([s for s in skills if s["improvement_rate"] > 0])
+
+    def _count_stable_skills(self, skills: List[Dict]) -> int:
+        """Count skills with zero improvement rate"""
+        return len([s for s in skills if s["improvement_rate"] == 0])
+
+    def _count_declining_skills(self, skills: List[Dict]) -> int:
+        """Count skills with negative improvement rate"""
+        return len([s for s in skills if s["improvement_rate"] < 0])
+
     def _calculate_progress_trends(self, skills: List[Dict]) -> Dict[str, Any]:
         """Calculate progress trend metrics"""
         return {
             "average_improvement_rate": safe_mean(
-                [s["improvement_rate"] for s in skills if s["improvement_rate"] > 0]
+                self._extract_positive_improvement_rates(skills)
             ),
-            "total_practice_time": sum(
-                s["total_practice_time_minutes"] for s in skills
-            ),
+            "total_practice_time": self._calculate_total_practice_time(skills),
             "average_consistency_score": safe_mean(
-                [s["consistency_score"] for s in skills]
+                self._extract_consistency_scores(skills)
             ),
-            "skills_improving": len([s for s in skills if s["improvement_rate"] > 0]),
-            "skills_stable": len([s for s in skills if s["improvement_rate"] == 0]),
-            "skills_declining": len([s for s in skills if s["improvement_rate"] < 0]),
+            "skills_improving": self._count_improving_skills(skills),
+            "skills_stable": self._count_stable_skills(skills),
+            "skills_declining": self._count_declining_skills(skills),
         }
 
     def _calculate_difficulty_analysis(self, skills: List[Dict]) -> Dict[str, Any]:
