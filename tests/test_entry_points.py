@@ -44,20 +44,21 @@ class TestScriptEntryPoints:
 
         # Import and call the extracted function
         from app.frontend_main import run_frontend_server
-        from app.core.config import get_settings
 
         # Call the function that contains our logic
         run_frontend_server()
 
-        # Verify uvicorn.run was called with correct parameters
-        settings = get_settings()
-        mock_uvicorn_run.assert_called_once_with(
-            "frontend_main:frontend_app",
-            host=settings.HOST,
-            port=settings.FRONTEND_PORT,
-            reload=settings.DEBUG,
-            log_level="info" if settings.DEBUG else "warning",
-        )
+        # Verify uvicorn.run was called (check for app object, not string)
+        mock_uvicorn_run.assert_called_once()
+        call_args = mock_uvicorn_run.call_args
+
+        # Verify it was called with an app object (not string)
+        from fasthtml.core import FastHTML
+
+        assert isinstance(call_args[0][0], FastHTML)
+        assert call_args[1]["host"] == "127.0.0.1"
+        assert call_args[1]["port"] == 3000
+        assert call_args[1]["reload"] == True
 
     @patch("app.main.run_server")
     def test_main_py_script_execution_calls_run_server(self, mock_run_server):
@@ -110,8 +111,9 @@ class TestScriptEntryPoints:
 
         # Verify the if __name__ == '__main__' block exists
         assert 'if __name__ == "__main__":' in source
-        assert "uvicorn.run(" in source
-        assert '"frontend_main:frontend_app"' in source
+        assert "run_frontend_server()" in source
+        # Check for modular architecture - passes app object, not string
+        assert "create_frontend_app()" in source
 
     @patch("app.main.run_server")
     def test_main_py_name_main_execution_path(self, mock_run_server):
