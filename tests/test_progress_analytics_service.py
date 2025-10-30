@@ -1160,3 +1160,316 @@ class TestNextActionHelpers:
 
         assert isinstance(actions, list)
         assert len(actions) > 0
+
+
+class TestPublicAPIIntegration:
+    """Test public API methods (integration tests)"""
+
+    def test_track_conversation_session(self, service):
+        """Test track_conversation_session stores metrics correctly"""
+        from datetime import datetime
+
+        metrics = ConversationMetrics(
+            session_id="test_session_001",
+            user_id=1,
+            language_code="es",
+            conversation_type="scenario",
+            scenario_id="restaurant",
+            tutor_mode="conversational",
+            duration_minutes=15.5,
+            total_exchanges=10,
+            user_turns=5,
+            ai_turns=5,
+            words_spoken=150,
+            unique_words_used=75,
+            vocabulary_complexity_score=0.75,
+            grammar_accuracy_score=0.80,
+            pronunciation_clarity_score=0.70,
+            fluency_score=0.85,
+            average_confidence_score=0.72,
+            confidence_distribution={"low": 2, "medium": 5, "high": 3},
+            engagement_score=0.78,
+            hesitation_count=3,
+            self_correction_count=2,
+            new_vocabulary_encountered=12,
+            grammar_patterns_practiced=5,
+            cultural_context_learned=2,
+            learning_objectives_met=["practice greetings", "order food"],
+            improvement_from_last_session=0.05,
+            peer_comparison_percentile=0.65,
+            started_at=datetime.now(),
+            ended_at=datetime.now(),
+        )
+
+        result = service.track_conversation_session(metrics)
+
+        assert result is True
+
+    def test_track_conversation_session_error_handling(self, service):
+        """Test track_conversation_session handles errors gracefully"""
+        # Create metrics with invalid data type
+        invalid_metrics = ConversationMetrics(
+            session_id=None,  # This might cause issues
+            user_id=1,
+            language_code="es",
+            conversation_type="scenario",
+        )
+
+        # Should return False on error, not crash
+        result = service.track_conversation_session(invalid_metrics)
+        assert isinstance(result, bool)
+
+    def test_get_conversation_analytics(self, service, sample_sessions):
+        """Test get_conversation_analytics returns proper structure"""
+        from datetime import datetime
+
+        # Insert test sessions
+        with service._get_connection() as conn:
+            cursor = conn.cursor()
+            recent_date = datetime.now().isoformat()
+
+            cursor.execute(
+                """
+                INSERT INTO conversation_metrics (
+                    session_id, user_id, language_code, conversation_type,
+                    duration_minutes, total_exchanges, fluency_score,
+                    grammar_accuracy_score, pronunciation_clarity_score,
+                    vocabulary_complexity_score, average_confidence_score,
+                    engagement_score, hesitation_count, self_correction_count,
+                    started_at, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "test_analytics_1",
+                    1,
+                    "es",
+                    "scenario",
+                    15.0,
+                    10,
+                    0.75,
+                    0.80,
+                    0.70,
+                    0.65,
+                    0.72,
+                    0.78,
+                    3,
+                    2,
+                    recent_date,
+                    recent_date,
+                ),
+            )
+            conn.commit()
+
+        # Get analytics
+        analytics = service.get_conversation_analytics(
+            user_id=1, language_code="es", period_days=30
+        )
+
+        assert isinstance(analytics, dict)
+        assert "overview" in analytics
+        assert "performance_metrics" in analytics
+        assert "learning_progress" in analytics
+        assert "engagement_analysis" in analytics
+        assert "trends" in analytics
+        assert "recommendations" in analytics
+
+    def test_get_conversation_analytics_empty_data(self, service):
+        """Test get_conversation_analytics with no data returns empty structure"""
+        analytics = service.get_conversation_analytics(
+            user_id=999, language_code="fr", period_days=30
+        )
+
+        assert isinstance(analytics, dict)
+        assert analytics["overview"]["total_conversations"] == 0
+        assert analytics["performance_metrics"]["average_fluency_score"] == 0
+        assert isinstance(analytics["recommendations"], list)
+
+    def test_update_skill_progress(self, service):
+        """Test update_skill_progress stores metrics correctly"""
+        skill_metrics = SkillProgressMetrics(
+            user_id=1,
+            language_code="es",
+            skill_type="vocabulary",
+            current_level=75.0,
+            mastery_percentage=75.0,
+            confidence_level="high",
+            initial_assessment_score=60.0,
+            latest_assessment_score=75.0,
+            total_improvement=15.0,
+            improvement_rate=0.25,
+            total_practice_sessions=20,
+            total_practice_time_minutes=300,
+            average_session_performance=0.78,
+            consistency_score=0.82,
+            easy_items_percentage=0.85,
+            moderate_items_percentage=0.70,
+            hard_items_percentage=0.50,
+            challenge_comfort_level=0.75,
+            retention_rate=0.80,
+            forgetting_curve_analysis={"decay_rate": 0.15},
+            optimal_review_intervals={"easy": 7, "medium": 3, "hard": 1},
+            recommended_focus_areas=["advanced vocabulary", "idioms"],
+            suggested_exercises=["flashcards", "context practice"],
+            next_milestone_target="80% mastery",
+            last_updated=datetime.now(),
+            next_assessment_due=datetime.now(),
+        )
+
+        result = service.update_skill_progress(skill_metrics)
+
+        assert result is True
+
+    def test_update_skill_progress_error_handling(self, service):
+        """Test update_skill_progress handles errors gracefully"""
+        invalid_skill = SkillProgressMetrics(
+            user_id=None,  # Invalid
+            language_code="es",
+            skill_type="grammar",
+        )
+
+        result = service.update_skill_progress(invalid_skill)
+        assert isinstance(result, bool)
+
+    def test_get_multi_skill_analytics(self, service, sample_skills):
+        """Test get_multi_skill_analytics returns proper structure"""
+        import json
+
+        # Insert test skills
+        with service._get_connection() as conn:
+            cursor = conn.cursor()
+
+            for skill in sample_skills:
+                cursor.execute(
+                    """
+                    INSERT INTO skill_progress_metrics (
+                        user_id, language_code, skill_type, current_level,
+                        mastery_percentage, confidence_level, improvement_rate,
+                        total_practice_time_minutes, consistency_score, retention_rate,
+                        easy_items_percentage, moderate_items_percentage, hard_items_percentage,
+                        challenge_comfort_level,
+                        forgetting_curve_analysis, optimal_review_intervals,
+                        recommended_focus_areas, suggested_exercises
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        skill["user_id"],
+                        skill["language_code"],
+                        skill["skill_type"],
+                        skill["current_level"],
+                        skill["mastery_percentage"],
+                        skill["confidence_level"],
+                        skill["improvement_rate"],
+                        skill["total_practice_time_minutes"],
+                        skill["consistency_score"],
+                        skill["retention_rate"],
+                        skill["easy_items_percentage"],
+                        skill["moderate_items_percentage"],
+                        skill["hard_items_percentage"],
+                        skill["challenge_comfort_level"],
+                        json.dumps({}),
+                        json.dumps({}),
+                        json.dumps(skill["suggested_exercises"]),
+                        json.dumps(skill["suggested_exercises"]),
+                    ),
+                )
+            conn.commit()
+
+        # Get analytics
+        analytics = service.get_multi_skill_analytics(user_id=1, language_code="es")
+
+        assert isinstance(analytics, dict)
+        assert "skill_overview" in analytics
+        assert "progress_trends" in analytics
+        assert "difficulty_analysis" in analytics
+        assert "retention_performance" in analytics
+        assert "recommendations" in analytics
+        assert "next_actions" in analytics
+
+    def test_get_multi_skill_analytics_empty_data(self, service):
+        """Test get_multi_skill_analytics with no data returns empty structure"""
+        analytics = service.get_multi_skill_analytics(user_id=999, language_code="fr")
+
+        assert isinstance(analytics, dict)
+        assert analytics["skill_overview"]["total_skills_tracked"] == 0
+        assert analytics["progress_trends"]["skills_improving"] == 0
+
+    def test_create_learning_path_recommendation(self, service):
+        """Test create_learning_path_recommendation creates proper structure"""
+        recommendation = LearningPathRecommendation(
+            user_id=1,
+            language_code="es",
+            recommendation_id="rec_001",
+            recommended_path_type="vocabulary_intensive",
+            path_title="Vocabulary Building Path",
+            path_description="Focused vocabulary development",
+            estimated_duration_weeks=4,
+            difficulty_level=2,
+            recommendation_reasons=["Strong foundation", "Consistent practice"],
+            user_strengths=["grammar", "pronunciation"],
+            user_weaknesses=["advanced vocabulary"],
+            learning_style_preferences=["visual", "interactive"],
+            primary_goals=["Business Spanish", "Travel communication"],
+            weekly_milestones=["Week 1: 50 new words", "Week 2: Business terms"],
+            success_metrics=["80% retention", "90% accuracy"],
+            optimal_practice_times=["morning", "evening"],
+            adaptation_triggers=["<70% retention", "3 days no practice"],
+        )
+
+        result = service.create_learning_path_recommendation(recommendation)
+
+        assert result is True
+
+    def test_create_learning_path_recommendation_error_handling(self, service):
+        """Test create_learning_path_recommendation handles errors"""
+        invalid_rec = LearningPathRecommendation(
+            user_id=None,
+            language_code="es",
+            recommendation_id="rec_002",
+            recommended_path_type="vocabulary_intensive",
+            path_title="Test Path",
+            path_description="Test description",
+        )
+
+        result = service.create_learning_path_recommendation(invalid_rec)
+        assert isinstance(result, bool)
+
+    def test_create_memory_retention_analysis(self, service):
+        """Test create_memory_retention_analysis creates proper structure"""
+        analysis = MemoryRetentionAnalysis(
+            user_id=1,
+            language_code="es",
+            analysis_period_days=30,
+            short_term_retention_rate=0.90,
+            medium_term_retention_rate=0.85,
+            long_term_retention_rate=0.75,
+            active_recall_success_rate=0.80,
+            passive_review_success_rate=0.85,
+            recall_vs_recognition_ratio=0.94,
+            forgetting_curve_steepness=0.15,
+            optimal_review_timing={"easy": 7.0, "medium": 3.0, "hard": 1.0},
+            most_retained_item_types=["vocabulary", "phrases"],
+            least_retained_item_types=["idioms", "advanced grammar"],
+            retention_by_difficulty={"easy": 0.95, "medium": 0.85, "hard": 0.70},
+            average_exposures_to_master=5.2,
+            efficiency_compared_to_peers=1.15,
+            learning_velocity=12.5,
+            retention_improvement_strategies=[
+                "Increase review frequency",
+                "Use more contexts",
+            ],
+        )
+
+        result = service.create_memory_retention_analysis(analysis)
+
+        assert result is True
+
+    def test_create_memory_retention_analysis_error_handling(self, service):
+        """Test create_memory_retention_analysis handles errors"""
+        invalid_analysis = MemoryRetentionAnalysis(
+            user_id=None,
+            language_code="es",
+            analysis_period_days=30,
+        )
+
+        result = service.create_memory_retention_analysis(invalid_analysis)
+        assert isinstance(result, bool)

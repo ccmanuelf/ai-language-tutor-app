@@ -7,6 +7,7 @@ addopts = [
     "--strict-config",
 ]
 testpaths = ["tests"]
+asyncio_mode = "auto"
 filterwarnings = [
     # Ignore external library warnings beyond our control
     # protobuf Python 3.14 compatibility - awaiting upstream fix

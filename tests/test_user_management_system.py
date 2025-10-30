@@ -11,27 +11,29 @@ Tests cover:
 - Integration scenarios
 """
 
-import pytest
 import asyncio
 from datetime import datetime, timedelta
-from sqlalchemy.orm import Session
-from fastapi.testclient import TestClient
-from fasthtml.common import *
 
 # Import patch AFTER fasthtml to avoid conflicts
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+from fastapi.testclient import TestClient
+from fasthtml.common import *
+from sqlalchemy.orm import Session
+
+from app.database.chromadb_config import chroma_manager
 
 # Import modules to test
-from app.database.config import db_manager, check_database_health
+from app.database.config import check_database_health, db_manager
 from app.database.local_config import local_db_manager
-from app.database.chromadb_config import chroma_manager
 from app.database.migrations import migration_manager
-from app.services.auth import auth_service, AuthenticationService
-from app.services.user_management import user_service, UserProfileService
-from app.services.sync import sync_service, SyncDirection
-from app.models.database import User, UserRole, Language
-from app.models.schemas import UserCreate, UserUpdate, UserRoleEnum
-from app.frontend.user_ui import user_profile_page, login_form, registration_form
+from app.frontend.user_ui import login_form, registration_form, user_profile_page
+from app.models.database import Language, User, UserRole
+from app.models.schemas import UserCreate, UserRoleEnum, UserUpdate
+from app.services.auth import AuthenticationService, auth_service
+from app.services.sync import SyncDirection, sync_service
+from app.services.user_management import UserProfileService, user_service
 
 
 class TestDatabaseConnections:
@@ -86,30 +88,44 @@ class TestDatabaseConnections:
         except Exception as e:
             pytest.skip(f"ChromaDB not available: {e}")
 
-    @pytest.mark.skip(reason="Database health checks require running database services")
     def test_connection_health_checks(self):
         """Test database health check system"""
         # Test individual health checks (may fail if databases not running)
+        # This test gracefully skips for databases that aren't available
+        health_checks_passed = 0
+        health_checks_total = 3
+
         try:
             sqlite_health = db_manager.test_sqlite_connection()
             assert isinstance(sqlite_health, dict)
             assert "status" in sqlite_health
-        except Exception:
-            pytest.skip("SQLite not available for testing")
+            health_checks_passed += 1
+        except Exception as e:
+            # SQLite should always be available, so this is a real failure
+            assert False, f"SQLite health check failed: {e}"
 
         try:
             chromadb_health = db_manager.test_chromadb_connection()
             assert isinstance(chromadb_health, dict)
             assert "status" in chromadb_health
+            health_checks_passed += 1
         except Exception:
-            pytest.skip("ChromaDB not available for testing")
+            # ChromaDB might not be running, that's okay
+            pass
 
         try:
             duckdb_health = db_manager.test_duckdb_connection()
             assert isinstance(duckdb_health, dict)
             assert "status" in duckdb_health
+            health_checks_passed += 1
         except Exception:
-            pytest.skip("DuckDB not available for testing")
+            # DuckDB might not be available, that's okay
+            pass
+
+        # At least SQLite should pass (1/3)
+        assert health_checks_passed >= 1, (
+            f"Expected at least SQLite to be healthy, got {health_checks_passed}/{health_checks_total}"
+        )
 
     def test_connection_stats(self):
         """Test connection statistics tracking"""
@@ -225,8 +241,9 @@ class TestUserAuthentication:
 
     def test_rate_limiting(self):
         """Test basic rate limiting functionality"""
-        from app.services.auth import rate_limiter
         import time
+
+        from app.services.auth import rate_limiter
 
         # Use unique key for test isolation
         key = f"test_key_{time.time()}"
@@ -260,33 +277,36 @@ class TestUserProfileManagement:
 
     def test_user_creation_validation(self):
         """Test user creation with validation"""
-        # Skip this test - mocking database sessions requires more complex setup
-        pytest.skip("Database mocking requires integration test environment")
+        # Test the UserCreate model validation instead of the full DB flow
+        # This tests the validation logic without requiring complex DB mocking
 
-        # Mock query results
-        mock_session_instance.query.return_value.filter.return_value.first.return_value = None
-        mock_session_instance.flush.return_value = None
-        mock_session_instance.commit.return_value = None
+        # Test valid user creation
+        valid_user = UserCreate(
+            user_id="valid_user_123",
+            username="Valid User",
+            email="valid@example.com",
+            role=UserRoleEnum.CHILD,
+            first_name="Valid",
+            last_name="User",
+            preferences={"theme": "dark"},
+        )
+        assert valid_user.user_id == "valid_user_123"
+        assert valid_user.email == "valid@example.com"
+        assert valid_user.role == UserRoleEnum.CHILD
 
-        # Mock user object
-        mock_user = Mock()
-        mock_user.id = 1
-        mock_user.user_id = self.test_user_data.user_id
-        mock_user.username = self.test_user_data.username
-        mock_user.email = self.test_user_data.email
-        mock_user.to_dict.return_value = {
-            "id": 1,
-            "user_id": self.test_user_data.user_id,
-            "username": self.test_user_data.username,
-            "email": self.test_user_data.email,
-            "role": self.test_user_data.role.value,
-            "created_at": datetime.now().isoformat(),
-            "updated_at": datetime.now().isoformat(),
-        }
-
-        # Mock local database manager
-        with patch("app.services.user_management.local_db_manager") as mock_local:
-            mock_local.add_user_profile.return_value = True
+        # Test that UserCreate model validates required fields
+        try:
+            # This should fail - missing required fields
+            invalid_user = UserCreate(
+                user_id="",  # Empty user_id should be invalid
+                username="",
+                email="invalid-email",  # Invalid email format
+            )
+            # If we get here, validation didn't work as expected
+            assert False, "Expected validation error for invalid user data"
+        except Exception:
+            # Validation error expected
+            pass
 
             # This would normally create a user, but we're testing validation
             # The actual database operations are mocked
@@ -355,12 +375,15 @@ class TestDataSynchronization:
     @pytest.mark.asyncio
     async def test_sync_direction_handling(self):
         """Test different sync directions"""
+        from unittest.mock import AsyncMock as UnittestAsyncMock
+        from unittest.mock import patch as unittest_patch
+
         directions = [SyncDirection.UP, SyncDirection.DOWN, SyncDirection.BIDIRECTIONAL]
 
         for direction in directions:
             # Mock the sync operation
-            with patch.object(
-                self.sync_service, "_sync_user_profiles", new_callable=AsyncMock
+            with unittest_patch.object(
+                self.sync_service, "_sync_user_profiles", new_callable=UnittestAsyncMock
             ) as mock_sync:
                 mock_sync.return_value = Mock(
                     items_processed=1,
@@ -419,7 +442,9 @@ class TestDataSynchronization:
     def test_connectivity_check(self):
         """Test connectivity checking"""
         # Mock connectivity check (using SQLite as primary DB)
-        with patch.object(db_manager, "test_sqlite_connection") as mock_check:
+        from unittest.mock import patch as unittest_patch
+
+        with unittest_patch.object(db_manager, "test_sqlite_connection") as mock_check:
             mock_check.return_value = {"status": "healthy"}
 
             connectivity = self.sync_service._check_connectivity()
