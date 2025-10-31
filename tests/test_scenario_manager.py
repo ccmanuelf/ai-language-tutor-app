@@ -776,3 +776,297 @@ class TestConvenienceFunctions:
 
         assert status is not None
         assert "progress_id" in status
+
+
+class TestPhaseCompletionEdgeCases:
+    """Test phase completion with no criteria."""
+
+    def setup_method(self):
+        """Setup test instance."""
+        self.manager = ScenarioManager()
+
+    @pytest.mark.asyncio
+    async def test_check_phase_completion_no_criteria_high_score(self):
+        """Test phase completion when no criteria and high completion score."""
+        progress = ScenarioProgress(
+            scenario_id="restaurant_dinner_reservation",
+            user_id="user123",
+            current_phase=0,
+            phase_progress={},
+            vocabulary_mastered=[],
+            objectives_completed=[],
+            start_time=datetime.now(),
+            last_activity=datetime.now(),
+            total_attempts=0,
+            success_rate=0.0,
+        )
+
+        scenario = self.manager.scenarios["restaurant_dinner_reservation"]
+        current_phase = scenario.phases[0]
+
+        # Modify phase to have no success criteria
+        with patch.object(current_phase, "success_criteria", []):
+            analysis = {
+                "vocabulary_used": ["hello", "table", "reservation"],
+                "phrases_used": ["I'd like to make a reservation"],
+                "objectives_addressed": ["greeting", "stating_purpose"],
+                "engagement_score": 0.9,
+            }
+
+            result = self.manager._check_phase_completion(
+                analysis, current_phase, progress
+            )
+
+            # With all three components, score = 0.3 + 0.3 + 0.4 = 1.0 >= 0.6
+            assert result["is_complete"] is True
+
+    @pytest.mark.asyncio
+    async def test_check_phase_completion_no_criteria_low_score(self):
+        """Test phase completion when no criteria and low completion score."""
+        progress = ScenarioProgress(
+            scenario_id="restaurant_dinner_reservation",
+            user_id="user123",
+            current_phase=0,
+            phase_progress={},
+            vocabulary_mastered=[],
+            objectives_completed=[],
+            start_time=datetime.now(),
+            last_activity=datetime.now(),
+            total_attempts=0,
+            success_rate=0.0,
+        )
+
+        scenario = self.manager.scenarios["restaurant_dinner_reservation"]
+        current_phase = scenario.phases[0]
+
+        # Modify phase to have no success criteria
+        with patch.object(current_phase, "success_criteria", []):
+            analysis = {
+                "vocabulary_used": [],
+                "phrases_used": ["hello"],
+                "objectives_addressed": [],
+                "engagement_score": 0.3,
+            }
+
+            result = self.manager._check_phase_completion(
+                analysis, current_phase, progress
+            )
+
+            # Only phrases_used, score = 0.3 < 0.6
+            assert result["is_complete"] is False
+
+    @pytest.mark.asyncio
+    async def test_check_phase_completion_no_criteria_medium_score(self):
+        """Test phase completion when no criteria and medium completion score."""
+        progress = ScenarioProgress(
+            scenario_id="restaurant_dinner_reservation",
+            user_id="user123",
+            current_phase=0,
+            phase_progress={},
+            vocabulary_mastered=[],
+            objectives_completed=[],
+            start_time=datetime.now(),
+            last_activity=datetime.now(),
+            total_attempts=0,
+            success_rate=0.0,
+        )
+
+        scenario = self.manager.scenarios["restaurant_dinner_reservation"]
+        current_phase = scenario.phases[0]
+
+        # Modify phase to have no success criteria
+        with patch.object(current_phase, "success_criteria", []):
+            analysis = {
+                "vocabulary_used": ["reservation"],
+                "phrases_used": ["I need a table"],
+                "objectives_addressed": [],
+                "engagement_score": 0.6,
+            }
+
+            result = self.manager._check_phase_completion(
+                analysis, current_phase, progress
+            )
+
+            # vocab + phrases = 0.3 + 0.3 = 0.6 >= 0.6
+            assert result["is_complete"] is True
+
+
+class TestScenarioValidation:
+    """Test scenario validation edge cases."""
+
+    def setup_method(self):
+        """Setup test instance."""
+        self.manager = ScenarioManager()
+
+    def test_validate_scenario_empty_id(self):
+        """Test validation fails with empty scenario_id."""
+        scenario = Mock(spec=ConversationScenario)
+        scenario.scenario_id = ""
+        scenario.name = "Valid Name"
+        scenario.duration_minutes = 10
+        scenario.phases = [Mock()]
+
+        result = self.manager._validate_scenario(scenario)
+        assert result is False
+
+    def test_validate_scenario_whitespace_id(self):
+        """Test validation fails with whitespace-only scenario_id."""
+        scenario = Mock(spec=ConversationScenario)
+        scenario.scenario_id = "   "
+        scenario.name = "Valid Name"
+        scenario.duration_minutes = 10
+        scenario.phases = [Mock()]
+
+        result = self.manager._validate_scenario(scenario)
+        assert result is False
+
+    def test_validate_scenario_empty_name(self):
+        """Test validation fails with empty name."""
+        scenario = Mock(spec=ConversationScenario)
+        scenario.scenario_id = "valid_id"
+        scenario.name = ""
+        scenario.duration_minutes = 10
+        scenario.phases = [Mock()]
+
+        result = self.manager._validate_scenario(scenario)
+        assert result is False
+
+    def test_validate_scenario_zero_duration(self):
+        """Test validation fails with zero duration."""
+        scenario = Mock(spec=ConversationScenario)
+        scenario.scenario_id = "valid_id"
+        scenario.name = "Valid Name"
+        scenario.duration_minutes = 0
+        scenario.phases = [Mock()]
+
+        result = self.manager._validate_scenario(scenario)
+        assert result is False
+
+    def test_validate_scenario_negative_duration(self):
+        """Test validation fails with negative duration."""
+        scenario = Mock(spec=ConversationScenario)
+        scenario.scenario_id = "valid_id"
+        scenario.name = "Valid Name"
+        scenario.duration_minutes = -5
+        scenario.phases = [Mock()]
+
+        result = self.manager._validate_scenario(scenario)
+        assert result is False
+
+    def test_validate_scenario_no_phases(self):
+        """Test validation fails with empty phases list."""
+        scenario = Mock(spec=ConversationScenario)
+        scenario.scenario_id = "valid_id"
+        scenario.name = "Valid Name"
+        scenario.duration_minutes = 10
+        scenario.phases = []
+
+        result = self.manager._validate_scenario(scenario)
+        assert result is False
+
+
+class TestDeleteScenario:
+    """Test delete_scenario functionality."""
+
+    def setup_method(self):
+        """Setup test instance."""
+        self.manager = ScenarioManager()
+
+    @pytest.mark.asyncio
+    async def test_delete_scenario_success(self):
+        """Test successful scenario deletion."""
+        scenario_id = "restaurant_dinner_reservation"
+        assert scenario_id in self.manager.scenarios
+
+        with patch(
+            "app.services.scenario_manager.ScenarioIO.save_scenarios_to_file"
+        ) as mock_save:
+            mock_save.return_value = None
+
+            result = await self.manager.delete_scenario(scenario_id)
+
+            assert result is True
+            assert scenario_id not in self.manager.scenarios
+            mock_save.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_delete_scenario_nonexistent(self):
+        """Test deleting non-existent scenario returns False."""
+        result = await self.manager.delete_scenario("nonexistent_scenario_999")
+
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_delete_scenario_save_failure(self):
+        """Test delete_scenario handles save errors gracefully."""
+        scenario_id = "hotel_check_in"
+
+        with patch(
+            "app.services.scenario_manager.ScenarioIO.save_scenarios_to_file"
+        ) as mock_save:
+            mock_save.side_effect = Exception("Disk write error")
+
+            result = await self.manager.delete_scenario(scenario_id)
+
+            assert result is False
+
+
+class TestSetScenarioActive:
+    """Test set_scenario_active functionality."""
+
+    def setup_method(self):
+        """Setup test instance."""
+        self.manager = ScenarioManager()
+
+    @pytest.mark.asyncio
+    async def test_set_scenario_active_true(self):
+        """Test activating a scenario."""
+        scenario_id = "restaurant_dinner_reservation"
+
+        with patch(
+            "app.services.scenario_manager.ScenarioIO.save_scenarios_to_file"
+        ) as mock_save:
+            mock_save.return_value = None
+
+            result = await self.manager.set_scenario_active(scenario_id, True)
+
+            assert result is True
+            assert self.manager.scenarios[scenario_id].is_active is True
+            mock_save.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_set_scenario_active_false(self):
+        """Test deactivating a scenario."""
+        scenario_id = "hotel_check_in"
+
+        with patch(
+            "app.services.scenario_manager.ScenarioIO.save_scenarios_to_file"
+        ) as mock_save:
+            mock_save.return_value = None
+
+            result = await self.manager.set_scenario_active(scenario_id, False)
+
+            assert result is True
+            assert self.manager.scenarios[scenario_id].is_active is False
+            mock_save.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_set_scenario_active_nonexistent(self):
+        """Test setting active status on non-existent scenario."""
+        result = await self.manager.set_scenario_active("nonexistent_999", True)
+
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_set_scenario_active_save_failure(self):
+        """Test set_scenario_active handles save errors."""
+        scenario_id = "clothing_shopping"
+
+        with patch(
+            "app.services.scenario_manager.ScenarioIO.save_scenarios_to_file"
+        ) as mock_save:
+            mock_save.side_effect = Exception("Database error")
+
+            result = await self.manager.set_scenario_active(scenario_id, True)
+
+            assert result is False
