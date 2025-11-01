@@ -10,32 +10,32 @@ This module provides comprehensive user management functionality including:
 """
 
 import logging
-from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta, timezone
-from sqlalchemy.exc import IntegrityError
+from typing import Any, Dict, List, Optional
+
 from sqlalchemy import and_, func
+from sqlalchemy.exc import IntegrityError
 
 from app.database.config import get_db_session
 from app.database.local_config import local_db_manager
 from app.models.database import (
-    User,
     LearningProgress,
-    UserRole,
     LearningStatus,
+    User,
+    UserRole,
     user_languages,
 )
 from app.models.schemas import (
-    UserCreate,
-    UserUpdate,
-    UserResponse,
-    UserProfile,
     LearningProgressCreate,
-    LearningProgressUpdate,
     LearningProgressResponse,
+    LearningProgressUpdate,
+    UserCreate,
+    UserProfile,
+    UserResponse,
     UserRoleEnum,
+    UserUpdate,
 )
 from app.services.auth import auth_service
-
 
 logger = logging.getLogger(__name__)
 
@@ -269,7 +269,7 @@ class UserProfileService:
                 return None
 
             # Update fields if provided
-            update_fields = user_updates.dict(exclude_unset=True)
+            update_fields = user_updates.model_dump(exclude_unset=True)
             for field, value in update_fields.items():
                 if hasattr(user, field) and value is not None:
                     setattr(user, field, value)
@@ -285,7 +285,7 @@ class UserProfileService:
                 preferences=user.preferences,
             )
 
-            user_response = UserResponse.from_orm(user)
+            user_response = UserResponse.model_validate(user)
             logger.info(f"User updated successfully: {user_id}")
             return user_response
 
@@ -370,7 +370,7 @@ class UserProfileService:
             # Apply pagination
             users = query.offset(offset).limit(limit).all()
 
-            return [UserResponse.from_orm(user) for user in users]
+            return [UserResponse.model_validate(user) for user in users]
 
         except Exception as e:
             logger.error(f"Error listing users: {e}")
@@ -592,7 +592,7 @@ class UserProfileService:
             session.add(progress)
             session.commit()
 
-            return LearningProgressResponse.from_orm(progress)
+            return LearningProgressResponse.model_validate(progress)
 
         except Exception as e:
             session.rollback()
@@ -642,7 +642,7 @@ class UserProfileService:
                 return None
 
             # Update fields
-            update_fields = progress_updates.dict(exclude_unset=True)
+            update_fields = progress_updates.model_dump(exclude_unset=True)
             for field, value in update_fields.items():
                 if hasattr(progress, field) and value is not None:
                     setattr(progress, field, value)
@@ -652,7 +652,7 @@ class UserProfileService:
 
             session.commit()
 
-            return LearningProgressResponse.from_orm(progress)
+            return LearningProgressResponse.model_validate(progress)
 
         except Exception as e:
             session.rollback()
@@ -690,7 +690,8 @@ class UserProfileService:
             progress_records = query.all()
 
             return [
-                LearningProgressResponse.from_orm(record) for record in progress_records
+                LearningProgressResponse.model_validate(record)
+                for record in progress_records
             ]
 
         except Exception as e:
@@ -806,7 +807,7 @@ class UserProfileService:
                 .all()
             )  # Simplified for demo
 
-            return [UserResponse.from_orm(user) for user in family_members]
+            return [UserResponse.model_validate(user) for user in family_members]
 
         except Exception as e:
             logger.error(f"Error getting family members for {parent_user_id}: {e}")
