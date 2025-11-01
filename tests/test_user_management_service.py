@@ -1587,3 +1587,619 @@ class TestCreateLearningProgressDuplicateError:
 
             # Should return None due to exception
             assert result is None
+
+
+class TestCreateUserCompleteSuccess:
+    """Test complete success path for create_user."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = UserProfileService()
+
+    def test_create_user_complete_success_with_logging(self):
+        """Test complete successful user creation with all steps including logging."""
+        with (
+            patch.object(self.service, "_get_session") as mock_session_getter,
+            patch(
+                "app.services.user_management.local_db_manager.add_user_profile"
+            ) as mock_add_profile,
+            patch("app.services.user_management.logger") as mock_logger,
+        ):
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # No existing user with ID or email
+            mock_session.query.return_value.filter.return_value.first.return_value = (
+                None
+            )
+
+            # Create a mock user that will be returned after add/flush
+            mock_user = Mock(spec=User)
+            mock_user.user_id = "test123"
+            mock_user.username = "testuser"
+            mock_user.email = None
+            mock_user.role = UserRole.PARENT
+            mock_user.first_name = "Test"
+            mock_user.last_name = "User"
+            mock_user.ui_language = "en"
+            mock_user.timezone = "UTC"
+            mock_user.preferences = {}
+            mock_user.privacy_settings = {}
+            mock_user.is_active = True
+            mock_user.is_verified = False
+            mock_user.created_at = datetime.now(timezone.utc)
+            mock_user.updated_at = datetime.now(timezone.utc)
+
+            # Mock to_dict to return proper dict
+            mock_user.to_dict.return_value = {
+                "user_id": "test123",
+                "username": "testuser",
+                "email": None,
+                "role": "PARENT",
+                "first_name": "Test",
+                "last_name": "User",
+                "ui_language": "en",
+                "timezone": "UTC",
+                "preferences": {},
+                "privacy_settings": {},
+                "is_active": True,
+                "is_verified": False,
+            }
+
+            # Make add() save the user object for later access
+            def mock_add_side_effect(user):
+                # Simulate the user being persisted
+                pass
+
+            mock_session.add.side_effect = mock_add_side_effect
+
+            # Make refresh() update the user to simulate database persistence
+            def mock_refresh_side_effect(user):
+                pass
+
+            mock_session.refresh.side_effect = mock_refresh_side_effect
+
+            user_data = UserCreate(
+                user_id="test123",
+                username="testuser",
+                role=UserRoleEnum.PARENT,
+                first_name="Test",
+                last_name="User",
+                ui_language="en",
+            )
+
+            # Patch User class to return our mock
+            with patch("app.services.user_management.User", return_value=mock_user):
+                result = self.service.create_user(user_data)
+
+                # Verify the complete flow
+                mock_session.add.assert_called_once()
+                mock_session.flush.assert_called_once()
+                mock_session.commit.assert_called_once()
+                mock_session.refresh.assert_called_once()
+                mock_add_profile.assert_called_once()
+
+                # Verify logging occurred (line 142)
+                assert mock_logger.info.called
+
+                # Verify UserResponse was returned (line 143)
+                assert result is not None
+
+
+class TestUpdateUserCompleteSuccess:
+    """Test complete success path for update_user."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = UserProfileService()
+
+    def test_update_user_complete_success_with_logging(self):
+        """Test complete successful user update with logging."""
+        with (
+            patch.object(self.service, "_get_session") as mock_session_getter,
+            patch(
+                "app.services.user_management.local_db_manager.add_user_profile"
+            ) as mock_add_profile,
+            patch("app.services.user_management.logger") as mock_logger,
+        ):
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user exists
+            mock_user = Mock(spec=User)
+            mock_user.user_id = "user123"
+            mock_user.first_name = "Old Name"
+            mock_session.query.return_value.filter.return_value.first.return_value = (
+                mock_user
+            )
+
+            user_updates = UserUpdate(first_name="New Name")
+
+            result = self.service.update_user("user123", user_updates)
+
+            # Verify the complete flow
+            assert mock_user.first_name == "New Name"
+            mock_session.commit.assert_called_once()
+            mock_add_profile.assert_called_once()
+
+            # Verify logging occurred (line 289)
+            assert mock_logger.info.called
+
+            # Verify UserResponse was returned (line 290)
+            # The result depends on UserResponse.model_validate which we need to mock
+            # For now, just verify commit was called
+
+
+class TestGetUserByIdReturnsNone:
+    """Test get_user_by_id returns None when user not found."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = UserProfileService()
+
+    def test_get_user_by_id_user_not_found_returns_none(self):
+        """Test get_user_by_id returns None when user doesn't exist."""
+        with patch.object(self.service, "_get_session") as mock_session_getter:
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user not found
+            mock_session.query.return_value.filter.return_value.first.return_value = (
+                None
+            )
+
+            result = self.service.get_user_by_id("nonexistent")
+
+            # Should return None at line 173
+            assert result is None
+
+
+class TestAddUserLanguageInsertPath:
+    """Test add_user_language insert path for new language."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = UserProfileService()
+
+    def test_add_user_language_insert_new_language(self):
+        """Test adding a new language executes insert statement."""
+        with patch.object(self.service, "_get_session") as mock_session_getter:
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user exists
+            mock_user = Mock(spec=User)
+            mock_user.user_id = "user123"
+
+            # First query returns user, second query (existing language) returns None
+            mock_session.query.return_value.filter.return_value.first.side_effect = [
+                mock_user,  # User exists
+                None,  # No existing language association
+            ]
+
+            result = self.service.add_user_language("user123", "es")
+
+            # Verify insert was executed (line 433)
+            mock_session.execute.assert_called_once()
+            mock_session.commit.assert_called_once()
+            assert result is True
+
+
+class TestUpdateLearningProgressCompleteSuccess:
+    """Test complete success path for update_learning_progress."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = UserProfileService()
+
+    def test_update_learning_progress_complete_success_with_field_updates(self):
+        """Test update_learning_progress successfully updates all fields."""
+        with patch.object(self.service, "_get_session") as mock_session_getter:
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user and progress exist
+            mock_user = Mock(spec=User)
+            mock_progress = Mock(spec=LearningProgress)
+            mock_progress.current_level = 1
+            mock_progress.total_study_time = 100
+            mock_progress.last_activity = datetime.now(timezone.utc) - timedelta(days=1)
+            mock_progress.updated_at = datetime.now(timezone.utc) - timedelta(days=1)
+
+            # First query returns user, second returns progress
+            mock_session.query.return_value.filter.return_value.first.side_effect = [
+                mock_user,
+                mock_progress,
+            ]
+
+            from app.models.schemas import LearningProgressUpdate
+
+            progress_updates = LearningProgressUpdate(
+                current_level=2,
+                total_study_time=200,
+            )
+
+            result = self.service.update_learning_progress(
+                "user123", "es", "vocabulary", progress_updates
+            )
+
+            # Verify fields were updated (lines 647-651)
+            assert mock_progress.current_level == 2
+            assert mock_progress.total_study_time == 200
+
+            # Verify commit was called (line 653)
+            mock_session.commit.assert_called_once()
+
+
+class TestGetUserStatisticsCompleteSuccess:
+    """Test complete success path for get_user_statistics."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = UserProfileService()
+
+    def test_get_user_statistics_complete_success_returns_dict(self):
+        """Test get_user_statistics returns complete statistics dict."""
+        with (
+            patch.object(self.service, "_get_session") as mock_session_getter,
+            patch.object(self.service, "get_user_languages") as mock_get_languages,
+        ):
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user with relationships
+            mock_user = Mock(spec=User)
+            mock_user.user_id = "user123"
+            mock_user.conversations = [Mock(), Mock()]  # 2 conversations
+            mock_user.documents = [Mock()]  # 1 document
+            mock_user.vocabulary_lists = [Mock(), Mock(), Mock()]  # 3 lists
+
+            mock_session.query.return_value.filter.return_value.first.return_value = (
+                mock_user
+            )
+
+            # Mock progress records with study time and sessions
+            mock_progress1 = Mock(spec=LearningProgress)
+            mock_progress1.total_study_time = 100
+            mock_progress1.total_sessions = 5
+
+            mock_progress2 = Mock(spec=LearningProgress)
+            mock_progress2.total_study_time = 200
+            mock_progress2.total_sessions = 10
+
+            mock_session.query.return_value.filter.return_value.all.return_value = [
+                mock_progress1,
+                mock_progress2,
+            ]
+
+            # Mock get_user_languages to return list of languages
+            mock_get_languages.return_value = ["en", "es"]
+
+            result = self.service.get_user_statistics("user123")
+
+            # Verify complete dict is returned (line 865)
+            assert isinstance(result, dict)
+            assert "conversations_count" in result
+            assert "documents_count" in result
+            assert "vocabulary_lists_count" in result
+            assert "total_study_time" in result
+            assert "total_sessions" in result
+            assert "languages" in result
+
+
+class TestDeleteUserHardDelete:
+    """Test hard delete functionality for delete_user."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = UserProfileService()
+
+    def test_delete_user_hard_delete_success(self):
+        """Test hard delete removes user and cleans up local data."""
+        with (
+            patch.object(self.service, "_get_session") as mock_session_getter,
+            patch(
+                "app.services.user_management.local_db_manager.delete_user_data_locally"
+            ) as mock_delete_local,
+        ):
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user exists
+            mock_user = Mock(spec=User)
+            mock_session.query.return_value.filter.return_value.first.return_value = (
+                mock_user
+            )
+
+            result = self.service.delete_user("user123", soft_delete=False)
+
+            # Verify hard delete operations
+            mock_session.delete.assert_called_once_with(mock_user)
+            mock_session.commit.assert_called_once()
+            mock_delete_local.assert_called_once_with("user123")
+            assert result is True
+
+    def test_delete_user_exception_handling(self):
+        """Test delete_user handles exceptions during deletion."""
+        with patch.object(self.service, "_get_session") as mock_session_getter:
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user exists
+            mock_user = Mock(spec=User)
+            mock_session.query.return_value.filter.return_value.first.return_value = (
+                mock_user
+            )
+
+            # Make commit raise an exception
+            mock_session.commit.side_effect = Exception("Database error")
+
+            result = self.service.delete_user("user123")
+
+            # Verify rollback was called
+            mock_session.rollback.assert_called_once()
+            assert result is False
+
+
+class TestListUsersWithFilters:
+    """Test list_users with various filters."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = UserProfileService()
+
+    def test_list_users_with_is_active_filter(self):
+        """Test list_users filters by is_active status."""
+        with patch.object(self.service, "_get_session") as mock_session_getter:
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Create a mock query chain
+            mock_query = Mock()
+            mock_session.query.return_value = mock_query
+            mock_query.filter.return_value = mock_query
+            mock_query.all.return_value = []
+
+            result = self.service.list_users(is_active=True)
+
+            # Verify filter was called (we can't easily verify the exact filter condition)
+            assert mock_query.filter.called
+            assert isinstance(result, list)
+
+
+class TestAddRemoveUserLanguage:
+    """Test add and remove user language edge cases."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = UserProfileService()
+
+    def test_add_user_language_user_not_found_returns_false(self):
+        """Test add_user_language returns False when user doesn't exist."""
+        with patch.object(self.service, "_get_session") as mock_session_getter:
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user not found
+            mock_session.query.return_value.filter.return_value.first.return_value = (
+                None
+            )
+
+            result = self.service.add_user_language("nonexistent", "es")
+
+            assert result is False
+
+    def test_remove_user_language_user_not_found(self):
+        """Test remove_user_language returns False when user doesn't exist."""
+        with patch.object(self.service, "_get_session") as mock_session_getter:
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user not found
+            mock_session.query.return_value.filter.return_value.first.return_value = (
+                None
+            )
+
+            result = self.service.remove_user_language("nonexistent", "es")
+
+            assert result is False
+
+
+class TestLearningProgressEdgeCases:
+    """Test learning progress edge cases."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = UserProfileService()
+
+    def test_create_learning_progress_user_not_found_returns_none(self):
+        """Test create_learning_progress returns None when user doesn't exist."""
+        with patch.object(self.service, "_get_session") as mock_session_getter:
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user not found
+            mock_session.query.return_value.filter.return_value.first.return_value = (
+                None
+            )
+
+            from app.models.schemas import LearningProgressCreate
+
+            progress_data = LearningProgressCreate(
+                user_id="nonexistent", language="es", skill_type="vocabulary"
+            )
+
+            result = self.service.create_learning_progress("nonexistent", progress_data)
+
+            assert result is None
+
+    def test_update_learning_progress_user_not_found_returns_none(self):
+        """Test update_learning_progress returns None when user doesn't exist."""
+        with patch.object(self.service, "_get_session") as mock_session_getter:
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user not found
+            mock_session.query.return_value.filter.return_value.first.return_value = (
+                None
+            )
+
+            from app.models.schemas import LearningProgressUpdate
+
+            progress_updates = LearningProgressUpdate(current_level=2)
+
+            result = self.service.update_learning_progress(
+                "nonexistent", "es", "vocabulary", progress_updates
+            )
+
+            assert result is None
+
+
+class TestUpdateUserPreferencesExceptionHandling:
+    """Test exception handling in update_user_preferences."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = UserProfileService()
+
+    def test_update_user_preferences_exception_handling(self):
+        """Test update_user_preferences handles exceptions gracefully."""
+        with patch.object(self.service, "_get_session") as mock_session_getter:
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user exists
+            mock_user = Mock(spec=User)
+            mock_user.preferences = {}
+            mock_session.query.return_value.filter.return_value.first.return_value = (
+                mock_user
+            )
+
+            # Make commit raise an exception
+            mock_session.commit.side_effect = Exception("Database error")
+
+            result = self.service.update_user_preferences("user123", {"theme": "dark"})
+
+            # Verify rollback was called
+            mock_session.rollback.assert_called_once()
+            assert result is False
+
+
+class TestGetUserPreferencesExceptionHandling:
+    """Test exception handling in get_user_preferences."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = UserProfileService()
+
+    def test_get_user_preferences_exception_handling(self):
+        """Test get_user_preferences handles exceptions gracefully."""
+        with patch.object(self.service, "_get_session") as mock_session_getter:
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Make query raise an exception
+            mock_session.query.side_effect = Exception("Database error")
+
+            result = self.service.get_user_preferences("user123")
+
+            # Should return empty dict on exception
+            assert result == {}
+
+
+class TestGetUserStatisticsEdgeCases:
+    """Test edge cases in get_user_statistics."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.service = UserProfileService()
+
+    def test_get_user_statistics_user_not_found(self):
+        """Test get_user_statistics returns empty dict when user doesn't exist."""
+        with patch.object(self.service, "_get_session") as mock_session_getter:
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user not found
+            mock_session.query.return_value.filter.return_value.first.return_value = (
+                None
+            )
+
+            result = self.service.get_user_statistics("nonexistent")
+
+            assert result == {}
+
+
+class TestModuleLevelConvenienceFunctions:
+    """Test module-level convenience functions that delegate to user_service."""
+
+    def test_module_level_create_user(self):
+        """Test module-level create_user function delegates to service."""
+        from app.services.user_management import create_user
+
+        user_data = UserCreate(
+            user_id="test123",
+            username="testuser",
+            role=UserRoleEnum.PARENT,
+            first_name="Test",
+            last_name="User",
+            ui_language="en",
+        )
+
+        with patch(
+            "app.services.user_management.user_service.create_user"
+        ) as mock_create:
+            mock_response = Mock()
+            mock_create.return_value = mock_response
+
+            result = create_user(user_data, password="test123")
+
+            assert result == mock_response
+            mock_create.assert_called_once_with(user_data, "test123")
+
+    def test_module_level_get_user_by_id(self):
+        """Test module-level get_user_by_id function delegates to service."""
+        from app.services.user_management import get_user_by_id
+
+        with patch(
+            "app.services.user_management.user_service.get_user_by_id"
+        ) as mock_get:
+            mock_response = Mock()
+            mock_get.return_value = mock_response
+
+            result = get_user_by_id("user123")
+
+            assert result == mock_response
+            mock_get.assert_called_once_with("user123")
+
+    def test_module_level_get_user_profile(self):
+        """Test module-level get_user_profile function delegates to service."""
+        from app.services.user_management import get_user_profile
+
+        with patch(
+            "app.services.user_management.user_service.get_user_profile"
+        ) as mock_get:
+            mock_response = Mock()
+            mock_get.return_value = mock_response
+
+            result = get_user_profile("user123")
+
+            assert result == mock_response
+            mock_get.assert_called_once_with("user123")
+
+    def test_module_level_update_user(self):
+        """Test module-level update_user function delegates to service."""
+        from app.services.user_management import update_user
+
+        user_updates = UserUpdate(first_name="Updated")
+
+        with patch(
+            "app.services.user_management.user_service.update_user"
+        ) as mock_update:
+            mock_response = Mock()
+            mock_update.return_value = mock_response
+
+            result = update_user("user123", user_updates)
+
+            assert result == mock_response
+            mock_update.assert_called_once_with("user123", user_updates)
