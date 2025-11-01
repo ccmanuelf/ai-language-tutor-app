@@ -1070,3 +1070,312 @@ class TestSetScenarioActive:
             result = await self.manager.set_scenario_active(scenario_id, True)
 
             assert result is False
+
+
+class TestAsyncInitialization:
+    """Test async initialization of ScenarioManager."""
+
+    @pytest.mark.asyncio
+    async def test_initialize_loads_scenarios_from_file(self):
+        """Test that initialize() loads scenarios from file."""
+        manager = ScenarioManager()
+        initial_count = len(manager.scenarios)
+
+        # Mock ScenarioIO.load_scenarios_from_file
+        mock_scenarios = {
+            "test_scenario_1": Mock(spec=ConversationScenario),
+            "test_scenario_2": Mock(spec=ConversationScenario),
+        }
+
+        with patch(
+            "app.services.scenario_manager.ScenarioIO.load_scenarios_from_file"
+        ) as mock_load:
+            mock_load.return_value = mock_scenarios
+
+            await manager.initialize()
+
+            # Verify scenarios were loaded
+            assert manager._initialized is True
+            mock_load.assert_called_once()
+            assert len(manager.scenarios) == initial_count + 2
+
+    @pytest.mark.asyncio
+    async def test_initialize_only_runs_once(self):
+        """Test that initialize() only loads scenarios once."""
+        manager = ScenarioManager()
+
+        with patch(
+            "app.services.scenario_manager.ScenarioIO.load_scenarios_from_file"
+        ) as mock_load:
+            mock_load.return_value = {}
+
+            await manager.initialize()
+            await manager.initialize()  # Second call should not load
+
+            # Should only be called once
+            mock_load.assert_called_once()
+
+
+class TestGetUniversalTemplatesComplete:
+    """Test get_universal_templates with tier filtering."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.manager = ScenarioManager()
+
+    def test_get_universal_templates_with_tier(self):
+        """Test get_universal_templates with tier parameter."""
+        mock_template = Mock()
+        mock_template.template_id = "greetings_basic"
+        mock_template.name = "Basic Greetings"
+        mock_template.category.value = "social"
+        mock_template.tier = 1
+        mock_template.base_vocabulary = ["hello"]
+        mock_template.scenario_variations = ["formal"]
+        mock_template.learning_objectives = ["greet", "respond", "farewell"]
+        mock_template.conversation_starters = ["Hello!", "Hi!"]
+
+        with patch.object(
+            self.manager.scenario_factory, "get_templates_by_tier"
+        ) as mock_get:
+            mock_get.return_value = [mock_template]
+
+            result = self.manager.get_universal_templates(tier=1)
+
+            assert len(result) == 1
+            mock_get.assert_called_once_with(1)
+
+    def test_get_universal_templates_without_tier(self):
+        """Test get_universal_templates without tier parameter."""
+        mock_template = Mock()
+        mock_template.template_id = "greetings_basic"
+        mock_template.name = "Basic Greetings"
+        mock_template.category.value = "social"
+        mock_template.tier = 1
+        mock_template.base_vocabulary = ["hello"]
+        mock_template.scenario_variations = ["formal"]
+        mock_template.learning_objectives = ["greet", "respond", "farewell"]
+        mock_template.conversation_starters = ["Hello!", "Hi!"]
+
+        with patch.object(
+            self.manager.scenario_factory, "get_all_templates"
+        ) as mock_get:
+            mock_get.return_value = [mock_template]
+
+            result = self.manager.get_universal_templates()
+
+            assert len(result) == 1
+            mock_get.assert_called_once()
+
+
+class TestCreateScenarioFromTemplateNotImplemented:
+    """Test create_scenario_from_template raises NotImplementedError."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.manager = ScenarioManager()
+
+    def test_create_scenario_from_template_not_implemented(self):
+        """Test that create_scenario_from_template raises NotImplementedError."""
+        with pytest.raises(NotImplementedError) as exc_info:
+            self.manager.create_scenario_from_template(
+                template_id="greetings_basic", difficulty=ScenarioDifficulty.BEGINNER
+            )
+
+        assert "scenario_factory.create_scenario()" in str(exc_info.value)
+
+
+class TestUpdateScenarioMethod:
+    """Test update_scenario method."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.manager = ScenarioManager()
+
+    @pytest.mark.asyncio
+    async def test_update_scenario_calls_save(self):
+        """Test that update_scenario calls save_scenario."""
+        mock_scenario = Mock(spec=ConversationScenario)
+        mock_scenario.scenario_id = "test_123"
+
+        with patch.object(self.manager, "save_scenario") as mock_save:
+            mock_save.return_value = True
+
+            result = await self.manager.update_scenario("test_123", mock_scenario)
+
+            assert result is True
+            mock_save.assert_called_once_with(mock_scenario)
+
+
+class TestConvenienceFunctionFinish:
+    """Test finish_scenario convenience function."""
+
+    @pytest.mark.asyncio
+    async def test_finish_scenario_function(self):
+        """Test finish_scenario convenience function."""
+        with patch.object(scenario_manager, "complete_scenario") as mock_complete:
+            mock_complete.return_value = {"completed": True, "summary": "Great job!"}
+
+            from app.services.scenario_manager import finish_scenario
+
+            result = await finish_scenario("progress_123")
+
+            assert result["completed"] is True
+            mock_complete.assert_called_once_with("progress_123")
+
+
+class TestGetTier1ScenariosActual:
+    """Test get_tier1_scenarios actually calls get_universal_templates."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.manager = ScenarioManager()
+
+    def test_get_tier1_scenarios_returns_tier1_templates(self):
+        """Test that get_tier1_scenarios returns tier 1 templates."""
+        with patch.object(self.manager, "get_universal_templates") as mock_get:
+            mock_get.return_value = [{"tier": 1, "name": "Essential Greetings"}]
+
+            result = self.manager.get_tier1_scenarios()
+
+            mock_get.assert_called_once_with(tier=1)
+            assert len(result) == 1
+            assert result[0]["tier"] == 1
+
+
+class TestSaveScenarioSuccess:
+    """Test save_scenario success path."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.manager = ScenarioManager()
+
+    @pytest.mark.asyncio
+    async def test_save_scenario_success_path(self):
+        """Test successful scenario save including logger call."""
+        valid_scenario = Mock(spec=ConversationScenario)
+        valid_scenario.scenario_id = "test_success_123"
+        valid_scenario.name = "Test Success Scenario"
+        valid_scenario.duration_minutes = 30
+        valid_scenario.phases = [Mock()]
+
+        with patch(
+            "app.services.scenario_manager.ScenarioIO.save_scenarios_to_file"
+        ) as mock_save:
+            mock_save.return_value = None
+
+            result = await self.manager.save_scenario(valid_scenario)
+
+            assert result is True
+            assert "test_success_123" in self.manager.scenarios
+            mock_save.assert_called_once()
+
+
+class TestSaveScenarioLogging:
+    """Test save_scenario logging paths."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.manager = ScenarioManager()
+
+    @pytest.mark.asyncio
+    async def test_save_scenario_logs_success(self):
+        """Test that save_scenario logs success."""
+        valid_scenario = Mock(spec=ConversationScenario)
+        valid_scenario.scenario_id = "log_test_123"
+        valid_scenario.name = "Log Test Scenario"
+        valid_scenario.duration_minutes = 30
+        valid_scenario.phases = [Mock()]
+
+        with patch("app.services.scenario_manager.ScenarioIO.save_scenarios_to_file"):
+            with patch("app.services.scenario_manager.logger") as mock_logger:
+                result = await self.manager.save_scenario(valid_scenario)
+
+                assert result is True
+                # Verify info log was called for successful save
+                assert mock_logger.info.called
+
+    @pytest.mark.asyncio
+    async def test_save_scenario_logs_error_on_exception(self):
+        """Test that save_scenario logs errors on exception."""
+        valid_scenario = Mock(spec=ConversationScenario)
+        valid_scenario.scenario_id = "error_test_123"
+        valid_scenario.name = "Error Test"
+        valid_scenario.duration_minutes = 30
+        valid_scenario.phases = [Mock()]
+
+        with patch.object(self.manager, "_validate_scenario", return_value=True):
+            with patch(
+                "app.services.scenario_manager.ScenarioIO.save_scenarios_to_file"
+            ) as mock_save:
+                mock_save.side_effect = Exception("Save failed")
+
+                with patch("app.services.scenario_manager.logger") as mock_logger:
+                    result = await self.manager.save_scenario(valid_scenario)
+
+                    assert result is False
+                    # Verify error log was called
+                    assert mock_logger.error.called
+
+    @pytest.mark.asyncio
+    async def test_save_scenario_logs_validation_warning(self):
+        """Test that save_scenario logs warning when validation fails."""
+        invalid_scenario = Mock(spec=ConversationScenario)
+        invalid_scenario.scenario_id = "invalid_123"
+        invalid_scenario.name = ""  # Invalid - will fail validation
+
+        with patch("app.services.scenario_manager.logger") as mock_logger:
+            result = await self.manager.save_scenario(invalid_scenario)
+
+            assert result is False
+            # Verify warning log was called for validation failure
+            assert mock_logger.warning.called
+
+
+class TestRecommendationsAdvancedScenarios:
+    """Test recommendations for advanced scenarios in same category."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.manager = ScenarioManager()
+
+    def test_recommendations_include_advanced_same_category(self):
+        """Test recommendations include higher difficulty scenarios in same category."""
+        # Create scenarios with different difficulties in same category
+        beginner_scenario = Mock(spec=ConversationScenario)
+        beginner_scenario.scenario_id = "restaurant_beginner"
+        beginner_scenario.name = "Beginner Restaurant"
+        beginner_scenario.category = ScenarioCategory.RESTAURANT
+        beginner_scenario.difficulty = ScenarioDifficulty.BEGINNER
+
+        intermediate_scenario = Mock(spec=ConversationScenario)
+        intermediate_scenario.scenario_id = "restaurant_intermediate"
+        intermediate_scenario.name = "Intermediate Restaurant"
+        intermediate_scenario.category = ScenarioCategory.RESTAURANT
+        intermediate_scenario.difficulty = ScenarioDifficulty.INTERMEDIATE
+
+        # Add scenarios to manager
+        self.manager.scenarios = {
+            "restaurant_beginner": beginner_scenario,
+            "restaurant_intermediate": intermediate_scenario,
+        }
+
+        # Create progress for beginner scenario
+        progress = Mock(spec=ScenarioProgress)
+        progress.scenario_id = "restaurant_beginner"
+        progress.success_rate = 0.90
+
+        # Get recommendations (method takes completed_scenario and progress)
+        recommendations = self.manager._get_next_scenario_recommendations(
+            beginner_scenario, progress
+        )
+
+        # Should include intermediate scenario as advanced same-category option
+        recommendation_ids = [r["scenario_id"] for r in recommendations]
+        assert "restaurant_intermediate" in recommendation_ids
+
+        # Find the intermediate recommendation and verify reason
+        for rec in recommendations:
+            if rec["scenario_id"] == "restaurant_intermediate":
+                assert "Advanced" in rec["reason"]
+                assert "restaurant" in rec["reason"].lower()

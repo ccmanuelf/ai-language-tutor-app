@@ -15,19 +15,19 @@ Features:
 """
 
 import logging
-from typing import Dict, List, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from .scenario_models import (
-    ScenarioCategory,
-    ScenarioDifficulty,
-    ConversationRole,
-    ScenarioPhase,
-    ConversationScenario,
-    ScenarioProgress,
-)
 from .scenario_factory import ScenarioFactory
 from .scenario_io import ScenarioIO
+from .scenario_models import (
+    ConversationRole,
+    ConversationScenario,
+    ScenarioCategory,
+    ScenarioDifficulty,
+    ScenarioPhase,
+    ScenarioProgress,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -670,7 +670,10 @@ class ScenarioManager:
         self, tier: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """Get available universal scenario templates"""
-        templates = self.scenario_factory.get_available_templates(tier)
+        if tier is not None:
+            templates = self.scenario_factory.get_templates_by_tier(tier)
+        else:
+            templates = self.scenario_factory.get_all_templates()
 
         return [
             {
@@ -695,19 +698,15 @@ class ScenarioManager:
         ai_role: ConversationRole = ConversationRole.TEACHER,
         variation_id: Optional[str] = None,
     ) -> Optional[ConversationScenario]:
-        """Create a new scenario instance from a universal template"""
-        scenario = self.scenario_factory.create_scenario(
-            template_id, difficulty, user_role, ai_role, variation_id
+        """Create a new scenario instance from a universal template
+
+        Note: This method requires scenario_factory.create_scenario() to be implemented.
+        Currently not functional - placeholder for future implementation.
+        """
+        raise NotImplementedError(
+            "Scenario creation from templates requires scenario_factory.create_scenario() "
+            "which is not yet implemented. Use predefined scenarios instead."
         )
-
-        if scenario:
-            # Add to scenarios collection for immediate use
-            self.scenarios[scenario.scenario_id] = scenario
-            logger.info(
-                f"Created scenario from template {template_id}: {scenario.scenario_id}"
-            )
-
-        return scenario
 
     def get_tier1_scenarios(self) -> List[Dict[str, Any]]:
         """Get all Tier 1 (essential) scenario templates"""
