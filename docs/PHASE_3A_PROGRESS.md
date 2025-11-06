@@ -26,18 +26,19 @@
 - **3A.13**: claude_service.py to 96% coverage ✅ COMPLETE (96%)
 - **3A.14**: mistral_service.py to 94% coverage ✅ COMPLETE (94%)
 - **3A.15**: deepseek_service.py to 97% coverage ✅ COMPLETE (97%)
-- **3A.16**: ollama_service.py to 76% coverage 🚧 WIP (76%, needs async mock fixes)
-- **3A.17**: Next module selection - PENDING
+- **3A.16**: ollama_service.py to 98% coverage ✅ COMPLETE (98%)
+- **3A.17**: qwen_service.py to 97% coverage ✅ COMPLETE (97%)
+- **3A.18**: ai_router.py to 41% coverage ⚠️ PARTIAL (41%, 11/17 tests)
 
-### Current Statistics (Session 5 Final - 2025-11-06)
+### Current Statistics (Session 5 Continued FINAL - 2025-11-06)
 - **Modules at 100% coverage**: 9 (scenario_models, sr_models, conversation_models, conversation_manager, conversation_state, conversation_messages, conversation_analytics, scenario_manager, conversation_prompts)
-- **Modules at >90% coverage**: 6 (progress_analytics 96%, auth 96%, user_management 98%, claude_service 96%, mistral_service 94%, deepseek_service 97%)
-- **Modules at >70% coverage**: 1 (ollama_service 76% - WIP)
-- **Overall project coverage**: ~53% (up from 44% baseline, +9 percentage points)
-- **Total tests passing**: 684+ (528 baseline + 38 claude + 36 mistral + 39 deepseek + 43 ollama)
-- **Total tests created in Session 5**: 156 tests (1,852 lines of test code)
+- **Modules at >90% coverage**: 8 (progress_analytics 96%, auth 96%, user_management 98%, claude_service 96%, mistral_service 94%, deepseek_service 97%, ollama_service 98%, qwen_service 97%)
+- **Modules at >40% coverage**: 1 (ai_router 41% - partial progress)
+- **Overall project coverage**: ~54% (up from 44% baseline, +10 percentage points)
+- **Total tests passing**: 787+ (528 baseline + 38 claude + 36 mistral + 39 deepseek + 54 ollama + 41 qwen + 11 ai_router + others)
+- **Total tests created in Session 5 Continued**: 246 tests (3,070+ lines of test code)
 - **Tests skipped**: 0
-- **Tests failing**: 5 (documenting future work in user_management)
+- **Tests failing**: 11 (5 in user_management documenting future work, 6 in ai_router partial progress)
 - **Warnings**: 0 (all Pydantic deprecations fixed)
 
 ---
@@ -1576,3 +1577,336 @@ After the initial session where we achieved 76% for scenario_manager and 35% for
 - Clean separation of concerns in test organization
 
 ---
+
+---
+
+## 3A.16: ollama_service.py to 98% Coverage ✅ COMPLETE
+
+**Date**: 2025-11-06 (Session 5 Continued)  
+**Status**: ✅ COMPLETE - **98% coverage achieved**
+
+### Selection Rationale
+- **Initial coverage**: 76% (46 lines uncovered, 6 tests failing)
+- **Strategic priority**: Local AI provider for offline/privacy-focused usage
+- **Medium-high complexity**: Async HTTP operations with aiohttp
+- **Critical functionality**: Local LLM service with model management
+
+### Implementation Journey
+
+**Initial State from Previous Session**:
+- 49 tests created, but 43 passing, 6 failing
+- Coverage: 76% (147/193 statements)
+- **Problem**: Async context manager mocking issues with aiohttp
+
+**Issues Fixed**:
+1. **Async Context Manager Mocking** (6 failing tests):
+   - Error: "'coroutine' object does not support the asynchronous context manager protocol"
+   - Root cause: Incorrect async mock setup for aiohttp session operations
+   - Tests affected: check_availability, list_models, pull_model, generate_response tests
+   
+2. **Solution Applied**:
+   - Created proper async context manager mocks using `__aenter__` and `__aexit__`
+   - Used async helper functions with `side_effect` for proper async behavior
+   - Pattern: Mock → AsyncMock for context manager → side_effect with async def
+
+**Test File**: `tests/test_ollama_service.py` (1,019 lines, 54 tests)
+
+**Test Organization**:
+1. **TestOllamaServiceInitialization** (3 tests)
+2. **TestSessionManagement** (3 tests)
+3. **TestCheckAvailability** (3 tests) - Fixed async mocking
+4. **TestListModels** (3 tests) - Fixed async mocking
+5. **TestPullModel** (3 tests) - Fixed async mocking
+6. **TestEnsureModelAvailable** (3 tests)
+7. **TestGetRecommendedModel** (5 tests)
+8. **TestGenerateResponse** (4 tests) - Fixed async mocking
+9. **TestFormatPrompt** (4 tests)
+10. **TestGetHealthStatus** (3 tests)
+11. **TestOllamaManager** (7 tests)
+12. **TestGlobalInstances** (2 tests)
+13. **TestConvenienceFunctions** (4 tests)
+14. **TestCloseSession** (2 tests)
+15. **TestGenerateStreamingResponse** (5 tests) - Added for streaming support
+
+### Async Mocking Pattern (Critical Fix)
+
+**Before (WRONG)**:
+```python
+mock_session = AsyncMock()
+mock_session.get.return_value.__aenter__.return_value = mock_response
+```
+
+**After (CORRECT)**:
+```python
+mock_response = Mock()
+mock_response.status = 200
+mock_response.json = AsyncMock(return_value=data)
+
+mock_cm = AsyncMock()
+mock_cm.__aenter__.return_value = mock_response
+mock_cm.__aexit__.return_value = None
+
+mock_session = Mock()
+mock_session.get = Mock(return_value=mock_cm)
+
+async def mock_get_session():
+    return mock_session
+
+with patch.object(service, '_get_session', side_effect=mock_get_session):
+    result = await service.check_availability()
+```
+
+### Final Results ✅
+
+**Test Statistics**:
+- **Total tests**: 54 passing, 0 skipped, 0 failed
+- **Test runtime**: 0.44 seconds
+- **Improvement**: 43/49 passing → 54/54 passing
+
+**Coverage Statistics**:
+- **Final coverage**: 98% (190/193 statements covered)
+- **Improvement**: 76% → 98% (+22 percentage points)
+- **Uncovered statements**: 3 lines remaining
+- **Uncovered lines**: Defensive error handling in async operations
+
+**Target Achievement**: ✅ **EXCEEDED 90% MINIMUM TARGET, ACHIEVED 98%**
+
+### Files Modified
+- **tests/test_ollama_service.py**: Fixed 6 failing tests, added 5 streaming tests (1,019 lines total)
+
+### Git Commits
+- `e975e12` (2025-11-06) - "✅ Phase 3A.16: Fix ollama async mocking, achieve 98% coverage (76% to 98%, all 54 tests passing)"
+
+### Lessons Learned
+1. **Async Context Managers**: Must use proper `__aenter__`/`__aexit__` pattern with AsyncMock
+2. **aiohttp Mocking**: Session operations return context managers, not direct responses
+3. **Side Effect Pattern**: Use `side_effect` with async helper functions for proper async behavior
+4. **Streaming Tests**: Test async generators separately with iteration patterns
+5. **Local AI Services**: Test model management (pull, list, ensure availability) thoroughly
+6. **Health Checks**: Validate service availability and model listing
+
+### Special Notes
+- Fixed critical async mocking issues preventing tests from running
+- All 54 tests now passing with zero failures
+- Added comprehensive streaming response tests
+- Covers local AI service operations (Ollama-specific)
+- Model management thoroughly tested
+- Health checks and setup assistance validated
+
+---
+
+## 3A.17: qwen_service.py to 97% Coverage ✅ COMPLETE
+
+**Date**: 2025-11-06 (Session 5 Continued)  
+**Status**: ✅ COMPLETE - **97% coverage achieved**
+
+### Selection Rationale
+- **Initial coverage**: 0% (107 statements uncovered)
+- **Strategic priority**: Chinese-optimized AI provider
+- **Medium size**: 107 statements
+- **Critical functionality**: Multilingual support with Chinese specialization
+
+### Implementation
+
+**Created new test file**: `tests/test_qwen_service.py` (578 lines, 41 tests)
+
+**Test Organization**:
+1. **TestQwenServiceInitialization** (5 tests):
+   - Initialization with DeepSeek API key
+   - Initialization with Qwen API key
+   - Initialization without API key
+   - Initialization when openai library not available
+   - Client initialization error handling
+
+2. **TestConversationPromptGeneration** (4 tests):
+   - Chinese (Simplified) prompt generation (小李 tutor from Beijing)
+   - Chinese (Taiwan) prompt generation
+   - English prompt generation
+   - Other languages prompt generation (French fallback)
+
+3. **TestHelperMethods** (13 tests):
+   - Extract user message from message parameter
+   - Extract user message from messages list
+   - Extract user message default fallback
+   - Extract from empty messages list
+   - Get model name (DeepSeek vs Qwen API)
+   - Call DeepSeek API with custom params
+   - Call DeepSeek API with default params
+   - Call Qwen API with custom params
+   - Call Qwen API with default params
+   - Calculate cost from response
+   - Calculate cost with no usage
+   - Extract response content with choices
+   - Extract response content without choices
+
+4. **TestFallbackMessages** (2 tests):
+   - Chinese fallback message
+   - English fallback message
+
+5. **TestResponseBuilding** (4 tests):
+   - Build successful response
+   - Build successful response without context
+   - Build error response
+   - Build error response without model
+
+6. **TestGenerateResponse** (5 tests):
+   - Successful response generation
+   - Response when service not available
+   - Response generation with API error
+   - Response with messages list
+   - Response with user context
+
+7. **TestAvailabilityAndHealth** (6 tests):
+   - Check availability with no client
+   - Check availability success (DeepSeek)
+   - Check availability success (Qwen)
+   - Check availability with error
+   - Get health status healthy (DeepSeek)
+   - Get health status healthy (Qwen)
+
+8. **TestGlobalInstance** (2 tests):
+   - Global instance exists
+   - Global instance has correct attributes
+
+### Key Features Tested
+- **Dual API Support**: Both DeepSeek and Qwen API endpoints
+- **Chinese Optimization**: 小李 (Xiao Li) tutor persona from Beijing
+- **OpenAI Compatibility**: Uses OpenAI client library with custom base URLs
+- **Language-Specific Prompts**: Chinese (Simplified), Chinese (Taiwan), English, other languages
+- **Cost Calculation**: Per-1k token pricing for both APIs
+
+### Final Results ✅
+
+**Test Statistics**:
+- **Total tests**: 41 passing, 0 skipped, 0 failed
+- **Test runtime**: 1.35 seconds
+
+**Coverage Statistics**:
+- **Final coverage**: 97% (104/107 statements covered)
+- **Improvement**: 0% → 97% (+97 percentage points)
+- **Uncovered statements**: 3 lines remaining
+- **Uncovered lines**: Import error handling only
+
+**Target Achievement**: ✅ **EXCEEDED 90% MINIMUM TARGET, ACHIEVED 97%**
+
+**Remaining 3% uncovered** (3 lines - acceptable):
+- Lines 18-20: Import exception handling for openai library (cannot be tested)
+
+### Files Modified
+- **tests/test_qwen_service.py**: New file with 41 comprehensive tests (578 lines)
+
+### Git Commits
+- `deb5d8c` (2025-11-06) - "✅ Phase 3A.17: Achieve 97% coverage for qwen_service.py (0% to 97%, +41 tests)"
+
+### Lessons Learned
+1. **Dual API Support**: Test both DeepSeek and Qwen API configurations
+2. **Chinese Localization**: Validate Chinese-specific prompts and personas
+3. **OpenAI Client Pattern**: Reusable pattern for OpenAI-compatible APIs
+4. **Language Fallbacks**: Test language-specific fallback messages
+5. **Cost-Effective Provider**: Qwen is optimized for Chinese language processing
+6. **API Key Priority**: DeepSeek key takes priority if both are available
+
+### Special Notes
+- Chinese-optimized service with 小李 tutor persona
+- Dual API provider support (DeepSeek and Qwen)
+- All 41 tests passing with zero warnings
+- OpenAI-compatible API pattern
+- Comprehensive language-specific prompt testing
+
+---
+
+## 3A.18: ai_router.py to 41% Coverage ⚠️ PARTIAL PROGRESS
+
+**Date**: 2025-11-06 (Session 5 Continued)  
+**Status**: ⚠️ PARTIAL - **41% coverage achieved (11/17 tests passing)**
+
+### Selection Rationale
+- **Initial coverage**: 33% (177 statements uncovered)
+- **High complexity**: AI provider routing logic with budget management
+- **Large size**: 266 statements
+- **Critical functionality**: Intelligent provider selection and fallback
+
+### Implementation (Partial)
+
+**Created new test file**: `tests/test_ai_router.py` (143 lines, 17 tests, 11 passing)
+
+**Test Organization**:
+1. **TestRouterInitialization** (1 test) ✅
+2. **TestProviderRegistration** (1 test) ✅
+3. **TestProviderHealthCheck** (2 tests) ✅
+4. **TestBudgetChecks** (3 tests) - ⚠️ 2 failing
+5. **TestProviderSelection** (4 tests) - ⚠️ 1 failing
+6. **TestLocalProviderSelection** (1 test) ✅
+7. **TestRouterModes** (2 tests) ✅
+8. **TestCostEstimation** (1 test) - ⚠️ 1 failing
+9. **TestGenerateResponse** (1 test) - ⚠️ 1 failing
+10. **TestRouterStatus** (1 test) - ⚠️ 1 failing
+11. **TestDataclasses** (1 test) ✅
+
+### Failing Tests (6 tests)
+
+**Issue**: BudgetStatus dataclass structure mismatch
+- Expected constructor: `BudgetStatus(current_spend, budget_limit, alert_level, remaining_budget)`
+- Actual constructor: Requires `alert_level`, `days_remaining`, `projected_monthly_cost`, `is_over_budget`
+
+**Failing Tests**:
+1. `test_check_budget_status` - BudgetStatus initialization error
+2. `test_should_use_local_only` - Method returns dict instead of boolean
+3. `test_get_model_for_provider` - Returns "default" instead of "deepseek-chat"
+4. `test_estimate_request_cost` - BudgetStatus structure mismatch
+5. `test_generate_response_success` - BudgetStatus structure mismatch
+6. `test_get_router_status` - BudgetStatus structure mismatch
+
+### Partial Results ⚠️
+
+**Test Statistics**:
+- **Total tests**: 17 (11 passing, 6 failing)
+- **Test runtime**: 2.09 seconds
+- **Pass rate**: 65%
+
+**Coverage Statistics**:
+- **Current coverage**: 41% (109/266 statements covered)
+- **Improvement**: 33% → 41% (+8 percentage points)
+- **Uncovered statements**: 157 lines remaining
+- **Target gap**: Need +49 percentage points to reach 90%
+
+**Target Achievement**: ⚠️ **DID NOT REACH 90% TARGET - PARTIAL PROGRESS**
+
+### Files Modified
+- **tests/test_ai_router.py**: New file with 17 tests (143 lines), 11 passing
+
+### Git Commits
+- `0b03a89` (2025-11-06) - "🚧 Phase 3A.18: AI Router partial progress - 41% coverage, 11/17 tests passing"
+
+### Next Steps for Completion
+
+To reach 90% coverage for ai_router.py:
+1. **Fix BudgetStatus dataclass issues** (investigate budget_manager.py structure)
+2. **Fix failing tests** (6 tests)
+3. **Add provider selection tests** (cloud provider fallback logic)
+4. **Add routing mode tests** (cost-optimized, quality-optimized, speed-optimized)
+5. **Add fallback logic tests** (cloud → local fallback)
+6. **Add budget-aware routing tests** (stay within budget constraints)
+7. **Add integration tests** (full generate_response flow with multiple providers)
+
+**Estimated effort**: 2-3 hours to complete (complex module with multiple dependencies)
+
+### Lessons Learned
+1. **Complex Dependencies**: AI router depends on budget_manager, multiple AI services
+2. **Dataclass Structure**: Must fully understand dependency dataclass structures before mocking
+3. **Partial Progress Valid**: Document partial progress when complexity is high
+4. **Budget Integration**: Budget-aware routing requires deep understanding of budget_manager
+5. **Provider Fallback**: Complex fallback logic with health checks and retries
+
+### Special Notes
+- 11/17 tests passing provides foundational coverage
+- BudgetStatus structure needs investigation
+- Provider registration and health checks working
+- Router modes and local provider selection validated
+- Remaining work: Budget integration, provider selection logic, full routing flow
+
+---
+
+**Last Updated**: 2025-11-06 (Session 5 Continued - FINAL)
+**Next Session**: Complete ai_router.py to 90%+, then test speech_processor.py
+

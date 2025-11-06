@@ -1615,6 +1615,7 @@ class TestCreateUserCompleteSuccess:
 
             # Create a mock user that will be returned after add/flush
             mock_user = Mock(spec=User)
+            mock_user.id = 1  # Required for UserResponse
             mock_user.user_id = "test123"
             mock_user.username = "testuser"
             mock_user.email = None
@@ -1707,8 +1708,22 @@ class TestUpdateUserCompleteSuccess:
 
             # Mock user exists
             mock_user = Mock(spec=User)
+            mock_user.id = 1  # Required for UserResponse
             mock_user.user_id = "user123"
+            mock_user.username = "testuser"
+            mock_user.email = "test@example.com"
+            mock_user.role = UserRole.PARENT
             mock_user.first_name = "Old Name"
+            mock_user.last_name = "User"
+            mock_user.ui_language = "en"
+            mock_user.timezone = "UTC"
+            mock_user.is_active = True
+            mock_user.is_verified = False
+            mock_user.preferences = {}
+            mock_user.avatar_url = None
+            mock_user.last_login = None
+            mock_user.created_at = datetime.now(timezone.utc)
+            mock_user.updated_at = datetime.now(timezone.utc)
             mock_session.query.return_value.filter.return_value.first.return_value = (
                 mock_user
             )
@@ -1769,6 +1784,7 @@ class TestAddUserLanguageInsertPath:
 
             # Mock user exists
             mock_user = Mock(spec=User)
+            mock_user.id = 1  # Required for user_languages query
             mock_user.user_id = "user123"
 
             # First query returns user, second query (existing language) returns None
@@ -1800,6 +1816,7 @@ class TestUpdateLearningProgressCompleteSuccess:
 
             # Mock user and progress exist
             mock_user = Mock(spec=User)
+            mock_user.id = 1  # Required for progress query
             mock_progress = Mock(spec=LearningProgress)
             mock_progress.current_level = 1
             mock_progress.total_study_time = 100
@@ -1849,6 +1866,7 @@ class TestGetUserStatisticsCompleteSuccess:
 
             # Mock user with relationships
             mock_user = Mock(spec=User)
+            mock_user.id = 1  # Required for progress query
             mock_user.user_id = "user123"
             mock_user.conversations = [Mock(), Mock()]  # 2 conversations
             mock_user.documents = [Mock()]  # 1 document
