@@ -24,13 +24,15 @@
 - **3A.11**: scenario_manager.py to 100% coverage ✅ COMPLETE (100%)
 - **3A.12**: user_management.py to 98% coverage ✅ COMPLETE (98%)
 - **3A.13**: claude_service.py to 96% coverage ✅ COMPLETE (96%)
-- **3A.14**: Next module selection - PENDING
+- **3A.14**: mistral_service.py to 94% coverage ✅ COMPLETE (94%)
+- **3A.15**: deepseek_service.py to 97% coverage ✅ COMPLETE (97%)
+- **3A.16**: Next module selection - PENDING
 
-### Current Statistics
+### Current Statistics (Session 5 Continued - 2025-11-06)
 - **Modules at 100% coverage**: 9 (scenario_models, sr_models, conversation_models, conversation_manager, conversation_state, conversation_messages, conversation_analytics, scenario_manager, conversation_prompts)
-- **Modules at >90% coverage**: 4 (progress_analytics 96%, auth 96%, user_management 98%, claude_service 96%)
-- **Overall project coverage**: ~51% (up from 44% baseline)
-- **Total tests passing**: 566+ (528 + 38 claude_service)
+- **Modules at >90% coverage**: 6 (progress_analytics 96%, auth 96%, user_management 98%, claude_service 96%, mistral_service 94%, deepseek_service 97%)
+- **Overall project coverage**: ~52% (up from 44% baseline, +8 percentage points)
+- **Total tests passing**: 641+ (528 baseline + 38 claude + 36 mistral + 39 deepseek)
 - **Tests skipped**: 0
 - **Tests failing**: 5 (documenting future work in user_management)
 - **Warnings**: 0 (all Pydantic deprecations fixed)
@@ -784,6 +786,253 @@ Based on coverage analysis, prioritized by impact and criticality:
 - Convenience functions maintain backward compatibility
 - Property delegation works correctly
 - Global conversation_manager instance validated
+
+---
+
+## 3A.14: mistral_service.py to 94% Coverage ✅ COMPLETE
+
+**Date**: 2025-11-06 (Session 5 Continued)  
+**Status**: ✅ COMPLETE - **94% coverage achieved**
+
+### Selection Rationale
+- **Initial coverage**: 40% (60 lines uncovered out of 100 statements)
+- **Strategic priority**: Secondary AI provider, French-optimized
+- **Medium size**: 100 statements - manageable in one session
+- **Critical functionality**: Alternative AI provider for multilingual support
+
+### Implementation
+
+**Created new test file**: `tests/test_mistral_service.py` (547 lines, 36 tests)
+
+**Test Organization**:
+1. **TestMistralServiceInitialization** (4 tests):
+   - Service initialization with API key
+   - Initialization without API key
+   - Initialization when mistralai library not available
+   - Client initialization error handling
+
+2. **TestConversationPromptGeneration** (3 tests):
+   - French prompt generation (Pierre tutor)
+   - Prompt with conversation history
+   - Prompt with unsupported language
+
+3. **TestValidationMethods** (2 tests):
+   - Validation fails when service not available
+   - Validation passes when service available
+
+4. **TestHelperMethods** (11 tests):
+   - Extract user message from message parameter
+   - Extract user message from messages list
+   - Extract user message default fallback
+   - Extract from empty messages list
+   - Get model name with custom model
+   - Get model name with default
+   - Build Mistral API request
+   - Build request with default parameters
+   - Calculate cost from response
+   - Extract response content with text
+   - Extract response content without choices
+
+5. **TestResponseBuilding** (4 tests):
+   - Build successful response
+   - Build successful response without context
+   - Build error response
+   - Build error response without model
+
+6. **TestGenerateResponse** (5 tests):
+   - Successful response generation
+   - Response when service not available
+   - Response generation with API error
+   - Response with messages list
+   - Response with user context
+
+7. **TestAvailabilityAndHealth** (5 tests):
+   - Check availability with no client
+   - Check availability success
+   - Check availability with error
+   - Get health status when healthy
+   - Get health status when error
+
+8. **TestGlobalInstance** (2 tests):
+   - Global instance exists
+   - Global instance has correct attributes
+
+### Lines Previously Uncovered (Now Covered)
+- Lines 31-49: Service initialization logic with all error paths
+- Lines 149-151: Request validation
+- Lines 153-160: Message extraction logic
+- Lines 162-164: Model name selection
+- Lines 166-172: Mistral request building
+- Lines 174-178: Mistral API execution
+- Lines 180-185: Cost calculation
+- Lines 187-197: Response content extraction
+- Lines 199-220: Success response building
+- Lines 222-236: Error response building
+- Lines 238-288: Generate response method (main integration)
+- Lines 290-298: Availability checking
+- Lines 300-312: Health status generation
+
+### Final Results ✅
+
+**Test Statistics**:
+- **Total tests**: 36 passing, 0 skipped, 0 failed
+- **Test runtime**: 1.13 seconds
+
+**Coverage Statistics**:
+- **Final coverage**: 94% (94/100 statements covered)
+- **Improvement**: 40% → 94% (+54 percentage points)
+- **Uncovered statements**: 6 lines remaining
+- **Uncovered lines**: 17-22 (import error handling only)
+
+**Target Achievement**: ✅ **EXCEEDED 90% MINIMUM TARGET, ACHIEVED 94%**
+
+**Remaining 6% uncovered** (6 lines - acceptable):
+- Lines 17-22: Import exception handling (cannot be tested without environment manipulation)
+
+### Files Modified
+- **tests/test_mistral_service.py**: New file with 36 comprehensive tests (547 lines)
+
+### Git Commits
+- `c1bbb0e` (2025-11-06) - "✅ Phase 3A.14: Achieve 94% coverage for mistral_service.py (40% to 94%)"
+
+### Lessons Learned
+1. **French Prompt Optimization**: Mistral specializes in French with "Pierre" tutor persona
+2. **Cost Calculation Differences**: Mistral uses per-token pricing (not per-1k like other providers)
+3. **Synchronous Client Calls**: Mistral client uses synchronous API calls like Claude
+4. **Test Pattern Reusability**: Similar AI service patterns allowed quick test development
+5. **Health Status Reporting**: Costs reported per-token, not per-1k tokens
+
+### Special Notes
+- French-optimized prompts with Pierre tutor persona
+- All tests passing with zero warnings
+- Reused proven testing patterns from claude_service
+- Cost calculations: $0.0007/token input, $0.002/token output
+- Clean test organization matching claude_service structure
+
+---
+
+## 3A.15: deepseek_service.py to 97% Coverage ✅ COMPLETE
+
+**Date**: 2025-11-06 (Session 5 Continued)  
+**Status**: ✅ COMPLETE - **97% coverage achieved**
+
+### Selection Rationale
+- **Initial coverage**: 39% (62 lines uncovered out of 101 statements)
+- **Strategic priority**: Third AI provider, multilingual-optimized
+- **Medium size**: 101 statements
+- **Critical functionality**: OpenAI-compatible API for cost-effective multilingual support
+
+### Implementation
+
+**Created new test file**: `tests/test_deepseek_service.py` (540 lines, 39 tests)
+
+**Test Organization**:
+1. **TestDeepSeekServiceInitialization** (4 tests):
+   - Service initialization with API key
+   - Initialization without API key
+   - Initialization when openai library not available
+   - Client initialization error handling
+
+2. **TestConversationPromptGeneration** (5 tests):
+   - Chinese prompt generation (小李 tutor)
+   - Spanish prompt generation
+   - French prompt generation
+   - English prompt generation
+   - Other languages prompt generation
+
+3. **TestHelperMethods** (10 tests):
+   - Extract user message from message parameter
+   - Extract user message from messages list
+   - Extract user message default fallback
+   - Extract from empty messages list
+   - Call DeepSeek API with custom params
+   - Call API with default params
+   - Calculate cost from response
+   - Calculate cost with no usage
+   - Extract response content with choices
+   - Extract response content without choices
+
+4. **TestFallbackMessages** (4 tests):
+   - Chinese fallback message
+   - Spanish fallback message
+   - French fallback message
+   - English fallback message
+
+5. **TestResponseBuilding** (4 tests):
+   - Build successful response
+   - Build successful response without context
+   - Build error response
+   - Build error response without model
+
+6. **TestGenerateResponse** (5 tests):
+   - Successful response generation
+   - Response when service not available
+   - Response generation with API error
+   - Response with messages list
+   - Response with user context
+
+7. **TestAvailabilityAndHealth** (5 tests):
+   - Check availability with no client
+   - Check availability success
+   - Check availability with error
+   - Get health status when healthy
+   - Get health status when error
+
+8. **TestGlobalInstance** (2 tests):
+   - Global instance exists
+   - Global instance has correct attributes
+
+### Lines Previously Uncovered (Now Covered)
+- Lines 34-56: Service initialization with OpenAI client
+- Lines 153-155: Request validation
+- Lines 157-164: Message extraction logic
+- Lines 169-178: Language-specific fallback messages (Chinese, Spanish, French, English)
+- Lines 180-183: DeepSeek API call wrapper
+- Lines 185-190: Cost calculation (very low cost provider)
+- Lines 192-202: Response content extraction
+- Lines 204-225: Success response building
+- Lines 227-241: Error response building
+- Lines 243-293: Generate response method (main integration)
+- Lines 295-303: Availability checking
+- Lines 305-317: Health status generation
+
+### Final Results ✅
+
+**Test Statistics**:
+- **Total tests**: 39 passing, 0 skipped, 0 failed
+- **Test runtime**: 1.43 seconds
+
+**Coverage Statistics**:
+- **Final coverage**: 97% (98/101 statements covered)
+- **Improvement**: 39% → 97% (+58 percentage points)
+- **Uncovered statements**: 3 lines remaining
+- **Uncovered lines**: 20-22 (import error handling only)
+
+**Target Achievement**: ✅ **EXCEEDED 90% MINIMUM TARGET, ACHIEVED 97%**
+
+**Remaining 3% uncovered** (3 lines - acceptable):
+- Lines 20-22: Import exception handling for openai library (cannot be tested)
+
+### Files Modified
+- **tests/test_deepseek_service.py**: New file with 39 comprehensive tests (540 lines)
+
+### Git Commits
+- `b28d04f` (2025-11-06) - "✅ Phase 3A.15: Achieve 97% coverage for deepseek_service.py (39% to 97%, +39 tests)"
+
+### Lessons Learned
+1. **Multilingual Optimization**: DeepSeek optimized for Chinese (小李), Spanish, French, English
+2. **OpenAI-Compatible API**: Uses OpenAI client library with custom base URL
+3. **Cost-Effective Provider**: $0.1/1M input tokens, $0.2/1M output tokens (very low cost)
+4. **Language-Specific Fallbacks**: Each language has customized error messages
+5. **Base URL Configuration**: https://api.deepseek.com with OpenAI client
+
+### Special Notes
+- Chinese-primary optimization with 小李 tutor persona
+- Most cost-effective AI provider in the stack
+- Uses OpenAI client library for compatibility
+- All 39 tests passing with zero warnings
+- Comprehensive multilingual prompt testing
+- Language-specific fallback message validation
 
 ---
 
