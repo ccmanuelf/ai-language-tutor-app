@@ -1,5 +1,5 @@
 """
-Comprehensive tests for Ollama Service
+Comprehensive tests for Ollama Service  
 Achieves >90% test coverage for ollama_service.py
 """
 
@@ -110,13 +110,21 @@ class TestCheckAvailability:
         """Test availability check when server is running"""
         service = OllamaService()
         
-        mock_response = AsyncMock()
+        # Create proper async context manager mock
+        mock_response = Mock()
         mock_response.status = 200
         
-        mock_session = AsyncMock()
-        mock_session.get.return_value.__aenter__.return_value = mock_response
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
         
-        with patch.object(service, '_get_session', return_value=mock_session):
+        mock_session = Mock()
+        mock_session.get = Mock(return_value=mock_cm)
+        
+        async def mock_get_session():
+            return mock_session
+        
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
             result = await service.check_availability()
         
         assert result is True
@@ -126,13 +134,20 @@ class TestCheckAvailability:
         """Test availability check when server returns error"""
         service = OllamaService()
         
-        mock_response = AsyncMock()
+        mock_response = Mock()
         mock_response.status = 500
         
-        mock_session = AsyncMock()
-        mock_session.get.return_value.__aenter__.return_value = mock_response
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
         
-        with patch.object(service, '_get_session', return_value=mock_session):
+        mock_session = Mock()
+        mock_session.get = Mock(return_value=mock_cm)
+        
+        async def mock_get_session():
+            return mock_session
+        
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
             result = await service.check_availability()
         
         assert result is False
@@ -142,10 +157,13 @@ class TestCheckAvailability:
         """Test availability check when connection fails"""
         service = OllamaService()
         
-        mock_session = AsyncMock()
-        mock_session.get.side_effect = aiohttp.ClientError("Connection refused")
+        mock_session = Mock()
+        mock_session.get = Mock(side_effect=aiohttp.ClientError("Connection refused"))
         
-        with patch.object(service, '_get_session', return_value=mock_session):
+        async def mock_get_session():
+            return mock_session
+        
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
             result = await service.check_availability()
         
         assert result is False
@@ -166,14 +184,21 @@ class TestListModels:
             ]
         }
         
-        mock_response = AsyncMock()
+        mock_response = Mock()
         mock_response.status = 200
         mock_response.json = AsyncMock(return_value=mock_models)
         
-        mock_session = AsyncMock()
-        mock_session.get.return_value.__aenter__.return_value = mock_response
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
         
-        with patch.object(service, '_get_session', return_value=mock_session):
+        mock_session = Mock()
+        mock_session.get = Mock(return_value=mock_cm)
+        
+        async def mock_get_session():
+            return mock_session
+        
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
             result = await service.list_models()
         
         assert len(result) == 2
@@ -184,14 +209,21 @@ class TestListModels:
         """Test listing models when no models installed"""
         service = OllamaService()
         
-        mock_response = AsyncMock()
+        mock_response = Mock()
         mock_response.status = 200
         mock_response.json = AsyncMock(return_value={"models": []})
         
-        mock_session = AsyncMock()
-        mock_session.get.return_value.__aenter__.return_value = mock_response
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
         
-        with patch.object(service, '_get_session', return_value=mock_session):
+        mock_session = Mock()
+        mock_session.get = Mock(return_value=mock_cm)
+        
+        async def mock_get_session():
+            return mock_session
+        
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
             result = await service.list_models()
         
         assert result == []
@@ -201,10 +233,13 @@ class TestListModels:
         """Test listing models when request fails"""
         service = OllamaService()
         
-        mock_session = AsyncMock()
-        mock_session.get.side_effect = Exception("Connection error")
+        mock_session = Mock()
+        mock_session.get = Mock(side_effect=Exception("Connection error"))
         
-        with patch.object(service, '_get_session', return_value=mock_session):
+        async def mock_get_session():
+            return mock_session
+        
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
             result = await service.list_models()
         
         assert result == []
@@ -232,14 +267,21 @@ class TestPullModel:
         mock_content = MagicMock()
         mock_content.__aiter__ = lambda self: mock_content_iter()
         
-        mock_response = AsyncMock()
+        mock_response = Mock()
         mock_response.status = 200
         mock_response.content = mock_content
         
-        mock_session = AsyncMock()
-        mock_session.post.return_value.__aenter__.return_value = mock_response
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
         
-        with patch.object(service, '_get_session', return_value=mock_session):
+        mock_session = Mock()
+        mock_session.post = Mock(return_value=mock_cm)
+        
+        async def mock_get_session():
+            return mock_session
+        
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
             result = await service.pull_model("llama2:7b")
         
         assert result is True
@@ -249,13 +291,20 @@ class TestPullModel:
         """Test model pull when server returns error"""
         service = OllamaService()
         
-        mock_response = AsyncMock()
+        mock_response = Mock()
         mock_response.status = 500
         
-        mock_session = AsyncMock()
-        mock_session.post.return_value.__aenter__.return_value = mock_response
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
         
-        with patch.object(service, '_get_session', return_value=mock_session):
+        mock_session = Mock()
+        mock_session.post = Mock(return_value=mock_cm)
+        
+        async def mock_get_session():
+            return mock_session
+        
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
             result = await service.pull_model("llama2:7b")
         
         assert result is False
@@ -265,10 +314,13 @@ class TestPullModel:
         """Test model pull when connection fails"""
         service = OllamaService()
         
-        mock_session = AsyncMock()
-        mock_session.post.side_effect = Exception("Connection error")
+        mock_session = Mock()
+        mock_session.post = Mock(side_effect=Exception("Connection error"))
         
-        with patch.object(service, '_get_session', return_value=mock_session):
+        async def mock_get_session():
+            return mock_session
+        
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
             result = await service.pull_model("llama2:7b")
         
         assert result is False
@@ -380,14 +432,21 @@ class TestGenerateResponse:
             "eval_count": 10
         }
         
-        mock_response = AsyncMock()
+        mock_response = Mock()
         mock_response.status = 200
         mock_response.json = AsyncMock(return_value=mock_api_response)
         
-        mock_session = AsyncMock()
-        mock_session.post.return_value.__aenter__.return_value = mock_response
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
         
-        with patch.object(service, '_get_session', return_value=mock_session):
+        mock_session = Mock()
+        mock_session.post = Mock(return_value=mock_cm)
+        
+        async def mock_get_session():
+            return mock_session
+        
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
             with patch.object(service, 'ensure_model_available', return_value=True):
                 result = await service.generate_response(messages, language="en")
         
@@ -417,14 +476,21 @@ class TestGenerateResponse:
         
         messages = [{"role": "user", "content": "Hello"}]
         
-        mock_response = AsyncMock()
+        mock_response = Mock()
         mock_response.status = 500
         mock_response.text = AsyncMock(return_value="Internal server error")
         
-        mock_session = AsyncMock()
-        mock_session.post.return_value.__aenter__.return_value = mock_response
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
         
-        with patch.object(service, '_get_session', return_value=mock_session):
+        mock_session = Mock()
+        mock_session.post = Mock(return_value=mock_cm)
+        
+        async def mock_get_session():
+            return mock_session
+        
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
             with patch.object(service, 'ensure_model_available', return_value=True):
                 with pytest.raises(Exception) as exc_info:
                     await service.generate_response(messages, language="en")
@@ -443,14 +509,21 @@ class TestGenerateResponse:
             "done": True
         }
         
-        mock_response = AsyncMock()
+        mock_response = Mock()
         mock_response.status = 200
         mock_response.json = AsyncMock(return_value=mock_api_response)
         
-        mock_session = AsyncMock()
-        mock_session.post.return_value.__aenter__.return_value = mock_response
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
         
-        with patch.object(service, '_get_session', return_value=mock_session):
+        mock_session = Mock()
+        mock_session.post = Mock(return_value=mock_cm)
+        
+        async def mock_get_session():
+            return mock_session
+        
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
             with patch.object(service, 'ensure_model_available', return_value=True):
                 result = await service.generate_response(
                     messages, 
@@ -753,3 +826,186 @@ class TestCloseSession:
         await service.close()
         
         assert True  # No exception raised
+
+
+class TestGenerateStreamingResponse:
+    """Test streaming response generation"""
+
+    @pytest.mark.asyncio
+    async def test_generate_streaming_response_success(self):
+        """Test successful streaming response generation"""
+        service = OllamaService()
+        
+        messages = [{"role": "user", "content": "Hello"}]
+        
+        # Mock streaming chunks
+        chunk_lines = [
+            b'{"response": "Hello ", "done": false}\n',
+            b'{"response": "there!", "done": false}\n',
+            b'{"response": "", "done": true, "context": [1, 2, 3]}\n'
+        ]
+        
+        async def mock_content_iter():
+            for line in chunk_lines:
+                yield line
+        
+        mock_content = MagicMock()
+        mock_content.__aiter__ = lambda self: mock_content_iter()
+        
+        mock_response = Mock()
+        mock_response.status = 200
+        mock_response.content = mock_content
+        
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
+        
+        mock_session = Mock()
+        mock_session.post = Mock(return_value=mock_cm)
+        
+        async def mock_get_session():
+            return mock_session
+        
+        chunks = []
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
+            with patch.object(service, 'ensure_model_available', return_value=True):
+                async for chunk in service.generate_streaming_response(messages, language="en"):
+                    chunks.append(chunk)
+        
+        assert len(chunks) == 3
+        assert chunks[0].content == "Hello "
+        assert chunks[0].is_final is False
+        assert chunks[2].is_final is True
+
+    @pytest.mark.asyncio
+    async def test_generate_streaming_response_model_not_available(self):
+        """Test streaming when model not available"""
+        service = OllamaService()
+        
+        messages = [{"role": "user", "content": "Hello"}]
+        
+        with patch.object(service, 'ensure_model_available', return_value=False):
+            with pytest.raises(Exception) as exc_info:
+                async for chunk in service.generate_streaming_response(messages, language="en"):
+                    pass
+        
+        assert "not available" in str(exc_info.value).lower()
+
+    @pytest.mark.asyncio
+    async def test_generate_streaming_response_api_error(self):
+        """Test streaming when API returns error"""
+        service = OllamaService()
+        
+        messages = [{"role": "user", "content": "Hello"}]
+        
+        mock_response = Mock()
+        mock_response.status = 500
+        mock_response.text = AsyncMock(return_value="Internal server error")
+        
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
+        
+        mock_session = Mock()
+        mock_session.post = Mock(return_value=mock_cm)
+        
+        async def mock_get_session():
+            return mock_session
+        
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
+            with patch.object(service, 'ensure_model_available', return_value=True):
+                with pytest.raises(Exception) as exc_info:
+                    async for chunk in service.generate_streaming_response(messages, language="en"):
+                        pass
+        
+        assert "ollama streaming error" in str(exc_info.value).lower()
+
+    @pytest.mark.asyncio
+    async def test_generate_streaming_response_with_custom_model(self):
+        """Test streaming with custom model"""
+        service = OllamaService()
+        
+        messages = [{"role": "user", "content": "Hello"}]
+        
+        chunk_lines = [
+            b'{"response": "Hi", "done": true}\n'
+        ]
+        
+        async def mock_content_iter():
+            for line in chunk_lines:
+                yield line
+        
+        mock_content = MagicMock()
+        mock_content.__aiter__ = lambda self: mock_content_iter()
+        
+        mock_response = Mock()
+        mock_response.status = 200
+        mock_response.content = mock_content
+        
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
+        
+        mock_session = Mock()
+        mock_session.post = Mock(return_value=mock_cm)
+        
+        async def mock_get_session():
+            return mock_session
+        
+        chunks = []
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
+            with patch.object(service, 'ensure_model_available', return_value=True):
+                async for chunk in service.generate_streaming_response(
+                    messages,
+                    language="en",
+                    model="mistral:7b"
+                ):
+                    chunks.append(chunk)
+        
+        assert chunks[0].model == "mistral:7b"
+
+    @pytest.mark.asyncio
+    async def test_generate_streaming_response_invalid_json(self):
+        """Test streaming handles invalid JSON gracefully"""
+        service = OllamaService()
+        
+        messages = [{"role": "user", "content": "Hello"}]
+        
+        # Mix valid and invalid JSON
+        chunk_lines = [
+            b'{"response": "Valid", "done": false}\n',
+            b'Invalid JSON here\n',
+            b'{"response": " chunk", "done": true}\n'
+        ]
+        
+        async def mock_content_iter():
+            for line in chunk_lines:
+                yield line
+        
+        mock_content = MagicMock()
+        mock_content.__aiter__ = lambda self: mock_content_iter()
+        
+        mock_response = Mock()
+        mock_response.status = 200
+        mock_response.content = mock_content
+        
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
+        
+        mock_session = Mock()
+        mock_session.post = Mock(return_value=mock_cm)
+        
+        async def mock_get_session():
+            return mock_session
+        
+        chunks = []
+        with patch.object(service, '_get_session', side_effect=mock_get_session):
+            with patch.object(service, 'ensure_model_available', return_value=True):
+                async for chunk in service.generate_streaming_response(messages, language="en"):
+                    chunks.append(chunk)
+        
+        # Should have 2 valid chunks (invalid JSON skipped)
+        assert len(chunks) == 2
+        assert chunks[0].content == "Valid"
+        assert chunks[1].content == " chunk"
