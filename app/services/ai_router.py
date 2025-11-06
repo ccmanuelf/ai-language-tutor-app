@@ -18,22 +18,22 @@ Features:
 """
 
 import logging
-from typing import Dict, List, Any, Optional, AsyncGenerator
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from dataclasses import dataclass
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from app.services.ai_service_base import (
-    BaseAIService,
     AIResponse,
     AIResponseStatus,
+    BaseAIService,
     StreamingResponse,
 )
-from app.services.budget_manager import budget_manager, BudgetStatus, BudgetAlert
-from app.services.ollama_service import ollama_service
+from app.services.budget_manager import BudgetAlert, BudgetStatus, budget_manager
 from app.services.claude_service import claude_service
-from app.services.mistral_service import mistral_service
 from app.services.deepseek_service import deepseek_service
+from app.services.mistral_service import mistral_service
+from app.services.ollama_service import ollama_service
 from app.services.response_cache import response_cache
 
 logger = logging.getLogger(__name__)
@@ -153,7 +153,11 @@ class EnhancedAIRouter:
         self, force_local: bool, user_preferences: Optional[Dict[str, Any]]
     ) -> bool:
         """Check if local-only mode is requested"""
-        return force_local or (user_preferences and user_preferences.get("local_only"))
+        if force_local:
+            return True
+        if user_preferences and user_preferences.get("local_only"):
+            return True
+        return False
 
     def _should_use_budget_fallback(self, budget_status: Any) -> bool:
         """Check if budget requires fallback to local"""
