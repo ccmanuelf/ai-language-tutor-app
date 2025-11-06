@@ -319,7 +319,7 @@ class TestUserProfileManagement:
         # Valid user IDs
         valid_ids = ["user123", "test_user", "child-01", "parent_account"]
         for user_id in valid_ids:
-            test_data = self.test_user_data.copy()
+            test_data = self.test_user_data.model_copy()
             test_data.user_id = user_id
             # Should not raise validation error
             assert len(test_data.user_id) >= 3
@@ -329,7 +329,7 @@ class TestUserProfileManagement:
         # Valid emails
         valid_emails = ["test@example.com", "user+tag@domain.org", None]
         for email in valid_emails:
-            test_data = self.test_user_data.copy()
+            test_data = self.test_user_data.model_copy()
             test_data.email = email
             # Should not raise validation error
             if email:
