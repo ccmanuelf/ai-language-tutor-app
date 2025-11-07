@@ -680,6 +680,7 @@ class TestFastAPIDependencies:
         """Set up test fixtures"""
         self.auth = AuthenticationService()
 
+    @pytest.mark.asyncio
     async def test_get_current_user_success(self):
         """Test get_current_user dependency with valid token"""
         from fastapi.security import HTTPAuthorizationCredentials
@@ -701,6 +702,7 @@ class TestFastAPIDependencies:
         user_data = await get_current_user(credentials)
         assert user_data["user_id"] == "user_123"
 
+    @pytest.mark.asyncio
     async def test_get_current_user_no_credentials(self):
         """Test get_current_user dependency without credentials"""
         from app.services.auth import get_current_user
@@ -711,6 +713,7 @@ class TestFastAPIDependencies:
         assert exc_info.value.status_code == 401
         assert "Not authenticated" in exc_info.value.detail
 
+    @pytest.mark.asyncio
     async def test_get_current_active_user(self):
         """Test get_current_active_user dependency"""
         from app.services.auth import get_current_active_user
@@ -719,6 +722,7 @@ class TestFastAPIDependencies:
         result = await get_current_active_user(current_user)
         assert result == current_user
 
+    @pytest.mark.asyncio
     async def test_require_role_success(self):
         """Test require_role dependency with correct role"""
         from app.services.auth import require_role
@@ -728,6 +732,7 @@ class TestFastAPIDependencies:
         result = checker(current_user)
         assert result == current_user
 
+    @pytest.mark.asyncio
     async def test_require_role_forbidden(self):
         """Test require_role dependency with incorrect role"""
         from app.services.auth import require_role
