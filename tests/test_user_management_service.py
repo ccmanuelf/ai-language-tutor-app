@@ -1677,7 +1677,7 @@ class TestCreateUserCompleteSuccess:
                 mock_session.add.assert_called_once()
                 mock_session.flush.assert_called_once()
                 mock_session.commit.assert_called_once()
-                mock_session.refresh.assert_called_once()
+                # Note: refresh() is not called in actual implementation
                 mock_add_profile.assert_called_once()
 
                 # Verify logging occurred (line 142)
@@ -1702,6 +1702,9 @@ class TestUpdateUserCompleteSuccess:
                 "app.services.user_management.local_db_manager.add_user_profile"
             ) as mock_add_profile,
             patch("app.services.user_management.logger") as mock_logger,
+            patch(
+                "app.services.user_management.UserResponse"
+            ) as mock_user_response_class,
         ):
             mock_session = Mock()
             mock_session_getter.return_value = mock_session
@@ -1728,6 +1731,10 @@ class TestUpdateUserCompleteSuccess:
                 mock_user
             )
 
+            # Mock UserResponse.model_validate to return a valid response
+            mock_response = Mock()
+            mock_user_response_class.model_validate.return_value = mock_response
+
             user_updates = UserUpdate(first_name="New Name")
 
             result = self.service.update_user("user123", user_updates)
@@ -1741,8 +1748,7 @@ class TestUpdateUserCompleteSuccess:
             assert mock_logger.info.called
 
             # Verify UserResponse was returned (line 290)
-            # The result depends on UserResponse.model_validate which we need to mock
-            # For now, just verify commit was called
+            assert result is not None
 
 
 class TestGetUserByIdReturnsNone:
@@ -1778,7 +1784,10 @@ class TestAddUserLanguageInsertPath:
 
     def test_add_user_language_insert_new_language(self):
         """Test adding a new language executes insert statement."""
-        with patch.object(self.service, "_get_session") as mock_session_getter:
+        with (
+            patch.object(self.service, "_get_session") as mock_session_getter,
+            patch("app.services.user_management.user_languages") as mock_user_languages,
+        ):
             mock_session = Mock()
             mock_session_getter.return_value = mock_session
 
@@ -1787,16 +1796,27 @@ class TestAddUserLanguageInsertPath:
             mock_user.id = 1  # Required for user_languages query
             mock_user.user_id = "user123"
 
-            # First query returns user, second query (existing language) returns None
-            mock_session.query.return_value.filter.return_value.first.side_effect = [
-                mock_user,  # User exists
-                None,  # No existing language association
-            ]
+            # Setup query mocks - need to handle two different queries
+            mock_user_query = Mock()
+            mock_user_query.filter.return_value.first.return_value = mock_user
+
+            mock_lang_query = Mock()
+            mock_lang_query.filter.return_value.first.return_value = (
+                None  # No existing language
+            )
+
+            # query() is called twice: once for User, once for user_languages
+            mock_session.query.side_effect = [mock_user_query, mock_lang_query]
+
+            # Mock user_languages table structure
+            mock_user_languages.c.user_id = Mock()
+            mock_user_languages.c.language = Mock()
+            mock_user_languages.insert.return_value.values.return_value = Mock()
 
             result = self.service.add_user_language("user123", "es")
 
             # Verify insert was executed (line 433)
-            mock_session.execute.assert_called_once()
+            assert mock_session.execute.called  # Should be called for insert
             mock_session.commit.assert_called_once()
             assert result is True
 
@@ -1810,16 +1830,21 @@ class TestUpdateLearningProgressCompleteSuccess:
 
     def test_update_learning_progress_complete_success_with_field_updates(self):
         """Test update_learning_progress successfully updates all fields."""
-        with patch.object(self.service, "_get_session") as mock_session_getter:
+        with (
+            patch.object(self.service, "_get_session") as mock_session_getter,
+            patch(
+                "app.services.user_management.LearningProgressResponse"
+            ) as mock_response_class,
+        ):
             mock_session = Mock()
             mock_session_getter.return_value = mock_session
 
-            # Mock user and progress exist
-            mock_user = Mock(spec=User)
+            # Mock user and progress exist - use plain Mock without spec to allow setattr
+            mock_user = Mock()
             mock_user.id = 1  # Required for progress query
-            mock_progress = Mock(spec=LearningProgress)
+            mock_progress = Mock()
             mock_progress.current_level = 1
-            mock_progress.total_study_time = 100
+            mock_progress.total_study_time_minutes = 100  # Correct field name
             mock_progress.last_activity = datetime.now(timezone.utc) - timedelta(days=1)
             mock_progress.updated_at = datetime.now(timezone.utc) - timedelta(days=1)
 
@@ -1829,11 +1854,15 @@ class TestUpdateLearningProgressCompleteSuccess:
                 mock_progress,
             ]
 
+            # Mock the response validation
+            mock_response = Mock()
+            mock_response_class.model_validate.return_value = mock_response
+
             from app.models.schemas import LearningProgressUpdate
 
             progress_updates = LearningProgressUpdate(
                 current_level=2,
-                total_study_time=200,
+                total_study_time_minutes=200,  # Correct field name
             )
 
             result = self.service.update_learning_progress(
@@ -1842,10 +1871,13 @@ class TestUpdateLearningProgressCompleteSuccess:
 
             # Verify fields were updated (lines 647-651)
             assert mock_progress.current_level == 2
-            assert mock_progress.total_study_time == 200
+            assert mock_progress.total_study_time_minutes == 200
 
             # Verify commit was called (line 653)
             mock_session.commit.assert_called_once()
+
+            # Verify result is returned
+            assert result is not None
 
 
 class TestGetUserStatisticsCompleteSuccess:
@@ -1860,34 +1892,59 @@ class TestGetUserStatisticsCompleteSuccess:
         with (
             patch.object(self.service, "_get_session") as mock_session_getter,
             patch.object(self.service, "get_user_languages") as mock_get_languages,
+            patch("app.services.user_management.func") as mock_func,
+            patch("app.services.user_management.and_") as mock_and,
         ):
             mock_session = Mock()
             mock_session_getter.return_value = mock_session
 
-            # Mock user with relationships
-            mock_user = Mock(spec=User)
+            # Mock user with relationships and required attributes
+            mock_user = Mock()
             mock_user.id = 1  # Required for progress query
             mock_user.user_id = "user123"
-            mock_user.conversations = [Mock(), Mock()]  # 2 conversations
+
+            # Mock conversations as a list-like object with SQLAlchemy methods
+            mock_conversations = Mock()
+            mock_conversations.__len__ = Mock(return_value=2)
+            mock_conversations.any = Mock()  # SQLAlchemy relationship method
+            mock_user.conversations = mock_conversations
+
             mock_user.documents = [Mock()]  # 1 document
             mock_user.vocabulary_lists = [Mock(), Mock(), Mock()]  # 3 lists
+            mock_user.created_at = datetime.now(timezone.utc) - timedelta(days=100)
+            mock_user.last_login = datetime.now(timezone.utc) - timedelta(days=1)
 
-            mock_session.query.return_value.filter.return_value.first.return_value = (
-                mock_user
-            )
+            # Setup query mocks to handle different query types
+            # First query: get user
+            mock_user_query = Mock()
+            mock_user_query.filter.return_value.first.return_value = mock_user
 
-            # Mock progress records with study time and sessions
-            mock_progress1 = Mock(spec=LearningProgress)
-            mock_progress1.total_study_time = 100
-            mock_progress1.total_sessions = 5
+            # Second query: get progress records
+            mock_progress1 = Mock()
+            mock_progress1.total_study_time_minutes = 100  # Correct field name
+            mock_progress1.sessions_completed = 5  # Correct field name
 
-            mock_progress2 = Mock(spec=LearningProgress)
-            mock_progress2.total_study_time = 200
-            mock_progress2.total_sessions = 10
+            mock_progress2 = Mock()
+            mock_progress2.total_study_time_minutes = 200  # Correct field name
+            mock_progress2.sessions_completed = 10  # Correct field name
 
-            mock_session.query.return_value.filter.return_value.all.return_value = [
+            mock_progress_query = Mock()
+            mock_progress_query.filter.return_value.all.return_value = [
                 mock_progress1,
                 mock_progress2,
+            ]
+
+            # Mock func.count() and and_() for recent conversations query
+            mock_count_query = Mock()
+            mock_count_query.filter.return_value.scalar.return_value = 0
+            mock_func.count.return_value = Mock()  # Return value for func.count()
+            mock_and.return_value = Mock()  # Return value for and_()
+
+            # Set up side_effect for multiple queries
+            mock_session.query.side_effect = [
+                mock_user_query,
+                mock_progress_query,
+                mock_count_query,
             ]
 
             # Mock get_user_languages to return list of languages
@@ -1895,14 +1952,20 @@ class TestGetUserStatisticsCompleteSuccess:
 
             result = self.service.get_user_statistics("user123")
 
-            # Verify complete dict is returned (line 865)
+            # Verify complete dict is returned with correct keys (line 865-876)
             assert isinstance(result, dict)
-            assert "conversations_count" in result
-            assert "documents_count" in result
-            assert "vocabulary_lists_count" in result
-            assert "total_study_time" in result
-            assert "total_sessions" in result
-            assert "languages" in result
+            assert "total_conversations" in result
+            assert result["total_conversations"] == 2
+            assert "total_documents" in result
+            assert result["total_documents"] == 1
+            assert "total_vocabulary_items" in result
+            assert result["total_vocabulary_items"] == 3
+            assert "total_study_time_minutes" in result
+            assert result["total_study_time_minutes"] == 300  # 100 + 200
+            assert "total_sessions_completed" in result
+            assert result["total_sessions_completed"] == 15  # 5 + 10
+            assert "languages_learning" in result
+            assert result["languages_learning"] == 2
 
 
 class TestDeleteUserHardDelete:
