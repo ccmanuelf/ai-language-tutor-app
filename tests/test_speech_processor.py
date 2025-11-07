@@ -1835,185 +1835,6 @@ class TestGlobalInstanceAndConvenience:
 # ============================================================================
 
 
-class TestDeprecatedWatsonMethods:
-    """Test deprecated Watson methods and warnings"""
-
-    def test_fetch_available_voices_with_watson_client(self, processor):
-        """Test fetching voices with Watson client"""
-        mock_client = Mock()
-        mock_voices_result = {
-            "voices": [
-                {"language": "en-US", "name": "en-US_AllisonV3Voice"},
-                {"language": "fr-FR", "name": "fr-FR_ReneeV3Voice"},
-                {"language": "zh-CN", "name": "zh-CN_LiNaVoice"},
-            ]
-        }
-        mock_client.list_voices.return_value.get_result.return_value = (
-            mock_voices_result
-        )
-
-        processor.watson_tts_client = mock_client
-
-        result = processor._fetch_available_voices()
-
-        assert "available_voices" in result
-        assert "en-US" in result["available_voices"]
-        assert result["chinese_supported"] is True
-        assert result["total_languages"] == 3
-
-    @pytest.mark.asyncio
-    async def test_check_watson_health_with_stt_success(self, processor):
-        """Test Watson health check with successful STT"""
-        mock_stt_client = Mock()
-        mock_stt_client.list_models = Mock()
-        processor.watson_stt_client = mock_stt_client
-        processor.watson_tts_client = None
-
-        health = await processor.check_watson_health()
-
-        assert health["stt_available"] is True
-        assert "stt_response_time" in health
-        assert health["tts_available"] is False
-
-    @pytest.mark.asyncio
-    async def test_check_watson_health_with_tts_success(self, processor):
-        """Test Watson health check with successful TTS"""
-        mock_tts_client = Mock()
-        mock_tts_client.list_voices = Mock()
-        processor.watson_stt_client = None
-        processor.watson_tts_client = mock_tts_client
-
-        health = await processor.check_watson_health()
-
-        assert health["stt_available"] is False
-        assert health["tts_available"] is True
-        assert "tts_response_time" in health
-
-    @pytest.mark.asyncio
-    async def test_check_watson_health_stt_error(self, processor):
-        """Test Watson health check with STT error"""
-        mock_stt_client = Mock()
-        mock_stt_client.list_models.side_effect = Exception("API Error")
-        processor.watson_stt_client = mock_stt_client
-        processor.watson_tts_client = None
-
-        health = await processor.check_watson_health()
-
-        assert health["stt_available"] is False
-        assert health["tts_available"] is False
-
-    @pytest.mark.asyncio
-    async def test_check_watson_health_tts_error(self, processor):
-        """Test Watson health check with TTS error"""
-        mock_tts_client = Mock()
-        mock_tts_client.list_voices.side_effect = Exception("API Error")
-        processor.watson_stt_client = None
-        processor.watson_tts_client = mock_tts_client
-
-        health = await processor.check_watson_health()
-
-        assert health["stt_available"] is False
-        assert health["tts_available"] is False
-
-    @pytest.mark.asyncio
-    async def test_select_stt_provider_mistral_fallback(
-        self, processor, mock_audio_data
-    ):
-        """Test STT provider selection with mistral_fallback"""
-        mock_result = SpeechRecognitionResult(
-            transcript="mistral result",
-            confidence=0.9,
-            language="en",
-            processing_time=0.5,
-            alternative_transcripts=[],
-            metadata={},
-        )
-
-        processor.mistral_stt_available = True
-
-        with patch.object(processor, "_try_mistral_stt", return_value=mock_result):
-            result = await processor._select_stt_provider_and_process(
-                audio_data=mock_audio_data,
-                language="en",
-                audio_format=AudioFormat.WAV,
-                provider="mistral_fallback",
-            )
-            assert result.transcript == "mistral result"
-
-    def test_build_watson_stt_status_no_settings(self, processor):
-        """Test building Watson STT status without settings"""
-        status = processor._build_watson_stt_status(False, None)
-        assert status["status"] == "unavailable"
-        assert status["api_key_configured"] is False
-
-    def test_build_watson_tts_status_no_settings(self, processor):
-        """Test building Watson TTS status without settings"""
-        status = processor._build_watson_tts_status(False, None)
-        assert status["status"] == "unavailable"
-        assert status["api_key_configured"] is False
-
-    @pytest.mark.asyncio
-    async def test_try_piper_with_fallback_warning_success(self, processor):
-        """Test Piper TTS with fallback warning on success"""
-        mock_result = SpeechSynthesisResult(
-            audio_data=b"piper_audio",
-            audio_format=AudioFormat.WAV,
-            sample_rate=22050,
-            duration_seconds=2.0,
-            processing_time=0.5,
-            metadata={},
-        )
-
-        processor.piper_tts_available = True
-
-        with patch.object(processor, "_text_to_speech_piper", return_value=mock_result):
-            result = await processor._try_piper_with_fallback_warning(
-                "hello", "hello", "en", "neural", 1.0
-            )
-            assert result is not None
-            assert result.audio_data == b"piper_audio"
-
-    @pytest.mark.asyncio
-    async def test_try_piper_with_fallback_warning_failure(self, processor):
-        """Test Piper TTS with fallback warning on failure"""
-        processor.piper_tts_available = True
-
-        with patch.object(
-            processor, "_text_to_speech_piper", side_effect=Exception("Piper failed")
-        ):
-            result = await processor._try_piper_with_fallback_warning(
-                "hello", "hello", "en", "neural", 1.0
-            )
-            assert result is None
-
-    @pytest.mark.asyncio
-    async def test_select_tts_provider_piper_fallback(self, processor):
-        """Test TTS provider selection with piper_fallback"""
-        mock_result = SpeechSynthesisResult(
-            audio_data=b"audio",
-            audio_format=AudioFormat.WAV,
-            sample_rate=22050,
-            duration_seconds=2.0,
-            processing_time=0.5,
-            metadata={},
-        )
-
-        processor.piper_tts_available = True
-
-        with patch.object(
-            processor, "_process_piper_fallback", return_value=mock_result
-        ):
-            result = await processor._select_tts_provider_and_process(
-                text="hello",
-                language="en",
-                voice_type="neural",
-                speaking_rate=1.0,
-                provider="piper_fallback",
-                original_text="hello",
-            )
-            assert result.audio_data == b"audio"
-
-
 class TestAdditionalCoverage:
     """Additional tests to cover missing lines"""
 
@@ -2063,19 +1884,6 @@ class TestAdditionalCoverage:
                 )
 
     @pytest.mark.asyncio
-    async def test_process_with_watson_fallback_unavailable(
-        self, processor, mock_audio_data
-    ):
-        """Test Watson fallback when both unavailable"""
-        processor.mistral_stt_available = False
-        processor.watson_stt_available = False
-
-        with pytest.raises(Exception, match="No STT providers available"):
-            await processor._process_with_watson_fallback(
-                mock_audio_data, "en", AudioFormat.WAV
-            )
-
-    @pytest.mark.asyncio
     async def test_process_auto_provider_tts_unavailable(self, processor):
         """Test auto provider when Piper unavailable"""
         processor.piper_tts_available = False
@@ -2087,13 +1895,10 @@ class TestAdditionalCoverage:
 
     @pytest.mark.asyncio
     async def test_process_piper_fallback_both_unavailable(self, processor):
-        """Test piper_fallback when both services unavailable"""
+        """Test piper_fallback when Piper unavailable"""
         processor.piper_tts_available = False
-        processor.watson_tts_available = False
 
-        with pytest.raises(
-            Exception, match="Piper TTS failed and Watson TTS not available"
-        ):
+        with pytest.raises(Exception, match="Piper TTS not available"):
             await processor._process_piper_fallback(
                 "hello", "hello", "en", "neural", 1.0
             )
