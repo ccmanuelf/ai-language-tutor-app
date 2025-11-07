@@ -1,7 +1,7 @@
 # Daily Project Resumption Prompt Template
 ## AI Language Tutor App - Phase 3A IN PROGRESS
 
-**Last Updated**: 2025-11-07 (Session 6 Continued FINAL - speech_processor 93%, Watson debt removed, 5 tests fixed!)  
+**Last Updated**: 2025-11-07 (Session 7 - Fixed 9 skipped tests, 969 tests passing!)  
 **Current Phase**: 🚀 Phase 3A - Comprehensive Testing (IN PROGRESS)  
 **Current Status**: 13 modules COMPLETE (8 at 100%, 2 at 96%, 1 at 98%, 1 at 93%, 1 at 97%) ✅  
 **Next Task**: Continue Phase 3A - Processing Services (content_processor, sr_sessions, sr_algorithm)
@@ -20,12 +20,12 @@ Hello! I'm resuming work on the AI Language Tutor App, currently in Phase 3A (Co
 
 **PROJECT CONTEXT**:
 - **Phase**: Phase 3A - Comprehensive Testing (IN PROGRESS - EXCEPTIONAL momentum!)
-- **Achievement**: 13 modules tested, Session 6 Continued: speech_processor 93%, Watson debt removed, 5 user_management tests fixed!
+- **Achievement**: 13 modules tested, Session 7: Fixed 9 skipped tests, 969 tests passing!
 - **Modules at 100%**: 8 (scenario_models, sr_models, conversation_models, conversation_manager, conversation_state, conversation_messages, conversation_analytics, scenario_manager, conversation_prompts)
 - **Modules at >96%**: 4 (progress_analytics 96%, auth 96%, user_management 98%, qwen_service 97%, speech_processor 93%)
 - **Overall Coverage**: 52% (up from baseline 44%, targeting >70% critical modules)
 - **Tech Stack**: FastAPI + FastHTML + multi-LLM routing + Mistral STT + Piper TTS + SQLite/ChromaDB/DuckDB
-- **Test Suite**: 964 tests passing, 0 failures ✅
+- **Test Suite**: 969 tests passing, 0 skipped, 0 failures ✅
 
 **🔥 CRITICAL PROJECT PHILOSOPHY**:
 > "Quality and performance above all."
@@ -45,10 +45,13 @@ Before ANY work, you MUST read these files IN THIS ORDER:
 
 2. **`docs/SESSION_6_FINAL_REPORT.md`** ⭐ LATEST SESSION
    - Session 6 Continued achievements - speech_processor 93%, Watson debt removed, 5 user_management tests fixed!
+   - Session 7 achievements - Fixed 9 skipped tests (5 async + 4 integration scripts)
    - 154 speech_processor tests (removed 12 Watson tests for dead code)
    - **CRITICAL**: 27 lines of Watson dead code removed (methods referencing non-existent functions)
    - Fixed 5 pre-existing user_management test failures (mocking issues)
-   - Validation: 964 tests pass, 0 regressions ✅
+   - Fixed 5 async tests missing @pytest.mark.asyncio decorators
+   - Excluded 4 standalone integration scripts from pytest collection
+   - Validation: 969 tests pass, 0 skipped, 0 failures ✅
    - **Key Lesson**: Always remove dead/deprecated code during testing, never skip it!
 
 3. **`docs/SESSION_4_SUMMARY.md`** ⭐ PREVIOUS SESSION
@@ -71,7 +74,7 @@ Before ANY work, you MUST read these files IN THIS ORDER:
 2. **Verify Environment** (2-3 minutes)
    - Run validation: `./ai-tutor-env/bin/python scripts/validate_environment.py` (5/5 checks must pass)
    - Check git status: `git status` (should be clean)
-   - Verify tests passing: `./ai-tutor-env/bin/python -m pytest tests/ -q` (323+ tests should pass)
+   - Verify tests passing: `./ai-tutor-env/bin/python -m pytest tests/ -q` (969 tests should pass, 0 skipped)
    - Check overall coverage: `./ai-tutor-env/bin/python -m pytest --cov=app --cov-report=term -q | tail -40`
 
 3. **Select Next Module for Phase 3A.14** (Strategic decision)
