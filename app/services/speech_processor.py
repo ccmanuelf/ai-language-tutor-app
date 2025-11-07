@@ -24,7 +24,6 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
 
 # Audio processing libraries
@@ -304,54 +303,6 @@ class SpeechProcessor:
             logger.error(f"Failed to initialize Piper TTS service: {e}")
             self.piper_tts_service = None
             self.piper_tts_available = False
-
-    @lru_cache(maxsize=1)
-    def _get_cached_voices(self):
-        """Cache available voices to reduce API calls"""
-        return self._fetch_available_voices()
-
-    def _fetch_available_voices(self):
-        """Fetch available voices from Watson TTS service"""
-        if not self.watson_tts_client:
-            return {"error": "Watson TTS client not available"}
-
-        try:
-            voices_result = self.watson_tts_client.list_voices().get_result()
-
-            available_voices = {}
-            language_support = {}
-
-            for voice in voices_result["voices"]:
-                language = voice["language"]
-                voice_name = voice["name"]
-
-                if language not in available_voices:
-                    available_voices[language] = []
-                available_voices[language].append(voice_name)
-
-                # Map to our simplified language codes
-                lang_code = language.split("-")[0]
-                if lang_code not in language_support:
-                    language_support[lang_code] = []
-                language_support[lang_code].append(voice_name)
-
-            return {
-                "available_voices": available_voices,
-                "language_support": language_support,
-                "chinese_supported": any(
-                    "zh" in lang for lang in available_voices.keys()
-                ),
-                "total_languages": len(available_voices),
-            }
-
-        except Exception as e:
-            logger.error(f"Failed to fetch available voices: {e}")
-            return {"error": str(e)}
-
-    async def check_available_voices(self) -> Dict[str, List[str]]:
-        """Check available voices in Watson TTS service"""
-        # Use cached version to reduce API calls
-        return self._get_cached_voices()
 
     def _load_pronunciation_models(self) -> Dict[str, Any]:
         """Load language-specific pronunciation models"""
@@ -1577,43 +1528,6 @@ class SpeechProcessor:
             "tts_voice": "es-LA_SofiaV3Voice",
             "note": "Using Mexican Spanish STT and Latin American Spanish TTS (closest to es-MX preference)",
         }
-
-    async def check_watson_health(self) -> Dict[str, Any]:
-        """Check Watson service health"""
-        health_status = {
-            "stt_available": False,
-            "tts_available": False,
-            "stt_response_time": None,
-            "tts_response_time": None,
-        }
-
-        # Check STT health
-        if self.watson_stt_client:
-            try:
-                import time
-
-                start_time = time.time()
-                # Simple health check - list models
-                self.watson_stt_client.list_models()
-                health_status["stt_available"] = True
-                health_status["stt_response_time"] = time.time() - start_time
-            except Exception:
-                health_status["stt_available"] = False
-
-        # Check TTS health
-        if self.watson_tts_client:
-            try:
-                import time
-
-                start_time = time.time()
-                # Simple health check - list voices
-                self.watson_tts_client.list_voices()
-                health_status["tts_available"] = True
-                health_status["tts_response_time"] = time.time() - start_time
-            except Exception:
-                health_status["tts_available"] = False
-
-        return health_status
 
 
 # Global speech processor instance
