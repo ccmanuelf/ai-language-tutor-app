@@ -1,10 +1,10 @@
 # Daily Project Resumption Prompt Template
 ## AI Language Tutor App - Phase 3A IN PROGRESS
 
-**Last Updated**: 2025-10-31 (Session 4 Continued FINAL - 3 at 100%, 1 at 98%, ZERO WARNINGS!)  
+**Last Updated**: 2025-11-07 (Session 6 Continued FINAL - speech_processor 93%, Watson debt removed, 5 tests fixed!)  
 **Current Phase**: 🚀 Phase 3A - Comprehensive Testing (IN PROGRESS)  
-**Current Status**: 12 modules COMPLETE (8 at 100%, 2 at 96%, 1 at 98%) ✅  
-**Next Task**: Continue Phase 3A - AI Services and Processors
+**Current Status**: 13 modules COMPLETE (8 at 100%, 2 at 96%, 1 at 98%, 1 at 93%, 1 at 97%) ✅  
+**Next Task**: Continue Phase 3A - Processing Services (content_processor, sr_sessions, sr_algorithm)
 
 ---
 
@@ -20,17 +20,19 @@ Hello! I'm resuming work on the AI Language Tutor App, currently in Phase 3A (Co
 
 **PROJECT CONTEXT**:
 - **Phase**: Phase 3A - Comprehensive Testing (IN PROGRESS - EXCEPTIONAL momentum!)
-- **Achievement**: 12 modules tested, Session 4 Continued FINAL: scenario_manager 100%, user_management 98%, ZERO warnings!
+- **Achievement**: 13 modules tested, Session 6 Continued: speech_processor 93%, Watson debt removed, 5 user_management tests fixed!
 - **Modules at 100%**: 8 (scenario_models, sr_models, conversation_models, conversation_manager, conversation_state, conversation_messages, conversation_analytics, scenario_manager, conversation_prompts)
-- **Modules at >96%**: 4 (progress_analytics 96%, auth 96%, user_management 98% with zero warnings)
-- **Overall Coverage**: 50% (up from baseline 44%, targeting >70% critical modules)
+- **Modules at >96%**: 4 (progress_analytics 96%, auth 96%, user_management 98%, qwen_service 97%, speech_processor 93%)
+- **Overall Coverage**: 52% (up from baseline 44%, targeting >70% critical modules)
 - **Tech Stack**: FastAPI + FastHTML + multi-LLM routing + Mistral STT + Piper TTS + SQLite/ChromaDB/DuckDB
+- **Test Suite**: 964 tests passing, 0 failures ✅
 
 **🔥 CRITICAL PROJECT PHILOSOPHY**:
 > "Quality and performance above all."
 > "Time is not a restriction - let's keep the pace."
 > "Test coverage > 90% is the minimum bar to move forward."
 > "We have plenty of time to do this right."
+> **"Remove deprecated, non-existent, or unused code immediately - never skip or omit dead code during testing!"** ⚠️
 
 **🚨 MANDATORY FIRST STEP - READ STATUS FILES**:
 Before ANY work, you MUST read these files IN THIS ORDER:
@@ -41,18 +43,18 @@ Before ANY work, you MUST read these files IN THIS ORDER:
    - Coverage statistics and lessons learned
    - Next module priorities
 
-2. **`docs/SESSION_4_SUMMARY.md`** ⭐ LATEST SESSION
+2. **`docs/SESSION_6_FINAL_REPORT.md`** ⭐ LATEST SESSION
+   - Session 6 Continued achievements - speech_processor 93%, Watson debt removed, 5 user_management tests fixed!
+   - 154 speech_processor tests (removed 12 Watson tests for dead code)
+   - **CRITICAL**: 27 lines of Watson dead code removed (methods referencing non-existent functions)
+   - Fixed 5 pre-existing user_management test failures (mocking issues)
+   - Validation: 964 tests pass, 0 regressions ✅
+   - **Key Lesson**: Always remove dead/deprecated code during testing, never skip it!
+
+3. **`docs/SESSION_4_SUMMARY.md`** ⭐ PREVIOUS SESSION
    - Session 4 Continued FINAL achievements - 3 at 100%, 1 at 98%, ZERO WARNINGS!
    - 4 modules completed (conversation_messages 100%, conversation_analytics 100%, scenario_manager 100%, user_management 98%)
-   - 205 tests created, 4,800+ lines of test code
-   - Bug fixes in scenario_manager + Pydantic V2 migration + comprehensive edge case testing
-   - Comprehensive results and recommendations
-
-3. **`docs/SESSION_3_CONTINUED_FINAL_SUMMARY.md`** ⭐ PREVIOUS SESSION
-   - Session 3 Continued achievements for context
-   - Phase 3A.6 and 3A.7 details
-   - Testing patterns established
-   - Technical insights and process lessons
+   - Bug fixes in scenario_manager + Pydantic V2 migration
 
 4. **`docs/PROJECT_STATUS.md`** ⭐ PROJECT OVERVIEW
    - Overall project status
@@ -72,32 +74,35 @@ Before ANY work, you MUST read these files IN THIS ORDER:
    - Verify tests passing: `./ai-tutor-env/bin/python -m pytest tests/ -q` (323+ tests should pass)
    - Check overall coverage: `./ai-tutor-env/bin/python -m pytest --cov=app --cov-report=term -q | tail -40`
 
-3. **Select Next Module for Phase 3A.13** (Strategic decision)
+3. **Select Next Module for Phase 3A.14** (Strategic decision)
    
-   **Recommended Priority Order**:
+   **🎯 RECOMMENDED: Processing Services Track** (Following speech_processor momentum)
    
-   **Option A: AI Service Providers (HIGH VALUE)**
+   **Priority 1: content_processor.py** (32% coverage) ⭐ NEXT
+   - Rationale: Content handling is core functionality
+   - Effort: Medium (similar to speech_processor)
+   - Impact: High - affects all content generation
+   - Clean up: Look for deprecated/unused code patterns
+   
+   **Priority 2: sr_sessions.py** (Spaced Repetition Sessions)
+   - Rationale: SR algorithm session management
+   - Effort: Medium
+   - Impact: High - critical for learning algorithm
+   - Clean up: Check for deprecated session handling
+   
+   **Priority 3: sr_algorithm.py** (Spaced Repetition Core)
+   - Rationale: Core SR algorithm implementation
+   - Effort: Medium-High (complex logic)
+   - Impact: Very High - heart of learning system
+   - Clean up: Verify all algorithm paths are reachable
+   
+   **Alternative: AI Service Providers** (if processor work is blocked)
    - **ai_router.py** (33% coverage)
-     - Pros: Core routing logic, medium effort
+     - Core routing logic, medium effort
      - Critical for multi-LLM functionality
    
    - **claude_service.py** (34% coverage)
-     - Pros: Primary AI provider, medium effort
-     - Test API calls, error handling, retries
-   
-   - **mistral_service.py** (40% coverage)
-     - Pros: Secondary provider, medium effort
-   
-   - **deepseek_service.py** (39% coverage)
-     - Pros: Third provider, medium effort
-   
-   **Option B: Processing Services**
-   - **speech_processor.py** (58% coverage)
-     - Pros: Already halfway there, medium-high effort
-     - Audio processing and transcription
-   
-   - **content_processor.py** (32% coverage)
-     - Pros: Content handling, medium effort
+     - Primary AI provider, medium effort
 
 4. **Testing Strategy** (Follow established patterns)
    
@@ -113,6 +118,11 @@ Before ANY work, you MUST read these files IN THIS ORDER:
    - Test both success and failure paths
    - Validate error messages and types
    - Use side effects for stateful operations (DB loads)
+   - **⚠️ CRITICAL**: Remove deprecated/dead/unused code immediately during testing
+     - Don't skip or ignore methods referencing non-existent functions
+     - Don't leave commented-out code
+     - Clean up imports that are no longer used
+     - Remove entire test classes if testing deleted functionality
    
    **Test Commands**:
    ```bash
@@ -144,9 +154,10 @@ Before ANY work, you MUST read these files IN THIS ORDER:
 ```
 Phase 3A Progress: Exceptional Momentum! 🚀
 
-Modules Completed (12 total):
+Modules Completed (13 total):
 ✅ progress_analytics_service.py: 78% → 96% (+18%) - 12 tests
 ✅ scenario_models.py: 92% → 100% (+8%) - 17 tests
+✅ speech_processor.py: 58% → 93% (+35%) - 154 tests, 27 lines dead code removed! ⚠️
 ✅ sr_models.py: 89% → 100% (+11%) - 20 tests
 ✅ conversation_models.py: 99% → 100% (+1%) - 15 tests
 ✅ auth.py: 60% → 96% (+36%) - 63 tests ⭐ CRITICAL
