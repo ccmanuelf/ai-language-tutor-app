@@ -21,11 +21,11 @@ Features:
 import asyncio
 import logging
 import time
-from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from functools import lru_cache
+from typing import Any, Dict, List, Optional, Tuple
 
 # Audio processing libraries
 try:
@@ -60,7 +60,9 @@ except ImportError:
     PIPER_TTS_AVAILABLE = False
     logging.warning("Piper TTS service not available.")
 
-from app.core.config import get_settings  # noqa: E402 - Required after logger configuration
+from app.core.config import (
+    get_settings,  # noqa: E402 - Required after logger configuration
+)
 
 logger = logging.getLogger(__name__)
 
@@ -589,68 +591,19 @@ class SpeechProcessor:
         voice_type: str,
         speaking_rate: float,
     ) -> SpeechSynthesisResult:
-        """Process TTS with Piper and deprecated Watson fallback"""
-        if self.piper_tts_available:
-            result = await self._try_piper_with_fallback_warning(
-                text, original_text, language, voice_type, speaking_rate
-            )
-            if result:
-                return result
+        """Process TTS with Piper (Watson removed in Phase 2A)"""
+        if not self.piper_tts_available:
+            raise Exception("Piper TTS not available")
 
-        return await self._try_watson_fallback(
-            text, language, voice_type, speaking_rate
+        piper_text = original_text if original_text else text
+        result = await self._text_to_speech_piper(
+            text=piper_text,
+            language=language,
+            voice_type=voice_type,
+            speaking_rate=speaking_rate,
         )
-
-    async def _try_piper_with_fallback_warning(
-        self,
-        text: str,
-        original_text: str,
-        language: str,
-        voice_type: str,
-        speaking_rate: float,
-    ):
-        """Try Piper TTS with fallback warning on failure"""
-        try:
-            piper_text = original_text if original_text else text
-            result = await self._text_to_speech_piper(
-                text=piper_text,
-                language=language,
-                voice_type=voice_type,
-                speaking_rate=speaking_rate,
-            )
-            logger.info("TTS synthesis successful using Piper (cost: $0.00)")
-            return result
-        except Exception as e:
-            logger.warning(
-                f"Piper TTS failed, attempting deprecated Watson fallback: {e}"
-            )
-            return None
-
-    async def _try_watson_fallback(
-        self, text: str, language: str, voice_type: str, speaking_rate: float
-    ) -> SpeechSynthesisResult:
-        """Try deprecated Watson TTS fallback"""
-        if not self.watson_tts_available:
-            raise Exception("Piper TTS failed and Watson TTS not available")
-
-        logger.warning(
-            "⚠️ DEPRECATED: Using Watson TTS fallback. Please migrate to Piper TTS."
-        )
-
-        try:
-            result = await self._text_to_speech_watson(
-                text=text,
-                language=language,
-                voice_type=voice_type,
-                speaking_rate=speaking_rate,
-            )
-            logger.info("TTS synthesis successful using deprecated Watson fallback")
-            return result
-        except Exception as e:
-            logger.error(f"Watson TTS fallback also failed: {e}")
-            raise Exception(
-                f"All TTS providers failed. Piper: unavailable/failed, Watson: {e}"
-            )
+        logger.info("TTS synthesis successful using Piper (cost: $0.00)")
+        return result
 
     async def _process_piper_provider(
         self,
@@ -757,32 +710,14 @@ class SpeechProcessor:
             return result  # Accept even low quality in auto mode
         raise Exception("Mistral result not acceptable, need fallback")
 
-    async def _process_with_watson_fallback(
-        self, audio_data: bytes, language: str, audio_format: AudioFormat
-    ) -> SpeechRecognitionResult:
-        """Fallback to Watson STT if available"""
-        if self.watson_stt_available:
-            logger.info("Using Watson STT as fallback")
-            return await self._speech_to_text_watson(audio_data, language, audio_format)
-        raise Exception(
-            "No STT providers available (Mistral and Watson both unavailable)"
-        )
-
     async def _process_with_auto_or_fallback(
         self, audio_data: bytes, language: str, audio_format: AudioFormat, provider: str
     ) -> SpeechRecognitionResult:
-        """Process with auto or mistral_fallback provider mode"""
-        if self.mistral_stt_available:
-            try:
-                return await self._try_mistral_stt(
-                    audio_data, language, audio_format, provider
-                )
-            except Exception as e:
-                logger.warning(f"Mistral STT failed, attempting Watson fallback: {e}")
+        """Process with auto or mistral_fallback provider mode (Watson removed in Phase 2A)"""
+        if not self.mistral_stt_available:
+            raise Exception("Mistral STT not available")
 
-        return await self._process_with_watson_fallback(
-            audio_data, language, audio_format
-        )
+        return await self._try_mistral_stt(audio_data, language, audio_format, provider)
 
     async def _select_stt_provider_and_process(
         self,
@@ -1280,8 +1215,8 @@ class SpeechProcessor:
                 return audio_data
 
             # Convert raw audio data to proper WAV format
-            import wave
             import io
+            import wave
 
             # Create a proper WAV file in memory
             wav_buffer = io.BytesIO()
