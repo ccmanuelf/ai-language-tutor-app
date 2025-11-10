@@ -17,7 +17,7 @@ filterwarnings = [
     # protobuf Python 3.14 compatibility - awaiting upstream fix
     "ignore:Type google.protobuf.pyext._message.*:DeprecationWarning",
     # Ignore spurious async warnings from unittest.mock internals
-    "ignore:coroutine.*was never awaited:RuntimeWarning:unittest.mock",
+    "ignore:coroutine.*was never awaited:RuntimeWarning",
 ]
 markers = [
     "unit: Unit tests",
