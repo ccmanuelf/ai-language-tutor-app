@@ -6,7 +6,7 @@ Handles learning session lifecycle and streak tracking
 import json
 import logging
 import uuid
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from typing import Dict
 
 from app.services.sr_database import DatabaseManager
@@ -167,6 +167,9 @@ class SessionManager:
                     return False
 
                 started_at = datetime.fromisoformat(row["started_at"])
+                # Handle both timezone-aware and naive datetimes
+                if started_at.tzinfo is not None:
+                    started_at = started_at.replace(tzinfo=None)
                 ended_at = datetime.now()
                 duration_minutes = int((ended_at - started_at).total_seconds() / 60)
 
@@ -392,8 +395,6 @@ class SessionManager:
                         "Studied for 365 consecutive days",
                         1500,
                     )
-                else:
-                    continue
 
                 # Award the achievement
                 self._award_streak_achievement(
