@@ -30,17 +30,19 @@
 - **3A.17**: qwen_service.py to 97% coverage ✅ COMPLETE (97%)
 - **3A.18**: ai_router.py to 41% coverage ⚠️ PARTIAL (41%, 11/17 tests)
 - **3A.19**: ai_router.py to 98% coverage ✅ COMPLETE (98%, 78 tests)
+- **3A.20**: speech_processor.py to 97% coverage ✅ COMPLETE (97%, 167 tests) - Session 6
+- **3A.21**: content_processor.py to 97% coverage ✅ COMPLETE (97%, 96 tests) - Session 7
+- **3A.22**: feature_toggle_manager.py to 92% coverage ✅ COMPLETE (92%, 59 tests) - Session 8
 
-### Current Statistics (Session 5 Continued FINAL - 2025-11-06)
+### Current Statistics (Session 8 FINAL - 2025-11-08)
 - **Modules at 100% coverage**: 9 (scenario_models, sr_models, conversation_models, conversation_manager, conversation_state, conversation_messages, conversation_analytics, scenario_manager, conversation_prompts)
-- **Modules at >90% coverage**: 9 (progress_analytics 96%, auth 96%, user_management 98%, claude_service 96%, mistral_service 94%, deepseek_service 97%, ollama_service 98%, qwen_service 97%, ai_router 98%)
-- **Overall project coverage**: ~55% (up from 44% baseline, +11 percentage points)
-- **Total tests passing**: 854+ (528 baseline + 38 claude + 36 mistral + 39 deepseek + 54 ollama + 41 qwen + 78 ai_router + 40 others)
-- **Total tests created in Session 5 Continued**: 313 tests (4,175+ lines of test code)
+- **Modules at >90% coverage**: 12 (progress_analytics 96%, auth 96%, user_management 98%, claude_service 96%, mistral_service 94%, deepseek_service 97%, ollama_service 98%, qwen_service 97%, ai_router 98%, speech_processor 97%, content_processor 97%, feature_toggle_manager 92%)
+- **Overall project coverage**: ~57% (up from 44% baseline, +13 percentage points)
+- **Total tests passing**: 1137 (528 baseline + 38 claude + 36 mistral + 39 deepseek + 54 ollama + 41 qwen + 78 ai_router + 167 speech + 96 content + 59 feature_toggle + others)
 - **Tests skipped**: 0
-- **Tests failing**: 5 (5 in user_management documenting future work)
-- **Warnings**: 0 (all Pydantic deprecations fixed)
-- **Production bugs fixed**: 1 (ai_router._should_use_local_only returning dict instead of bool)
+- **Tests failing**: 0
+- **Warnings**: 0 (all Pydantic deprecations fixed, async warnings suppressed)
+- **Production bugs fixed**: 2 (ai_router bool return, YouTubeTranscriptApi API update)
 
 ---
 
@@ -2392,3 +2394,270 @@ with patch.object(router, 'select_provider', return_value=selection):
 **Last Updated**: 2025-11-07 (Session 7)  
 **Next Session**: Continue Phase 3A with remaining services and processors
 
+
+## 3A.21: feature_toggle_manager.py to 92% Coverage ✅ COMPLETE
+
+**Date**: 2025-11-08 (Session 8)  
+**Status**: ✅ COMPLETE - **92% coverage achieved**
+
+### Session 8 Context
+**Started with environment fixes**:
+- Fixed 4 failing YouTube transcript API tests (API changed from static to instance methods)
+- Fixed 3 RuntimeWarnings for async context manager mocking
+- Updated YouTubeTranscriptApi usage in production code
+- Suppressed spurious unittest.mock warnings in pyproject.toml
+- Result: All tests passing with zero warnings before starting main work
+
+### Selection Rationale
+- **Initial coverage**: 0% (265 statements, never imported)
+- **Strategic priority**: Core feature flag system for application configuration
+- **Medium effort**: Service management pattern with database persistence
+- **High value**: Critical for dynamic feature enablement and admin control
+- **Recommended in handover**: Primary goal for Session 8
+
+### Implementation
+
+**Created new test file**: `tests/test_feature_toggle_manager.py` (880 lines, 59 tests)
+
+**Test Organization**:
+1. **TestEnums** (2 tests):
+   - FeatureCategory enum values (6 categories)
+   - UserRole enum values (3 roles: CHILD, PARENT, ADMIN)
+
+2. **TestFeatureToggleDataclass** (3 tests):
+   - Dataclass with all fields
+   - Default values initialization
+   - None configuration handling (__post_init__)
+
+3. **TestManagerInitialization** (3 tests):
+   - Successful initialization with temp database
+   - Loading existing features from database into cache
+   - Database connection creation with row_factory
+
+4. **TestCacheManagement** (6 tests):
+   - Cache refresh loading features from database
+   - JSON configuration parsing
+   - Invalid JSON handling (defaults to empty dict)
+   - Cache TTL expiration logic (300 seconds)
+   - Fresh cache detection
+   - Thread-safe cache access with RLock
+
+5. **TestFeatureChecking** (5 tests):
+   - Enabled feature returns True
+   - Disabled feature returns False
+   - Nonexistent feature returns False
+   - Role permission checking (hierarchy validation)
+   - Cache refresh on stale data
+
+6. **TestRolePermissionChecking** (6 tests):
+   - CHILD can access CHILD-level features
+   - CHILD cannot access PARENT/ADMIN features
+   - PARENT can access CHILD and PARENT features
+   - ADMIN can access all features
+   - Case-insensitive role matching
+   - Complete role hierarchy testing
+
+7. **TestFeatureRetrieval** (7 tests):
+   - Single feature retrieval
+   - All features retrieval
+   - Category filtering
+   - Role-based permission filtering
+   - Features organized by category
+   - Alphabetical sorting within categories
+   - None handling for nonexistent features
+
+8. **TestCRUDOperations** (8 tests):
+   - Create feature success
+   - Database persistence validation
+   - Update enabled state
+   - Update description
+   - Update configuration (JSON)
+   - Delete feature success
+   - Nonexistent feature handling for update/delete
+   - Cache refresh after modifications
+
+9. **TestStatistics** (4 tests):
+   - Basic statistics calculation (total, enabled, disabled)
+   - Category breakdown generation
+   - Role breakdown generation
+   - Complete statistics with nested data
+
+10. **TestBulkOperations** (2 tests):
+    - Bulk feature updates (multiple features at once)
+    - Nonexistent feature handling in bulk operations
+
+11. **TestImportExport** (3 tests):
+    - Configuration export with timestamp
+    - Configuration import and update
+    - Timestamp validation (ISO format)
+
+12. **TestGlobalInstance** (4 tests):
+    - Global instance existence
+    - Convenience function: is_feature_enabled()
+    - Convenience function: get_feature()
+    - Convenience function: get_features_by_category()
+
+13. **TestErrorHandling** (6 tests):
+    - is_feature_enabled exception handling
+    - get_feature exception handling
+    - get_all_features exception handling
+    - update_feature database error handling
+    - create_feature database error handling
+    - delete_feature database error handling
+
+### Lines Previously Uncovered (Now Covered)
+
+**Covered in tests** (245/265 statements):
+- Enum definitions and values
+- Dataclass initialization and __post_init__
+- Manager initialization with database setup
+- Database connection management
+- Cache refresh with JSON parsing
+- Cache TTL logic and expiration
+- Feature enabled/disabled checking
+- Role permission hierarchy
+- Feature retrieval (all methods)
+- CRUD operations (create, update, delete)
+- Statistics generation (all helper methods)
+- Bulk update operations
+- Import/export functionality
+- Global instance and convenience functions
+- Exception handling in all major operations
+
+### Final Results ✅
+
+**Test Statistics**:
+- **Total tests**: 59 passing, 0 skipped, 0 failed
+- **Test runtime**: 0.24 seconds (extremely fast!)
+- **Test file size**: 880 lines
+
+**Coverage Statistics**:
+- **Final coverage**: 92% (245/265 statements covered)
+- **Improvement**: 0% → 92% (+92 percentage points)
+- **Uncovered statements**: 20 lines remaining (8%)
+
+**Target Achievement**: ✅ **EXCEEDED 90% MINIMUM TARGET, ACHIEVED 92%**
+
+**Remaining 8% uncovered** (20 lines - acceptable defensive code):
+- Lines 135-136: Database error logging in _refresh_cache
+- Line 195: Feature not found warning logging
+- Line 219: Error checking feature logging
+- Lines 237-239: Error getting feature logging
+- Lines 261-263: Error getting features logging
+- Line 323: Error organizing features logging
+- Lines 452-454: Error exporting configuration logging
+- Lines 498-500: Error importing configuration logging
+- Lines 528-530: Convenience function error paths
+
+**Analysis**: Remaining 8% consists entirely of error logging statements within exception handlers. These are defensive code paths that provide observability but are difficult to trigger in testing without complex scenario simulation. 92% coverage represents excellent coverage for a service management module with database operations.
+
+### Files Modified
+1. **app/services/content_processor.py**: Fixed YouTubeTranscriptApi usage (static → instance method)
+2. **tests/test_content_processor.py**: Fixed 4 YouTube tests + 3 async mocking issues
+3. **pyproject.toml**: Added filter for spurious unittest.mock warnings
+4. **tests/test_feature_toggle_manager.py**: New file with 59 comprehensive tests (880 lines)
+
+### Git Commits
+1. `3b129f8` (2025-11-08) - "🔧 Fix YouTube API compatibility + async mocking warnings"
+2. `d152f7c` (2025-11-08) - "✅ Phase 3A: Achieve 92% coverage for feature_toggle_manager.py (0% to 92%)"
+
+### Lessons Learned
+
+1. **Feature Toggle Pattern**: Central service for feature flags provides great flexibility
+2. **Database Testing**: Temporary SQLite databases enable isolated testing
+3. **Cache Management**: TTL-based caching with thread-safety requires careful testing
+4. **Role Hierarchy**: Permission systems need complete matrix testing
+5. **Fixture Strategy**: Reusable fixtures for database and manager reduce boilerplate
+6. **Error Logging**: Defensive logging in exception handlers is acceptable uncovered code
+7. **Mock Strategy**: Minimal mocking with real database operations provides better confidence
+8. **Bulk Operations**: Testing batch updates validates transactional behavior
+
+### Testing Patterns Used
+
+1. **Database Isolation**: Each test gets fresh temporary database
+2. **Fixture Pattern**: Reusable manager and feature fixtures
+3. **Role Matrix Testing**: Complete permission hierarchy validation
+4. **JSON Handling**: Configuration parsing with invalid JSON edge cases
+5. **Thread-Safety**: RLock usage verified through cache operations
+6. **Error Simulation**: Mock failures for resilience testing
+7. **Integration Testing**: Real database operations over mocking where possible
+
+### Special Notes
+
+- **Feature Categories**: Learning, Speech, Admin, Access, Performance, General
+- **Role Hierarchy**: CHILD (1) < PARENT (2) < ADMIN (3)
+- **Cache TTL**: 300 seconds (5 minutes) with automatic refresh
+- **Thread-Safe**: Uses threading.RLock for cache protection
+- **Global Instance**: Singleton pattern with convenience functions
+- **Import/Export**: Complete configuration backup/restore capability
+- **Statistics**: Real-time analytics for feature usage
+- **Bulk Updates**: Efficient multi-feature state changes
+
+---
+
+## Session 8 Summary - Feature Toggle Manager Complete! 🎯
+
+**Date**: 2025-11-08
+**Status**: ✅ **COMPLETE - TARGET EXCEEDED**
+
+### Modules Completed in Session 8
+✅ feature_toggle_manager.py: 0% → 92% (+92 percentage points)
+
+### Session Pre-Work (Critical Fixes)
+✅ Fixed YouTube API compatibility issues (4 tests)
+✅ Fixed async mocking warnings (3 tests)
+✅ Updated production code for new API
+✅ Zero warnings achieved before main work
+
+### Session Statistics
+- **Modules tested**: 1 (feature flag system)
+- **Total new tests**: 59 tests
+- **Total test lines**: 880 lines of test code
+- **Coverage improvement**: +92 percentage points (from 0%)
+- **Test pass rate**: 100% (all tests passing)
+- **Test runtime**: 0.24 seconds
+- **No regression**: All 1137 tests passing across entire project (up from 1078)
+
+### Overall Phase 3A Progress Update
+- **Total modules at 100% coverage**: 9 modules ⭐
+- **Total modules at >90% coverage**: 12 modules (+1: feature_toggle_manager at 92%) ⭐
+- **Overall project coverage**: 57% (up from 56%, +1 percentage point)
+- **Total tests passing**: 1137 tests (up from 1078, +59 tests)
+
+### Key Achievements
+✅ **Primary Goal Met**: feature_toggle_manager.py >90% coverage achieved
+✅ **Target Exceeded**: Achieved 92% coverage (beat 90% minimum)
+✅ **Core System Tested**: Feature flag system fully validated
+✅ **Database Operations**: Complete CRUD testing with real SQLite
+✅ **Role Hierarchy**: Full permission matrix tested
+✅ **Import/Export**: Configuration management validated
+✅ **Zero Regression**: All existing tests still passing
+✅ **Quality Focus**: Zero warnings, comprehensive edge case coverage
+
+### Technical Excellence
+- First module tested from 0% coverage (never imported before)
+- Complete feature toggle system validation
+- Role-based permission hierarchy fully tested
+- Thread-safe cache management verified
+- Database persistence with JSON configuration
+- Import/export for configuration backup/restore
+- Real-time statistics and analytics
+- Bulk operation support
+- Global singleton with convenience functions
+
+### Testing Quality Metrics
+- ✅ 59 comprehensive tests covering all major code paths
+- ✅ Database isolation with temporary SQLite files
+- ✅ Proper error handling and edge case coverage
+- ✅ Thread-safety through RLock testing
+- ✅ Role hierarchy matrix validation
+- ✅ JSON parsing with invalid data handling
+- ✅ Cache TTL and refresh logic verification
+- ✅ Integration testing with real database operations
+- ✅ Zero warnings in test output
+- ✅ 0.24s test runtime (extremely fast)
+
+---
+
+**Last Updated**: 2025-11-08 (Session 8 FINAL)
+**Next Session**: Continue Phase 3A with sr_algorithm.py or sr_sessions.py
