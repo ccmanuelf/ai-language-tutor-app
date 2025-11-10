@@ -866,9 +866,18 @@ class TestErrorHandling:
 
             assert result is None
 
-    def test_get_all_features_handles_exceptions(self, manager):
+    def test_get_all_features_handles_exceptions(self, manager, sample_feature):
         """Test get_all_features handles exceptions gracefully"""
-        with patch.object(manager, "_cache", side_effect=Exception("Cache error")):
+        manager.create_feature(sample_feature)
+
+        # Make cache stale to trigger refresh, then cause error during iteration
+        manager._last_cache_update = datetime.now() - timedelta(seconds=400)
+        manager.cache_ttl = 300
+
+        # Mock _check_role_permission to raise exception during iteration
+        with patch.object(
+            manager, "_check_role_permission", side_effect=Exception("Permission error")
+        ):
             result = manager.get_all_features()
 
             assert result == {}
@@ -899,3 +908,97 @@ class TestErrorHandling:
             result = manager.delete_feature("test")
 
             assert result is False
+
+    def test_refresh_cache_handles_database_errors(self, manager):
+        """Test _refresh_cache handles database connection errors"""
+        with patch.object(
+            manager, "_get_connection", side_effect=Exception("Connection failed")
+        ):
+            # Should not raise, just logs error
+            manager._refresh_cache()
+
+            # Cache should remain empty or unchanged
+            assert isinstance(manager._cache, dict)
+
+    def test_get_features_by_category_handles_exceptions(self, manager):
+        """Test get_features_by_category handles exceptions gracefully"""
+        with patch.object(
+            manager, "get_all_features", side_effect=Exception("Unexpected error")
+        ):
+            result = manager.get_features_by_category("ADMIN")
+
+            assert result == {}
+
+    def test_get_feature_statistics_handles_exceptions(self, manager):
+        """Test get_feature_statistics handles exceptions gracefully"""
+        with patch.object(
+            manager, "get_all_features", side_effect=Exception("Stats error")
+        ):
+            result = manager.get_feature_statistics()
+
+            assert result == {}
+
+    def test_export_configuration_handles_exceptions(self, manager):
+        """Test export_configuration handles exceptions gracefully"""
+        with patch.object(
+            manager, "get_all_features", side_effect=Exception("Export error")
+        ):
+            result = manager.export_configuration()
+
+            assert result == {}
+
+    def test_import_configuration_handles_exceptions(self, manager):
+        """Test import_configuration handles exceptions gracefully"""
+        # Create malformed config that will cause exception
+        bad_config = {"features": {"f1": "not a dict"}}
+
+        with patch.object(
+            manager, "update_feature", side_effect=Exception("Import error")
+        ):
+            result = manager.import_configuration(bad_config)
+
+            # Should return empty dict on error
+            assert result == {}
+
+    def test_update_feature_with_no_changes_returns_true(self, manager, sample_feature):
+        """Test update_feature returns True when no updates provided"""
+        manager.create_feature(sample_feature)
+
+        # Call update with no parameters (all None)
+        result = manager.update_feature("test_feature")
+
+        assert result is True
+
+    def test_is_feature_enabled_cache_refresh_on_stale(self, manager, sample_feature):
+        """Test is_feature_enabled triggers cache refresh when stale"""
+        manager.create_feature(sample_feature)
+
+        # Make cache stale
+        manager._last_cache_update = datetime.now() - timedelta(seconds=400)
+        manager.cache_ttl = 300
+
+        # Track if refresh was called
+        with patch.object(
+            manager, "_refresh_cache", wraps=manager._refresh_cache
+        ) as mock_refresh:
+            result = manager.is_feature_enabled("test_feature")
+
+            assert result is True
+            mock_refresh.assert_called_once()
+
+    def test_get_feature_cache_refresh_on_stale(self, manager, sample_feature):
+        """Test get_feature triggers cache refresh when stale"""
+        manager.create_feature(sample_feature)
+
+        # Make cache stale
+        manager._last_cache_update = datetime.now() - timedelta(seconds=400)
+        manager.cache_ttl = 300
+
+        # Track if refresh was called
+        with patch.object(
+            manager, "_refresh_cache", wraps=manager._refresh_cache
+        ) as mock_refresh:
+            result = manager.get_feature("test_feature")
+
+            assert result is not None
+            mock_refresh.assert_called_once()
