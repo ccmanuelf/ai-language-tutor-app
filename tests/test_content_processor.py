@@ -521,25 +521,36 @@ class TestYouTubeContentExtraction:
 
             # Mock transcript API
             with patch(
-                "app.services.content_processor.YouTubeTranscriptApi.list_transcripts"
-            ) as mock_list:
+                "app.services.content_processor.YouTubeTranscriptApi"
+            ) as mock_api_class:
                 mock_transcript = Mock()
                 mock_transcript.fetch.return_value = mock_transcript_data
 
                 mock_transcript_list = Mock()
                 mock_transcript_list.find_transcript.return_value = mock_transcript
-                mock_list.return_value = mock_transcript_list
 
-                result = await processor._extract_youtube_content(
-                    "https://www.youtube.com/watch?v=test123"
-                )
+                mock_api_instance = Mock()
+                mock_api_instance.list.return_value = mock_transcript_list
+                mock_api_class.return_value = mock_api_instance
 
-                assert result["title"] == "Test Video Title"
-                assert result["duration"] == 10.0  # 600 seconds / 60
-                assert result["author"] == "Test Channel"
-                assert "Hello world" in result["content"]
-                assert result["language"] == "en"
-                assert result["word_count"] > 0
+                # Mock TextFormatter
+                with patch(
+                    "app.services.content_processor.TextFormatter"
+                ) as mock_formatter:
+                    mock_formatter.return_value.format_transcript.return_value = (
+                        "Hello world This is a test"
+                    )
+
+                    result = await processor._extract_youtube_content(
+                        "https://www.youtube.com/watch?v=test123"
+                    )
+
+                    assert result["title"] == "Test Video Title"
+                    assert result["duration"] == 10.0  # 600 seconds / 60
+                    assert result["author"] == "Test Channel"
+                    assert "Hello world" in result["content"]
+                    assert result["language"] == "en"
+                    assert result["word_count"] > 0
 
     @pytest.mark.asyncio
     async def test_extract_youtube_content_no_transcript(self, processor):
@@ -558,9 +569,12 @@ class TestYouTubeContentExtraction:
 
             # Mock transcript API to raise exception
             with patch(
-                "app.services.content_processor.YouTubeTranscriptApi.list_transcripts",
-                side_effect=Exception("No transcript"),
-            ):
+                "app.services.content_processor.YouTubeTranscriptApi"
+            ) as mock_api_class:
+                mock_api_instance = Mock()
+                mock_api_instance.list.side_effect = Exception("No transcript")
+                mock_api_class.return_value = mock_api_instance
+
                 result = await processor._extract_youtube_content(
                     "https://www.youtube.com/watch?v=test123"
                 )
@@ -770,19 +784,23 @@ class TestWebContentExtraction:
         url = "https://example.com/article"
 
         # Create proper async context manager mock
-        async def mock_get(*args, **kwargs):
-            mock_resp = AsyncMock()
-            mock_resp.text = AsyncMock(return_value="<html>Content</html>")
-            return mock_resp
+        mock_response = Mock()
+        mock_response.text = AsyncMock(return_value="<html>Content</html>")
 
-        mock_session = AsyncMock()
-        mock_session.get = mock_get
+        # Create async context manager for session.get()
+        mock_get_cm = AsyncMock()
+        mock_get_cm.__aenter__ = AsyncMock(return_value=mock_response)
+        mock_get_cm.__aexit__ = AsyncMock(return_value=None)
 
+        mock_session = Mock()
+        mock_session.get = Mock(return_value=mock_get_cm)
+
+        # Mock ClientSession context manager
         with patch("aiohttp.ClientSession") as mock_session_class:
-            mock_session_class.return_value.__aenter__.return_value = mock_session
-            mock_session_class.return_value.__aexit__.return_value = AsyncMock(
-                return_value=None
+            mock_session_class.return_value.__aenter__ = AsyncMock(
+                return_value=mock_session
             )
+            mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
 
             result = await processor._extract_web_content(url)
 
@@ -797,12 +815,18 @@ class TestWebContentExtraction:
         url = "https://example.com/article"
 
         # Mock aiohttp to raise exception
+        mock_get_cm = AsyncMock()
+        mock_get_cm.__aenter__ = AsyncMock(side_effect=Exception("Network error"))
+        mock_get_cm.__aexit__ = AsyncMock(return_value=None)
+
+        mock_session = Mock()
+        mock_session.get = Mock(return_value=mock_get_cm)
+
         with patch("aiohttp.ClientSession") as mock_session_class:
-            mock_session = AsyncMock()
-            mock_session.get.side_effect = Exception("Network error")
-            mock_session.__aenter__.return_value = mock_session
-            mock_session.__aexit__.return_value = None
-            mock_session_class.return_value = mock_session
+            mock_session_class.return_value.__aenter__ = AsyncMock(
+                return_value=mock_session
+            )
+            mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
 
             with pytest.raises(ValueError, match="Could not process web article"):
                 await processor._extract_web_content(url)
@@ -1475,9 +1499,11 @@ class TestYouTubeTranscriptFallbacks:
             mock_ydl.return_value.__enter__.return_value = mock_ydl_instance
 
             with patch(
-                "app.services.content_processor.YouTubeTranscriptApi.list_transcripts"
-            ) as mock_transcript_api:
-                mock_transcript_api.return_value = mock_transcript_list
+                "app.services.content_processor.YouTubeTranscriptApi"
+            ) as mock_api_class:
+                mock_api_instance = Mock()
+                mock_api_instance.list.return_value = mock_transcript_list
+                mock_api_class.return_value = mock_api_instance
 
                 with patch(
                     "app.services.content_processor.TextFormatter"
@@ -1517,9 +1543,11 @@ class TestYouTubeTranscriptFallbacks:
             mock_ydl.return_value.__enter__.return_value = mock_ydl_instance
 
             with patch(
-                "app.services.content_processor.YouTubeTranscriptApi.list_transcripts"
-            ) as mock_transcript_api:
-                mock_transcript_api.return_value = mock_transcript_list
+                "app.services.content_processor.YouTubeTranscriptApi"
+            ) as mock_api_class:
+                mock_api_instance = Mock()
+                mock_api_instance.list.return_value = mock_transcript_list
+                mock_api_class.return_value = mock_api_instance
 
                 result = await processor._extract_youtube_content(
                     "https://youtube.com/watch?v=test123"
@@ -1713,15 +1741,17 @@ class TestAsyncProcessingWorkflow:
         )
 
         with patch.object(
-            processor, "_extract_youtube_content", return_value=mock_youtube_data
+            processor,
+            "_extract_youtube_content",
+            new=AsyncMock(return_value=mock_youtube_data),
         ):
             with patch.object(
-                processor, "_analyze_content", return_value=mock_analysis
+                processor, "_analyze_content", new=AsyncMock(return_value=mock_analysis)
             ):
                 with patch.object(
                     processor,
                     "_generate_learning_materials",
-                    return_value=[mock_material],
+                    new=AsyncMock(return_value=[mock_material]),
                 ):
                     await processor._process_content_async(
                         content_id=content_id,
