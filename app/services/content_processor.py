@@ -13,31 +13,33 @@ Target: Process YouTube videos → learning materials in <2 minutes
 """
 
 import asyncio
-import logging
-import tempfile
 import hashlib
 import json
-from datetime import datetime
-from typing import Dict, List, Any, Optional
-from pathlib import Path
+import logging
+import tempfile
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-import aiohttp
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+from urllib.parse import parse_qs, urlparse
+
 import aiofiles
-from urllib.parse import urlparse, parse_qs
+import aiohttp
 
 # Document processing
 import pypdf
+import yt_dlp
 from docx import Document
 
 # YouTube processing
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
-import yt_dlp
+
+from app.core.config import get_settings
 
 # AI Services
 from app.services.ai_router import ai_router, generate_ai_response
-from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -303,7 +305,8 @@ class ContentProcessor:
             # Get transcript
             try:
                 # Try to get transcript in multiple languages
-                transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+                youtube_api = YouTubeTranscriptApi()
+                transcript_list = youtube_api.list(video_id)
 
                 # Prefer English, then any available language
                 transcript = None
