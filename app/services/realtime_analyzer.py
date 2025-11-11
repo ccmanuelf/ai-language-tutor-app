@@ -19,15 +19,15 @@ Features:
 - Integration with existing speech processing pipeline
 """
 
-import logging
 import json
-import time
-from typing import Dict, List, Any, Optional, Tuple, Union
-from datetime import datetime
-from dataclasses import dataclass, asdict
-from enum import Enum
+import logging
 import statistics
+import time
 from collections import deque
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 def safe_mean(values: List[Union[int, float]], default: float = 0.0) -> float:
@@ -46,10 +46,18 @@ except ImportError:
     AUDIO_ANALYSIS_AVAILABLE = False
     logging.warning("NumPy not available for audio analysis")
 
-from app.services.ai_router import ai_router  # noqa: E402 - Required after logger configuration
-from app.services.ai_service_base import AIResponseStatus  # noqa: E402 - Required after logger configuration
-from app.services.speech_processor import SpeechProcessor  # noqa: E402 - Required after logger configuration
-from app.core.config import get_settings  # noqa: E402 - Required after logger configuration
+from app.core.config import (
+    get_settings,  # noqa: E402 - Required after logger configuration
+)
+from app.services.ai_router import (
+    ai_router,  # noqa: E402 - Required after logger configuration
+)
+from app.services.ai_service_base import (
+    AIResponseStatus,  # noqa: E402 - Required after logger configuration
+)
+from app.services.speech_processor import (
+    SpeechProcessor,  # noqa: E402 - Required after logger configuration
+)
 
 logger = logging.getLogger(__name__)
 
@@ -58,13 +66,26 @@ def extract_json_from_response(response_text: str) -> str:
     """Extract JSON from AI response that may include conversational text and markdown"""
     import re
 
-    # First, try to find JSON within markdown code blocks
-    json_pattern = r"```(?:json)?\s*(\{.*?\})\s*```"
+    # First, try to find JSON within markdown code blocks (objects or arrays)
+    json_pattern = r"```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```"
     match = re.search(json_pattern, response_text, re.DOTALL)
     if match:
         return match.group(1).strip()
 
-    # If no markdown blocks, try to find JSON-like content
+    # Check what the first JSON character is to determine type
+    # Find first occurrence of { or [
+    first_brace = response_text.find("{")
+    first_bracket = response_text.find("[")
+
+    # Determine which comes first (-1 means not found)
+    if first_bracket != -1 and (first_brace == -1 or first_bracket < first_brace):
+        # Array comes first - try to match array
+        json_array_pattern = r"\[\s*\{[^{}]*\}(?:\s*,\s*\{[^{}]*\})*\s*\]"
+        match = re.search(json_array_pattern, response_text, re.DOTALL)
+        if match:
+            return match.group(0).strip()
+
+    # Object comes first (or array match failed) - try to match object
     json_pattern = r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}"
     match = re.search(json_pattern, response_text, re.DOTALL)
     if match:
