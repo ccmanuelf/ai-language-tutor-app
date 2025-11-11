@@ -37,18 +37,7 @@ def safe_mean(values: List[Union[int, float]], default: float = 0.0) -> float:
     return statistics.mean(values)
 
 
-# Audio analysis libraries
-try:
-    pass
-
-    AUDIO_ANALYSIS_AVAILABLE = True
-except ImportError:
-    AUDIO_ANALYSIS_AVAILABLE = False
-    logging.warning("NumPy not available for audio analysis")
-
-from app.core.config import (
-    get_settings,  # noqa: E402 - Required after logger configuration
-)
+from app.core.config import get_settings
 from app.services.ai_router import (
     ai_router,  # noqa: E402 - Required after logger configuration
 )

@@ -1807,3 +1807,69 @@ async def test_collect_feedback_grammar_returns_none(
 
     # Should handle None gracefully
     assert isinstance(feedback, list)
+
+
+@pytest.mark.asyncio
+async def test_analyze_fluency_exception_handler(analyzer, sample_session):
+    """Test fluency analysis exception handler (lines 697-698) - PERFECTIONISM!"""
+    audio = AudioSegment(
+        audio_data=b"test",
+        text="test words",
+        start_time=0.0,
+        end_time=1.0,
+        duration=1.0,
+        language="en",
+        confidence=0.9,
+    )
+
+    # Force an exception during fluency calculation
+    # Mock the language_configs dictionary lookup to raise exception
+    original_configs = analyzer.language_configs
+    analyzer.language_configs = {
+        "en": {"expected_speech_rate": None}
+    }  # Will cause error
+
+    # Temporarily break the config to trigger exception
+    with patch.object(
+        analyzer, "language_configs", side_effect=Exception("Config error")
+    ):
+        feedback = await analyzer._analyze_fluency(audio, sample_session)
+
+        # Should handle exception and return empty list
+        assert feedback == []
+
+    # Restore
+    analyzer.language_configs = original_configs
+
+
+
+@pytest.mark.asyncio
+async def test_collect_feedback_grammar_with_results(
+    analyzer, sample_session, sample_audio_segment, mock_ai_response_success
+):
+    """Test _collect_feedback when grammar analysis returns feedback (line 345) - PERFECTIONISM!"""
+    # Mock grammar to return actual feedback (non-empty list)
+    mock_ai_response_success.content = json.dumps([
+        {
+            "error_type": "test_error",
+            "start": 0,
+            "end": 5,
+            "severity": "critical",
+            "correction": "corrected",
+            "explanation": "test",
+            "rule": "test_rule",
+            "confidence": 0.9,
+        }
+    ])
+    
+    with patch("app.services.realtime_analyzer.ai_router.generate_response",
+               return_value=mock_ai_response_success):
+        feedback = await analyzer._collect_feedback(
+            sample_audio_segment,
+            sample_session,
+            [AnalysisType.GRAMMAR],
+        )
+    
+    # Should have grammar feedback in the list
+    assert len(feedback) > 0
+    assert any(f.analysis_type == AnalysisType.GRAMMAR for f in feedback)
