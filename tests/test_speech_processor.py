@@ -2179,3 +2179,66 @@ class TestEnumsAndDataClasses:
         assert result.audio_data == b"audio"
         assert result.audio_format == AudioFormat.WAV
         assert result.sample_rate == 22050
+
+
+
+
+@pytest.mark.asyncio
+class TestFinalCoverageGaps:
+    """Tests to achieve 100% coverage for speech_processor.py - Session 19"""
+
+    def test_vad_empty_array(self, processor):
+        """Test VAD with empty array (line 214)"""
+        # Create audio that will produce empty array after conversion
+        audio_data = b""  # Empty bytes
+        result = processor.detect_voice_activity(audio_data, sample_rate=16000)
+        assert result is False  # Should return False for empty audio
+
+    def test_mistral_init_unavailable(self):
+        """Test Mistral STT init when unavailable (lines 254-257)"""
+        with patch('app.services.speech_processor.MISTRAL_STT_AVAILABLE', False):
+            processor = SpeechProcessor()
+            assert processor.mistral_stt_available is False
+            assert processor.mistral_stt_service is None
+
+    def test_piper_init_unavailable(self):
+        """Test Piper TTS init when unavailable (lines 283-286)"""
+        with patch('app.services.speech_processor.PIPER_TTS_AVAILABLE', False):
+            processor = SpeechProcessor()
+            assert processor.piper_tts_available is False
+            assert processor.piper_tts_service is None
+
+    async def test_piper_fallback_provider(self, processor):
+        """Test piper_fallback provider (line 499)"""
+        mock_result = SpeechSynthesisResult(
+            audio_data=b"test", audio_format=AudioFormat.WAV, sample_rate=22050,
+            duration_seconds=1.0, processing_time=0.1, metadata={}
+        )
+        with patch.object(processor, '_process_piper_fallback', return_value=mock_result):
+            result = await processor._select_tts_provider_and_process(
+                text="test", language="en", voice_type="female", speaking_rate=1.0, provider="piper_fallback"
+            )
+            assert result.audio_data == b"test"
+
+    async def test_auto_low_quality_acceptance(self, processor):
+        """Test auto mode accepts low quality (line 661)"""
+        low_quality = SpeechRecognitionResult(
+            transcript="test", confidence=0.3, language="en",
+            processing_time=0.1, alternative_transcripts=[], metadata={}
+        )
+        # Mock both the STT call and the acceptability check
+        with patch.object(processor, '_speech_to_text_mistral', return_value=low_quality):
+            with patch.object(processor, '_is_result_acceptable', return_value=False):
+                result = await processor._try_mistral_stt(
+                    audio_data=b"audio", language="en", audio_format=AudioFormat.WAV, provider="auto"
+                )
+                assert result.confidence == 0.3
+                assert result.transcript == "test"
+
+    async def test_mistral_unavailable_exception(self, processor):
+        """Test Mistral unavailable exception (line 669)"""
+        processor.mistral_stt_available = False
+        with pytest.raises(Exception, match="Mistral STT not available"):
+            await processor._process_with_auto_or_fallback(
+                audio_data=b"audio", language="en", audio_format=AudioFormat.WAV, provider="auto"
+            )
