@@ -824,3 +824,114 @@ class TestRateLimiting:
             check_rate_limit(mock_request, max_requests=10, window_seconds=60)
 
         assert exc_info.value.status_code == 429
+
+
+class TestZZZCompleteCoverage:
+    """Test remaining edge cases for 100% coverage"""
+
+    def setup_method(self):
+        self.auth = AuthenticationService()
+
+    def test_create_access_token_exception_handling(self):
+        """Test create_access_token exception handler (lines 178-180)"""
+        from unittest.mock import patch
+
+        # Mock jwt.encode to raise exception
+        with patch(
+            "app.services.auth.jwt.encode", side_effect=Exception("Encoding error")
+        ):
+            with pytest.raises(HTTPException) as exc_info:
+                self.auth.create_access_token(user_data={"user_id": "test123"})
+
+            assert exc_info.value.status_code == 500
+            assert "Could not create access token" in exc_info.value.detail
+
+    def test_create_refresh_token_exception_handling(self):
+        """Test create_refresh_token exception handler (lines 209-211)"""
+        from unittest.mock import patch
+
+        # Mock jwt.encode to raise exception
+        with patch(
+            "app.services.auth.jwt.encode", side_effect=Exception("Encoding error")
+        ):
+            with pytest.raises(HTTPException) as exc_info:
+                self.auth.create_refresh_token(user_id="test123")
+
+            assert exc_info.value.status_code == 500
+            assert "Could not create refresh token" in exc_info.value.detail
+
+    def test_refresh_access_token_expired_signature(self):
+        """Test refresh_access_token with expired signature error (line 274)"""
+        from unittest.mock import patch
+
+        # Mock jwt.decode to raise ExpiredSignatureError
+        with patch(
+            "app.services.auth.jwt.decode",
+            side_effect=jwt.ExpiredSignatureError("Token expired"),
+        ):
+            with pytest.raises(HTTPException) as exc_info:
+                self.auth.refresh_access_token("expired_token")
+
+            assert exc_info.value.status_code == 401
+            assert "Refresh token has expired" in exc_info.value.detail
+
+    def test_refresh_access_token_invalid_token(self):
+        """Test refresh_access_token with invalid token error (line 279)"""
+        from unittest.mock import patch
+
+        # Mock jwt.decode to raise InvalidTokenError
+        with patch(
+            "app.services.auth.jwt.decode",
+            side_effect=jwt.InvalidTokenError("Invalid token"),
+        ):
+            with pytest.raises(HTTPException) as exc_info:
+                self.auth.refresh_access_token("invalid_token")
+
+            assert exc_info.value.status_code == 401
+            assert "Invalid refresh token" in exc_info.value.detail
+
+    def test_revoke_refresh_token_exception_handling(self):
+        """Test revoke_refresh_token exception handler (line 297)"""
+        from unittest.mock import patch
+
+        # Create a valid refresh token first
+        refresh_token = self.auth.create_refresh_token(user_id="test123")
+
+        # Mock the token lookup to raise exception
+        with patch.object(
+            self.auth, "refresh_tokens", side_effect=Exception("Database error")
+        ):
+            result = self.auth.revoke_refresh_token(refresh_token)
+
+            # Should return False when exception occurs
+            assert result is False
+
+    def test_hash_api_key_function(self):
+        """Test hash_api_key helper function (line 569)"""
+        from app.services.auth import hash_api_key
+
+        api_key = "test_api_key_12345"
+        hashed = hash_api_key(api_key)
+
+        # Verify it returns a hash string
+        assert isinstance(hashed, str)
+        assert len(hashed) == 64  # SHA256 hex digest length
+
+        # Verify same input produces same hash
+        assert hash_api_key(api_key) == hashed
+
+        # Verify different input produces different hash
+        assert hash_api_key("different_key") != hashed
+
+    def test_verify_api_key_function(self):
+        """Test verify_api_key helper function (line 574)"""
+        from app.services.auth import hash_api_key, verify_api_key
+
+        api_key = "test_api_key_67890"
+        hashed = hash_api_key(api_key)
+
+        # Verify correct key
+        assert verify_api_key(api_key, hashed) is True
+
+        # Verify incorrect key
+        assert verify_api_key("wrong_key", hashed) is False
