@@ -24,6 +24,75 @@ from app.services.ai_service_base import AIResponse, AIResponseStatus
 from app.services.mistral_service import MistralService, mistral_service
 
 
+class TestZZZImportErrorHandling:
+    """Test import error handling for mistralai library
+
+    Note: Class name starts with ZZZ to ensure it runs last, avoiding interference
+    with other tests that mock module-level imports.
+    """
+
+    def test_import_error_handling(self):
+        """Test that ImportError is handled gracefully when mistralai is not available"""
+        import importlib
+        import sys
+
+        # Save original modules before modification
+        original_mistralai = sys.modules.get("mistralai")
+        original_mistralai_models = sys.modules.get("mistralai.models")
+        original_mistral_service = sys.modules.get("app.services.mistral_service")
+
+        # Remove mistralai modules from sys.modules to simulate not being installed
+        modules_to_remove = [
+            k for k in list(sys.modules.keys()) if k.startswith("mistralai")
+        ]
+        for module in modules_to_remove:
+            del sys.modules[module]
+
+        # Mock the import to raise ImportError
+        import builtins
+
+        original_import = builtins.__import__
+
+        def mock_import(name, *args, **kwargs):
+            if name == "mistralai" or name.startswith("mistralai."):
+                raise ImportError(f"No module named '{name}'")
+            return original_import(name, *args, **kwargs)
+
+        try:
+            builtins.__import__ = mock_import
+
+            # Remove the mistral_service module to force reimport
+            if "app.services.mistral_service" in sys.modules:
+                del sys.modules["app.services.mistral_service"]
+
+            # Now import the module - this should trigger the except block
+            import app.services.mistral_service as mistral_module
+
+            # Verify that the ImportError was caught and handled
+            assert mistral_module.MISTRAL_AVAILABLE is False
+            assert mistral_module.Mistral is None
+            assert mistral_module.UserMessage is None
+            assert mistral_module.SystemMessage is None
+            assert mistral_module.AssistantMessage is None
+
+        finally:
+            # Restore original import function
+            builtins.__import__ = original_import
+
+            # Restore original modules to their exact previous state
+            if original_mistralai is not None:
+                sys.modules["mistralai"] = original_mistralai
+            if original_mistralai_models is not None:
+                sys.modules["mistralai.models"] = original_mistralai_models
+
+            # Restore the original mistral_service module
+            if original_mistral_service is not None:
+                sys.modules["app.services.mistral_service"] = original_mistral_service
+            elif "app.services.mistral_service" in sys.modules:
+                # If it didn't exist before our test, remove it
+                del sys.modules["app.services.mistral_service"]
+
+
 class TestMistralServiceInitialization:
     """Test Mistral service initialization"""
 
