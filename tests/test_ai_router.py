@@ -1216,3 +1216,112 @@ class TestEnums:
         assert FallbackReason.BUDGET_EXCEEDED.value == "budget_exceeded"
         assert FallbackReason.API_UNAVAILABLE.value == "api_unavailable"
         assert FallbackReason.USER_PREFERENCE.value == "user_preference"
+
+
+class TestEdgeCaseCoverage:
+    """Test edge cases for complete coverage"""
+
+    @pytest.mark.asyncio
+    async def test_try_cloud_provider_exception_handling(self):
+        """Test that _try_cloud_provider catches exceptions and returns None
+
+        This tests lines 209-211 in ai_router.py where exceptions are caught
+        in the _try_cloud_provider method.
+        """
+        router = EnhancedAIRouter()
+
+        # Create a mock service that will pass health checks
+        mock_service = Mock()
+        mock_service.get_health_status = AsyncMock(
+            return_value={"status": "healthy", "available": True}
+        )
+
+        # Register the provider so it exists in self.providers
+        router.register_provider("test_provider", mock_service)
+
+        # Mock budget status
+        mock_budget = Mock()
+        mock_budget.remaining_budget = 10.0
+
+        # Mock _estimate_request_cost to raise an exception after health check passes
+        # This will trigger the exception handler at lines 209-211
+        with patch.object(
+            router,
+            "_estimate_request_cost",
+            new=AsyncMock(side_effect=Exception("Cost calculation error")),
+        ):
+            with patch("app.services.ai_router.logger") as mock_logger:
+                result = await router._try_cloud_provider(
+                    provider_name="test_provider",
+                    language="en",
+                    use_case="conversation",
+                    budget_status=mock_budget,
+                )
+
+                # Verify the warning was logged (line 210)
+                mock_logger.warning.assert_called_once()
+                assert "check failed" in str(mock_logger.warning.call_args)
+
+                # Should return None when exception occurs (line 211)
+                assert result is None
+
+    @pytest.mark.asyncio
+    async def test_streaming_all_providers_fail_raises_exception(self):
+        """Test that streaming raises exception when all providers fail
+
+        This tests line 517 in ai_router.py where an exception is raised
+        when both initial and fallback streaming attempts fail.
+        """
+        router = EnhancedAIRouter()
+
+        # Mock select_provider to always raise an exception
+        # This will cause both the initial attempt and the fallback attempt to fail
+        with patch.object(
+            router,
+            "select_provider",
+            side_effect=Exception("No providers available"),
+        ):
+            # Expect the exception to be raised with "All streaming providers failed"
+            with pytest.raises(Exception, match="All streaming providers failed"):
+                async for _ in router.generate_streaming_response(
+                    messages=[{"role": "user", "content": "test"}], language="en"
+                ):
+                    pass
+
+    @pytest.mark.asyncio
+    async def test_cost_optimization_default_balanced_scoring(self):
+        """Test cost optimization uses balanced scoring for unrecognized use cases
+
+        This tests line 620 in ai_router.py where the default balanced scoring
+        is used for use cases that don't match simple or complex categories.
+        """
+        router = EnhancedAIRouter()
+
+        # Create budget status with sufficient budget (>= $10) to avoid low budget path
+        budget_status = BudgetStatus(
+            total_budget=30.0,
+            used_budget=5.0,
+            remaining_budget=25.0,  # >= 10.0 to avoid low budget path
+            percentage_used=16.67,
+            alert_level=BudgetAlert.GREEN,
+            days_remaining=20,
+            projected_monthly_cost=7.5,
+            is_over_budget=False,
+        )
+
+        providers = ["claude", "mistral", "deepseek"]
+
+        # Use a use_case that's NOT in simple_use_cases or complex_use_cases
+        # simple_use_cases = ["conversation", "translation", "simple_qa"]
+        # complex_use_cases = ["analysis", "reasoning", "content_generation", "educational"]
+        # This should trigger the default balanced scoring at line 620
+        sorted_providers = await router._sort_providers_by_cost_efficiency(
+            providers=providers,
+            language="en",
+            use_case="unknown_category",  # Not in any predefined category
+            budget_status=budget_status,
+        )
+
+        # Should return all providers sorted by balanced scoring (50% cost, 50% quality)
+        assert len(sorted_providers) == 3
+        assert all(p in sorted_providers for p in providers)

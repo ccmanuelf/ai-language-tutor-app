@@ -486,6 +486,26 @@ class TestYouTubeIDExtraction:
         video_id = processor._extract_youtube_id("not a url at all")
         assert video_id is None
 
+    def test_extract_youtube_id_exception_handling(self, processor):
+        """Test exception handling in YouTube ID extraction
+
+        This tests lines 281-283 in content_processor.py where exceptions
+        during URL parsing are caught and logged.
+        """
+        from unittest.mock import patch
+
+        # Mock urlparse to raise an exception
+        with patch(
+            "app.services.content_processor.urlparse",
+            side_effect=Exception("Parse error"),
+        ):
+            video_id = processor._extract_youtube_id(
+                "https://www.youtube.com/watch?v=test"
+            )
+
+            # Should return None when exception occurs
+            assert video_id is None
+
 
 # Will continue with more test classes in next part...
 
@@ -1348,6 +1368,29 @@ class TestSearchAndLibrary:
         assert "snippet" in results[0]
 
     @pytest.mark.asyncio
+    async def test_search_content_no_match(self, processor, sample_content_metadata):
+        """Test search with query that doesn't match any content
+
+        This tests line 1057 in content_processor.py where content that
+        doesn't match the query is skipped.
+        """
+        processed = ProcessedContent(
+            metadata=sample_content_metadata,
+            raw_content="",
+            processed_content="Test content about Python programming",
+            learning_materials=[],
+            processing_stats={},
+        )
+
+        processor.content_library["test123"] = processed
+
+        # Search for something that doesn't match
+        results = await processor.search_content("javascript")
+
+        # Should return empty list since query doesn't match
+        assert len(results) == 0
+
+    @pytest.mark.asyncio
     async def test_search_content_with_filters(
         self, processor, sample_content_metadata
     ):
@@ -1943,3 +1986,220 @@ class TestProgressTrackingEdgeCases:
         assert progress is not None
         assert progress.status == ProcessingStatus.EXTRACTING
         assert progress.estimated_remaining == 0
+
+
+class TestContentTypeBranches:
+    """Test coverage for different content type processing branches
+
+    This tests lines 846-853 in content_processor.py where different
+    extraction methods are called based on content type.
+    """
+
+    @pytest.mark.asyncio
+    async def test_process_pdf_document_branch(self, processor):
+        """Test PDF document processing branch (lines 846-847)"""
+        content_id = "test_pdf_branch"
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            file_path = Path(tmp.name)
+            tmp.write(b"PDF content")
+
+        try:
+            # Mock all the extraction and processing methods
+            mock_pdf_data = {
+                "title": "Test",
+                "content": "PDF content",
+                "word_count": 10,
+            }
+            mock_analysis = {
+                "difficulty_level": "beginner",
+                "topics": [],
+                "detected_language": "en",
+            }
+
+            with patch.object(
+                processor,
+                "_extract_pdf_content",
+                new=AsyncMock(return_value=mock_pdf_data),
+            ):
+                with patch.object(
+                    processor,
+                    "_analyze_content",
+                    new=AsyncMock(return_value=mock_analysis),
+                ):
+                    with patch.object(
+                        processor,
+                        "_generate_learning_materials",
+                        new=AsyncMock(return_value=[]),
+                    ):
+                        await processor._process_content_async(
+                            content_id=content_id,
+                            source="test.pdf",
+                            file_path=file_path,
+                            material_types=[],
+                            language="en",
+                        )
+
+            # Verify processing completed
+            assert content_id in processor.content_library
+        finally:
+            file_path.unlink()
+
+    @pytest.mark.asyncio
+    async def test_process_word_document_branch(self, processor):
+        """Test Word document processing branch (lines 848-849)"""
+        content_id = "test_docx_branch"
+
+        with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
+            file_path = Path(tmp.name)
+            tmp.write(b"DOCX content")
+
+        try:
+            mock_docx_data = {
+                "title": "Test",
+                "content": "DOCX content",
+                "word_count": 10,
+            }
+            mock_analysis = {
+                "difficulty_level": "beginner",
+                "topics": [],
+                "detected_language": "en",
+            }
+
+            with patch.object(
+                processor,
+                "_extract_docx_content",
+                new=AsyncMock(return_value=mock_docx_data),
+            ):
+                with patch.object(
+                    processor,
+                    "_analyze_content",
+                    new=AsyncMock(return_value=mock_analysis),
+                ):
+                    with patch.object(
+                        processor,
+                        "_generate_learning_materials",
+                        new=AsyncMock(return_value=[]),
+                    ):
+                        await processor._process_content_async(
+                            content_id=content_id,
+                            source="test.docx",
+                            file_path=file_path,
+                            material_types=[],
+                            language="en",
+                        )
+
+            assert content_id in processor.content_library
+        finally:
+            file_path.unlink()
+
+    @pytest.mark.asyncio
+    async def test_process_text_file_branch(self, processor):
+        """Test text file processing branch (lines 850-851)"""
+        content_id = "test_txt_branch"
+
+        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as tmp:
+            file_path = Path(tmp.name)
+            tmp.write(b"Text content")
+
+        try:
+            mock_text_data = {
+                "title": "Test",
+                "content": "Text content",
+                "word_count": 10,
+            }
+            mock_analysis = {
+                "difficulty_level": "beginner",
+                "topics": [],
+                "detected_language": "en",
+            }
+
+            with patch.object(
+                processor,
+                "_extract_text_content",
+                new=AsyncMock(return_value=mock_text_data),
+            ):
+                with patch.object(
+                    processor,
+                    "_analyze_content",
+                    new=AsyncMock(return_value=mock_analysis),
+                ):
+                    with patch.object(
+                        processor,
+                        "_generate_learning_materials",
+                        new=AsyncMock(return_value=[]),
+                    ):
+                        await processor._process_content_async(
+                            content_id=content_id,
+                            source="test.txt",
+                            file_path=file_path,
+                            material_types=[],
+                            language="en",
+                        )
+
+            assert content_id in processor.content_library
+        finally:
+            file_path.unlink()
+
+    @pytest.mark.asyncio
+    async def test_process_web_article_branch(self, processor):
+        """Test web article processing branch (lines 850-851)"""
+        content_id = "test_web_branch"
+
+        mock_web_data = {
+            "title": "Test",
+            "content": "Web content",
+            "word_count": 10,
+        }
+        mock_analysis = {
+            "difficulty_level": "beginner",
+            "topics": [],
+            "detected_language": "en",
+        }
+
+        with patch.object(
+            processor, "_extract_web_content", new=AsyncMock(return_value=mock_web_data)
+        ):
+            with patch.object(
+                processor, "_analyze_content", new=AsyncMock(return_value=mock_analysis)
+            ):
+                with patch.object(
+                    processor,
+                    "_generate_learning_materials",
+                    new=AsyncMock(return_value=[]),
+                ):
+                    await processor._process_content_async(
+                        content_id=content_id,
+                        source="https://example.com/article",
+                        file_path=None,
+                        material_types=[],
+                        language="en",
+                    )
+
+        assert content_id in processor.content_library
+
+    @pytest.mark.asyncio
+    async def test_process_unsupported_content_type(self, processor):
+        """Test unsupported content type raises ValueError (lines 852-853)
+
+        The ValueError is caught by the outer exception handler in _process_content_async,
+        so we verify the processing fails rather than expecting the exception to propagate.
+        """
+        content_id = "test_unsupported"
+
+        # Mock _detect_content_type to return UNKNOWN type
+        with patch.object(
+            processor, "_detect_content_type", return_value=ContentType.UNKNOWN
+        ):
+            await processor._process_content_async(
+                content_id=content_id,
+                source="unknown_source",
+                file_path=None,
+                material_types=[],
+                language="en",
+            )
+
+            # Verify processing failed (content not in library or marked as failed)
+            progress = await processor.get_processing_progress(content_id)
+            assert progress is not None
+            assert progress.status == ProcessingStatus.FAILED
