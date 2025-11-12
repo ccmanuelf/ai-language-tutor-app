@@ -24,6 +24,68 @@ from app.services.ai_service_base import AIResponse, AIResponseStatus
 from app.services.deepseek_service import DeepSeekService, deepseek_service
 
 
+class TestZZZImportErrorHandling:
+    """Test import error handling for openai library (used by DeepSeek)
+
+    Note: Class name starts with ZZZ to ensure it runs last, avoiding interference
+    with other tests that mock module-level imports.
+    """
+
+    def test_import_error_handling(self):
+        """Test that ImportError is handled gracefully when openai is not available"""
+        import sys
+
+        # Save original modules before modification
+        original_openai = sys.modules.get("openai")
+        original_deepseek_service = sys.modules.get("app.services.deepseek_service")
+
+        # Remove openai modules from sys.modules to simulate not being installed
+        modules_to_remove = [
+            k for k in list(sys.modules.keys()) if k.startswith("openai")
+        ]
+        for module in modules_to_remove:
+            del sys.modules[module]
+
+        # Mock the import to raise ImportError
+        import builtins
+
+        original_import = builtins.__import__
+
+        def mock_import(name, *args, **kwargs):
+            if name == "openai" or name.startswith("openai."):
+                raise ImportError(f"No module named '{name}'")
+            return original_import(name, *args, **kwargs)
+
+        try:
+            builtins.__import__ = mock_import
+
+            # Remove the deepseek_service module to force reimport
+            if "app.services.deepseek_service" in sys.modules:
+                del sys.modules["app.services.deepseek_service"]
+
+            # Now import the module - this should trigger the except block
+            import app.services.deepseek_service as deepseek_module
+
+            # Verify that the ImportError was caught and handled
+            assert deepseek_module.DEEPSEEK_AVAILABLE is False
+            assert deepseek_module.openai is None
+
+        finally:
+            # Restore original import function
+            builtins.__import__ = original_import
+
+            # Restore original modules to their exact previous state
+            if original_openai is not None:
+                sys.modules["openai"] = original_openai
+
+            # Restore the original deepseek_service module
+            if original_deepseek_service is not None:
+                sys.modules["app.services.deepseek_service"] = original_deepseek_service
+            elif "app.services.deepseek_service" in sys.modules:
+                # If it didn't exist before our test, remove it
+                del sys.modules["app.services.deepseek_service"]
+
+
 class TestDeepSeekServiceInitialization:
     """Test DeepSeek service initialization"""
 
