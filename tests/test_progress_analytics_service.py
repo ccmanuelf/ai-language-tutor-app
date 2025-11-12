@@ -1473,3 +1473,120 @@ class TestPublicAPIIntegration:
 
         result = service.create_memory_retention_analysis(invalid_analysis)
         assert isinstance(result, bool)
+
+    # ============= EXCEPTION HANDLER COVERAGE TESTS =============
+
+    def test_initialize_enhanced_tables_exception(self, service):
+        """Test _initialize_enhanced_tables exception handler (lines 509-511)"""
+        # Mock the connection to raise an exception during table creation
+        with patch.object(service, "_get_connection") as mock_conn:
+            mock_context = MagicMock()
+            mock_cursor = MagicMock()
+            mock_cursor.execute.side_effect = sqlite3.Error("Table creation failed")
+            mock_context.__enter__.return_value.cursor.return_value = mock_cursor
+            mock_conn.return_value = mock_context
+
+            with pytest.raises(sqlite3.Error):
+                service._initialize_enhanced_tables()
+
+    def test_track_conversation_session_database_exception(self, service):
+        """Test track_conversation_session database exception handler (lines 574-576)"""
+        metrics = ConversationMetrics(
+            session_id="test_exception",
+            user_id=1,
+            language_code="es",
+            conversation_type="scenario",
+        )
+
+        # Mock database to raise exception during execute
+        with patch.object(service, "_get_connection") as mock_conn:
+            mock_context = MagicMock()
+            mock_cursor = MagicMock()
+            mock_cursor.execute.side_effect = sqlite3.Error("Database error")
+            mock_context.__enter__.return_value.cursor.return_value = mock_cursor
+            mock_conn.return_value = mock_context
+
+            result = service.track_conversation_session(metrics)
+            assert result is False
+
+    def test_get_conversation_analytics_database_exception(self, service):
+        """Test get_conversation_analytics exception handler (lines 613-615)"""
+        # Mock database to raise exception
+        with patch.object(service, "_get_connection") as mock_conn:
+            mock_conn.side_effect = sqlite3.Error("Database error")
+
+            result = service.get_conversation_analytics(
+                user_id=1, language_code="es", period_days=30
+            )
+
+            # Should return empty analytics structure
+            assert isinstance(result, dict)
+            assert "overview" in result
+            assert "performance_metrics" in result
+
+    def test_calculate_conversation_trends_with_multiple_sessions(self, service):
+        """Test _calculate_conversation_trends with 2+ sessions (lines 826-830)"""
+        from datetime import datetime
+
+        # Insert multiple test sessions to trigger trend calculation
+        with service._get_connection() as conn:
+            cursor = conn.cursor()
+            base_date = datetime.now()
+
+            for i in range(3):
+                session_date = (base_date - timedelta(days=i)).isoformat()
+                cursor.execute(
+                    """
+                    INSERT INTO conversation_metrics (
+                        session_id, user_id, language_code, conversation_type,
+                        duration_minutes, total_exchanges, fluency_score,
+                        grammar_accuracy_score, pronunciation_clarity_score,
+                        vocabulary_complexity_score, average_confidence_score,
+                        engagement_score, hesitation_count, self_correction_count,
+                        started_at, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        f"test_trends_{i}",
+                        1,
+                        "es",
+                        "scenario",
+                        15.0,
+                        10,
+                        0.75 + (i * 0.05),  # Increasing scores for trend
+                        0.80,
+                        0.70,
+                        0.65 + (i * 0.05),
+                        0.72 + (i * 0.05),
+                        0.78,
+                        3,
+                        2,
+                        session_date,
+                        session_date,
+                    ),
+                )
+            conn.commit()
+
+        # Get analytics - should now calculate trends
+        analytics = service.get_conversation_analytics(
+            user_id=1, language_code="es", period_days=30
+        )
+
+        assert isinstance(analytics, dict)
+        assert "trends" in analytics
+        # With 3 sessions, trends should be calculated
+        assert isinstance(analytics["trends"], dict)
+
+    def test_get_multi_skill_analytics_database_exception(self, service):
+        """Test get_multi_skill_analytics exception handler (lines 1010-1012)"""
+        # Mock database to raise exception
+        with patch.object(service, "_get_connection") as mock_conn:
+            mock_conn.side_effect = sqlite3.Error("Database error")
+
+            result = service.get_multi_skill_analytics(user_id=1, language_code="es")
+
+            # Should return empty skill analytics structure
+            assert isinstance(result, dict)
+            assert "skill_overview" in result
+            assert "progress_trends" in result
+            assert "individual_skills" in result
