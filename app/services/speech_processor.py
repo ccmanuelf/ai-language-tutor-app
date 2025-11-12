@@ -42,22 +42,12 @@ except ImportError:
 WATSON_SDK_AVAILABLE = False
 
 # Mistral Speech Services
-try:
-    pass
-
-    MISTRAL_STT_AVAILABLE = True
-except ImportError:
-    MISTRAL_STT_AVAILABLE = False
-    logging.warning("Mistral STT service not available.")
+# No external dependencies - always available
+MISTRAL_STT_AVAILABLE = True
 
 # Piper TTS Services
-try:
-    pass
-
-    PIPER_TTS_AVAILABLE = True
-except ImportError:
-    PIPER_TTS_AVAILABLE = False
-    logging.warning("Piper TTS service not available.")
+# No external dependencies - always available
+PIPER_TTS_AVAILABLE = True
 
 from app.core.config import (
     get_settings,  # noqa: E402 - Required after logger configuration
