@@ -22,6 +22,68 @@ from app.services.ai_service_base import AIResponse, AIResponseStatus
 from app.services.claude_service import ClaudeService, claude_service
 
 
+class TestZZZImportErrorHandling:
+    """Test import error handling for anthropic library
+
+    Note: Class name starts with ZZZ to ensure it runs last, avoiding interference
+    with other tests that mock module-level imports.
+    """
+
+    def test_import_error_handling(self):
+        """Test that ImportError is handled gracefully when anthropic is not available"""
+        import sys
+
+        # Save original modules before modification
+        original_anthropic = sys.modules.get("anthropic")
+        original_claude_service = sys.modules.get("app.services.claude_service")
+
+        # Remove anthropic modules from sys.modules to simulate not being installed
+        modules_to_remove = [
+            k for k in list(sys.modules.keys()) if k.startswith("anthropic")
+        ]
+        for module in modules_to_remove:
+            del sys.modules[module]
+
+        # Mock the import to raise ImportError
+        import builtins
+
+        original_import = builtins.__import__
+
+        def mock_import(name, *args, **kwargs):
+            if name == "anthropic" or name.startswith("anthropic."):
+                raise ImportError(f"No module named '{name}'")
+            return original_import(name, *args, **kwargs)
+
+        try:
+            builtins.__import__ = mock_import
+
+            # Remove the claude_service module to force reimport
+            if "app.services.claude_service" in sys.modules:
+                del sys.modules["app.services.claude_service"]
+
+            # Now import the module - this should trigger the except block
+            import app.services.claude_service as claude_module
+
+            # Verify that the ImportError was caught and handled
+            assert claude_module.ANTHROPIC_AVAILABLE is False
+            assert claude_module.anthropic is None
+
+        finally:
+            # Restore original import function
+            builtins.__import__ = original_import
+
+            # Restore original modules to their exact previous state
+            if original_anthropic is not None:
+                sys.modules["anthropic"] = original_anthropic
+
+            # Restore the original claude_service module
+            if original_claude_service is not None:
+                sys.modules["app.services.claude_service"] = original_claude_service
+            elif "app.services.claude_service" in sys.modules:
+                # If it didn't exist before our test, remove it
+                del sys.modules["app.services.claude_service"]
+
+
 class TestClaudeServiceInitialization:
     """Test Claude service initialization"""
 
@@ -547,6 +609,50 @@ class TestConversationPromptGeneration:
             language="unsupported_lang", user_message="Hello", conversation_history=None
         )
 
+        assert isinstance(prompt, str)
+        assert len(prompt) > 0
+
+    def test_get_conversation_prompt_with_mood_triggers_english(self):
+        """Test prompt generation with mood trigger words in English"""
+        # Test exciting mood trigger
+        prompt = self.service._get_conversation_prompt(
+            language="en",
+            user_message="I love this amazing experience!",
+            conversation_history=None,
+        )
+        assert isinstance(prompt, str)
+        assert len(prompt) > 0
+
+    def test_get_conversation_prompt_with_mood_triggers_spanish(self):
+        """Test prompt generation with mood trigger words in Spanish"""
+        # Test exciting mood trigger
+        prompt = self.service._get_conversation_prompt(
+            language="es",
+            user_message="¡Me encanta esta experiencia increíble!",
+            conversation_history=None,
+        )
+        assert isinstance(prompt, str)
+        assert len(prompt) > 0
+
+    def test_get_conversation_prompt_with_mood_triggers_french(self):
+        """Test prompt generation with mood trigger words in French"""
+        # Test curious mood trigger
+        prompt = self.service._get_conversation_prompt(
+            language="fr",
+            user_message="C'est très intéressant et différent!",
+            conversation_history=None,
+        )
+        assert isinstance(prompt, str)
+        assert len(prompt) > 0
+
+    def test_get_conversation_prompt_with_mood_triggers_chinese(self):
+        """Test prompt generation with mood trigger words in Chinese"""
+        # Test exciting mood trigger
+        prompt = self.service._get_conversation_prompt(
+            language="zh",
+            user_message="太棒了！这真是太厉害了！",
+            conversation_history=None,
+        )
         assert isinstance(prompt, str)
         assert len(prompt) > 0
 
