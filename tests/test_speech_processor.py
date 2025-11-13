@@ -1857,17 +1857,73 @@ class TestImportErrorHandlers:
     """Test import error handling for external libraries"""
 
     def test_import_numpy_unavailable(self):
-        """Test behavior when numpy is unavailable"""
-        # Test the fallback behavior by checking module-level constant
-        # Import errors are covered at module load time (lines 34-36)
-        # This test validates the behavior when AUDIO_LIBS_AVAILABLE is False
-        from app.services import speech_processor
+        """Test behavior when numpy is unavailable (lines 34-36)"""
+        import os
+        import subprocess
+        import sys
 
-        # The import error handling is already tested by the module's
-        # try-except block. We verify the constant exists.
-        assert hasattr(speech_processor, "AUDIO_LIBS_AVAILABLE")
-        # In normal test env, numpy is available, so this should be True
-        assert speech_processor.AUDIO_LIBS_AVAILABLE is True
+        # Run a subprocess that blocks numpy import and checks AUDIO_LIBS_AVAILABLE
+        test_code = """
+import sys
+import os
+
+# Enable coverage in subprocess if running under coverage
+try:
+    import coverage
+    cov = coverage.Coverage(data_suffix=True, auto_data=True, branch=True)
+    cov.start()
+except ImportError:
+    pass
+
+# Block numpy import using custom meta path finder
+class NumpyBlocker:
+    def find_module(self, fullname, path=None):
+        if fullname == 'numpy' or fullname.startswith('numpy.'):
+            raise ImportError("numpy is blocked for testing")
+        return None
+
+    def find_spec(self, fullname, path, target=None):
+        if fullname == 'numpy' or fullname.startswith('numpy.'):
+            raise ImportError("numpy is blocked for testing")
+        return None
+
+sys.meta_path.insert(0, NumpyBlocker())
+
+# Now import speech_processor - numpy should fail
+from app.services import speech_processor
+
+# Verify AUDIO_LIBS_AVAILABLE is False (lines 34-36 executed)
+assert speech_processor.AUDIO_LIBS_AVAILABLE is False, \\
+    f"Expected AUDIO_LIBS_AVAILABLE=False, got {speech_processor.AUDIO_LIBS_AVAILABLE}"
+print("SUCCESS: numpy import blocked, AUDIO_LIBS_AVAILABLE=False")
+
+# Stop coverage if it was started
+try:
+    cov.stop()
+    cov.save()
+except:
+    pass
+"""
+
+        # Set up environment for subprocess
+        env = os.environ.copy()
+        env["COVERAGE_PROCESS_START"] = ".coveragerc"
+
+        result = subprocess.run(
+            [sys.executable, "-c", test_code],
+            capture_output=True,
+            text=True,
+            cwd="/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app",
+            env=env,
+        )
+
+        # Check that subprocess succeeded
+        assert result.returncode == 0, (
+            f"Subprocess failed:\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}"
+        )
+        assert "SUCCESS" in result.stdout, (
+            f"Test did not complete successfully:\n{result.stdout}"
+        )
 
     def test_mistral_stt_import_unavailable(self, monkeypatch):
         """Test behavior when Mistral STT import fails"""
