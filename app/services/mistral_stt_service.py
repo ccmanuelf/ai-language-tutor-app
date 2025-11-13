@@ -14,11 +14,13 @@ Features:
 - Performance benchmarking capabilities
 """
 
-import logging
 import io
+import json
+import logging
 import time
-from typing import Dict, List, Any, Tuple
 from dataclasses import dataclass
+from typing import Any, Dict, List, Tuple
+
 import httpx
 
 from app.core.config import get_settings
@@ -286,7 +288,8 @@ async def mistral_speech_to_text(
     Compatibility wrapper for integration with existing speech processor
     Returns standardized format matching current SpeechRecognitionResult
     """
-    async with create_mistral_stt_service() as service:
+    service = await create_mistral_stt_service()
+    async with service:
         result = await service.transcribe_audio(audio_data, language, audio_format)
 
         # Convert to format expected by existing code
