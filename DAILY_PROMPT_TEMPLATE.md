@@ -117,41 +117,78 @@
 
 ---
 
-## 🎯 SESSION 24 OPTIONS - WHAT'S NEXT? 🚨
+## 🎯 SESSION 24-25 PLAN - COMPLETE AUDIO TESTING INITIATIVE! 🚨
 
-### AUDIO TESTING COMPLETE! ✅🏆
+### CURRENT STATUS: Phase 4 PENDING! ⚠️
 
-**Status**: All audio testing initiative objectives met!  
-- ✅ STT service at 100%
-- ✅ TTS service at 100%
-- ✅ Speech processor at 100%
-- ✅ Integration tests complete (23 tests)
+**What's Complete**:
+- ✅ Phase 1: Audio fixtures created (Session 21)
+- ✅ Phase 2: mistral_stt_service.py at 100% (Session 21)
+- ✅ Phase 3: piper_tts_service.py at 100% (Session 22)
+- ✅ **BONUS**: Integration tests created (Session 23)
 
-### Session 24 Options
+**What's PENDING**:
+- ⏳ **Phase 4**: Enhance speech_processor.py tests (Session 24)
+- ⏳ **Voice Validation**: Test all 11 voices functionality (Session 24-25)
 
-**Option 1: Continue Phase 3A** (More module testing)
-- Review coverage gaps in other modules
-- Pick next priority service/module
-- Apply proven testing methodology
-- Aim for 100% coverage
+### CRITICAL FINDINGS from Original Audit:
 
-**Option 2: Transition to Phase 3B** (Broader integration)
-- API endpoint integration tests
-- Database integration tests
-- Full-stack E2E tests
-- User workflow tests
+**Issue**: `speech_processor.py` has 100% coverage BUT:
+- Uses `b"fake_audio_data"` instead of real audio
+- Mocks internal methods (`_speech_to_text_mistral`, `_text_to_speech_piper`)
+- Missing end-to-end integration tests
+- **Risk**: "Mocked tests create false confidence" 🚨
 
-**Option 3: Other Priorities**
-- Review PHASE_3A_PROGRESS.md for remaining work
-- Discuss with user about next priorities
-- Plan next testing focus
+### Session 24: Phase 4 - Enhance speech_processor.py Tests
 
-**Recommendation**: Review project status and determine next priority! 🎯
+**Goal**: Add real audio integration tests without mocking internal methods
+
+**Tasks**:
+1. Add integration tests with REAL audio files
+2. Remove/reduce mocking of internal methods
+3. Test end-to-end scenarios (preprocessing → STT/TTS → validation)
+4. Document which tests use real vs. mocked audio
+5. Maintain 100% coverage with improved quality
+
+**Expected Tests**: ~15-20 new integration tests
+**Time Estimate**: 1 session (3-4 hours)
+
+### Session 25: Voice Validation & Testing
+
+**Goal**: Validate all installed voice models are functional
+
+**Available Voices** (11 working + 1 corrupted):
+- ✅ **en_US-lessac-medium** (English US)
+- ✅ **de_DE-thorsten-medium** (German)
+- ✅ **es_AR-daniela-high** (Spanish Argentina)
+- ✅ **es_ES-davefx-medium** (Spanish Spain)
+- ✅ **es_MX-ald-medium** (Spanish Mexico)
+- ✅ **es_MX-claude-high** (Spanish Mexico - currently mapped)
+- ⚠️ **es_MX-davefx-medium** (CORRUPTED - 15 bytes only!)
+- ✅ **fr_FR-siwis-medium** (French)
+- ✅ **it_IT-paola-medium** (Italian - currently mapped)
+- ✅ **it_IT-riccardo-x_low** (Italian low quality)
+- ✅ **pt_BR-faber-medium** (Portuguese Brazil)
+- ✅ **zh_CN-huayan-medium** (Chinese Simplified)
+
+**Tasks**:
+1. Create voice validation test suite
+2. Test each voice generates valid audio
+3. Validate audio quality per voice
+4. Test language-specific voice selection
+5. Fix/remove corrupted es_MX-davefx-medium voice
+6. Document voice quality and recommendations
+7. Test user-facing voice selection functionality
+
+**Expected Tests**: ~12-15 voice validation tests
+**Time Estimate**: 1 session (2-3 hours)
+
+**Combined**: Sessions 24-25 will complete the Audio Testing Initiative! 🎯
 
 **See Details**: 
-- `docs/SESSION_23_HANDOVER.md` - Complete Session 24 options
-- `docs/SESSION_23_SUMMARY.md` - Session 23 results
-- `docs/PHASE_3A_PROGRESS.md` - Overall progress tracker
+- `docs/AUDIO_TESTING_AUDIT_REPORT.md` - Original audit findings
+- `docs/SESSION_23_HANDOVER.md` - Session 23 results
+- `docs/SESSION_23_SUMMARY.md` - What we accomplished
 
 ---
 
