@@ -1621,3 +1621,308 @@ async def test_error_handling_across_all_operations(persistence, mock_session):
         mock_get_db.return_value = iter([mock_session])
         result4 = await persistence.load_conversation_from_db("conv_123")
         assert result4 is None
+
+
+# ============================================================================
+# TRUE 100% Branch Coverage Tests
+# Session 27: Cover remaining 10 branches for TRUE 100% validation
+# ============================================================================
+
+
+class TestSessionNoneExceptionHandling:
+    """
+    Test exception handling when session is None.
+    
+    These tests cover the branches where get_db_session() fails before
+    yielding a session, causing session to remain None in exception handlers.
+    
+    Missing branches covered:
+    - 126→128, 131→133, 135→exit (save_conversation_to_db)
+    - 203→205, 208→210, 212→exit (save_messages_to_db)
+    - 300→302, 333→exit (save_learning_progress)
+    - 393→exit (load_conversation_from_db)
+    """
+
+    @pytest.mark.asyncio
+    async def test_save_conversation_session_creation_failure(
+        self, persistence, sample_context
+    ):
+        """Test save_conversation_to_db when get_db_session() fails before yielding"""
+        with patch(
+            "app.services.conversation_persistence.get_db_session"
+        ) as mock_get_db:
+            # Simulate session creation failure - raises before yielding
+            mock_get_db.side_effect = Exception("Database connection failed")
+
+            result = await persistence.save_conversation_to_db(
+                "conv_123", sample_context
+            )
+
+            # Should handle gracefully and return False
+            assert result is False
+            # session is None, so rollback/close should not be called
+            # This tests branches 126→128, 131→133, 135→exit (else path when session is None)
+
+    @pytest.mark.asyncio
+    async def test_save_conversation_sqlalchemy_error_before_session_assignment(
+        self, persistence, sample_context
+    ):
+        """Test save_conversation when SQLAlchemyError occurs before session assignment"""
+        with patch(
+            "app.services.conversation_persistence.get_db_session"
+        ) as mock_get_db:
+            # Simulate SQLAlchemyError during session creation
+            mock_get_db.side_effect = SQLAlchemyError("Session creation failed")
+
+            result = await persistence.save_conversation_to_db(
+                "conv_123", sample_context
+            )
+
+            assert result is False
+            # Tests branch 126→128 (if session: else path)
+
+    @pytest.mark.asyncio
+    async def test_save_messages_session_creation_failure(
+        self, persistence, sample_messages
+    ):
+        """Test save_messages_to_db when get_db_session() fails"""
+        with patch(
+            "app.services.conversation_persistence.get_db_session"
+        ) as mock_get_db:
+            mock_get_db.side_effect = Exception("Database connection failed")
+
+            result = await persistence.save_messages_to_db("conv_123", sample_messages)
+
+            assert result is False
+            # Tests branches 203→205, 208→210, 212→exit
+
+    @pytest.mark.asyncio
+    async def test_save_messages_sqlalchemy_error_before_session_assignment(
+        self, persistence, sample_messages
+    ):
+        """Test save_messages when SQLAlchemyError occurs before session assignment"""
+        with patch(
+            "app.services.conversation_persistence.get_db_session"
+        ) as mock_get_db:
+            mock_get_db.side_effect = SQLAlchemyError("Session creation failed")
+
+            result = await persistence.save_messages_to_db("conv_123", sample_messages)
+
+            assert result is False
+            # Tests branch 203→205 (if session: else path)
+
+    @pytest.mark.asyncio
+    async def test_save_learning_progress_session_creation_failure(
+        self, persistence, sample_context
+    ):
+        """Test save_learning_progress when get_db_session() fails"""
+        with patch(
+            "app.services.conversation_persistence.get_db_session"
+        ) as mock_get_db:
+            mock_get_db.side_effect = Exception("Database connection failed")
+
+            result = await persistence.save_learning_progress("conv_123", sample_context)
+
+            assert result is False
+            # Tests branches 300→302, 333→exit
+
+    @pytest.mark.asyncio
+    async def test_save_learning_progress_sqlalchemy_error_before_session(
+        self, persistence, sample_context
+    ):
+        """Test save_learning_progress when SQLAlchemyError during session creation"""
+        with patch(
+            "app.services.conversation_persistence.get_db_session"
+        ) as mock_get_db:
+            mock_get_db.side_effect = SQLAlchemyError("Session creation failed")
+
+            result = await persistence.save_learning_progress("conv_123", sample_context)
+
+            assert result is False
+            # Tests branch 300→302 (if session: else path)
+
+    @pytest.mark.asyncio
+    async def test_load_conversation_session_creation_failure(self, persistence):
+        """Test load_conversation_from_db when get_db_session() fails"""
+        with patch(
+            "app.services.conversation_persistence.get_db_session"
+        ) as mock_get_db:
+            mock_get_db.side_effect = Exception("Database connection failed")
+
+            result = await persistence.load_conversation_from_db("conv_123")
+
+            assert result is None
+            # Tests branch 393→exit (if session: else path in finally)
+
+    @pytest.mark.asyncio
+    async def test_load_conversation_sqlalchemy_error_before_session(self, persistence):
+        """Test load_conversation when SQLAlchemyError during session creation"""
+        with patch(
+            "app.services.conversation_persistence.get_db_session"
+        ) as mock_get_db:
+            mock_get_db.side_effect = SQLAlchemyError("Session creation failed")
+
+            result = await persistence.load_conversation_from_db("conv_123")
+
+            assert result is None
+
+
+class TestVocabularyExistsBranch:
+    """
+    Test vocabulary loop continuation branch.
+    
+    Missing branch covered:
+    - 265→264 (loop continues when vocabulary already exists)
+    """
+
+    @pytest.mark.asyncio
+    async def test_save_learning_progress_skips_existing_vocabulary(
+        self, persistence, sample_context
+    ):
+        """Test that existing vocabulary words are skipped in the loop"""
+        mock_session = Mock(spec=Session)
+        mock_session.commit = Mock()
+        mock_session.rollback = Mock()
+        mock_session.close = Mock()
+        mock_session.add = Mock()
+
+        # Mock conversation to return user_id
+        mock_conversation = Mock(spec=Conversation)
+        mock_conversation.user_id = 42
+
+        # Mock LearningProgress objects with MagicMock for += operations
+        vocab_progress = MagicMock(spec=LearningProgress)
+        vocab_progress.words_learned = 10
+        vocab_progress.sessions_completed = 5
+
+        conv_progress = MagicMock(spec=LearningProgress)
+        conv_progress.conversations_completed = 3
+        conv_progress.sessions_completed = 2
+
+        # Create context with multiple vocabulary words
+        context = ConversationContext(
+            conversation_id="conv_123",
+            user_id="42",
+            language="spanish",
+            learning_focus=LearningFocus.CONVERSATION,
+            current_topic="Restaurant",
+            vocabulary_level="intermediate",
+            learning_goals=["Practice"],
+            mistakes_tracked=[],
+            vocabulary_introduced=["mesero", "cuenta", "propina"],  # 3 words
+            session_start_time=datetime.now(),
+            last_activity=datetime.now(),
+        )
+
+        # Setup query mock to return different objects based on query
+        def query_side_effect(model):
+            query_mock = Mock()
+            filter_mock = Mock()
+
+            if model == Conversation:
+                filter_mock.first.return_value = mock_conversation
+            elif model == LearningProgress:
+                # Return vocab_progress first call, conv_progress second call
+                filter_mock.first.side_effect = [vocab_progress, conv_progress]
+            elif model == VocabularyItem:
+                # Will be handled by _vocabulary_exists mock
+                filter_mock.first.return_value = None
+
+            query_mock.filter.return_value = filter_mock
+            return query_mock
+
+        mock_session.query.side_effect = query_side_effect
+
+        # Mock _vocabulary_exists to return True for first and third words
+        # This will cause the loop to skip (branch 265→264) for those words
+        def mock_vocabulary_exists(session, user_id, language, word):
+            return word in ["mesero", "propina"]  # These exist, skip them
+
+        with patch(
+            "app.services.conversation_persistence.get_db_session"
+        ) as mock_get_db:
+            mock_get_db.return_value = iter([mock_session])
+
+            with patch.object(
+                persistence, "_vocabulary_exists", side_effect=mock_vocabulary_exists
+            ):
+                result = await persistence.save_learning_progress("conv_123", context)
+
+                assert result is True
+
+                # Should only add "cuenta" (the one that doesn't exist)
+                # "mesero" and "propina" trigger the skip branch 265→264
+                add_calls = mock_session.add.call_args_list
+                vocab_adds = [
+                    call for call in add_calls if isinstance(call[0][0], VocabularyItem)
+                ]
+
+                # Only 1 vocabulary item should be added (cuenta)
+                assert len(vocab_adds) == 1
+                added_word = vocab_adds[0][0][0].word
+                assert added_word == "cuenta"
+
+                # This test covers branch 265→264 (loop continuation when word exists)
+
+    @pytest.mark.asyncio
+    async def test_save_learning_progress_adds_all_new_vocabulary(
+        self, persistence, sample_context
+    ):
+        """Test that all new vocabulary words are added when none exist"""
+        mock_session = Mock(spec=Session)
+        mock_session.commit = Mock()
+        mock_session.rollback = Mock()
+        mock_session.close = Mock()
+        mock_session.add = Mock()
+
+        # Mock conversation to return user_id
+        mock_conversation = Mock(spec=Conversation)
+        mock_conversation.user_id = 42
+
+        # Mock LearningProgress objects with MagicMock for += operations
+        vocab_progress = MagicMock(spec=LearningProgress)
+        vocab_progress.words_learned = 10
+        vocab_progress.sessions_completed = 5
+
+        conv_progress = MagicMock(spec=LearningProgress)
+        conv_progress.conversations_completed = 3
+        conv_progress.sessions_completed = 2
+
+        # Setup query mock
+        def query_side_effect(model):
+            query_mock = Mock()
+            filter_mock = Mock()
+
+            if model == Conversation:
+                filter_mock.first.return_value = mock_conversation
+            elif model == LearningProgress:
+                # Return vocab_progress first call, conv_progress second call
+                filter_mock.first.side_effect = [vocab_progress, conv_progress]
+            elif model == VocabularyItem:
+                # Will be handled by _vocabulary_exists mock
+                filter_mock.first.return_value = None
+
+            query_mock.filter.return_value = filter_mock
+            return query_mock
+
+        mock_session.query.side_effect = query_side_effect
+
+        # All vocabulary words are new (none exist)
+        with patch(
+            "app.services.conversation_persistence.get_db_session"
+        ) as mock_get_db:
+            mock_get_db.return_value = iter([mock_session])
+
+            with patch.object(persistence, "_vocabulary_exists", return_value=False):
+                result = await persistence.save_learning_progress(
+                    "conv_123", sample_context
+                )
+
+                assert result is True
+
+                # All 3 vocabulary words should be added
+                add_calls = mock_session.add.call_args_list
+                vocab_adds = [
+                    call for call in add_calls if isinstance(call[0][0], VocabularyItem)
+                ]
+                assert len(vocab_adds) == 3
