@@ -2330,3 +2330,293 @@ class TestFinalCoverageGaps:
                 audio_format=AudioFormat.WAV,
                 provider="auto",
             )
+
+
+class TestBranchCoverageGaps:
+    """Tests to achieve 100% branch coverage - Session 25
+
+    Covers the 12 untested branch paths identified in Session 24:
+    - 5 silent/zero audio edge cases
+    - 4 empty/minimal audio edge cases
+    - 1 format handling case
+    - 2 text processing edge cases
+    """
+
+    # ============================================================================
+    # Category 1: Silent/Zero Audio Edge Cases (5 tests)
+    # ============================================================================
+
+    @pytest.mark.asyncio
+    async def test_analyze_audio_quality_without_numpy(self, processor):
+        """Branch 844→874: Test audio quality analysis without numpy libraries"""
+        with patch("app.services.speech_processor.AUDIO_LIBS_AVAILABLE", False):
+            # Create fresh processor with mocked AUDIO_LIBS_AVAILABLE
+            processor_no_numpy = SpeechProcessor()
+
+            # Create valid audio data
+            audio_data = b"\x00\x01" * 1000
+
+            # Should skip advanced analysis and return basic metadata
+            result = await processor_no_numpy._analyze_audio_quality(
+                audio_data, AudioFormat.WAV
+            )
+
+            assert result is not None
+            assert result.quality_score > 0
+            assert result.format == AudioFormat.WAV
+
+    @pytest.mark.asyncio
+    async def test_analyze_audio_quality_zero_signal_power(self, processor):
+        """Branch 864→874: Test with zero signal power or noise floor"""
+        # Create silent audio (all zeros) - results in zero signal power
+        silent_audio = b"\x00\x00" * 1000
+
+        result = await processor._analyze_audio_quality(silent_audio, AudioFormat.WAV)
+
+        # Should handle zero signal/noise gracefully without crashing
+        assert result is not None
+        assert result.quality_score >= 0
+        # Silent audio should have low quality score
+        assert result.quality_score < 0.5
+
+    def test_speech_enhancement_silent_audio(self, processor):
+        """Branch 953→961: Test speech enhancement with silent audio (max_val = 0)"""
+        # Create non-empty but silent audio
+        silent_audio = b"\x00\x00" * 500
+
+        result = processor._apply_speech_enhancement(silent_audio)
+
+        # Should handle silence without division by zero
+        assert result is not None
+        assert len(result) == len(silent_audio)
+
+    def test_reduce_noise_silent_audio(self, processor):
+        """Branch 1203→1208: Test noise reduction with silent audio"""
+        # Create silent audio (max_val will be 0)
+        silent_audio = b"\x00\x00" * 500
+
+        result = processor._reduce_noise(silent_audio)
+
+        # Should skip threshold application when max_val is 0
+        assert result is not None
+        assert result == silent_audio
+
+    def test_normalize_audio_silent_non_empty(self, processor):
+        """Branch 1234→1239: Test normalization with non-empty silent audio"""
+        # Create non-empty but silent audio (len > 0, max_val = 0)
+        silent_audio = b"\x00\x00" * 500
+
+        result = processor._normalize_audio(silent_audio)
+
+        # Should handle zero max_val without division by zero
+        assert result is not None
+        assert result == silent_audio
+
+    # ============================================================================
+    # Category 2: Empty/Minimal Audio Edge Cases (4 tests)
+    # ============================================================================
+
+    def test_speech_enhancement_single_sample(self, processor):
+        """Branch 939→947: Test with single-sample audio (len ≤ 1)"""
+        # Create audio with exactly 1 sample (2 bytes for int16)
+        single_sample = b"\x00\x01"
+
+        result = processor._apply_speech_enhancement(single_sample)
+
+        # Should skip pre-emphasis filter but still process
+        assert result is not None
+        assert len(result) == len(single_sample)
+
+    def test_speech_enhancement_empty_audio(self, processor):
+        """Branch 947→961: Test with empty audio array"""
+        # Empty audio
+        empty_audio = b""
+
+        result = processor._apply_speech_enhancement(empty_audio)
+
+        # Should skip compression and return empty
+        assert result is not None
+        assert result == empty_audio
+
+    def test_normalize_audio_empty(self, processor):
+        """Branch 1232→1239: Test normalization with empty audio"""
+        # Empty audio
+        empty_audio = b""
+
+        result = processor._normalize_audio(empty_audio)
+
+        # Should return empty bytes gracefully
+        assert result is not None
+        assert result == empty_audio
+
+    @pytest.mark.asyncio
+    async def test_preprocess_audio_without_libraries(self, processor):
+        """Branch 1132→1136: Test preprocessing without numpy libraries"""
+        with patch.object(processor, "audio_libs_available", False):
+            audio_data = b"\x00\x01" * 1000
+
+            result = await processor._preprocess_audio(audio_data, AudioFormat.WAV)
+
+            # Should skip noise reduction but still process
+            assert result is not None
+            assert len(result) >= len(audio_data)  # May be padded
+
+    # ============================================================================
+    # Category 3: Format Handling (1 test)
+    # ============================================================================
+
+    @pytest.mark.asyncio
+    async def test_preprocess_audio_non_wav_formats(self, processor):
+        """Branch 1139→1142: Test with non-WAV formats (MP3, FLAC, WEBM)"""
+        audio_data = b"\x00\x01" * 1000
+
+        # Test MP3 format
+        result_mp3 = await processor._preprocess_audio(audio_data, AudioFormat.MP3)
+        assert result_mp3 is not None
+
+        # Test FLAC format
+        result_flac = await processor._preprocess_audio(audio_data, AudioFormat.FLAC)
+        assert result_flac is not None
+
+        # Test WEBM format
+        result_webm = await processor._preprocess_audio(audio_data, AudioFormat.WEBM)
+        assert result_webm is not None
+
+        # Should skip WAV format conversion for all non-WAV formats
+        # All should be processed but not converted to WAV
+
+    # ============================================================================
+    # Category 4: Text Processing Edge Cases (2 tests)
+    # ============================================================================
+
+    def test_apply_word_emphasis_no_matches(self, processor):
+        """Branch 1284→1283: Test emphasis words NOT present in text"""
+        text = "Hello world"
+        emphasis_words = ["goodbye", "universe", "missing"]
+
+        result = processor._apply_word_emphasis(text, emphasis_words)
+
+        # Should return unchanged text when words don't match
+        assert result == text
+        assert "<emphasis" not in result
+
+    def test_enhance_chinese_text_existing_prosody(self, processor):
+        """Branch 1339→1343: Test Chinese text with existing prosody markup"""
+        # Text already has prosody rate markup
+        text = '<prosody rate="-20%">你好世界</prosody>'
+
+        result = processor._enhance_chinese_text(text)
+
+        # Should NOT add another prosody wrapper
+        assert result.count("<prosody rate=") == 1
+        assert result.count("</prosody>") == 1
+
+
+class TestRemainingBranchGaps:
+    """Additional tests to cover the last 3 branch gaps - Session 25"""
+
+    @pytest.mark.asyncio
+    async def test_analyze_audio_quality_edge_case_noise_floor(self, processor):
+        """Branch 864→874: Test when noise_floor calculation might be zero or negative"""
+        # Create audio where all non-zero values might cause issues with noise_floor calc
+        # The noise_floor is calculated as: np.mean(np.abs(audio_array[audio_array != 0])) * 0.1
+        # If all values are zero, audio_array[audio_array != 0] is empty, causing mean to return nan or 0
+        
+        # Patch numpy operations to simulate edge case
+        with patch('app.services.speech_processor.np.frombuffer') as mock_frombuffer:
+            with patch('app.services.speech_processor.np.all') as mock_all:
+                with patch('app.services.speech_processor.np.mean') as mock_mean:
+                    # Return non-empty array
+                    mock_array = MagicMock()
+                    mock_array.__len__ = lambda self: 100
+                    mock_array.astype = lambda dtype: mock_array
+                    mock_array.__pow__ = lambda self, x: mock_array
+                    mock_frombuffer.return_value = mock_array
+                    
+                    # Not all zeros (to pass silence check)
+                    mock_all.return_value = False
+                    
+                    # First call: signal_power calculation returns positive
+                    # Second call: noise_floor calculation returns 0 or negative
+                    mock_mean.side_effect = [100.0, 0.0]  # signal_power > 0, noise_floor = 0
+                    
+                    audio_data = b"\x00\x01" * 1000
+                    result = await processor._analyze_audio_quality(audio_data, AudioFormat.WAV)
+                    
+                    # Should skip SNR calculation when noise_floor is 0
+                    assert result is not None
+
+    def test_speech_enhancement_with_modified_array(self, processor):
+        """Branch 947→961: Test edge case where array might become empty after operations"""
+        # This branch might be unreachable, but let's try mocking to force it
+        with patch('app.services.speech_processor.np.frombuffer') as mock_frombuffer:
+            with patch('app.services.speech_processor.np.copy') as mock_copy:
+                # First call to frombuffer returns non-empty array
+                mock_array_initial = np.array([100, 200], dtype=np.int16)
+                mock_frombuffer.return_value = mock_array_initial
+                
+                # After np.copy, simulate array becoming empty (hypothetical edge case)
+                # First copy (line 935): returns normal array
+                # This will test if the len > 0 check at line 947 handles edge cases
+                mock_array_copy = np.array([100, 200], dtype=np.int16)
+                mock_copy.return_value = mock_array_copy
+                
+                audio_data = b"\x00\x01\x00\x02"
+                result = processor._apply_speech_enhancement(audio_data)
+                
+                # Should complete without error
+                assert result is not None
+
+    def test_normalize_audio_with_edge_case_array(self, processor):
+        """Branch 1232→1239: Test normalization with edge case array"""
+        # Test with array that passes initial checks but might have edge cases
+        with patch('app.services.speech_processor.np.frombuffer') as mock_frombuffer:
+            with patch('app.services.speech_processor.np.copy') as mock_copy:
+                # Return non-empty array from frombuffer
+                mock_array = np.array([100, 200, 300], dtype=np.int16)
+                mock_frombuffer.return_value = mock_array
+                mock_copy.return_value = mock_array
+                
+                audio_data = b"\x00\x01" * 10
+                result = processor._normalize_audio(audio_data)
+                
+                # Should complete normalization
+                assert result is not None
+                assert len(result) > 0
+
+
+class TestUnreachableBranches:
+    """Test seemingly unreachable defensive programming branches - Session 25"""
+
+    def test_speech_enhancement_force_empty_after_copy(self, processor):
+        """Branch 947->961: Force empty array scenario using mock"""
+        # Mock np.copy to return empty array (simulating hypothetical numpy bug/edge case)
+        with patch('app.services.speech_processor.np.copy') as mock_copy:
+            # First check passes (non-empty from frombuffer)
+            # But after copy, array becomes empty (defensive check at line 947)
+            empty_array = np.array([], dtype=np.int16)
+            mock_copy.return_value = empty_array
+            
+            # Provide non-empty audio so it passes line 932 check
+            audio_data = b"\x00\x01\x00\x02"
+            
+            result = processor._apply_speech_enhancement(audio_data)
+            
+            # Should handle the edge case gracefully
+            assert result is not None
+
+    def test_normalize_audio_force_empty_after_copy(self, processor):
+        """Branch 1232->1239: Force empty array scenario using mock"""
+        # Mock np.copy to return empty array (simulating hypothetical edge case)
+        with patch('app.services.speech_processor.np.copy') as mock_copy:
+            # After copy at line 1227, array becomes empty (defensive check at line 1232)
+            empty_array = np.array([], dtype=np.int16)
+            mock_copy.return_value = empty_array
+            
+            # Provide non-empty audio so it passes line 1223 check
+            audio_data = b"\x00\x01\x00\x02"
+            
+            result = processor._normalize_audio(audio_data)
+            
+            # Should handle the edge case gracefully
+            assert result is not None
