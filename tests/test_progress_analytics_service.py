@@ -1590,3 +1590,178 @@ class TestPublicAPIIntegration:
             assert "skill_overview" in result
             assert "progress_trends" in result
             assert "individual_skills" in result
+
+
+class TestDataclassPreInitializedFields:
+    """Test dataclass __post_init__ with pre-initialized fields for TRUE 100% coverage
+
+    These tests cover the else branches (261→263, 319→321, 326→328) and early exits
+    (263→exit, 321→exit, 337→exit) in __post_init__ methods when fields are already
+    initialized (not None).
+    """
+
+    def test_learning_path_recommendation_with_preinitialized_timestamps(self):
+        """Test LearningPathRecommendation when timestamps are pre-initialized
+
+        Covers branches:
+        - 261→263: else path when generated_at is not None
+        - 263→exit: early exit from _initialize_timestamps when expires_at check follows
+        """
+        custom_generated = datetime(2024, 1, 15, 10, 0, 0)
+        custom_expires = datetime(2024, 2, 15, 10, 0, 0)
+
+        recommendation = LearningPathRecommendation(
+            user_id=1,
+            language_code="es",
+            recommendation_id="rec_preinitialized",
+            recommended_path_type="vocabulary_intensive",
+            path_title="Test Path",
+            path_description="Testing pre-initialized timestamps",
+            generated_at=custom_generated,  # Pre-initialized (not None)
+            expires_at=custom_expires,  # Pre-initialized (not None)
+        )
+
+        # Verify pre-initialized values are preserved (not overwritten)
+        assert recommendation.generated_at == custom_generated
+        assert recommendation.expires_at == custom_expires
+
+        # Verify list fields still get initialized
+        assert recommendation.recommendation_reasons == []
+        assert recommendation.user_strengths == []
+        assert recommendation.weekly_milestones == []
+
+    def test_learning_path_recommendation_partial_timestamp_initialization(self):
+        """Test LearningPathRecommendation with only generated_at pre-initialized
+
+        Tests the scenario where one timestamp is set but the other is None.
+        This ensures both branches in _initialize_timestamps are covered.
+        """
+        custom_generated = datetime(2024, 1, 20, 14, 30, 0)
+
+        recommendation = LearningPathRecommendation(
+            user_id=2,
+            language_code="fr",
+            recommendation_id="rec_partial",
+            recommended_path_type="grammar_focus",
+            path_title="Grammar Path",
+            path_description="Testing partial timestamp initialization",
+            generated_at=custom_generated,  # Pre-initialized
+            # expires_at=None (default) - will be auto-initialized
+        )
+
+        # generated_at should be preserved
+        assert recommendation.generated_at == custom_generated
+
+        # expires_at should be auto-generated (4 weeks from generated_at)
+        assert recommendation.expires_at is not None
+        assert isinstance(recommendation.expires_at, datetime)
+
+    def test_memory_retention_analysis_with_preinitialized_lists(self):
+        """Test MemoryRetentionAnalysis when list fields are pre-initialized
+
+        Covers branches:
+        - 319→321: else path when interference_patterns is not None
+        - 321→exit: early exit from _initialize_list_fields
+        - 326→328: else path when most_retained_item_types is not None
+        """
+        custom_interference = ["Similar words confusion", "Grammar interference"]
+        custom_retained = ["basic_phrases", "common_verbs"]
+        custom_least_retained = ["idioms", "subjunctive"]
+        custom_strategies = ["More context", "Spaced repetition"]
+
+        analysis = MemoryRetentionAnalysis(
+            user_id=1,
+            language_code="es",
+            interference_patterns=custom_interference,  # Pre-initialized
+            most_retained_item_types=custom_retained,  # Pre-initialized
+            least_retained_item_types=custom_least_retained,  # Pre-initialized
+            retention_improvement_strategies=custom_strategies,  # Pre-initialized
+        )
+
+        # Verify pre-initialized list values are preserved
+        assert analysis.interference_patterns == custom_interference
+        assert analysis.most_retained_item_types == custom_retained
+        assert analysis.least_retained_item_types == custom_least_retained
+        assert analysis.retention_improvement_strategies == custom_strategies
+
+        # Verify dict fields still get initialized
+        assert analysis.optimal_review_timing == {}
+        assert analysis.retention_by_difficulty == {}
+
+    def test_memory_retention_analysis_with_preinitialized_timestamp(self):
+        """Test MemoryRetentionAnalysis when analysis_date is pre-initialized
+
+        Covers branch:
+        - 337→exit: early exit from _initialize_timestamp_fields when analysis_date is not None
+        """
+        custom_date = datetime(2024, 1, 10, 9, 0, 0)
+
+        analysis = MemoryRetentionAnalysis(
+            user_id=3,
+            language_code="de",
+            analysis_date=custom_date,  # Pre-initialized (not None)
+        )
+
+        # Verify pre-initialized timestamp is preserved
+        assert analysis.analysis_date == custom_date
+
+        # Verify other fields still get initialized
+        assert analysis.interference_patterns == []
+        assert analysis.optimal_review_timing == {}
+
+    def test_memory_retention_analysis_fully_preinitialized(self):
+        """Test MemoryRetentionAnalysis with all optional fields pre-initialized
+
+        Comprehensive test ensuring all else branches are covered when nothing needs initialization.
+        """
+        custom_date = datetime(2024, 2, 1, 12, 0, 0)
+        custom_dicts = {
+            "optimal_review_timing": {"easy": 7.0, "hard": 1.0},
+            "retention_by_difficulty": {"easy": 0.95, "hard": 0.60},
+            "retention_by_context": {"conversation": 0.85, "reading": 0.78},
+            "optimal_study_schedule": {"Monday": ["morning"], "Wednesday": ["evening"]},
+        }
+        custom_lists = {
+            "interference_patterns": ["pattern1", "pattern2"],
+            "most_retained_item_types": ["type1"],
+            "least_retained_item_types": ["type2"],
+            "retention_improvement_strategies": ["strategy1", "strategy2"],
+        }
+
+        analysis = MemoryRetentionAnalysis(
+            user_id=4,
+            language_code="it",
+            analysis_date=custom_date,
+            optimal_review_timing=custom_dicts["optimal_review_timing"],
+            retention_by_difficulty=custom_dicts["retention_by_difficulty"],
+            retention_by_context=custom_dicts["retention_by_context"],
+            optimal_study_schedule=custom_dicts["optimal_study_schedule"],
+            interference_patterns=custom_lists["interference_patterns"],
+            most_retained_item_types=custom_lists["most_retained_item_types"],
+            least_retained_item_types=custom_lists["least_retained_item_types"],
+            retention_improvement_strategies=custom_lists[
+                "retention_improvement_strategies"
+            ],
+        )
+
+        # Verify all pre-initialized values are preserved
+        assert analysis.analysis_date == custom_date
+        assert analysis.optimal_review_timing == custom_dicts["optimal_review_timing"]
+        assert (
+            analysis.retention_by_difficulty == custom_dicts["retention_by_difficulty"]
+        )
+        assert analysis.retention_by_context == custom_dicts["retention_by_context"]
+        assert analysis.optimal_study_schedule == custom_dicts["optimal_study_schedule"]
+        assert analysis.interference_patterns == custom_lists["interference_patterns"]
+        assert (
+            analysis.most_retained_item_types
+            == custom_lists["most_retained_item_types"]
+        )
+        assert (
+            analysis.least_retained_item_types
+            == custom_lists["least_retained_item_types"]
+        )
+        assert (
+            analysis.retention_improvement_strategies
+            == custom_lists["retention_improvement_strategies"]
+        )
