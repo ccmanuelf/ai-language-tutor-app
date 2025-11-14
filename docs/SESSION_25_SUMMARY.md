@@ -8,11 +8,13 @@
 
 ## 🎯 Mission Accomplished
 
-**Starting Point**: 98.35% branch coverage (12 partial branches)  
+**Starting Point**: 98.35% branch coverage (12 partial branches - in wrong environment)  
 **Ending Point**: **100.00% branch coverage (0 partial branches)** ✅  
 **Tests Added**: 17 new tests  
 **Total Tests**: 213 tests (190 unit + 23 integration)  
 **Result**: **LEGENDARY THIRTEEN-PEAT!!!** 🎯🔥
+
+**🚨 Critical Discovery**: Session initially worked in wrong environment (Anaconda base instead of ai-tutor-env). This caused 72 tests to be skipped and incorrect branch counts. All work was valid; environment issue has been identified and fixed with prominent reminders in DAILY_PROMPT_TEMPLATE.md.
 
 ---
 
@@ -22,14 +24,16 @@
 ```
 Name                               Stmts   Miss Branch BrPart    Cover
 ------------------------------------------------------------------------
-app/services/speech_processor.py     575      0    154      0  100.00%
+app/services/speech_processor.py     575      0    166      0  100.00%
 ------------------------------------------------------------------------
 ```
 
 **Perfect Scores**:
 - ✅ **Statement Coverage**: 100% (575/575 lines)
-- ✅ **Branch Coverage**: 100% (154/154 branches, 0 partial)
+- ✅ **Branch Coverage**: 100% (166/166 branches, 0 partial)
 - ✅ **Total Tests**: 213 passing, 0 failures, 0 warnings
+
+**Note**: Correct branch count is 166 (not 154). Initial measurements used wrong Python environment (Anaconda base instead of ai-tutor-env), which caused different branch detection.
 
 ---
 
@@ -272,6 +276,61 @@ After completing Voice Validation, return to systematic testing of core features
 
 ---
 
+## 🚨 Critical Issue Discovered & Resolved
+
+### Environment Problem
+
+**Issue**: Session 25 initially worked in the wrong Python environment
+- ❌ Used: `/opt/anaconda3/bin/python` (Anaconda base)
+- ✅ Should use: `ai-tutor-env/bin/python` (project virtual environment)
+
+### Symptoms Observed
+
+1. **72 skipped tests** with async warnings
+2. **pytest-asyncio plugin warnings** about missing async support
+3. **Different branch counts**: 154 vs 166 branches detected
+4. **Confusion about test results**
+
+### Root Cause
+
+- DAILY_PROMPT_TEMPLATE.md was **missing** the virtual environment activation reminder
+- No prominent warning at start of template about environment requirement
+- Easy to forget activation step when resuming work
+
+### Resolution Applied
+
+1. **Added STEP 0** at top of DAILY_PROMPT_TEMPLATE.md with:
+   - Activation commands: `source ai-tutor-env/bin/activate`
+   - Verification command: `which python`
+   - Expected vs wrong output examples
+   - Explanation of why it matters
+
+2. **Added duplicate reminder** at bottom of template
+   - Ensures visibility regardless of where template is read
+
+3. **Verified correct results** in proper environment:
+   - All 213 tests pass (no skipped tests)
+   - True branch count: 166 branches (not 154)
+   - 100% branch coverage confirmed
+
+### Impact Assessment
+
+**Good News**: 
+- ✅ All test work was valid and correct
+- ✅ 100% coverage achievement is real
+- ✅ No need to redo any testing work
+
+**Lesson Learned**:
+- 🚨 Virtual environment is CRITICAL - must be first step
+- 🚨 Wrong environment = misleading metrics and skipped tests
+- 🚨 Template must have prominent activation reminder
+
+### Prevention
+
+Future sessions will see prominent **STEP 0** reminder immediately when reading DAILY_PROMPT_TEMPLATE.md, preventing this issue from recurring.
+
+---
+
 ## 📝 Lessons Learned
 
 1. **Branch coverage matters**: Statement coverage alone misses edge cases
@@ -281,6 +340,7 @@ After completing Voice Validation, return to systematic testing of core features
 5. **Coverage tools track everything**: Even unreachable branches need attention
 6. **Zero debt policy works**: Maintaining perfection prevents future problems
 7. **Real + simulated testing**: Best of both worlds for comprehensive coverage
+8. **🚨 CRITICAL: Virtual environment is MANDATORY**: Wrong environment = wrong results, skipped tests, false metrics. ALWAYS verify `which python` before starting work!
 
 ---
 
