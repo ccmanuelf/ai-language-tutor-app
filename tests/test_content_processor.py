@@ -16,7 +16,7 @@ Tests cover:
 import asyncio
 import json
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
@@ -2203,3 +2203,219 @@ class TestContentTypeBranches:
             progress = await processor.get_processing_progress(content_id)
             assert progress is not None
             assert progress.status == ProcessingStatus.FAILED
+
+
+class TestMissingBranchCoverage:
+    """Test cases to achieve TRUE 100% branch coverage
+
+    This class covers the 5 missing branches identified in coverage report:
+    - Line 99->exit: ProcessingProgress dataclass pre-initialization
+    - Line 255->259: _detect_content_type with unknown file extension
+    - Line 277->280: _extract_youtube_id with embed URL format
+    - Line 551->546: _generate_learning_materials loop exception handling
+    - Line 1082->1085: _calculate_relevance_score without title match
+    """
+
+    def test_processing_progress_with_preinitialized_created_at(self):
+        """Test ProcessingProgress when created_at is pre-initialized (line 99->exit)
+
+        This tests the else branch of 'if self.created_at is None' in __post_init__.
+        When created_at is provided, the initialization should be skipped.
+        """
+        custom_time = datetime.now() - timedelta(hours=1)
+
+        progress = ProcessingProgress(
+            content_id="test123",
+            status=ProcessingStatus.EXTRACTING,
+            current_step="Testing",
+            progress_percentage=50,
+            time_elapsed=30.0,
+            estimated_remaining=30.0,
+            details="Test details",
+            created_at=custom_time,  # Pre-initialize created_at
+        )
+
+        # Verify the pre-initialized time is preserved (not overwritten)
+        assert progress.created_at == custom_time
+        assert progress.content_id == "test123"
+        assert progress.status == ProcessingStatus.EXTRACTING
+
+    def test_detect_content_type_unknown_file_extension(self, processor):
+        """Test _detect_content_type with unknown file extension (line 255->259)
+
+        This tests the fall-through case where file_path exists but the extension
+        doesn't match any of the known types, falling through to URL detection.
+        """
+        # Create a file path with unknown extension
+        unknown_file = Path("/path/to/file.xyz")  # .xyz is not in any elif
+
+        content_type = processor._detect_content_type(
+            source="file.xyz", file_path=unknown_file
+        )
+
+        # Should return UNKNOWN since it's not a URL and extension is unknown
+        assert content_type == ContentType.UNKNOWN
+
+    def test_extract_youtube_id_from_embed_url(self, processor):
+        """Test _extract_youtube_id with embed URL format
+
+        This tests the 'elif "embed" in parsed.path' branch that extracts
+        video ID from YouTube embed URLs.
+        """
+        embed_url = "https://www.youtube.com/embed/dQw4w9WgXcQ"
+
+        video_id = processor._extract_youtube_id(embed_url)
+
+        assert video_id == "dQw4w9WgXcQ"
+
+    def test_extract_youtube_id_unsupported_youtube_path(self, processor):
+        """Test _extract_youtube_id with unsupported YouTube path (line 277->280)
+
+        This tests the fall-through branch when the YouTube URL hostname matches
+        but the path is neither 'watch' nor 'embed', falling through to return None.
+        """
+        # YouTube URL with unsupported path (not watch or embed)
+        unsupported_url = "https://www.youtube.com/playlist?list=PLtest123"
+
+        video_id = processor._extract_youtube_id(unsupported_url)
+
+        # Should return None since it's not a watch or embed URL
+        assert video_id is None
+
+    @pytest.mark.asyncio
+    async def test_generate_learning_materials_with_none_material(self, processor):
+        """Test _generate_learning_materials when material is None (line 551->546)
+
+        This tests the loop continuation when _generate_single_material returns None,
+        ensuring the material is not added to the list (if material: check fails).
+        """
+        metadata = ContentMetadata(
+            content_id="test123",
+            title="Test Content",
+            content_type=ContentType.WEB_ARTICLE,
+            source_url="https://example.com",
+            language="en",
+            duration=None,
+            word_count=100,
+            difficulty_level="beginner",
+            topics=["test"],
+            author=None,
+            created_at=datetime.now(),
+        )
+
+        # Mock _generate_single_material to return None for SUMMARY, valid material for FLASHCARDS
+        async def mock_generate(content, meta, material_type):
+            if material_type == LearningMaterialType.SUMMARY:
+                return None  # Return None instead of raising exception
+            return LearningMaterial(
+                material_id=f"mat_{material_type.value}",
+                content_id="test123",
+                material_type=material_type,
+                title=f"Test {material_type.value}",
+                content={"data": "test"},
+                difficulty_level="beginner",
+                estimated_time=5,
+                tags=["test"],
+                created_at=datetime.now(),
+            )
+
+        with patch.object(
+            processor, "_generate_single_material", side_effect=mock_generate
+        ):
+            materials = await processor._generate_learning_materials(
+                content="Test content",
+                metadata=metadata,
+                material_types=[
+                    LearningMaterialType.SUMMARY,  # Will return None
+                    LearningMaterialType.FLASHCARDS,  # Will succeed
+                ],
+            )
+
+        # Should have 1 material (FLASHCARDS), SUMMARY was not added (None)
+        assert len(materials) == 1
+        assert materials[0].material_type == LearningMaterialType.FLASHCARDS
+
+    @pytest.mark.asyncio
+    async def test_generate_learning_materials_with_exception(self, processor):
+        """Test _generate_learning_materials when exception occurs
+
+        This tests the exception handling in the loop, ensuring the loop continues
+        when _generate_single_material raises an exception.
+        """
+        metadata = ContentMetadata(
+            content_id="test123",
+            title="Test Content",
+            content_type=ContentType.WEB_ARTICLE,
+            source_url="https://example.com",
+            language="en",
+            duration=None,
+            word_count=100,
+            difficulty_level="beginner",
+            topics=["test"],
+            author=None,
+            created_at=datetime.now(),
+        )
+
+        # Mock _generate_single_material to raise exception for SUMMARY, succeed for FLASHCARDS
+        async def mock_generate(content, meta, material_type):
+            if material_type == LearningMaterialType.SUMMARY:
+                raise Exception("Failed to generate summary")
+            return LearningMaterial(
+                material_id=f"mat_{material_type.value}",
+                content_id="test123",
+                material_type=material_type,
+                title=f"Test {material_type.value}",
+                content={"data": "test"},
+                difficulty_level="beginner",
+                estimated_time=5,
+                tags=["test"],
+                created_at=datetime.now(),
+            )
+
+        with patch.object(
+            processor, "_generate_single_material", side_effect=mock_generate
+        ):
+            materials = await processor._generate_learning_materials(
+                content="Test content",
+                metadata=metadata,
+                material_types=[
+                    LearningMaterialType.SUMMARY,  # Will raise exception
+                    LearningMaterialType.FLASHCARDS,  # Will succeed
+                ],
+            )
+
+        # Should have 1 material (FLASHCARDS), SUMMARY was skipped due to exception
+        assert len(materials) == 1
+        assert materials[0].material_type == LearningMaterialType.FLASHCARDS
+
+    def test_calculate_relevance_score_topics_match_only(self, processor):
+        """Test _calculate_relevance_score when query matches topics but not title (line 1082->1085)
+
+        This tests the case where query is NOT in title but IS in topics,
+        ensuring all three if statements (title, topics, content) are tested independently.
+        """
+        processed_content = ProcessedContent(
+            metadata=ContentMetadata(
+                content_id="test123",
+                title="Different Title",  # Query won't match this
+                content_type=ContentType.WEB_ARTICLE,
+                source_url="https://example.com",
+                language="en",
+                duration=None,
+                word_count=100,
+                difficulty_level="beginner",
+                topics=["python", "programming"],  # Query will match here
+                author=None,
+                created_at=datetime.now(),
+            ),
+            raw_content="Raw content here",
+            processed_content="Some other content here",  # Query won't match this either
+            learning_materials=[],
+            processing_stats={},
+        )
+
+        # Query matches topics only
+        score = processor._calculate_relevance("python", processed_content)
+
+        # Score should be 0.5 (topics match only, no title or content match)
+        assert score == 0.5
