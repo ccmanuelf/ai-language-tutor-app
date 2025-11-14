@@ -1,39 +1,52 @@
 # AI Language Tutor App - Daily Project Resumption Prompt Template
 
 **Project**: AI Language Tutor App  
-**Phase**: 3A - Comprehensive Testing - **AUDIO TESTING COMPLETE!** ✅  
-**Last Updated**: 2025-11-23 (Post-Session 23 - INTEGRATION TESTS COMPLETE!)  
-**Next Session Date**: 2025-11-24  
-**Status**: Audio Testing Initiative Complete - Ready for Next Phase 🎯
+**Phase**: 3A - Comprehensive Testing - **CRITICAL: BRANCH COVERAGE GAPS FOUND!** ⚠️  
+**Last Updated**: 2025-11-14 (Post-Session 24 - 100% Statement Coverage, Branch Gaps Identified!)  
+**Next Session Date**: TBD  
+**Status**: Session 25 HIGH PRIORITY - Fix 12 Branch Coverage Gaps 🎯🚨
 
 ---
 
 ## 🚨 CRITICAL CONTEXT - READ FIRST! 🚨
 
-### Session 23 Achievement - AUDIO TESTING COMPLETE! ✅🏆
+### Session 24 Achievement - CRITICAL DISCOVERY! ⚠️🔍
 
-**Mission**: Audio Integration Testing  
-**Result**: ✅ **23 INTEGRATION TESTS - ALL PASSING!** 🎯🏆
+**Mission**: Real Audio Integration Testing + Coverage Validation  
+**Result**: ✅ **Integration Tests Complete** | ⚠️ **Branch Coverage Gaps Found**
 
-### What Was Accomplished in Session 23
-1. ✅ **Integration Tests**: 23 comprehensive tests (754 lines)
-2. ✅ **End-to-End Workflows** - STT + TTS round-trips validated!
-3. ✅ **Multi-Language Testing** - All supported languages tested!
-4. ✅ **Error Recovery** - All edge cases covered!
-5. ✅ **Performance Baselines** - Benchmarks established!
-6. ✅ **All Tests Passing**: 1,789/1,789 (was 1,766, +23 tests)
-7. ✅ **Zero Warnings**, **Zero Regressions**
+### What Was Accomplished in Session 24
+1. ✅ **23 Integration Tests**: Real audio files, no internal mocking (630 lines)
+2. ✅ **100% Statement Coverage**: 575/575 lines covered
+3. ✅ **196 Tests Passing**: All passing, 0 warnings, 0 regressions
+4. ✅ **Coverage Fix**: Subprocess-based test for numpy ImportError
+5. ⚠️ **CRITICAL FINDING**: 98.35% branch coverage - 12 untested branches
 
-### Audio Testing Initiative Status - COMPLETE! 🎯🏆
+### Critical Finding - Branch Coverage Gaps! 🚨
+**Branch Coverage**: 98.35% (154 branches, **12 partial**)
+
+**12 Untested Branches Identified**:
+- **5 branches**: Silent/empty audio edge cases (division by zero risk)
+- **2 branches**: Audio library unavailability scenarios
+- **2 branches**: Single-sample/empty audio handling
+- **1 branch**: Non-WAV format handling (MP3/FLAC/WEBM)
+- **2 branches**: Text processing edge cases
+
+**Risk Level**: HIGH - Real production risks (crashes, incorrect behavior)  
+**Policy**: Zero technical debt - Must be fixed before proceeding
+
+### Audio Testing Initiative Status - PARTIAL! ⚠️
 1. ✅ **mistral_stt_service.py**: 45% → **100%** (Session 21)
 2. ✅ **piper_tts_service.py**: 41% → **100%** (Session 22)
-3. ✅ **speech_processor.py**: 98% → **100%** (Sessions 19-20)
-4. ✅ **Integration Tests**: 23 tests covering all workflows (Session 23)
+3. ⚠️ **speech_processor.py**: 100% statement, 98.35% branch (Session 24)
+4. ✅ **Integration Tests**: 23 tests with real audio (Session 24)
 
-**Status**: ✅ **ALL AUDIO TESTING COMPLETE!** 🎯🏆
+**Status**: ⚠️ **BRANCH COVERAGE GAPS REQUIRE SESSION 25!** 🎯🚨
 
-**See**: `docs/SESSION_23_SUMMARY.md` for complete results  
-**See**: `docs/SESSION_23_HANDOVER.md` for Session 24 options
+**See**: 
+- `docs/SESSION_24_SUMMARY.md` - Complete session results
+- `docs/BRANCH_COVERAGE_ANALYSIS.md` - Detailed gap analysis
+- `docs/SESSION_25_PLAN.md` - Fix implementation plan
 
 ---
 
@@ -83,21 +96,21 @@
 
 ## 📋 Quick Status Summary
 
-### Current Project State (After Session 23) ✅
-- **Overall Coverage**: 65% (up from 44% baseline, +21 percentage points)
-- **Modules at 100%**: **32 modules** ⭐ **LEGENDARY!**
-- **Modules at >90%**: **0 modules** (all graduated to 100%!)
-- **Total Tests**: **1,789 passing** (up from 1,766, +23 tests!)
+### Current Project State (After Session 24) ⚠️
+- **Overall Coverage**: ~65% (statement coverage maintained)
+- **Modules at 100% (Statement)**: **32+ modules** ⭐
+- **speech_processor.py**: 100% statement, 98.35% branch ⚠️
+- **Total Tests**: **196 passing** (173 original + 23 integration)
 - **Warnings**: **0** (ZERO!) ✅
-- **Environment**: ✅ Production-grade, verified in venv
-- **Historic Streak**: 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥 **FOURTEEN-PEAT!!!** 🏆
+- **Environment**: ✅ Production-grade, verified
+- **Technical Debt**: 12 untested branches (HIGH PRIORITY) 🚨
 
-### Session 23 Results (INTEGRATION TESTS COMPLETE!) 🎯🏆
-- ✅ **Integration Tests**: 23 tests, 754 lines of code 🎯
-- ✅ **End-to-End Workflows**: STT + TTS round-trips validated!
-- ✅ **Multi-Language**: English, Spanish, French, German tested!
-- ✅ **Error Recovery**: All edge cases covered!
-- ✅ **Performance**: Baselines established!
+### Session 24 Results (INTEGRATION + CRITICAL FINDING!) ⚠️🔍
+- ✅ **Integration Tests**: 23 tests, 630 lines (real audio!)
+- ✅ **100% Statement Coverage**: 575/575 lines
+- ✅ **All Tests Passing**: 196/196 tests ✅
+- ⚠️ **Branch Coverage**: 98.35% (12 partial branches)
+- ⚠️ **Critical Gaps**: Edge cases with production risk
 - ✅ **Warnings**: 0 ✅ **Regressions**: 0 ✅
 
 ### Features at 100%
@@ -117,43 +130,48 @@
 
 ---
 
-## 🎯 SESSION 24-25 PLAN - COMPLETE AUDIO TESTING INITIATIVE! 🚨
+## 🎯 SESSION 25-26 PLAN - COMPLETE AUDIO TESTING INITIATIVE! 🚨
 
-### CURRENT STATUS: Phase 4 PENDING! ⚠️
+### REVISED ROADMAP (Post-Session 24) ⚠️
 
 **What's Complete**:
 - ✅ Phase 1: Audio fixtures created (Session 21)
 - ✅ Phase 2: mistral_stt_service.py at 100% (Session 21)
 - ✅ Phase 3: piper_tts_service.py at 100% (Session 22)
-- ✅ **BONUS**: Integration tests created (Session 23)
+- ✅ Phase 4: Integration tests with real audio (Session 24)
+- ✅ Phase 4+: 100% statement coverage (Session 24)
 
-**What's PENDING**:
-- ⏳ **Phase 4**: Enhance speech_processor.py tests (Session 24)
-- ⏳ **Voice Validation**: Test all 11 voices functionality (Session 24-25)
+**What's PENDING** (CRITICAL):
+- 🚨 **Session 25**: Fix 12 branch coverage gaps (HIGH PRIORITY)
+- ⏳ **Session 26**: Voice validation testing (rescheduled from Session 25)
 
-### CRITICAL FINDINGS from Original Audit:
+### Session 25: Fix 12 Branch Coverage Gaps (HIGH PRIORITY) 🚨
 
-**Issue**: `speech_processor.py` has 100% coverage BUT:
-- Uses `b"fake_audio_data"` instead of real audio
-- Mocks internal methods (`_speech_to_text_mistral`, `_text_to_speech_piper`)
-- Missing end-to-end integration tests
-- **Risk**: "Mocked tests create false confidence" 🚨
+**Goal**: Achieve 100% branch coverage for speech_processor.py
 
-### Session 24: Phase 4 - Enhance speech_processor.py Tests
+**Current Status**:
+- Statement Coverage: 100% (575/575 lines) ✅
+- Branch Coverage: 98.35% (154 branches, 12 partial) ⚠️
 
-**Goal**: Add real audio integration tests without mocking internal methods
+**Critical Gaps Identified**:
+1. **Silent/Empty Audio** (5 branches) - Division by zero, zero-length handling
+2. **Library Unavailability** (2 branches) - Behavior without numpy
+3. **Minimal Audio** (2 branches) - Single-sample edge cases
+4. **Format Handling** (1 branch) - Non-WAV formats (MP3/FLAC/WEBM)
+5. **Text Processing** (2 branches) - Emphasis/prosody edge cases
 
 **Tasks**:
-1. Add integration tests with REAL audio files
-2. Remove/reduce mocking of internal methods
-3. Test end-to-end scenarios (preprocessing → STT/TTS → validation)
-4. Document which tests use real vs. mocked audio
-5. Maintain 100% coverage with improved quality
+1. Implement 9 audio edge case tests (empty, silent, single-sample)
+2. Implement 1 format handling test (non-WAV)
+3. Implement 2 text processing tests
+4. Verify 100% branch coverage achieved
+5. Ensure 0 regressions
 
-**Expected Tests**: ~15-20 new integration tests
-**Time Estimate**: 1 session (3-4 hours)
+**Expected**: 12-15 new test cases  
+**Time Estimate**: 1 session (2 hours)  
+**Documentation**: Complete plan in `docs/SESSION_25_PLAN.md`
 
-### Session 25: Voice Validation & Testing
+### Session 26: Voice Validation & Testing (Rescheduled)
 
 **Goal**: Validate all installed voice models are functional
 
@@ -183,34 +201,40 @@
 **Expected Tests**: ~12-15 voice validation tests
 **Time Estimate**: 1 session (2-3 hours)
 
-**Combined**: Sessions 24-25 will complete the Audio Testing Initiative! 🎯
+### Session 27+: Resume Phase 3A Core Features Testing
+
+After completing Audio Testing Initiative, return to systematic progression of core feature tests from Session 2 task list.
 
 **See Details**: 
-- `docs/AUDIO_TESTING_AUDIT_REPORT.md` - Original audit findings
-- `docs/SESSION_23_HANDOVER.md` - Session 23 results
-- `docs/SESSION_23_SUMMARY.md` - What we accomplished
+- `docs/SESSION_24_SUMMARY.md` - Session 24 complete results
+- `docs/BRANCH_COVERAGE_ANALYSIS.md` - Detailed gap analysis
+- `docs/SESSION_25_PLAN.md` - Implementation plan for Session 25
+- `docs/SESSION_ROADMAP_UPDATE.md` - Revised session roadmap
 
 ---
 
-**Template Version**: 21.0 (Updated for Session 24 - NEXT PHASE PLANNING)  
-**Last Session**: 23 (2025-11-23) - Audio Integration Testing Complete! 🎯🏆  
-**Next Session**: 24 (2025-11-24)  
-**Status**: Audio Testing Complete - Determine Next Priority! 🎯
+**Template Version**: 24.0 (Updated Post-Session 24 - BRANCH COVERAGE GAPS FOUND!)  
+**Last Session**: 24 (2025-11-14) - Integration Tests Complete + Critical Finding! ⚠️  
+**Next Session**: 25 (TBD) - **HIGH PRIORITY: Fix 12 Branch Coverage Gaps** 🚨  
+**Status**: 100% Statement Coverage ✅ | 98.35% Branch Coverage ⚠️ - Gaps Must Be Fixed!
 
 **📋 CANONICAL FILE**: This is the ONLY official DAILY_PROMPT_TEMPLATE.md (located in project root)
 
 **⚠️ REMEMBER**: 
-- Virtual environment: `source ai-tutor-env/bin/activate`
-- No acceptable gaps - push for 100%!
-- Real audio testing required - no false positives!
+- Virtual environment: Check active Python environment
+- **Zero technical debt policy** - No acceptable gaps!
+- Branch coverage matters - 98.35% is NOT 100%!
+- Edge cases are NOT optional - they're production risks!
 - Fix ALL warnings - they matter!
-- "The devil is in the details" - perfectionism is the goal!
+- "The devil is in the details" - and we found 12 devils! 🔍
 
-**Ready for Session 24 - Audio Testing Complete, What's Next?** 🚀🎯🏆
+**🚨 CRITICAL FOR SESSION 25: Fix 12 Branch Coverage Gaps Before Proceeding!** 
 
 ---
 
 *For full details, see:*
-- *docs/SESSION_23_SUMMARY.md - Session 23 results*
-- *docs/SESSION_23_HANDOVER.md - Session 24 options*
+- *docs/SESSION_24_SUMMARY.md - Session 24 complete results*
+- *docs/BRANCH_COVERAGE_ANALYSIS.md - Detailed analysis of 12 gaps*
+- *docs/SESSION_25_PLAN.md - Complete implementation plan*
+- *docs/SESSION_ROADMAP_UPDATE.md - Revised session roadmap*
 - *docs/PHASE_3A_PROGRESS.md - Full progress tracker*
