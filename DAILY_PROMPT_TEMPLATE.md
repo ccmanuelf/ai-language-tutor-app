@@ -8,6 +8,28 @@
 
 ---
 
+## 🚨 STEP 0: ACTIVATE VIRTUAL ENVIRONMENT FIRST! 🚨
+
+**CRITICAL**: Before doing ANYTHING, activate the virtual environment:
+
+```bash
+cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app
+source ai-tutor-env/bin/activate
+
+# Verify you're in the correct environment:
+which python
+# Expected output: /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/bin/python
+
+# If wrong, you'll see: /opt/anaconda3/bin/python (WRONG!)
+```
+
+**Why This Matters**:
+- ❌ Wrong environment = tests skip, dependencies missing, false results
+- ✅ Correct environment = all tests pass, proper coverage, accurate results
+- 🎯 Project requires: `ai-tutor-env/bin/python` (Python 3.12.2)
+
+---
+
 ## 🎯 CRITICAL CONTEXT - READ FIRST! 🎯
 
 ### Session 25 Achievement - 100% BRANCH COVERAGE! 🎯🔥
@@ -200,8 +222,17 @@ After completing Audio Testing Initiative, return to systematic progression of c
 
 **📋 CANONICAL FILE**: This is the ONLY official DAILY_PROMPT_TEMPLATE.md (located in project root)
 
+**🚨 CRITICAL - ALWAYS DO FIRST! 🚨**:
+```bash
+# ACTIVATE VIRTUAL ENVIRONMENT BEFORE ANY WORK!
+cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app
+source ai-tutor-env/bin/activate
+# Verify correct environment:
+which python  # Should show: .../ai-tutor-env/bin/python
+```
+
 **✅ REMEMBER**: 
-- Virtual environment: Check active Python environment
+- **ALWAYS activate ai-tutor-env FIRST** - Project will fail in wrong environment!
 - **Zero technical debt achieved** - All gaps closed!
 - Branch coverage perfection - 100% means 100%!
 - Edge cases all tested - production risks eliminated!
