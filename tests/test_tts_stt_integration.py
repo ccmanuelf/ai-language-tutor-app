@@ -41,9 +41,10 @@ def tts_service():
     return PiperTTSService()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def stt_service():
-    """Create STT service instance"""
+    """Create STT service instance (function-scoped for async client lifecycle)"""
+    # Create new service for each test to avoid event loop issues
     return MistralSTTService()
 
 
@@ -66,18 +67,19 @@ class TestTTStoSTTRoundTrip:
         assert len(audio_data) > 1000, "TTS audio too small"
 
         # Transcribe audio with STT
-        transcription, stt_meta = await stt_service.transcribe_audio(
-            audio_data, language="en"
-        )
+        stt_result = await stt_service.transcribe_audio(audio_data, language="en")
 
         # Verify transcription is close to original
         # Note: May not be exact due to TTS/STT characteristics
-        transcription_lower = transcription.lower().strip()
-        original_lower = TTS_STT_TEST_PHRASES["en"].lower().strip()
+        transcription_lower = stt_result.transcript.lower().strip()
 
         # Check for key words present
-        assert "hello" in transcription_lower, f"Expected 'hello' in '{transcription}'"
-        assert "test" in transcription_lower, f"Expected 'test' in '{transcription}'"
+        assert "hello" in transcription_lower, (
+            f"Expected 'hello' in '{stt_result.transcript}'"
+        )
+        assert "test" in transcription_lower, (
+            f"Expected 'test' in '{stt_result.transcript}'"
+        )
 
     @pytest.mark.asyncio
     async def test_german_tts_to_stt(self, tts_service, stt_service):
@@ -88,15 +90,13 @@ class TestTTStoSTTRoundTrip:
 
         assert len(audio_data) > 1000
 
-        transcription, stt_meta = await stt_service.transcribe_audio(
-            audio_data, language="de"
-        )
+        stt_result = await stt_service.transcribe_audio(audio_data, language="de")
 
-        transcription_lower = transcription.lower().strip()
+        transcription_lower = stt_result.transcript.lower().strip()
 
         # Check for key German words
         assert "hallo" in transcription_lower or "test" in transcription_lower, (
-            f"Expected German words in '{transcription}'"
+            f"Expected German words in '{stt_result.transcript}'"
         )
 
     @pytest.mark.asyncio
@@ -108,15 +108,13 @@ class TestTTStoSTTRoundTrip:
 
         assert len(audio_data) > 1000
 
-        transcription, stt_meta = await stt_service.transcribe_audio(
-            audio_data, language="es"
-        )
+        stt_result = await stt_service.transcribe_audio(audio_data, language="es")
 
-        transcription_lower = transcription.lower().strip()
+        transcription_lower = stt_result.transcript.lower().strip()
 
         # Check for key Spanish words
         assert "hola" in transcription_lower or "prueba" in transcription_lower, (
-            f"Expected Spanish words in '{transcription}'"
+            f"Expected Spanish words in '{stt_result.transcript}'"
         )
 
     @pytest.mark.asyncio
@@ -128,15 +126,13 @@ class TestTTStoSTTRoundTrip:
 
         assert len(audio_data) > 1000
 
-        transcription, stt_meta = await stt_service.transcribe_audio(
-            audio_data, language="fr"
-        )
+        stt_result = await stt_service.transcribe_audio(audio_data, language="fr")
 
-        transcription_lower = transcription.lower().strip()
+        transcription_lower = stt_result.transcript.lower().strip()
 
         # Check for key French words
         assert "bonjour" in transcription_lower or "test" in transcription_lower, (
-            f"Expected French words in '{transcription}'"
+            f"Expected French words in '{stt_result.transcript}'"
         )
 
     @pytest.mark.asyncio
@@ -148,15 +144,13 @@ class TestTTStoSTTRoundTrip:
 
         assert len(audio_data) > 1000
 
-        transcription, stt_meta = await stt_service.transcribe_audio(
-            audio_data, language="it"
-        )
+        stt_result = await stt_service.transcribe_audio(audio_data, language="it")
 
-        transcription_lower = transcription.lower().strip()
+        transcription_lower = stt_result.transcript.lower().strip()
 
         # Check for key Italian words
         assert "ciao" in transcription_lower or "test" in transcription_lower, (
-            f"Expected Italian words in '{transcription}'"
+            f"Expected Italian words in '{stt_result.transcript}'"
         )
 
     @pytest.mark.asyncio
@@ -168,15 +162,13 @@ class TestTTStoSTTRoundTrip:
 
         assert len(audio_data) > 1000
 
-        transcription, stt_meta = await stt_service.transcribe_audio(
-            audio_data, language="pt"
-        )
+        stt_result = await stt_service.transcribe_audio(audio_data, language="pt")
 
-        transcription_lower = transcription.lower().strip()
+        transcription_lower = stt_result.transcript.lower().strip()
 
         # Check for key Portuguese words
         assert "olá" in transcription_lower or "teste" in transcription_lower, (
-            f"Expected Portuguese words in '{transcription}'"
+            f"Expected Portuguese words in '{stt_result.transcript}'"
         )
 
     @pytest.mark.asyncio
@@ -188,14 +180,12 @@ class TestTTStoSTTRoundTrip:
 
         assert len(audio_data) > 1000
 
-        transcription, stt_meta = await stt_service.transcribe_audio(
-            audio_data, language="zh"
-        )
+        stt_result = await stt_service.transcribe_audio(audio_data, language="zh")
 
         # Check for key Chinese characters
         # Note: Chinese transcription may have variations
-        assert "你好" in transcription or "测试" in transcription, (
-            f"Expected Chinese characters in '{transcription}'"
+        assert "你好" in stt_result.transcript or "测试" in stt_result.transcript, (
+            f"Expected Chinese characters in '{stt_result.transcript}'"
         )
 
 
@@ -238,19 +228,19 @@ class TestFullValidationLoop:
             assert len(audio_data) > 1000, f"{lang}: TTS audio too small"
 
             # Step 2: Transcribe with STT
-            transcription, stt_meta = await stt_service.transcribe_audio(
-                audio_data, language=lang
-            )
+            stt_result = await stt_service.transcribe_audio(audio_data, language=lang)
 
             # Verify transcription was generated
-            assert len(transcription) > 0, f"{lang}: STT produced empty transcription"
+            assert len(stt_result.transcript) > 0, (
+                f"{lang}: STT produced empty transcription"
+            )
 
             # Store result
             results.append(
                 {
                     "language": lang,
                     "original": test_phrase,
-                    "transcription": transcription,
+                    "transcription": stt_result.transcript,
                     "tts_voice": tts_meta["voice"],
                     "audio_size": len(audio_data),
                     "step": i + 1,
@@ -268,14 +258,14 @@ class TestFullValidationLoop:
         final_audio, final_tts_meta = await tts_service.synthesize_speech(
             TTS_STT_TEST_PHRASES["en"], language="en"
         )
-        final_transcription, final_stt_meta = await stt_service.transcribe_audio(
+        final_stt_result = await stt_service.transcribe_audio(
             final_audio, language="en"
         )
 
-        assert len(final_transcription) > 0, "Final EN step: STT failed"
+        assert len(final_stt_result.transcript) > 0, "Final EN step: STT failed"
         assert (
-            "test" in final_transcription.lower()
-            or "hello" in final_transcription.lower()
+            "test" in final_stt_result.transcript.lower()
+            or "hello" in final_stt_result.transcript.lower()
         ), "Final EN step: Transcription incorrect"
 
 
@@ -302,13 +292,11 @@ class TestCrossLanguageValidation:
         for lang, phrase in test_sequence:
             # Generate and transcribe
             audio_data, _ = await tts_service.synthesize_speech(phrase, language=lang)
-            transcription, _ = await stt_service.transcribe_audio(
-                audio_data, language=lang
-            )
+            stt_result = await stt_service.transcribe_audio(audio_data, language=lang)
 
             # Verify we got valid output
             assert len(audio_data) > 1000, f"{lang}: Audio generation failed"
-            assert len(transcription) > 0, f"{lang}: Transcription failed"
+            assert len(stt_result.transcript) > 0, f"{lang}: Transcription failed"
 
     @pytest.mark.asyncio
     async def test_voice_quality_consistency(self, tts_service, stt_service):
@@ -321,10 +309,8 @@ class TestCrossLanguageValidation:
             audio_data, _ = await tts_service.synthesize_speech(
                 test_phrase, language="en"
             )
-            transcription, _ = await stt_service.transcribe_audio(
-                audio_data, language="en"
-            )
-            transcriptions.append(transcription.lower().strip())
+            stt_result = await stt_service.transcribe_audio(audio_data, language="en")
+            transcriptions.append(stt_result.transcript.lower().strip())
 
         # All transcriptions should be similar (contain key words)
         for trans in transcriptions:
@@ -354,21 +340,19 @@ class TestAudioQualityInRoundTrip:
         simple_audio, _ = await tts_service.synthesize_speech(
             simple_phrase, language="en"
         )
-        simple_trans, _ = await stt_service.transcribe_audio(
-            simple_audio, language="en"
-        )
+        simple_result = await stt_service.transcribe_audio(simple_audio, language="en")
 
         # Test complex phrase
         complex_audio, _ = await tts_service.synthesize_speech(
             complex_phrase, language="en"
         )
-        complex_trans, _ = await stt_service.transcribe_audio(
+        complex_result = await stt_service.transcribe_audio(
             complex_audio, language="en"
         )
 
         # Both should produce valid output
-        assert len(simple_trans) > 0, "Simple phrase transcription failed"
-        assert len(complex_trans) > 0, "Complex phrase transcription failed"
+        assert len(simple_result.transcript) > 0, "Simple phrase transcription failed"
+        assert len(complex_result.transcript) > 0, "Complex phrase transcription failed"
 
         # Complex audio should be longer
         assert len(complex_audio) > len(simple_audio), (
@@ -378,9 +362,7 @@ class TestAudioQualityInRoundTrip:
     @pytest.mark.asyncio
     async def test_multiple_voices_same_language(self, tts_service, stt_service):
         """Test that different voices for same language all transcribe well"""
-        test_phrase = "This is a test of multiple voices."
-
-        # Get all Spanish voices (we have 3: AR, ES, MX)
+        # Get all Spanish voices (we have 4: AR, ES, MX x2)
         spanish_voices = [
             "es_AR-daniela-high",
             "es_ES-davefx-medium",
@@ -398,14 +380,16 @@ class TestAudioQualityInRoundTrip:
                 )
 
                 # Transcribe
-                transcription, _ = await stt_service.transcribe_audio(
+                stt_result = await stt_service.transcribe_audio(
                     audio_data, language="es"
                 )
 
                 # Should transcribe successfully
-                assert len(transcription) > 0, f"{voice_name}: Transcription failed"
+                assert len(stt_result.transcript) > 0, (
+                    f"{voice_name}: Transcription failed"
+                )
                 # Should contain Spanish words
-                trans_lower = transcription.lower()
+                trans_lower = stt_result.transcript.lower()
                 assert (
                     "prueba" in trans_lower
                     or "voz" in trans_lower

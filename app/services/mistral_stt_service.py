@@ -102,7 +102,8 @@ class MistralSTTService:
                 base_url=self.config.base_url,
                 headers={
                     "Authorization": f"Bearer {self.config.api_key}",
-                    "Content-Type": "application/json",
+                    # Note: Don't set Content-Type here - httpx will set it automatically
+                    # for multipart/form-data when sending files
                 },
                 timeout=httpx.Timeout(self.config.timeout),
             )
@@ -164,6 +165,9 @@ class MistralSTTService:
 
             if response.status_code != 200:
                 error_detail = await self._handle_api_error(response)
+                logger.error(
+                    f"Mistral STT API error details: Status={response.status_code}, Body={response.text[:500]}"
+                )
                 raise Exception(f"Mistral STT API error: {error_detail}")
 
             result_data = response.json()
