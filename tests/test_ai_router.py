@@ -1325,3 +1325,277 @@ class TestEdgeCaseCoverage:
         # Should return all providers sorted by balanced scoring (50% cost, 50% quality)
         assert len(sorted_providers) == 3
         assert all(p in sorted_providers for p in providers)
+
+
+class TestMissingBranchCoverage:
+    """Tests to achieve TRUE 100% branch coverage for ai_router.py"""
+
+    @pytest.mark.asyncio
+    async def test_select_local_provider_ollama_already_registered(self):
+        """Test branch 287->290: ollama already registered in providers"""
+        router = EnhancedAIRouter()
+
+        # Pre-register ollama provider to skip the registration branch
+        mock_ollama = AsyncMock()
+        mock_ollama.check_availability = AsyncMock(return_value=True)
+        mock_ollama.get_recommended_model = Mock(return_value="llama2")
+        router.register_provider("ollama", mock_ollama)
+
+        # Now call _select_local_provider - should skip "if ollama not in providers" branch
+        # Use valid FallbackReason enum value
+        with patch("app.services.ai_router.ollama_service", mock_ollama):
+            selection = await router._select_local_provider(
+                "en", FallbackReason.USER_PREFERENCE.value
+            )
+
+        assert selection.provider_name == "ollama"
+        assert selection.model == "llama2"
+        assert selection.service == mock_ollama
+
+    @pytest.mark.asyncio
+    async def test_generate_ai_response_fallback_no_content(self):
+        """Test branch 756->764: fallback response without content"""
+        # Mock ai_router to trigger AttributeError, then fallback returns empty response
+        mock_router = Mock()
+        mock_router.generate_response = Mock(
+            side_effect=AttributeError("Method not found")
+        )
+
+        # Mock select_provider to return a selection
+        mock_service = AsyncMock()
+        mock_selection = ProviderSelection(
+            provider_name="test",
+            model="test-model",
+            service=mock_service,
+            reason="test",
+            confidence=1.0,
+            cost_estimate=0.0,
+            is_fallback=True,
+        )
+        mock_router.select_provider = AsyncMock(return_value=mock_selection)
+
+        # Mock service to return response WITHOUT content (empty string)
+        empty_response = AIResponse(
+            content="",  # Empty content to trigger else branch
+            provider="test",
+            model="test-model",
+            language="en",
+            processing_time=0.1,
+            cost=0.0,
+            status=AIResponseStatus.SUCCESS,
+        )
+        mock_service.generate_response = AsyncMock(return_value=empty_response)
+
+        with patch("app.services.ai_router.ai_router", mock_router):
+            with patch("app.services.ai_router.response_cache") as mock_cache:
+                mock_cache.get = Mock(return_value=None)  # No cached response
+                result = await generate_ai_response(
+                    [{"role": "user", "content": "test"}], "en"
+                )
+
+        # Should return the response, but NOT call cache.set due to empty content
+        assert result == empty_response
+        mock_cache.set.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_generate_ai_response_fallback_none_response(self):
+        """Test branch 756->764: fallback returns None response"""
+        # Mock ai_router to trigger AttributeError
+        mock_router = Mock()
+        mock_router.generate_response = Mock(
+            side_effect=AttributeError("Method not found")
+        )
+
+        # Mock select_provider
+        mock_service = AsyncMock()
+        mock_selection = ProviderSelection(
+            provider_name="test",
+            model="test-model",
+            service=mock_service,
+            reason="test",
+            confidence=1.0,
+            cost_estimate=0.0,
+            is_fallback=True,
+        )
+        mock_router.select_provider = AsyncMock(return_value=mock_selection)
+
+        # Mock service to return None
+        mock_service.generate_response = AsyncMock(return_value=None)
+
+        with patch("app.services.ai_router.ai_router", mock_router):
+            with patch("app.services.ai_router.response_cache") as mock_cache:
+                mock_cache.get = Mock(return_value=None)  # No cached response
+                result = await generate_ai_response(
+                    [{"role": "user", "content": "test"}], "en"
+                )
+
+        # Should return None and NOT call cache.set
+        assert result is None
+        mock_cache.set.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_get_ai_router_status_no_alert_level(self):
+        """Test branch 789->794: budget_status.alert_level is None"""
+        # Mock ai_router.get_router_status to return base status
+        base_status = {
+            "mode": "hybrid",
+            "providers": ["claude", "ollama"],
+            "fallback_enabled": True,
+        }
+
+        # Mock check_budget_status to return budget status with None alert_level
+        budget_status = BudgetStatus(
+            total_budget=100.0,
+            used_budget=10.0,
+            remaining_budget=90.0,
+            percentage_used=10.0,
+            alert_level=None,  # None to trigger else branch
+            days_remaining=30,
+            projected_monthly_cost=10.0,
+            is_over_budget=False,
+        )
+
+        # Mock response_cache.get_stats (not get_cache_stats)
+        cache_stats = {
+            "hits": 5,
+            "misses": 10,
+            "total_requests": 15,
+            "hit_rate": 0.33,
+            "size": 100,
+        }
+
+        with patch("app.services.ai_router.ai_router") as mock_router:
+            mock_router.get_router_status = AsyncMock(return_value=base_status)
+            mock_router.check_budget_status = AsyncMock(return_value=budget_status)
+
+            with patch("app.services.ai_router.response_cache") as mock_cache:
+                mock_cache.get_stats = Mock(return_value=cache_stats)
+
+                status = await get_ai_router_status()
+
+        # Should use "green" as default when alert_level is None
+        assert status["cost_optimization"]["budget_status"]["alert_level"] == "green"
+        assert status["cost_optimization"]["budget_status"]["remaining"] == 90.0
+        assert (
+            status["cost_optimization"]["estimated_cache_savings_usd"] == 0.05
+        )  # 5 hits * $0.01
+
+    @pytest.mark.asyncio
+    async def test_generate_ai_response_try_block_no_content(self):
+        """Test branch 735->743: normal try path with no content (not AttributeError fallback)"""
+        # Mock ai_router.generate_response to succeed but return response without content
+        mock_router = Mock()
+
+        # Return response with empty content (no AttributeError)
+        empty_response = AIResponse(
+            content="",  # Empty content to trigger else branch at line 735
+            provider="test",
+            model="test-model",
+            language="en",
+            processing_time=0.1,
+            cost=0.0,
+            status=AIResponseStatus.SUCCESS,
+        )
+        mock_router.generate_response = AsyncMock(return_value=empty_response)
+
+        with patch("app.services.ai_router.ai_router", mock_router):
+            with patch("app.services.ai_router.response_cache") as mock_cache:
+                mock_cache.get = Mock(return_value=None)  # No cached response
+                result = await generate_ai_response(
+                    [{"role": "user", "content": "test"}], "en"
+                )
+
+        # Should return the response, but NOT call cache.set due to empty content
+        assert result == empty_response
+        mock_cache.set.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_get_ai_router_status_with_alert_level(self):
+        """Test branch 789->794: budget_status.alert_level has a value (not None)"""
+        # Mock ai_router.get_router_status to return base status
+        base_status = {
+            "mode": "hybrid",
+            "providers": ["claude", "ollama"],
+            "fallback_enabled": True,
+        }
+
+        # Mock check_budget_status to return budget status with alert_level set
+        budget_status = BudgetStatus(
+            total_budget=100.0,
+            used_budget=85.0,
+            remaining_budget=15.0,
+            percentage_used=85.0,
+            alert_level=BudgetAlert.RED,  # Has value to trigger if branch
+            days_remaining=5,
+            projected_monthly_cost=85.0,
+            is_over_budget=False,
+        )
+
+        # Mock response_cache.get_stats
+        cache_stats = {
+            "hits": 10,
+            "misses": 5,
+            "total_requests": 15,
+            "hit_rate": 0.67,
+            "size": 200,
+        }
+
+        with patch("app.services.ai_router.ai_router") as mock_router:
+            mock_router.get_router_status = AsyncMock(return_value=base_status)
+            mock_router.check_budget_status = AsyncMock(return_value=budget_status)
+
+            with patch("app.services.ai_router.response_cache") as mock_cache:
+                mock_cache.get_stats = Mock(return_value=cache_stats)
+
+                status = await get_ai_router_status()
+
+        # Should use alert_level.value when alert_level is not None
+        assert status["cost_optimization"]["budget_status"]["alert_level"] == "red"
+        assert status["cost_optimization"]["budget_status"]["remaining"] == 15.0
+        assert (
+            status["cost_optimization"]["estimated_cache_savings_usd"] == 0.1
+        )  # 10 hits * $0.01
+
+    @pytest.mark.asyncio
+    async def test_get_ai_router_status_zero_cache_hits(self):
+        """Test branch 789->794: cache_stats hits = 0 (no cache savings calculation)"""
+        # Mock ai_router.get_router_status to return base status
+        base_status = {
+            "mode": "hybrid",
+            "providers": ["claude", "ollama"],
+            "fallback_enabled": True,
+        }
+
+        # Mock check_budget_status
+        budget_status = BudgetStatus(
+            total_budget=100.0,
+            used_budget=10.0,
+            remaining_budget=90.0,
+            percentage_used=10.0,
+            alert_level=BudgetAlert.GREEN,
+            days_remaining=30,
+            projected_monthly_cost=10.0,
+            is_over_budget=False,
+        )
+
+        # Mock response_cache.get_stats with ZERO hits to trigger else branch
+        cache_stats = {
+            "hits": 0,  # Zero hits - should skip savings calculation
+            "misses": 10,
+            "total_requests": 10,
+            "hit_rate": 0.0,
+            "size": 0,
+        }
+
+        with patch("app.services.ai_router.ai_router") as mock_router:
+            mock_router.get_router_status = AsyncMock(return_value=base_status)
+            mock_router.check_budget_status = AsyncMock(return_value=budget_status)
+
+            with patch("app.services.ai_router.response_cache") as mock_cache:
+                mock_cache.get_stats = Mock(return_value=cache_stats)
+
+                status = await get_ai_router_status()
+
+        # Should have cache_savings = 0.0 since hits = 0
+        assert status["cost_optimization"]["estimated_cache_savings_usd"] == 0.0
+        assert status["cost_optimization"]["cache_stats"]["hits"] == 0
