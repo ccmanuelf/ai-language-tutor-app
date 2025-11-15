@@ -19,6 +19,7 @@ from sqlalchemy.exc import IntegrityError
 from app.database.config import get_db_session
 from app.database.local_config import local_db_manager
 from app.models.database import (
+    Conversation,
     LearningProgress,
     LearningStatus,
     User,
@@ -849,15 +850,12 @@ class UserProfileService:
 
             # Recent activity (last 30 days)
             thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+            # Query recent conversations directly without lambda
             recent_conversations = (
-                session.query(func.count())
+                session.query(func.count(Conversation.id))
                 .filter(
-                    and_(
-                        user.conversations.any(),
-                        user.conversations.filter(
-                            lambda c: c.started_at >= thirty_days_ago
-                        ).exists(),
-                    )
+                    Conversation.user_id == user.id,
+                    Conversation.started_at >= thirty_days_ago,
                 )
                 .scalar()
             )
