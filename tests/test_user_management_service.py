@@ -2606,18 +2606,88 @@ class TestMissingBranchCoverage:
             # Verify session was closed (line 880)
             mock_session.close.assert_called_once()
 
-    def test_get_user_statistics_no_conversations_any_false(self):
-        """Test get_user_statistics when user.conversations.any() returns False.
+    def test_get_user_statistics_scalar_returns_none(self):
+        """Test get_user_statistics when scalar() returns None.
 
-        This tests the short-circuit branch in the and_() expression at line 856.
-        When conversations.any() is False, the lambda filter is not evaluated,
-        potentially covering branch 852→exit.
+        This tests the case where the count query returns None instead of 0,
+        which would trigger the 'or 0' fallback and potentially cover branch 852→-852.
         """
         with (
             patch.object(self.service, "_get_session") as mock_session_getter,
             patch.object(self.service, "get_user_languages") as mock_get_languages,
             patch("app.services.user_management.func") as mock_func,
             patch("app.services.user_management.and_") as mock_and,
+        ):
+            mock_session = Mock()
+            mock_session_getter.return_value = mock_session
+
+            # Mock user with data
+            mock_user = Mock()
+            mock_user.id = 1
+            mock_user.user_id = "user123"
+            mock_user.created_at = datetime.now(timezone.utc) - timedelta(days=10)
+            mock_user.last_login = None  # Test None path
+
+            # Mock conversations
+            mock_conversations = Mock()
+            mock_conversations.__len__ = Mock(return_value=2)
+            mock_conversations.any = Mock(return_value=True)
+            mock_user.conversations = mock_conversations
+
+            # Mock other relationships
+            mock_user.documents = []
+            mock_user.vocabulary_lists = []
+
+            # Mock progress
+            mock_progress = Mock()
+            mock_progress.total_study_time_minutes = 100
+            mock_progress.sessions_completed = 5
+
+            # First query: get user
+            mock_user_query = Mock()
+            mock_user_query.filter.return_value.first.return_value = mock_user
+
+            # Second query: get progress
+            mock_progress_query = Mock()
+            mock_progress_query.filter.return_value.all.return_value = [mock_progress]
+
+            # Third query: CRITICAL - make scalar() return None (not 0)
+            mock_count_query = Mock()
+            mock_count_query.filter.return_value.scalar.return_value = (
+                None  # Returns None!
+            )
+
+            mock_func.count.return_value = Mock()
+            mock_and.return_value = Mock()
+
+            # Use side_effect for multiple queries
+            mock_session.query.side_effect = [
+                mock_user_query,
+                mock_progress_query,
+                mock_count_query,
+            ]
+
+            # Mock get_user_languages
+            mock_get_languages.return_value = ["es"]
+
+            result = self.service.get_user_statistics("user123")
+
+            # When scalar() returns None, the 'or 0' should kick in
+            assert result["recent_conversations_30d"] == 0  # None or 0 = 0
+            assert result["total_conversations"] == 2
+            assert result["last_login"] is None  # Also testing None path
+
+            mock_session.close.assert_called_once()
+
+    def test_get_user_statistics_no_conversations_any_false(self):
+        """Test get_user_statistics with no recent conversations.
+
+        This tests the direct query for recent conversations when user has no conversations.
+        """
+        with (
+            patch.object(self.service, "_get_session") as mock_session_getter,
+            patch.object(self.service, "get_user_languages") as mock_get_languages,
+            patch("app.services.user_management.func") as mock_func,
         ):
             mock_session = Mock()
             mock_session_getter.return_value = mock_session
@@ -2629,17 +2699,15 @@ class TestMissingBranchCoverage:
             mock_user.created_at = datetime.now(timezone.utc) - timedelta(days=10)
             mock_user.last_login = datetime.now(timezone.utc)
 
-            # Mock conversations.any() to return False (no conversations)
+            # Mock conversations as empty
             mock_conversations = Mock()
-            mock_conversations.__len__ = Mock(return_value=0)  # No conversations
-            mock_conversations.any.return_value = False  # any() returns False
+            mock_conversations.__len__ = Mock(return_value=0)
             mock_user.conversations = mock_conversations
 
             # Mock other relationships
             mock_user.documents = []
             mock_user.vocabulary_lists = []
 
-            # No progress records
             # First query: get user
             mock_user_query = Mock()
             mock_user_query.filter.return_value.first.return_value = mock_user
@@ -2648,13 +2716,9 @@ class TestMissingBranchCoverage:
             mock_progress_query = Mock()
             mock_progress_query.filter.return_value.all.return_value = []
 
-            # Third query: count query for recent conversations
-            # When and_() receives any() == False, it should short-circuit
+            # Third query: count query for recent conversations (returns 0)
             mock_count_query = Mock()
             mock_count_query.filter.return_value.scalar.return_value = 0
-
-            # Setup and_() to return a value that results in scalar() == 0
-            mock_and.return_value = False  # Short-circuit value
             mock_func.count.return_value = Mock()
 
             # Use side_effect for multiple queries
@@ -2677,7 +2741,4 @@ class TestMissingBranchCoverage:
             assert result["total_sessions_completed"] == 0
             assert result["recent_conversations_30d"] == 0
             assert result["languages_learning"] == 0
-
-            # Verify and_() was called (at line 855)
-            mock_and.assert_called_once()
             mock_session.close.assert_called_once()
