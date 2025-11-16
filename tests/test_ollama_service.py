@@ -326,6 +326,45 @@ class TestPullModel:
 
         assert result is False
 
+    @pytest.mark.asyncio
+    async def test_pull_model_progress_without_status_key(self):
+        """Test model pull when progress doesn't have 'status' key (branch 153->150)"""
+        service = OllamaService()
+
+        # Mock streaming response with progress data lacking "status" key
+        progress_lines = [
+            b'{"digest": "sha256:abc123", "total": 1000}\n',  # No "status" key
+            b'{"completed": 500, "total": 1000}\n',  # No "status" key
+            b'{"status": "success"}\n',  # Has "status" key
+        ]
+
+        async def mock_content_iter():
+            for line in progress_lines:
+                yield line
+
+        mock_content = MagicMock()
+        mock_content.__aiter__ = lambda self: mock_content_iter()
+
+        mock_response = Mock()
+        mock_response.status = 200
+        mock_response.content = mock_content
+
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
+
+        mock_session = Mock()
+        mock_session.post = Mock(return_value=mock_cm)
+
+        async def mock_get_session():
+            return mock_session
+
+        with patch.object(service, "_get_session", side_effect=mock_get_session):
+            result = await service.pull_model("llama2:7b")
+
+        # Should return True for successful pull
+        assert result is True
+
 
 class TestEnsureModelAvailable:
     """Test ensuring model availability"""
@@ -583,6 +622,29 @@ class TestFormatPrompt:
 
         assert "language tutor" in prompt
         assert "Student: Hello" in prompt
+
+    def test_format_prompt_with_system_role(self):
+        """Test prompt formatting with non-user/assistant roles (branch 377->371)"""
+        service = OllamaService()
+
+        messages = [
+            {"role": "system", "content": "You are a helpful tutor"},
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "Hi!"},
+            {"role": "function", "content": "Some function output"},
+        ]
+
+        prompt = service._format_prompt_for_language_learning(messages, "en")
+
+        # System and function roles should be skipped (else branch)
+        # Only user and assistant should be formatted
+        assert "Student: Hello" in prompt
+        assert "Tutor: Hi!" in prompt
+        # System and function content should not appear as Student/Tutor
+        assert "Student: You are a helpful tutor" not in prompt
+        assert "Tutor: You are a helpful tutor" not in prompt
+        assert "Student: Some function output" not in prompt
+        assert "Tutor: Some function output" not in prompt
 
 
 class TestGetHealthStatus:
@@ -1017,6 +1079,55 @@ class TestGenerateStreamingResponse:
         assert len(chunks) == 2
         assert chunks[0].content == "Valid"
         assert chunks[1].content == " chunk"
+
+    @pytest.mark.asyncio
+    async def test_generate_streaming_response_chunk_without_response_key(self):
+        """Test streaming when chunk doesn't have 'response' key (branch 319->315)"""
+        service = OllamaService()
+
+        messages = [{"role": "user", "content": "Hello"}]
+
+        # Mix chunks with and without "response" key
+        chunk_lines = [
+            b'{"response": "Hello", "done": false}\n',
+            b'{"status": "processing", "done": false}\n',  # No "response" key
+            b'{"model": "llama2", "done": false}\n',  # No "response" key
+            b'{"response": " world", "done": true}\n',
+        ]
+
+        async def mock_content_iter():
+            for line in chunk_lines:
+                yield line
+
+        mock_content = MagicMock()
+        mock_content.__aiter__ = lambda self: mock_content_iter()
+
+        mock_response = Mock()
+        mock_response.status = 200
+        mock_response.content = mock_content
+
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__.return_value = mock_response
+        mock_cm.__aexit__.return_value = None
+
+        mock_session = Mock()
+        mock_session.post = Mock(return_value=mock_cm)
+
+        async def mock_get_session():
+            return mock_session
+
+        chunks = []
+        with patch.object(service, "_get_session", side_effect=mock_get_session):
+            with patch.object(service, "ensure_model_available", return_value=True):
+                async for chunk in service.generate_streaming_response(
+                    messages, language="en"
+                ):
+                    chunks.append(chunk)
+
+        # Should only yield chunks with "response" key
+        assert len(chunks) == 2
+        assert chunks[0].content == "Hello"
+        assert chunks[1].content == " world"
 
 
 class TestExceptionHandling:
