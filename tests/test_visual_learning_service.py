@@ -646,6 +646,141 @@ class TestGrammarFlowchartOperations:
                 to_node_id="node2",
             )
 
+    def test_connect_flowchart_nodes_from_node_not_found(
+        self, service, sample_flowchart
+    ):
+        """Test connecting when from_node_id doesn't exist in nodes list
+
+        Branch coverage: Tests loop exit without finding matching node (274→280)
+        When connection is added but from_node doesn't exist in flowchart.nodes,
+        the loop completes without finding a match and exits.
+        """
+        # Add one node
+        node1 = service.add_flowchart_node(
+            flowchart_id=sample_flowchart.flowchart_id,
+            title="Node 1",
+            description="First node",
+            node_type="start",
+            content="Start here",
+        )
+
+        # Create a connection with a non-existent from_node_id
+        # This will add the connection but the loop won't find the node
+        result = service.connect_flowchart_nodes(
+            flowchart_id=sample_flowchart.flowchart_id,
+            from_node_id="nonexistent_from_node",
+            to_node_id=node1.node_id,
+        )
+
+        # Connection is still added even though from_node doesn't exist
+        assert result is True
+
+        # Verify connection was added
+        flowchart = service.get_flowchart(sample_flowchart.flowchart_id)
+        assert ("nonexistent_from_node", node1.node_id) in flowchart.connections
+
+        # Verify no node's next_nodes was updated (loop exited without finding match)
+        for node in flowchart.nodes:
+            assert node1.node_id not in node.next_nodes
+
+    def test_connect_flowchart_nodes_loop_continues(self, service, sample_flowchart):
+        """Test connecting nodes when from_node is not the first node
+
+        Branch coverage: Tests loop continue when node_id doesn't match (275→274)
+        When iterating through multiple nodes, the condition fails for non-matching
+        nodes and the loop continues to the next iteration.
+        """
+        # Add multiple nodes
+        node1 = service.add_flowchart_node(
+            flowchart_id=sample_flowchart.flowchart_id,
+            title="Node 1",
+            description="First node",
+            node_type="start",
+            content="Start here",
+        )
+        node2 = service.add_flowchart_node(
+            flowchart_id=sample_flowchart.flowchart_id,
+            title="Node 2",
+            description="Second node",
+            node_type="process",
+            content="Process here",
+        )
+        node3 = service.add_flowchart_node(
+            flowchart_id=sample_flowchart.flowchart_id,
+            title="Node 3",
+            description="Third node",
+            node_type="end",
+            content="End here",
+        )
+
+        # Connect using node3 as from_node (not the first node in the list)
+        # This forces the loop to continue past node1 and node2 before matching node3
+        result = service.connect_flowchart_nodes(
+            flowchart_id=sample_flowchart.flowchart_id,
+            from_node_id=node3.node_id,
+            to_node_id=node1.node_id,
+        )
+
+        assert result is True
+
+        # Verify connection and next_nodes updated for node3
+        flowchart = service.get_flowchart(sample_flowchart.flowchart_id)
+        assert (node3.node_id, node1.node_id) in flowchart.connections
+
+        from_node = [n for n in flowchart.nodes if n.node_id == node3.node_id][0]
+        assert node1.node_id in from_node.next_nodes
+
+    def test_connect_flowchart_nodes_next_node_already_exists(
+        self, service, sample_flowchart
+    ):
+        """Test connecting when to_node_id already exists in next_nodes
+
+        Branch coverage: Tests skip append when to_node_id already in next_nodes (276→278)
+        When connection doesn't exist but to_node_id is already in next_nodes,
+        the inner if condition fails and append is skipped.
+        """
+        # Add two nodes
+        node1 = service.add_flowchart_node(
+            flowchart_id=sample_flowchart.flowchart_id,
+            title="Node 1",
+            description="First node",
+            node_type="start",
+            content="Start here",
+        )
+        node2 = service.add_flowchart_node(
+            flowchart_id=sample_flowchart.flowchart_id,
+            title="Node 2",
+            description="Second node",
+            node_type="process",
+            content="Continue here",
+        )
+
+        # Manually add node2 to node1's next_nodes without adding to connections
+        # This simulates a state where next_nodes is already populated
+        flowchart = service.get_flowchart(sample_flowchart.flowchart_id)
+        for node in flowchart.nodes:
+            if node.node_id == node1.node_id:
+                node.next_nodes.append(node2.node_id)
+                break
+        service._save_flowchart(flowchart)
+
+        # Now try to connect - connection doesn't exist, but next_nodes already has it
+        result = service.connect_flowchart_nodes(
+            flowchart_id=sample_flowchart.flowchart_id,
+            from_node_id=node1.node_id,
+            to_node_id=node2.node_id,
+        )
+
+        assert result is True
+
+        # Verify connection was added
+        flowchart = service.get_flowchart(sample_flowchart.flowchart_id)
+        assert (node1.node_id, node2.node_id) in flowchart.connections
+
+        # Verify next_nodes still has only one instance (no duplicate)
+        from_node = [n for n in flowchart.nodes if n.node_id == node1.node_id][0]
+        assert from_node.next_nodes.count(node2.node_id) == 1
+
     def test_get_flowchart_success(self, service, sample_flowchart):
         """Test retrieving an existing flowchart"""
         flowchart = service.get_flowchart(sample_flowchart.flowchart_id)
