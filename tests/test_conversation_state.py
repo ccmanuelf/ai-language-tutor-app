@@ -540,6 +540,74 @@ class TestPrivateHelperMethods:
 
             assert result is False
 
+    @pytest.mark.asyncio
+    async def test_save_conversation_to_db_no_context(self):
+        """Test _save_conversation_to_db when conversation_id not in active_conversations"""
+        conv_id = "conv_nonexistent"
+        # Do NOT add conv_id to active_conversations - testing else path
+
+        with patch(
+            "app.services.conversation_state.conversation_persistence.save_conversation_to_db",
+            new_callable=AsyncMock,
+        ) as mock_save:
+            await self.manager._save_conversation_to_db(conv_id, status="active")
+
+            # Should NOT call save_conversation_to_db when context is None
+            mock_save.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_save_messages_to_db_no_messages(self):
+        """Test _save_messages_to_db when message_history has empty list"""
+        conv_id = "conv_no_messages"
+
+        # Test with empty list
+        with patch(
+            "app.services.conversation_state.message_handler.message_history",
+            {conv_id: []},
+        ):
+            with patch(
+                "app.services.conversation_state.conversation_persistence.save_messages_to_db",
+                new_callable=AsyncMock,
+            ) as mock_save:
+                await self.manager._save_messages_to_db(conv_id)
+
+                # Should NOT call save_messages_to_db when messages is empty
+                mock_save.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_save_messages_to_db_conversation_not_found(self):
+        """Test _save_messages_to_db when conversation_id not in message_history"""
+        conv_id = "conv_not_in_history"
+
+        # Test when conv_id not in message_history (returns empty list by default)
+        with patch(
+            "app.services.conversation_state.message_handler.message_history",
+            {},
+        ):
+            with patch(
+                "app.services.conversation_state.conversation_persistence.save_messages_to_db",
+                new_callable=AsyncMock,
+            ) as mock_save:
+                await self.manager._save_messages_to_db(conv_id)
+
+                # Should NOT call save_messages_to_db when messages is empty
+                mock_save.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_save_learning_progress_no_context(self):
+        """Test _save_learning_progress when conversation_id not in active_conversations"""
+        conv_id = "conv_no_progress"
+        # Do NOT add conv_id to active_conversations - testing else path
+
+        with patch(
+            "app.services.conversation_state.conversation_persistence.save_learning_progress",
+            new_callable=AsyncMock,
+        ) as mock_save:
+            await self.manager._save_learning_progress(conv_id)
+
+            # Should NOT call save_learning_progress when context is None
+            mock_save.assert_not_called()
+
 
 class TestGlobalInstance:
     """Test global conversation_state_manager instance"""
