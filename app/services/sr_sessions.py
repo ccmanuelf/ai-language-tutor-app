@@ -354,57 +354,28 @@ class SessionManager:
             Achievement is only awarded once at exact milestone.
             Requires integration with gamification system.
         """
-        streak_milestones = [7, 14, 30, 60, 100, 365]
+        # Map milestones to achievement details (title, description, points)
+        milestone_achievements = {
+            7: ("Week Warrior", "Studied for 7 consecutive days", 50),
+            14: ("Two Week Champion", "Studied for 14 consecutive days", 100),
+            30: ("Monthly Master", "Studied for 30 consecutive days", 200),
+            60: ("Dedication Legend", "Studied for 60 consecutive days", 400),
+            100: ("Century Scholar", "Studied for 100 consecutive days", 750),
+            365: ("Year-Long Learner", "Studied for 365 consecutive days", 1500),
+        }
 
-        for milestone in streak_milestones:
-            if current_streak == milestone:
-                # Map milestones to achievement details
-                if milestone == 7:
-                    title, desc, points = (
-                        "Week Warrior",
-                        "Studied for 7 consecutive days",
-                        50,
-                    )
-                elif milestone == 14:
-                    title, desc, points = (
-                        "Two Week Champion",
-                        "Studied for 14 consecutive days",
-                        100,
-                    )
-                elif milestone == 30:
-                    title, desc, points = (
-                        "Monthly Master",
-                        "Studied for 30 consecutive days",
-                        200,
-                    )
-                elif milestone == 60:
-                    title, desc, points = (
-                        "Dedication Legend",
-                        "Studied for 60 consecutive days",
-                        400,
-                    )
-                elif milestone == 100:
-                    title, desc, points = (
-                        "Century Scholar",
-                        "Studied for 100 consecutive days",
-                        750,
-                    )
-                elif milestone == 365:
-                    title, desc, points = (
-                        "Year-Long Learner",
-                        "Studied for 365 consecutive days",
-                        1500,
-                    )
-
-                # Award the achievement
-                self._award_streak_achievement(
-                    user_id,
-                    language_code,
-                    title,
-                    desc,
-                    points,
-                    milestone,
-                )
+        # Check if current streak matches a milestone
+        if current_streak in milestone_achievements:
+            title, desc, points = milestone_achievements[current_streak]
+            # Award the achievement
+            self._award_streak_achievement(
+                user_id,
+                language_code,
+                title,
+                desc,
+                points,
+                current_streak,
+            )
 
     def _award_streak_achievement(
         self,

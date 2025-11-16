@@ -440,6 +440,75 @@ class TestEndLearningSession:
 
             assert result is False
 
+    def test_end_session_missing_session_info_skips_streak_update(
+        self, session_manager
+    ):
+        """Test handles missing session_info after successful update"""
+        self._start_session(session_manager)
+
+        # Create a mock cursor that returns None on the second fetchone call
+        # This simulates a race condition where session is deleted between queries
+        call_count = [0]
+        original_get_connection = session_manager.db.get_connection
+
+        class MockCursor:
+            def __init__(self, real_cursor):
+                self.real_cursor = real_cursor
+
+            def execute(self, sql, params=None):
+                if params:
+                    return self.real_cursor.execute(sql, params)
+                return self.real_cursor.execute(sql)
+
+            def fetchone(self):
+                nonlocal call_count
+                call_count[0] += 1
+                # First call: return started_at (for session lookup)
+                if call_count[0] == 1:
+                    return self.real_cursor.fetchone()
+                # Second call: return None (session_info not found)
+                return None
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        class MockConnection:
+            def __init__(self, real_conn):
+                self.real_conn = real_conn
+
+            def cursor(self):
+                return MockCursor(self.real_conn.cursor())
+
+            def commit(self):
+                return self.real_conn.commit()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return self.real_conn.__exit__(*args)
+
+        def mock_get_connection():
+            real_conn = original_get_connection()
+            return MockConnection(real_conn.__enter__())
+
+        with patch.object(
+            session_manager.db, "get_connection", side_effect=mock_get_connection
+        ):
+            result = session_manager.end_learning_session(
+                session_id="test-session",
+                items_studied=10,
+                items_correct=8,
+                items_incorrect=2,
+            )
+
+            # Should still return True (session was updated successfully)
+            # Just skips streak update when session_info is None
+            assert result is True
+
 
 class TestUpdateLearningStreaks:
     """Test _update_learning_streaks method"""
