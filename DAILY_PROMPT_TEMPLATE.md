@@ -10,23 +10,62 @@
 
 ## 🚨 STEP 0: ACTIVATE VIRTUAL ENVIRONMENT FIRST! 🚨
 
-**CRITICAL**: Before doing ANYTHING, activate the virtual environment:
+**🔴 CRITICAL DISCOVERY (Session 36)**: Environment activation is NOT persistent across bash commands!
+
+### ⚠️ THE CRITICAL ISSUE
+
+**Each bash command is a NEW shell - previous activations DON'T persist!**
 
 ```bash
-cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app
-source ai-tutor-env/bin/activate
+# ❌ WRONG - These are SEPARATE shell sessions:
+source ai-tutor-env/bin/activate  # Activates in Shell #1
+pytest tests/                      # Runs in Shell #2 (NOT activated!)
 
-# Verify you're in the correct environment:
-which python
-# Expected output: /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/bin/python
-
-# If wrong, you'll see: /opt/anaconda3/bin/python (WRONG!)
+# ✅ CORRECT - Single shell session with && operator:
+source ai-tutor-env/bin/activate && pytest tests/
 ```
 
-**Why This Matters**:
-- ❌ Wrong environment = tests skip, dependencies missing, false results
-- ✅ Correct environment = all tests pass, proper coverage, accurate results
-- 🎯 Project requires: `ai-tutor-env/bin/python` (Python 3.12.2)
+### 🎯 MANDATORY PRACTICE
+
+**ALWAYS combine activation + command in ONE bash invocation:**
+
+```bash
+cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
+source ai-tutor-env/bin/activate && \
+<your command here>
+```
+
+**Example (Running Tests)**:
+```bash
+cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
+source ai-tutor-env/bin/activate && \
+pytest tests/ --cov=app --cov-report=term-missing -v
+```
+
+### 🔍 How to Verify Correct Environment
+
+**Check Python Path in Output**:
+- ✅ CORRECT: `/Users/.../ai-tutor-env/bin/python`
+- ❌ WRONG: `/opt/anaconda3/bin/python`
+
+**Check Error Traces**:
+- ✅ CORRECT: Paths contain `ai-tutor-env`
+- ❌ WRONG: Paths contain `/opt/anaconda3/`
+
+### 🚨 Why This Matters
+
+**Session 36 Discovery**:
+- Error traces showed `/opt/anaconda3/lib/python3.12/unittest/mock.py`
+- This proved tests ran in WRONG environment despite "activation"
+- Tests were re-verified in correct environment - all passed ✅
+
+**Impact of Wrong Environment**:
+- ❌ Tests skip (dependencies missing)
+- ❌ False positives (wrong Python version)
+- ❌ Incorrect coverage reports
+- ❌ Deployment issues (different dependencies)
+
+**See Full Details**: `docs/CRITICAL_ENVIRONMENT_WARNING.md`
 
 ---
 
@@ -185,17 +224,19 @@ which python
 - **ALWAYS run full test suite**: NEVER validate coverage with single test files - run `pytest tests/` to avoid false warnings and ensure complete validation! ⚠️ (See: docs/COVERAGE_WARNING_EXPLANATION.md)
 
 ### Lessons Learned - APPLY ALWAYS! 📚
-1. **"The devil is in the details"** - No gaps are truly acceptable
-2. **Real data over mocks** - Especially for audio/speech/voice processing
-3. **100% coverage ≠ Quality** - Coverage with mocked data = false confidence! ⚠️
-4. **Test the engine, not just the wrapper** - Core services must be tested
-5. **Fix ALL warnings** - They become bugs later
-6. **Exception handlers matter** - They're where bugs hide in production
-7. **Import errors are testable** - With the right approach
-8. **Edge cases are NOT optional** - They're where users break things
-9. **User intuition matters** - "I don't feel satisfied" is a valid quality concern! ✅
-10. **Validate real functionality** - Voice testing requires actual audio generation! ✅
-11. **Full test suite ALWAYS** - Single test files can produce false warnings from mocking - always run `pytest tests/` for true validation! ⚠️ (Session 33)
+1. **🚨 Environment activation NOT persistent** - ALWAYS combine `source ai-tutor-env/bin/activate && command` in single bash invocation! Each bash call is a new shell! ⚠️ **CRITICAL!** (Session 36)
+2. **"The devil is in the details"** - No gaps are truly acceptable
+3. **Real data over mocks** - Especially for audio/speech/voice processing
+4. **100% coverage ≠ Quality** - Coverage with mocked data = false confidence! ⚠️
+5. **Test the engine, not just the wrapper** - Core services must be tested
+6. **Fix ALL warnings** - They become bugs later
+7. **Exception handlers matter** - They're where bugs hide in production
+8. **Import errors are testable** - With the right approach
+9. **Edge cases are NOT optional** - They're where users break things
+10. **User intuition matters** - "I don't feel satisfied" is a valid quality concern! ✅
+11. **Validate real functionality** - Voice testing requires actual audio generation! ✅
+12. **Full test suite ALWAYS** - Single test files can produce false warnings from mocking - always run `pytest tests/` for true validation! ⚠️ (Session 33)
+13. **Verify Python paths** - Check for `/opt/anaconda3/` in error traces = WRONG environment! Always verify `which python` shows `ai-tutor-env` path! ⚠️ (Session 36)
 
 ### User's Praise
 > **Session 6**: "This is above and beyond expectations, great job!!!"
