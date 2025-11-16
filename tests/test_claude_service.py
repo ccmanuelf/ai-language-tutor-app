@@ -657,6 +657,109 @@ class TestConversationPromptGeneration:
         assert len(prompt) > 0
 
 
+class TestMissingBranchCoverage:
+    """Test missing branch coverage for TRUE 100% validation
+
+    Covers 3 missing branches:
+    1. Line 76→79: Empty recent_topics list (no user messages in history)
+    2. Line 251→256: Loop completes without finding text in content blocks
+    3. Line 252→251: Content block without text attribute
+    """
+
+    def setup_method(self):
+        """Set up test fixtures"""
+        with patch("app.services.claude_service.ANTHROPIC_AVAILABLE", False):
+            self.service = ClaudeService()
+
+    def test_get_conversation_prompt_no_user_messages_in_history(self):
+        """Test branch 76→79: conversation_history with no user messages
+
+        Tests the else path of 'if recent_topics:' when recent_topics is empty
+        because conversation_history contains only assistant messages.
+        """
+        # Conversation history with only assistant messages (no user role)
+        history = [
+            {"role": "assistant", "content": "Hello! How can I help you?"},
+            {"role": "assistant", "content": "I'm here to assist."},
+            {"role": "system", "content": "System message"},
+        ]
+
+        prompt = self.service._get_conversation_prompt(
+            language="en",
+            user_message="Hello",
+            conversation_history=history,
+        )
+
+        # Should still return valid prompt even without user messages in history
+        assert isinstance(prompt, str)
+        assert len(prompt) > 0
+
+    def test_get_conversation_prompt_empty_user_content_in_history(self):
+        """Test branch 76→79: conversation_history with empty user content
+
+        Tests the else path when user messages exist but have empty content,
+        resulting in empty recent_topics list.
+        """
+        # Conversation history with user messages but empty content
+        history = [
+            {"role": "user", "content": ""},
+            {"role": "assistant", "content": "Response"},
+            {"role": "user", "content": ""},
+        ]
+
+        prompt = self.service._get_conversation_prompt(
+            language="en",
+            user_message="Tell me something",
+            conversation_history=history,
+        )
+
+        # Should return valid prompt
+        assert isinstance(prompt, str)
+        assert len(prompt) > 0
+
+    def test_extract_response_content_no_text_attribute(self):
+        """Test branch 251→256 and 252→251: content blocks without text attribute
+
+        Tests two branches:
+        1. Loop continuation (252→251) when content_block has no text attribute
+        2. Loop exit (251→256) when loop completes without finding text
+        """
+        # Create mock response with content blocks that have no text attribute
+        mock_response = Mock()
+        mock_content_block_1 = Mock(spec=[])  # No attributes at all
+        mock_content_block_2 = Mock(spec=["type"])  # Has other attributes but not text
+        mock_content_block_2.type = "image"
+
+        mock_response.content = [mock_content_block_1, mock_content_block_2]
+
+        # Call the method
+        result = self.service._extract_response_content(mock_response)
+
+        # Should return fallback message when no text found
+        assert result == "I'm sorry, I couldn't generate a response."
+
+    def test_extract_response_content_mixed_content_blocks(self):
+        """Test branch 252→251: loop with some blocks without text
+
+        Tests loop continuation when first content_block has no text attribute,
+        but subsequent blocks might have text (though we break on first text found).
+        """
+        # Create mock response with mixed content blocks
+        mock_response = Mock()
+        mock_block_no_text = Mock(spec=["type"])  # No text attribute
+        mock_block_no_text.type = "image"
+        mock_block_with_text = Mock()
+        mock_block_with_text.text = "This is the response text"
+
+        mock_response.content = [mock_block_no_text, mock_block_with_text]
+
+        # Call the method
+        result = self.service._extract_response_content(mock_response)
+
+        # Should find text in second block after skipping first
+        assert result == "This is the response text"
+
+
 class TestGlobalInstance:
     """Test global claude_service instance"""
 
