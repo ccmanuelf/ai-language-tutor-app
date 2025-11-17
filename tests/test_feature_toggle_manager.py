@@ -659,6 +659,30 @@ class TestStatistics:
         assert breakdown["PARENT"]["enabled"] == 0
         assert breakdown["ADMIN"]["enabled"] == 1
 
+    def test_build_role_breakdown_multiple_features_same_role(self, manager):
+        """Test role breakdown with multiple features sharing the same role (branch 432->435)"""
+        # Pattern: Dictionary key already exists (similar to Sessions 38, 41)
+        # When processing second feature with same role, hits else branch at line 432->435
+        features = {
+            "f1": FeatureToggle(feature_name="f1", min_role="CHILD", is_enabled=True),
+            "f2": FeatureToggle(feature_name="f2", min_role="CHILD", is_enabled=False),
+            "f3": FeatureToggle(feature_name="f3", min_role="CHILD", is_enabled=True),
+            "f4": FeatureToggle(feature_name="f4", min_role="PARENT", is_enabled=True),
+            "f5": FeatureToggle(feature_name="f5", min_role="PARENT", is_enabled=False),
+        }
+
+        breakdown = manager._build_role_breakdown(features)
+
+        # Verify CHILD role aggregated correctly (3 features, 2 enabled)
+        assert "CHILD" in breakdown
+        assert breakdown["CHILD"]["total"] == 3
+        assert breakdown["CHILD"]["enabled"] == 2
+
+        # Verify PARENT role aggregated correctly (2 features, 1 enabled)
+        assert "PARENT" in breakdown
+        assert breakdown["PARENT"]["total"] == 2
+        assert breakdown["PARENT"]["enabled"] == 1
+
     def test_get_feature_statistics_complete(self, manager):
         """Test complete feature statistics"""
         manager.create_feature(
