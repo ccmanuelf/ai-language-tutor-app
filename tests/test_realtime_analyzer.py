@@ -1810,6 +1810,24 @@ async def test_collect_feedback_grammar_returns_none(
 
 
 @pytest.mark.asyncio
+async def test_collect_feedback_pronunciation_returns_none(
+    analyzer, sample_session, sample_audio_segment
+):
+    """Test _collect_feedback when pronunciation analysis returns None (line 339→342)"""
+    # Mock _analyze_pronunciation to return None instead of list
+    with patch.object(analyzer, "_analyze_pronunciation", return_value=None):
+        feedback = await analyzer._collect_feedback(
+            sample_audio_segment,
+            sample_session,
+            [AnalysisType.PRONUNCIATION],
+        )
+
+    # Should handle None gracefully and skip to line 342
+    assert isinstance(feedback, list)
+    assert len(feedback) == 0  # No feedback added when pronunciation returns None
+
+
+@pytest.mark.asyncio
 async def test_analyze_fluency_exception_handler(analyzer, sample_session):
     """Test fluency analysis exception handler (lines 697-698) - PERFECTIONISM!"""
     audio = AudioSegment(
@@ -1842,34 +1860,37 @@ async def test_analyze_fluency_exception_handler(analyzer, sample_session):
     analyzer.language_configs = original_configs
 
 
-
 @pytest.mark.asyncio
 async def test_collect_feedback_grammar_with_results(
     analyzer, sample_session, sample_audio_segment, mock_ai_response_success
 ):
     """Test _collect_feedback when grammar analysis returns feedback (line 345) - PERFECTIONISM!"""
     # Mock grammar to return actual feedback (non-empty list)
-    mock_ai_response_success.content = json.dumps([
-        {
-            "error_type": "test_error",
-            "start": 0,
-            "end": 5,
-            "severity": "critical",
-            "correction": "corrected",
-            "explanation": "test",
-            "rule": "test_rule",
-            "confidence": 0.9,
-        }
-    ])
-    
-    with patch("app.services.realtime_analyzer.ai_router.generate_response",
-               return_value=mock_ai_response_success):
+    mock_ai_response_success.content = json.dumps(
+        [
+            {
+                "error_type": "test_error",
+                "start": 0,
+                "end": 5,
+                "severity": "critical",
+                "correction": "corrected",
+                "explanation": "test",
+                "rule": "test_rule",
+                "confidence": 0.9,
+            }
+        ]
+    )
+
+    with patch(
+        "app.services.realtime_analyzer.ai_router.generate_response",
+        return_value=mock_ai_response_success,
+    ):
         feedback = await analyzer._collect_feedback(
             sample_audio_segment,
             sample_session,
             [AnalysisType.GRAMMAR],
         )
-    
+
     # Should have grammar feedback in the list
     assert len(feedback) > 0
     assert any(f.analysis_type == AnalysisType.GRAMMAR for f in feedback)
