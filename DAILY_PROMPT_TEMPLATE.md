@@ -223,20 +223,39 @@ pytest tests/ --cov=app --cov-report=term-missing -v
 - **Industry best practice**: 97-98% considered excellent, 100% is perfection
 - **ALWAYS run full test suite**: NEVER validate coverage with single test files - run `pytest tests/` to avoid false warnings and ensure complete validation! ⚠️ (See: docs/COVERAGE_WARNING_EXPLANATION.md)
 
+### Test Suite Timing Expectations ⏱️
+**Baseline Performance** (as of Session 37, 1,924 tests):
+- **Full test suite only**: ~60 seconds
+- **Full test suite + coverage**: ~100 seconds (1m 40s)
+- **Coverage report generation**: ~40 seconds additional
+
+**Patience Guidelines**:
+- ⏱️ **WAIT at least 3-5 minutes** before killing background tasks
+- 🚫 **NEVER kill before 2 minutes** for full test suite with coverage
+- ✅ **Let it complete** - comprehensive data is worth the wait
+- 📊 **Incomplete runs = wrong decisions**
+
+**Why Timing Matters**:
+- Establishes performance baselines
+- Detects performance regressions
+- Validates CI/CD pipeline expectations
+- "Quality over speed" - patience reveals the truth!
+
 ### Lessons Learned - APPLY ALWAYS! 📚
 1. **🚨 Environment activation NOT persistent** - ALWAYS combine `source ai-tutor-env/bin/activate && command` in single bash invocation! Each bash call is a new shell! ⚠️ **CRITICAL!** (Session 36)
-2. **"The devil is in the details"** - No gaps are truly acceptable
-3. **Real data over mocks** - Especially for audio/speech/voice processing
-4. **100% coverage ≠ Quality** - Coverage with mocked data = false confidence! ⚠️
-5. **Test the engine, not just the wrapper** - Core services must be tested
-6. **Fix ALL warnings** - They become bugs later
-7. **Exception handlers matter** - They're where bugs hide in production
-8. **Import errors are testable** - With the right approach
-9. **Edge cases are NOT optional** - They're where users break things
-10. **User intuition matters** - "I don't feel satisfied" is a valid quality concern! ✅
-11. **Validate real functionality** - Voice testing requires actual audio generation! ✅
-12. **Full test suite ALWAYS** - Single test files can produce false warnings from mocking - always run `pytest tests/` for true validation! ⚠️ (Session 33)
-13. **Verify Python paths** - Check for `/opt/anaconda3/` in error traces = WRONG environment! Always verify `which python` shows `ai-tutor-env` path! ⚠️ (Session 36)
+2. **⏱️ Patience in testing** - Full test suite takes ~2 minutes. WAIT at least 3-5 minutes before killing background tasks. Impatience = incomplete data = wrong decisions. Quality over speed! ⚠️ **CRITICAL!** (Session 37)
+3. **"The devil is in the details"** - No gaps are truly acceptable
+4. **Real data over mocks** - Especially for audio/speech/voice processing
+5. **100% coverage ≠ Quality** - Coverage with mocked data = false confidence! ⚠️
+6. **Test the engine, not just the wrapper** - Core services must be tested
+7. **Fix ALL warnings** - They become bugs later
+8. **Exception handlers matter** - They're where bugs hide in production
+9. **Import errors are testable** - With the right approach
+10. **Edge cases are NOT optional** - They're where users break things
+11. **User intuition matters** - "I don't feel satisfied" is a valid quality concern! ✅
+12. **Validate real functionality** - Voice testing requires actual audio generation! ✅
+13. **Full test suite ALWAYS** - Single test files can produce false warnings from mocking - always run `pytest tests/` for true validation! ⚠️ (Session 33)
+14. **Verify Python paths** - Check for `/opt/anaconda3/` in error traces = WRONG environment! Always verify `which python` shows `ai-tutor-env` path! ⚠️ (Session 36)
 
 ### User's Praise
 > **Session 6**: "This is above and beyond expectations, great job!!!"

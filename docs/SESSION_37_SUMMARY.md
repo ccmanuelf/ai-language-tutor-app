@@ -177,6 +177,40 @@ def test_cleanup_expired_sessions_with_fresh_refresh_tokens(self):
 
 ## 🎓 Lessons Learned & Patterns
 
+### Lesson: Patience in Testing ⏱️
+
+**Discovery (Session 37)**: Test suite was killed multiple times due to perceived "long runtime"  
+**Reality Check**: Full test suite with coverage completes in **1m 43s** (103 seconds)
+
+**The Lesson**:
+> "We are not in a rush, so feel free to wait at least 5 or 10 minutes before killing a long task. We might discover something hidden by exercising patience and may learn something in the process."
+
+**Timing Results**:
+- ⏱️ **Real Time**: 1m 43s (103 seconds)
+- 👤 **User Time**: 2m 29s
+- ⚙️ **System Time**: 6s
+- ✅ **All 1,924 tests passed**
+- 📊 **Complete coverage report generated**
+
+**Impact of Patience**:
+- ✅ Got complete, accurate coverage report
+- ✅ Confirmed all 6 remaining Phase 3 targets
+- ✅ Verified exact missing branches for each module
+- ✅ Learned actual runtime baseline (~100 seconds)
+- ✅ No data loss from premature termination
+
+**New Practice**: 
+- Wait **minimum 3-5 minutes** before considering timeout
+- Full test suite: expect ~2 minutes
+- Coverage generation adds ~40 seconds
+- **Quality over speed** - comprehensive data is worth the wait!
+
+**Why This Matters**:
+- Impatience = incomplete data = wrong decisions
+- Patience = full visibility = better planning
+- Test timing is predictable - use it for estimates
+- "Better to do it right by whatever it takes!" 🎯
+
 ### Pattern: Loop Exit Branches
 
 **Concept**: When loop contains conditional, two branch types exist:
