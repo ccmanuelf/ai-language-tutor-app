@@ -836,3 +836,47 @@ class TestPrivateHelperMethods:
         """Test _maybe_compress_context handles nonexistent conversation gracefully."""
         # Should not raise exception
         await self.handler._maybe_compress_context("nonexistent-id")
+
+    @pytest.mark.asyncio
+    async def test_maybe_compress_context_no_compression_when_compressed_count_zero(
+        self,
+    ):
+        """Test _maybe_compress_context skips compression when compressed_count <= 0."""
+        # This test covers the 515→exit branch
+        # When compressed_count = len(messages) - len(recent) - len(system) <= 0
+        # Create exactly 51 messages (over threshold of 50)
+        # with 20 recent messages + 31 system messages
+        # compressed_count = 51 - 20 - 31 = 0, so no compression occurs
+        self.handler.message_history[self.conversation_id] = [
+            ConversationMessage(
+                role=MessageRole.SYSTEM,
+                content=f"System message {i}",
+                timestamp=datetime.now(),
+                language="en",
+            )
+            for i in range(31)
+        ] + [
+            ConversationMessage(
+                role=MessageRole.USER,
+                content=f"Message {i}",
+                timestamp=datetime.now(),
+                language="en",
+            )
+            for i in range(20)
+        ]
+
+        original_count = len(self.handler.message_history[self.conversation_id])
+        assert original_count == 51  # Verify we're over threshold
+
+        await self.handler._maybe_compress_context(self.conversation_id)
+
+        # Should NOT compress because compressed_count = 0
+        assert len(self.handler.message_history[self.conversation_id]) == original_count
+        # No compression summary should be added
+        summary_count = sum(
+            1
+            for msg in self.handler.message_history[self.conversation_id]
+            if msg.role == MessageRole.SYSTEM
+            and "Previous conversation summary" in msg.content
+        )
+        assert summary_count == 0
