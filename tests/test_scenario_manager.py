@@ -890,6 +890,48 @@ class TestPhaseCompletionEdgeCases:
             # vocab + phrases = 0.3 + 0.3 = 0.6 >= 0.6
             assert result["is_complete"] is True
 
+    @pytest.mark.asyncio
+    async def test_check_phase_completion_no_criteria_empty_phrases(self):
+        """Test phase completion when no criteria and phrases_used is empty.
+
+        This tests the branch 959→961 where phrases_used is empty (False),
+        skipping the phrases score increment and going directly to check
+        objectives_addressed.
+        """
+        progress = ScenarioProgress(
+            scenario_id="restaurant_dinner_reservation",
+            user_id="user123",
+            current_phase=0,
+            phase_progress={},
+            vocabulary_mastered=[],
+            objectives_completed=[],
+            start_time=datetime.now(),
+            last_activity=datetime.now(),
+            total_attempts=0,
+            success_rate=0.0,
+        )
+
+        scenario = self.manager.scenarios["restaurant_dinner_reservation"]
+        current_phase = scenario.phases[0]
+
+        # Modify phase to have no success criteria
+        with patch.object(current_phase, "success_criteria", []):
+            analysis = {
+                "vocabulary_used": ["reservation", "table"],
+                "phrases_used": [],  # Empty - triggers branch 959→961
+                "objectives_addressed": ["greeting", "stating_purpose"],
+                "engagement_score": 0.8,
+            }
+
+            result = self.manager._check_phase_completion(
+                analysis, current_phase, progress
+            )
+
+            # vocab + objectives = 0.3 + 0.4 = 0.7 >= 0.6
+            # phrases_used is empty, so no 0.3 added for phrases
+            assert result["is_complete"] is True
+            assert result["completion_score"] == 0.7
+
 
 class TestScenarioValidation:
     """Test scenario validation edge cases."""
