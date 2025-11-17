@@ -361,6 +361,21 @@ class TestSessionManagement:
         for session_id in session_ids:
             assert self.auth.active_sessions[session_id].is_active is False
 
+    def test_revoke_all_user_sessions_no_active_sessions(self):
+        """Test revoking sessions when user has no active sessions"""
+        user_id = "user_no_sessions"
+
+        # Case 1: User has no sessions at all
+        count = self.auth.revoke_all_user_sessions(user_id)
+        assert count == 0
+
+        # Case 2: User has sessions but all are already inactive
+        session_id = self.auth.create_session(user_id)
+        self.auth.revoke_session(session_id)  # Make it inactive
+
+        count = self.auth.revoke_all_user_sessions(user_id)
+        assert count == 0
+
 
 class TestAuthenticationMethods:
     """Test user authentication methods"""
@@ -671,6 +686,24 @@ class TestCleanupExpiredSessions:
         # One refresh token should be removed
         assert count == 1
         assert jti not in self.auth.refresh_tokens
+
+    def test_cleanup_expired_sessions_with_fresh_refresh_tokens(self):
+        """Test cleanup when refresh tokens exist but are not expired"""
+        # Create fresh refresh tokens
+        refresh_token_1 = self.auth.create_refresh_token("user_1")
+        refresh_token_2 = self.auth.create_refresh_token("user_2")
+
+        payload_1 = self.auth.verify_token(refresh_token_1)
+        payload_2 = self.auth.verify_token(refresh_token_2)
+        jti_1 = payload_1.get("jti")
+        jti_2 = payload_2.get("jti")
+
+        # Run cleanup - should not remove fresh tokens
+        count = self.auth.cleanup_expired_sessions()
+
+        # No refresh tokens should be removed (only expired sessions if any)
+        assert jti_1 in self.auth.refresh_tokens
+        assert jti_2 in self.auth.refresh_tokens
 
 
 class TestFastAPIDependencies:
