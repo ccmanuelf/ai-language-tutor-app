@@ -391,6 +391,24 @@ class TestCalculateNextReview:
         assert ease > 0
         assert interval > 0
 
+    def test_calculate_next_review_with_invalid_review_result(
+        self, algorithm, sample_item
+    ):
+        """Test defensive handling when review_result is None (invalid input)"""
+        # Set up item with known values
+        sample_item.ease_factor = 2.5
+        sample_item.interval_days = 10
+        sample_item.repetition_number = 5
+
+        # Call with None (invalid ReviewResult - defensive pattern)
+        ease, interval, next_date = algorithm.calculate_next_review(sample_item, None)
+
+        # When review_result doesn't match any enum value, the algorithm should
+        # preserve the current values (defensive behavior - no changes applied)
+        assert ease == 2.5  # Unchanged
+        assert interval == 10  # Unchanged
+        assert next_date > datetime.now()  # Still sets a next review date
+
 
 class TestAddLearningItem:
     """Test add_learning_item method"""
