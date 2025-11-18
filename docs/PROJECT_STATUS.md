@@ -265,7 +265,7 @@ Used in all 27 refactored functions with consistent success.
 
 ### Project Purpose
 - Personal, non-commercial educational tool for family use
-- Combines features from YouLearn AI, Pingo AI, Fluently AI, Airlearn
+- Combines content-based learning, conversational practice, speech analysis, and adaptive learning features
 - Must remain flexible, configurable, and adaptable
 - Production-ready quality expected despite personal use
 

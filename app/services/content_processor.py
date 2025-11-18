@@ -1,6 +1,6 @@
 """
 Content Processing Pipeline
-AI Language Tutor App - YouLearn Functionality Implementation
+AI Language Tutor App - Content-Based Learning Implementation
 
 Provides:
 - YouTube video processing and transcript extraction
@@ -155,7 +155,7 @@ class ProcessedContent:
 
 
 class ContentProcessor:
-    """Main content processing service implementing YouLearn functionality"""
+    """Main content processing service for content-based learning features"""
 
     def __init__(self):
         self.settings = get_settings()

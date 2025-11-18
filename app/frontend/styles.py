@@ -15,9 +15,9 @@ from fasthtml.common import Style
 def load_styles():
     """Load comprehensive CSS styles for the AI Language Tutor frontend"""
     return Style("""
-    /* AI Language Tutor - YouLearn-Inspired Modern UI */
+    /* AI Language Tutor - content-based learning-Inspired Modern UI */
     :root {
-        /* YouLearn-inspired color palette */
+        /* content-based learning-inspired color palette */
         --primary-color: #6366f1;
         --primary-light: #a5b4fc;
         --primary-dark: #4338ca;

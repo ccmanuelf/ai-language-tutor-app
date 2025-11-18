@@ -1,7 +1,7 @@
 """
-Fluently-Style Tutor Modes Manager for AI Language Tutor App
+speech analysis-Style Tutor Modes Manager for AI Language Tutor App
 
-This module provides the complete set of tutor modes that define the Fluently experience:
+This module provides the complete set of tutor modes that define the speech analysis experience:
 1. Chit-chat free talking - Casual conversation with relaxed correction
 2. One-on-One interview simulation - Job interview practice scenarios
 3. Deadline negotiations - Business negotiation and pressure situations
@@ -10,7 +10,7 @@ This module provides the complete set of tutor modes that define the Fluently ex
 6. Open session talking - User-selected topic conversations
 
 Features:
-- Complete Fluently tutor mode compatibility
+- Complete speech analysis tutor mode compatibility
 - AI-powered conversation generation per mode
 - Real-time analysis integration
 - Multi-language support
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class TutorMode(Enum):
-    """Available Fluently-style tutor modes"""
+    """Available speech analysis-style tutor modes"""
 
     CHIT_CHAT = "chit_chat"
     INTERVIEW_SIMULATION = "interview_simulation"
@@ -113,7 +113,7 @@ class TutorSession:
 
 class TutorModeManager:
     """
-    Comprehensive Fluently-style tutor modes manager
+    Comprehensive speech analysis-style tutor modes manager
 
     Provides all 6 core tutor modes with AI-powered conversation generation,
     real-time analysis integration, and adaptive learning features.

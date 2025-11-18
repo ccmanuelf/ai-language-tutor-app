@@ -1,8 +1,8 @@
 """
-Scenario-Based Conversation Manager for AI Language Tutor App (Pingo functionality)
+Scenario-Based Conversation Manager for AI Language Tutor App
 
-This module provides structured scenario-based conversations for language learning,
-similar to Pingo's approach of contextual practice sessions.
+This module provides structured scenario-based conversations for language learning
+with contextual practice sessions and real-world situations.
 
 Features:
 - Pre-defined conversation scenarios (restaurant, travel, business, etc.)
