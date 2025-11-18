@@ -494,6 +494,26 @@ class TestContextManager:
             # After exit, client should be closed
             # (We can't verify this easily without accessing internals)
 
+    @pytest.mark.asyncio
+    async def test_context_manager_exit_with_no_client(self):
+        """Test async context manager exit when client is None (line 276→exit)
+
+        This tests the defensive programming pattern where __aexit__ is called
+        but self.client is None (due to initialization failure). The missing
+        branch 276→exit represents the else path when 'if self.client:' is False.
+        """
+        with patch("app.services.mistral_stt_service.get_settings") as mock_settings:
+            # Provide invalid config (API key too short) to prevent client creation
+            mock_settings.return_value = MagicMock(MISTRAL_API_KEY="short")
+
+            # Context manager should handle None client gracefully
+            async with MistralSTTService() as service:
+                assert service is not None
+                assert service.available is False
+                assert service.client is None  # Client not initialized
+
+            # __aexit__ should complete without error even though client is None
+
 
 # =============================================================================
 # Factory Function Tests (Lines 275-279)
