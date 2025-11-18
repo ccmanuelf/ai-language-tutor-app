@@ -4,7 +4,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green.svg)](https://fastapi.tiangolo.com/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-Frontend-red.svg)](https://streamlit.io/)
+[![FastHTML](https://img.shields.io/badge/FastHTML-Frontend-red.svg)](https://fastht.ml/)
 [![Testing](https://img.shields.io/badge/Test_Coverage-64%25-yellow.svg)](#testing)
 [![Status](https://img.shields.io/badge/Status-Active_Development-brightgreen.svg)](#project-status)
 
@@ -57,9 +57,10 @@ Phase 4: Production Deployment             📋 FUTURE
 ### Technology Stack
 
 **Frontend Layer**:
-- **Streamlit**: Modern, interactive UI framework
-- **Port**: 8501 (default)
+- **FastHTML**: Python-based, server-side rendering framework
+- **Port**: 3000
 - **Features**: Chat interface, progress tracking, admin dashboards, visual learning tools
+- **Architecture**: Modular component structure
 
 **Backend Layer**:
 - **FastAPI**: High-performance async API server
@@ -87,12 +88,12 @@ Phase 4: Production Deployment             📋 FUTURE
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Frontend Layer (Streamlit)                  │
+│                      Frontend Layer (FastHTML)                   │
 │  ┌─────────────┐  ┌──────────────┐  ┌────────────────────────┐ │
 │  │ Chat UI     │  │ Progress UI  │  │ Admin Dashboards       │ │
 │  └─────────────┘  └──────────────┘  └────────────────────────┘ │
 └───────────────────────────┬─────────────────────────────────────┘
-                            │ HTTP/WebSocket
+                            │ HTTP (CORS enabled)
 ┌───────────────────────────┴─────────────────────────────────────┐
 │                    Backend Layer (FastAPI)                       │
 │  ┌──────────────┐  ┌──────────────┐  ┌─────────────────────┐  │
@@ -148,20 +149,22 @@ cp .env.example .env
 ```bash
 cd /path/to/ai-language-tutor-app
 source ai-tutor-env/bin/activate
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+python run_backend.py
+# Or directly: uvicorn app.main:app --reload --host localhost --port 8000
 ```
 
 **Frontend Server** (Terminal 2):
 ```bash
 cd /path/to/ai-language-tutor-app
 source ai-tutor-env/bin/activate
-streamlit run app/frontend_main.py --server.port 8501
+python run_frontend.py
+# Or directly: uvicorn app.frontend_main:frontend_app --reload --host localhost --port 3000
 ```
 
 **Access Application**:
-- Frontend: http://localhost:8501
+- Frontend: http://localhost:3000
 - Backend API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
+- API Docs: http://localhost:8000/api/docs
 
 ## 🧪 Testing
 
@@ -223,9 +226,11 @@ ai-language-tutor-app/
 │   ├── core/                  # Core utilities
 │   │   ├── config.py          # Application config
 │   │   └── security.py        # Security utilities
-│   ├── frontend/              # Streamlit UI components
+│   ├── frontend/              # FastHTML UI components
+│   │   ├── main.py            # Frontend app factory
 │   │   ├── chat.py            # Chat interface
 │   │   ├── progress.py        # Progress tracking
+│   │   ├── home.py            # Landing page
 │   │   └── admin_dashboard.py # Admin tools
 │   ├── main.py                # Backend entry point
 │   └── frontend_main.py       # Frontend entry point
