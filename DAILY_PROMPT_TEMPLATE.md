@@ -428,16 +428,16 @@ pytest tests/ --cov=app --cov-report=term-missing -v
 **Phase 1 Complete**: ✅ 17/17 modules at TRUE 100% (Sessions 27-43)  
 **Next Goal**: Expand to **90+ modules** across the entire project! 🚀
 
-### Expansion Scope Overview
+### Expansion Scope Overview (Architecture-First Order)
 
 | Phase | Focus Area | Modules | Est. Hours | Priority |
 |-------|-----------|---------|------------|----------|
-| **Phase 3** | Extended Services | ~13 | 40-50 | HIGH ⭐ |
-| **Phase 4** | Database Layer | ~8 | 15-20 | HIGH ⭐ |
-| **Phase 5** | API Layer | ~14+ | 60-80 | MED-HIGH |
+| **Phase 3** | **Critical Infrastructure** | ~12 | 30-40 | ⭐⭐⭐ HIGHEST |
+| **Phase 4** | **Extended Services** | ~13 | 55-70 | ⭐⭐ HIGH |
+| **Phase 5** | API Layer | ~14+ | 60-80 | ⭐ MED-HIGH |
 | **Phase 6** | Frontend Layer | ~13+ | 25-35 | MEDIUM |
-| **Phase 7** | Utils & Infrastructure | ~8 | 10-15 | MED-LOW |
-| **TOTAL** | **Full Project** | **73+** | **150-200** | - |
+| **Phase 7** | Specialized Features | ~21+ | 30-40 | VARIABLE |
+| **TOTAL** | **Full Project** | **90+** | **200-265** | - |
 
 ### Target Achievement
 
@@ -449,28 +449,37 @@ pytest tests/ --cov=app --cov-report=term-missing -v
 - Branch Coverage: ~60% → **~95%+** 📈
 - Total Tests: 1,930 → **~3,000+** 🧪
 
-### Quick Wins - Recommended Starting Point!
+### Key Philosophy Change: "There Is No Small Enemy"
 
-**Nearly Complete Modules** (95%+ coverage, just need branch validation):
+**Lessons from Phase 1**:
+- Session 31: "Simple" user_management → Lambda closure refactoring needed
+- Session 36: "Just 2 branches" → Uncoverable branch, required refactoring
+- Session 40: "Just 1 branch" → Deep defensive pattern discovery
 
-1. ✅ **models/schemas.py** (99.36% stmt, 1 partial branch) - ~30 min
-2. ✅ **models/feature_toggle.py** (98.05% stmt) - ~30-45 min
-3. ✅ **models/simple_user.py** (96.30% stmt) - ~15-30 min
-4. ✅ **main.py** (96.08% stmt, 1 partial branch) - ~30-45 min
+**Conclusion**: Never assume ANY module is "quick" - respect every line of code! 🎯
 
-**Quick Wins Total**: 4 modules, ~2-3 hours, immediate momentum! 🎯
+### Phase 3: Critical Infrastructure (Priority 1 - START HERE!) ⭐⭐⭐
 
-### Phase 3: Extended Services (Priority 1)
+**Architecture-First Approach**: Foundation → Services → API → UI
 
-**High-Impact Targets**:
+**Tier 1: Database & Models** (CRITICAL - Start Here!):
 
-1. **scenario_factory.py** (57.33%, ~14 branches) - 2-3 hours
-2. **spaced_repetition_manager.py** (43.48%, ~11 branches) - 2-3 hours
-3. **tutor_mode_manager.py** (41.71%, ~38 branches) - 3-4 hours
-4. **ai_model_manager.py** (38.77%, ~120 branches) - 5-6 hours
-5. **budget_manager.py** (25.27%, ~68 branches) - 4-5 hours
-6. **response_cache.py** (25.29%, ~45 branches) - 3-4 hours
-7. **feature_toggle_service.py** (9.25%, ~210 branches!) - 6-8 hours ⚠️
+1. **models/database.py** (85.50%, ~16 branches, 2 partial) - 3-4 hours
+   - Why First: Core database models, everything depends on this
+   - Impact: Data corruption risk if not perfect
+   
+2. **database/config.py** (69.04%, ~44 branches, 3 partial) - 4-5 hours
+   - Why Critical: Database connections, configuration
+   
+3. **database/migrations.py** (28.70%, ~33 branches, 4 partial) - 5-6 hours
+   - Why Critical: Schema versioning, data migration (can destroy data!)
+
+**Tier 3: Security** (SECURITY CRITICAL):
+
+4. **core/security.py** (27.50%, ~16 branches) - 3-4 hours
+   - Why Critical: Encryption, hashing, authentication - must be bulletproof
+
+**See Full Plan**: `docs/TRUE_100_PERCENT_EXPANSION_PLAN.md` for complete details
 
 ### Execution Philosophy
 
