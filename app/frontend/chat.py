@@ -245,7 +245,7 @@ def create_chat_route(app):
                 # Real-Time Analysis Panel
                 Div(
                     H2(
-                        "🎯 Real-Time Analysis (Fluently)", style="margin-bottom: 1rem;"
+                        "🎯 Real-Time Analysis (speech analysis)", style="margin-bottom: 1rem;"
                     ),
                     Div(
                         Div(

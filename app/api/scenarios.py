@@ -1,6 +1,6 @@
 """
 Scenario-Based Conversation API Endpoints
-AI Language Tutor App - RESTful API for Pingo functionality
+AI Language Tutor App - RESTful API for conversational practice functionality
 
 This module provides API endpoints for managing scenario-based conversations,
 allowing users to practice language skills in structured, real-world contexts.

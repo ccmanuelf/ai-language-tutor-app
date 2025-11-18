@@ -1,5 +1,5 @@
 """
-Real-Time Analysis Engine for AI Language Tutor App (Fluently Functionality)
+Real-Time Analysis Engine for AI Language Tutor App (speech analysis Functionality)
 
 This module provides comprehensive real-time language analysis including:
 - Pronunciation analysis and scoring

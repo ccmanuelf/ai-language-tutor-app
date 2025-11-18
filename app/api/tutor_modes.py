@@ -1,7 +1,7 @@
 """
 Tutor Modes API for AI Language Tutor App
 
-This module provides RESTful API endpoints for Fluently-style tutor modes:
+This module provides RESTful API endpoints for speech analysis-style tutor modes:
 - Mode discovery and selection
 - Session management (start, status, end)
 - AI conversation generation per mode
@@ -112,7 +112,7 @@ async def get_available_modes(
     """
     Get list of available tutor modes
 
-    Returns all 6 Fluently-style tutor modes with descriptions and requirements.
+    Returns all 6 speech analysis-style tutor modes with descriptions and requirements.
     """
     try:
         modes = tutor_mode_manager.get_available_modes()

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Comprehensive Testing Suite for Task 2.4 - Fluently Tutor Modes Implementation
+Comprehensive Testing Suite for Task 2.4 - Conversational Tutor Modes Implementation
 AI Language Tutor App - Personal Family Educational Tool
 
-This test suite validates all 6 Fluently-style tutor modes:
+This test suite validates all 6 conversational tutor modes:
 1. Chit-chat free talking
 2. One-on-One interview simulation
 3. Deadline negotiations
@@ -27,19 +27,19 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 # Add project root to Python path
 sys.path.append(str(Path(__file__).parent))
 
-from app.services.tutor_mode_manager import (
-    tutor_mode_manager,
-    TutorMode,
-    DifficultyLevel,
-    TutorModeCategory,
-)
-from app.services.ai_router import ai_router
 from app.core.config import get_settings
+from app.services.ai_router import ai_router
+from app.services.tutor_mode_manager import (
+    DifficultyLevel,
+    TutorMode,
+    TutorModeCategory,
+    tutor_mode_manager,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 
 
 class TutorModesTestSuite:
-    """Comprehensive test suite for Fluently tutor modes"""
+    """Comprehensive test suite for conversational tutor modes"""
 
     def __init__(self):
         """Initialize test suite"""

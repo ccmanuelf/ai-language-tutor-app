@@ -3,8 +3,8 @@ Progress Analytics Service
 Task 3.1.8 - Enhanced Progress Analytics Dashboard
 
 Advanced progress analytics service complementing the existing Learning Analytics Dashboard
-with sophisticated tracking capabilities inspired by Airlearn AI and Pingo AI. This service
-focuses on enhancement rather than duplication of existing functionality.
+with sophisticated tracking capabilities for adaptive learning and conversational practice.
+This service focuses on enhancement rather than duplication of existing functionality.
 
 Features:
 - Enhanced spaced repetition analytics with smart scheduling insights
@@ -20,10 +20,10 @@ import json
 import logging
 import sqlite3
 import statistics
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 # Register SQLite datetime adapters for Python 3.12+ compatibility
 from app.utils.sqlite_adapters import register_sqlite_adapters

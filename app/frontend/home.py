@@ -1,12 +1,12 @@
 """
 Frontend Home Route
-AI Language Tutor App - YouLearn-Style Landing Page
+AI Language Tutor App - content-based learning-Style Landing Page
 
 Provides:
-- YouLearn-inspired main interface
+- content-based learning-inspired main interface
 - Upload, Paste, Record options
 - Learning spaces and content exploration
-- Clean, centered layout matching YouLearn design
+- Clean, centered layout matching content-based learning design
 """
 
 from datetime import datetime
@@ -42,7 +42,7 @@ def create_heroicon_svg(icon_name, size="20", stroke_width="1.5"):
 
 
 def create_youlearn_sidebar():
-    """Create YouLearn-style sidebar navigation with HeroIcons"""
+    """Create content-based learning-style sidebar navigation with HeroIcons"""
     return Div(
         # Logo section
         Div(
@@ -251,7 +251,7 @@ def create_youlearn_sidebar():
 
 
 def create_main_content():
-    """Create YouLearn-style main content area"""
+    """Create content-based learning-style main content area"""
     return Div(
         # Top bar with language selector and toolbar
         Div(
@@ -264,7 +264,7 @@ def create_main_content():
                 ),
                 style="display: flex; align-items: center;",
             ),
-            # Center toolbar with YouLearn features
+            # Center toolbar with content-based learning features
             Div(
                 A(
                     Span(
@@ -1189,11 +1189,11 @@ def create_content_processing_scripts():
 
 
 def create_home_routes(app):
-    """Create YouLearn-style home routes"""
+    """Create content-based learning-style home routes"""
 
     @app.route("/")
     def home():
-        """YouLearn-style main landing page"""
+        """content-based learning-style main landing page"""
         return Html(
             Head(
                 Meta(charset="utf-8"),

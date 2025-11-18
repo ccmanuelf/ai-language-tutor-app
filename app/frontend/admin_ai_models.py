@@ -12,7 +12,7 @@ Modern, responsive admin interface for managing AI models and providers:
 - Health monitoring alerts
 - Advanced filtering and search
 
-Follows YouLearn design patterns with modern responsive layout.
+Follows content-based learning design patterns with modern responsive layout.
 """
 
 from fasthtml import *
