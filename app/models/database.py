@@ -5,26 +5,25 @@ This module defines SQLAlchemy models for the SQLite database.
 Includes user management, conversations, documents, learning progress, and more.
 """
 
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Text,
-    DateTime,
-    Boolean,
-    Float,
-    ForeignKey,
-    Table,
-    JSON,
-    Enum,
-    Index,
-    UniqueConstraint,
-)
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import relationship, validates
-from sqlalchemy.sql import func
 from enum import Enum as PyEnum
 
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Table,
+    Text,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import declarative_base, relationship, validates
+from sqlalchemy.sql import func
 
 Base = declarative_base()
 
@@ -665,6 +664,7 @@ def get_db_session():
     """
     from app.database.config import db_manager
 
+    session = None  # Initialize to avoid UnboundLocalError in exception handlers
     try:
         # Use SQLite session from db_manager
         session = db_manager.get_sqlite_session()
