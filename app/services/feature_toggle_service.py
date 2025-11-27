@@ -4,22 +4,22 @@ Manages dynamic feature control and user-specific access.
 """
 
 import json
+import logging
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Any
-import logging
+from typing import Any, Dict, List, Optional
 
 from app.models.feature_toggle import (
+    FeatureCondition,
     FeatureToggle,
+    FeatureToggleCategory,
+    FeatureToggleEvent,
     FeatureToggleRequest,
-    FeatureToggleUpdateRequest,
     FeatureToggleScope,
     FeatureToggleStatus,
-    FeatureToggleCategory,
+    FeatureToggleUpdateRequest,
     UserFeatureAccess,
-    FeatureToggleEvent,
-    FeatureCondition,
 )
 
 logger = logging.getLogger(__name__)
@@ -137,17 +137,18 @@ class FeatureToggleService:
 
     def _looks_like_iso_datetime(self, text: str) -> bool:
         """Check if string looks like ISO datetime format"""
-        return (
-            len(text) >= 19
-            and "T" in text
-            and ":" in text
-            and (
+        # Basic check: has T separator, colons for time, and reasonable length
+        # This covers: YYYY-MM-DDTHH:MM:SS with optional timezone/microseconds
+        if len(text) >= 19 and "T" in text and ":" in text:
+            # Additional checks for timezone markers or microseconds
+            return (
                 text.endswith("Z")
                 or "+" in text[-6:]
                 or "-" in text[-6:]
                 or "." in text
+                or len(text) == 19  # Exact basic format: YYYY-MM-DDTHH:MM:SS
             )
-        )
+        return False
 
     def _normalize_datetime_string(self, text: str) -> str:
         """Normalize datetime string for parsing"""
@@ -198,10 +199,11 @@ class FeatureToggleService:
             features_data = []
             for feature in self._features.values():
                 feature_dict = feature.model_dump()
-                # Convert datetime objects to ISO strings
+                # Convert datetime objects to ISO strings (if not already strings)
                 for field in ["created_at", "updated_at"]:
                     if field in feature_dict and feature_dict[field]:
-                        feature_dict[field] = feature_dict[field].isoformat()
+                        if isinstance(feature_dict[field], datetime):
+                            feature_dict[field] = feature_dict[field].isoformat()
                 features_data.append(feature_dict)
 
             data = {
@@ -230,12 +232,13 @@ class FeatureToggleService:
                 user_access_data[user_id] = {}
                 for feature_id, access in access_dict.items():
                     access_dict_data = access.model_dump()
-                    # Convert datetime objects to ISO strings
+                    # Convert datetime objects to ISO strings (if not already strings)
                     for field in ["granted_at", "override_expires", "last_used"]:
                         if field in access_dict_data and access_dict_data[field]:
-                            access_dict_data[field] = access_dict_data[
-                                field
-                            ].isoformat()
+                            if isinstance(access_dict_data[field], datetime):
+                                access_dict_data[field] = access_dict_data[
+                                    field
+                                ].isoformat()
                     user_access_data[user_id][feature_id] = access_dict_data
 
             data = {
