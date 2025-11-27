@@ -45,11 +45,11 @@ def temp_storage():
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-@pytest.fixture
-def service(temp_storage, event_loop):
+@pytest_asyncio.fixture
+async def service(temp_storage):
     """Create a fresh FeatureToggleService instance."""
     svc = FeatureToggleService(storage_dir=temp_storage)
-    event_loop.run_until_complete(svc.initialize())
+    await svc.initialize()
     return svc
 
 
@@ -862,7 +862,11 @@ class TestFeatureEvaluation:
         """Test admin-required feature returns False without admin role."""
         # Get admin dashboard (requires admin)
         features = await service.get_all_features()
-        admin_feature = next(f for f in features if f.requires_admin and f.status == FeatureToggleStatus.ENABLED)
+        admin_feature = next(
+            f
+            for f in features
+            if f.requires_admin and f.status == FeatureToggleStatus.ENABLED
+        )
 
         result = await service.is_feature_enabled(
             admin_feature.id, user_id="user123", user_roles=["user"]
@@ -894,7 +898,11 @@ class TestFeatureEvaluation:
         """Test admin-required feature returns True with super_admin role."""
         # Get admin dashboard (requires admin)
         features = await service.get_all_features()
-        admin_feature = next(f for f in features if f.requires_admin and f.status == FeatureToggleStatus.ENABLED)
+        admin_feature = next(
+            f
+            for f in features
+            if f.requires_admin and f.status == FeatureToggleStatus.ENABLED
+        )
 
         result = await service.is_feature_enabled(
             admin_feature.id, user_id="superadmin123", user_roles=["super_admin"]
@@ -2540,10 +2548,118 @@ class TestEdgeCases:
 
 
 # ============================================================================
+# TEST CLASS 12: REMAINING COVERAGE (Session 60)
+# ============================================================================
+
+
+# ============================================================================
+# TEST CLASS 12: REMAINING COVERAGE (Session 60)
+# ============================================================================
+
+
+# ============================================================================
+# TEST CLASS 12: REMAINING COVERAGE (Session 60)
+# ============================================================================
+
+
+class TestRemainingCoverage:
+    """Tests to achieve TRUE 100% coverage - remaining branches"""
+
+    @pytest.mark.asyncio
+    async def test_delete_feature_no_user_access_entries(self, temp_storage):
+        """Test delete_feature when feature has no user access entries (branch 650→649)."""
+        service = FeatureToggleService(storage_dir=temp_storage)
+        await service.initialize()
+
+        # Create a feature
+        feature = FeatureToggle(
+            id="test_feature",
+            name="Test",
+            description="Test",
+            category=FeatureToggleCategory.ANALYSIS,
+            scope=FeatureToggleScope.GLOBAL,
+            status=FeatureToggleStatus.ENABLED,
+        )
+        service._features["test_feature"] = feature
+
+        # Ensure no user access entries exist for this feature
+        service._user_access = {}
+
+        # Delete feature - loop over empty user_access
+        result = await service.delete_feature("test_feature", deleted_by="admin")
+
+        assert result is True
+        assert "test_feature" not in service._features
+
+    @pytest.mark.asyncio
+    async def test_is_feature_enabled_cache_missing_result_and_timestamp(
+        self, temp_storage
+    ):
+        """Test is_feature_enabled when cache has neither result nor timestamp (branch 688→692)."""
+        service = FeatureToggleService(storage_dir=temp_storage)
+        await service.initialize()
+
+        # Create a feature
+        feature = FeatureToggle(
+            id="test_feature",
+            name="Test",
+            description="Test",
+            category=FeatureToggleCategory.ANALYSIS,
+            scope=FeatureToggleScope.GLOBAL,
+            status=FeatureToggleStatus.ENABLED,
+            enabled_by_default=True,
+        )
+        service._features["test_feature"] = feature
+
+        # Add invalid cache entry (missing both result and timestamp)
+        cache_key = "test_feature:user123:None"
+        service._feature_cache[cache_key] = {}  # Empty dict
+
+        # Call is_feature_enabled - should skip cache and evaluate
+        result = await service.is_feature_enabled("test_feature", user_id="user123")
+
+        # Should evaluate and return True (enabled_by_default=True)
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_set_user_feature_access_new_user(self, temp_storage):
+        """Test set_user_feature_access when user doesn't exist in _user_access (branch 950→953)."""
+        service = FeatureToggleService(storage_dir=temp_storage)
+        await service.initialize()
+
+        # Create a feature
+        feature = FeatureToggle(
+            id="test_feature",
+            name="Test",
+            description="Test",
+            category=FeatureToggleCategory.ANALYSIS,
+            scope=FeatureToggleScope.GLOBAL,
+            status=FeatureToggleStatus.ENABLED,
+        )
+        service._features["test_feature"] = feature
+
+        # Ensure user doesn't exist in _user_access initially
+        if "new_user" in service._user_access:
+            del service._user_access["new_user"]
+
+        # Set user access - should create new user entry
+        result = await service.set_user_feature_access(
+            user_id="new_user",
+            feature_id="test_feature",
+            enabled=True,
+        )
+
+        assert result is True
+        assert "new_user" in service._user_access
+        assert "test_feature" in service._user_access["new_user"]
+        assert service._user_access["new_user"]["test_feature"].enabled is True
+
+
+# ============================================================================
 # FINAL TEST COUNT
 # ============================================================================
 
-# Total test count: ~120+ comprehensive tests covering:
+# Total test count: 151 comprehensive tests covering:
 # - Initialization & Storage (28 tests)
 # - Datetime Serialization (18 tests)
 # - CRUD Operations (22 tests)
@@ -2555,5 +2671,8 @@ class TestEdgeCases:
 # - Helper Methods (25 tests)
 # - Global Functions (2 tests)
 # - Edge Cases (11 tests)
+# - Remaining Coverage (3 tests) - Session 60
 #
-# Coverage target: TRUE 100% (460 statements, 210 branches)
+# Coverage target: 100% (464 statements, 216 branches)
+# Session 59: 98.38% achieved (460/464 statements, 209/216 branches)
+# Session 60: Additional tests for remaining branches
