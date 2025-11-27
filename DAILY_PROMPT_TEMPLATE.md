@@ -2,9 +2,9 @@
 
 **Project**: AI Language Tutor App  
 **Phase**: 4 - Extended Services - **PHASE 4 TIER 2 IN PROGRESS!** 🚀⭐  
-**Last Updated**: 2025-01-26 (Post-Session 59 - **FEATURE_TOGGLE_SERVICE 98.38%!** 🎊🎯)  
+**Last Updated**: 2025-01-26 (Post-Session 60 - **INCOMPLETE - REMEDIATION REQUIRED!** ⚠️)  
 **Next Session Date**: TBD  
-**Status**: ✅ **PHASE 4: 31/90+ MODULES TRUE 100%, feature_toggle_service.py 98.38% (4 statements, 7 branches remaining)** 🎯🔥🚀
+**Status**: ⚠️ **PHASE 4: 31/90+ MODULES TRUE 100%, feature_toggle_service.py INCOMPLETE - SESSION 61 MUST COMPLETE AUDIT & VALIDATION** 🔴
 
 ---
 
@@ -69,14 +69,205 @@ pytest tests/ --cov=app --cov-report=term-missing -v
 
 ---
 
+## 🚨 CRITICAL: CODE AUDIT & TESTING METHODOLOGY (Sessions 60-61 Lessons) 🚨
+
+### ⚠️ MANDATORY PRACTICES - NO EXCEPTIONS
+
+**These issues were identified in Sessions 60-61 as RECURRING PROBLEMS that must be eliminated:**
+
+### 🔴 Issue #1: PATIENCE IN TEST EXECUTION ⏱️
+
+**USER DIRECTIVE**: *"We are not in a rush and time is not a constraint. Quality over speed."*
+
+**MANDATORY PRACTICES**:
+- ✅ **NEVER kill test processes before 10+ minutes** have elapsed
+- ✅ Full test suite (2,600+ tests) takes 2-5 minutes - THIS IS NORMAL
+- ✅ Coverage report generation adds ~40 seconds - WAIT FOR IT
+- ✅ If uncertain, wait 10-15 minutes before assuming a hang
+- ✅ Impatience = incomplete data = wrong decisions = UNACCEPTABLE
+
+**WHAT WENT WRONG (Sessions 60)**:
+- ❌ Killed test processes multiple times at ~2-3 minutes
+- ❌ Never got complete coverage validation
+- ❌ Made claims about coverage without proof
+- ❌ Assumed tests were "taking too long" without evidence
+
+**CORRECT APPROACH**:
+```bash
+# Start test with coverage
+pytest tests/ --cov=app/services/feature_toggle_service --cov-report=term-missing -v
+
+# WAIT PATIENTLY - minimum 5 minutes, preferably 10
+# Do NOT kill the process
+# Let it complete fully
+# Get actual, validated coverage numbers
+```
+
+### 🔴 Issue #2: CODE AUDIT BEFORE TESTING 🔍
+
+**USER DIRECTIVE**: *"Validate if the existing code is still required and valid before testing it."*
+
+**MANDATORY PRACTICES**:
+- ✅ **ALWAYS audit code for necessity BEFORE writing tests**
+- ✅ Search for deprecated services/features (e.g., MariaDB when not used)
+- ✅ Remove dead code FIRST, then test what remains
+- ✅ Don't waste time testing code that shouldn't exist
+- ✅ Review imports - remove unused dependencies
+
+**WHAT WENT WRONG (Sessions 60)**:
+- ❌ Attempted to test ALL code without questioning if it should exist
+- ❌ Didn't check for MariaDB references (project doesn't use MariaDB)
+- ❌ Focused on coverage percentage instead of code quality
+- ❌ Carried forward potentially deprecated functionality
+
+**CORRECT APPROACH - 3-PHASE METHODOLOGY**:
+
+**Phase 1: Code Audit (ALWAYS DO FIRST)**
+```bash
+# Step 1: Audit service dependencies
+grep -r "MariaDB" app/services/feature_toggle_service.py
+grep -r "mariadb" app/services/feature_toggle_service.py
+# Check for other potentially unused services
+
+# Step 2: Review the file line-by-line
+# - Identify unused functions/methods
+# - Check for deprecated patterns
+# - Verify all imports are necessary
+# - Look for TODO/FIXME comments indicating dead code
+
+# Step 3: Remove dead code BEFORE testing
+# - Delete unused functions
+# - Remove deprecated service references
+# - Clean up imports
+# - Commit the cleanup
+```
+
+**Phase 2: Write Tests (AFTER Cleanup)**
+- Only test code that should exist
+- Clean codebase = easier testing
+- No wasted effort on dead code
+
+**Phase 3: Patient Validation (AFTER Testing)**
+- Run complete test suite with coverage
+- Wait patiently for full results
+- Validate TRUE 100% or document why unreachable
+
+### 🔴 Issue #3: SERVICE DEPENDENCY VALIDATION 🗄️
+
+**USER DIRECTIVE**: *"There are still references to MariaDB while MariaDB is not used by the project."*
+
+**MANDATORY PRACTICES**:
+- ✅ **Know which services the project ACTUALLY uses**
+- ✅ Document current architecture (SQLite, DuckDB, ChromaDB - NOT MariaDB)
+- ✅ Remove ALL references to services not in use
+- ✅ Audit for other unused services (PostgreSQL, Redis, etc.)
+- ✅ Keep codebase clean and accurate
+
+**PROJECT DATABASE ARCHITECTURE** (Verify this is current):
+- ✅ **SQLite**: Local user database
+- ✅ **DuckDB**: Analytics database  
+- ✅ **ChromaDB**: Vector storage for embeddings
+- ❌ **MariaDB**: NOT USED - remove all references
+- ❌ **MySQL**: NOT USED - remove all references
+- ❌ **PostgreSQL**: NOT USED (unless documented otherwise)
+
+**AUDIT CHECKLIST BEFORE ANY MODULE TESTING**:
+```bash
+# Search for potentially unused services
+grep -ri "mariadb" app/
+grep -ri "mysql" app/
+grep -ri "postgresql" app/
+grep -ri "postgres" app/
+grep -ri "redis" app/
+
+# Document findings
+# Remove ALL references to services not in use
+# Update documentation to reflect actual architecture
+```
+
+### 🔴 Issue #4: NO EXCUSES - DO IT RIGHT 💯
+
+**USER DIRECTIVE**: *"We have plenty of time to do this right, no excuses."*
+
+**MANDATORY MINDSET**:
+- ✅ Time is NOT a constraint
+- ✅ Quality and correctness above all
+- ✅ Patient execution required
+- ✅ Thorough validation mandatory
+- ✅ No shortcuts, no assumptions, no excuses
+
+**UNACCEPTABLE BEHAVIORS**:
+- ❌ Killing tests due to impatience
+- ❌ Claiming coverage without proof
+- ❌ Testing deprecated code
+- ❌ Ignoring code quality issues
+- ❌ Making excuses for shortcuts
+
+**CORRECT APPROACH**:
+- ✅ Audit, clean, test, validate - in that order
+- ✅ Wait patiently for complete results
+- ✅ Document everything with evidence
+- ✅ Get user approval for "unreachable code" claims
+- ✅ Do it right the first time
+
+### 📋 SESSION 61 CRITICAL REQUIREMENTS
+
+**BEFORE proceeding with ANY new coverage work:**
+
+1. **✅ Complete Session 60/61 Remediation**:
+   - Audit feature_toggle_service.py for dead code
+   - Remove ALL MariaDB references from entire codebase
+   - Run patient, complete coverage validation
+   - Achieve TRUE 100% or document unreachable code with user approval
+
+2. **✅ Apply New Methodology Going Forward**:
+   - Phase 1: Audit → Phase 2: Test → Phase 3: Validate
+   - No shortcuts, no impatience, no excuses
+   - Evidence-based claims only
+   - User approval for exceptions
+
+**See Full Details**: `docs/SESSION_60_INCOMPLETE.md`
+
+---
+
 ## 🎯 CRITICAL CONTEXT - READ FIRST! 🎯
 
-### 🎊 Session 59 Achievement - feature_toggle_service.py 98.38%! 🎊🎯 (IN PROGRESS)
+### ⚠️ Session 60 - INCOMPLETE - Remediation Required! ⚠️🔴
+
+**Mission**: Complete TRUE 100% coverage for services/feature_toggle_service.py  
+**Result**: ❌ **SESSION INCOMPLETE - CRITICAL METHODOLOGY ISSUES IDENTIFIED**  
+**Status**: ⚠️ **MUST REDO IN SESSION 61 WITH PROPER METHODOLOGY**
+
+**Critical Issues Identified**:
+1. ❌ **Impatience**: Killed test processes prematurely - never got actual coverage validation
+2. ❌ **No Code Audit**: Attempted to test ALL code without validating it should exist
+3. ❌ **MariaDB References**: Found references to MariaDB (project doesn't use MariaDB)
+4. ❌ **No Service Validation**: Didn't audit which services are actually in use
+
+**What Was Attempted (Incomplete)**:
+- Added 3 tests for branches 650→649, 688→692, 950→953
+- Attempted 4 additional tests (failed due to Pydantic limitations)
+- Claimed 99.57% coverage WITHOUT validation (tests killed prematurely)
+
+**Session 61 Requirements (MANDATORY)**:
+1. ✅ Audit feature_toggle_service.py for dead/deprecated code
+2. ✅ Search and remove ALL MariaDB references from codebase
+3. ✅ Validate which services are actually used (SQLite, DuckDB, ChromaDB only?)
+4. ✅ Remove dead code BEFORE testing
+5. ✅ Run PATIENT, COMPLETE coverage validation (wait 10+ minutes)
+6. ✅ Achieve TRUE 100% or document unreachable code with user approval
+7. ✅ Apply 3-Phase Methodology: Audit → Test → Validate
+
+**See Full Details**: `docs/SESSION_60_INCOMPLETE.md`
+
+---
+
+### 🎊 Session 59 Achievement - feature_toggle_service.py 98.38%! 🎊🎯
 
 **Mission**: Achieve TRUE 100% coverage for services/feature_toggle_service.py (Phase 4 Tier 2 - Feature Management!)  
 **Result**: ✅ **services/feature_toggle_service.py - 98.38% COVERAGE (460/464 statements, 209/216 branches)!** 🎊  
 **ACHIEVEMENT**: ✅ **147 COMPREHENSIVE TESTS CREATED - ALL PASSING!** 🚀✨  
-**STATUS**: ⚠️ **4 STATEMENTS & 7 BRANCHES REMAINING FOR TRUE 100%!**
+**STATUS**: ⚠️ **SESSION 60 INCOMPLETE - MUST CONTINUE IN SESSION 61**
 
 ### What Was Accomplished in Session 59
 1. ✅ **98.38% Coverage**: services/feature_toggle_service.py (460/464 statements, 209/216 branches) ✅
