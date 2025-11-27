@@ -461,6 +461,29 @@ class TestMigrationManager:
 
         assert result is False
 
+    def test_seed_initial_data_commit_failure(self, migration_mgr):
+        """Test seed_initial_data handles errors during commit with rollback"""
+        mock_session = MagicMock()
+        mock_query = Mock()
+        mock_query.count.return_value = 0  # No existing data
+        mock_session.query.return_value = mock_query
+
+        # Make commit raise an exception to trigger rollback
+        mock_session.commit.side_effect = Exception("Commit failed")
+
+        with patch.object(
+            migration_mgr.db_manager, "get_sqlite_session"
+        ) as mock_get_session:
+            mock_get_session.return_value = mock_session
+
+            result = migration_mgr.seed_initial_data()
+
+        assert result is False
+        # Verify rollback was called due to exception
+        mock_session.rollback.assert_called_once()
+        # Verify session was closed in finally block
+        mock_session.close.assert_called_once()
+
     def test_backup_database_success(self, migration_mgr, temp_dir):
         """Test backup_database creates SQL backup file"""
         backup_path = os.path.join(temp_dir, "test_backup.sql")
@@ -502,22 +525,22 @@ class TestMigrationManager:
             assert "Rows: 2" in content
 
     def test_backup_database_default_path(self, migration_mgr):
-        """Test backup_database with auto-generated path"""
+        """Test backup_database with auto-generated path and empty table"""
         mock_session = MagicMock()
         mock_result = Mock()
         mock_result.keys.return_value = ["id"]
-        mock_result.fetchall.return_value = []
+        mock_result.fetchall.return_value = []  # Empty table - covers branch 490->485
         mock_session.execute.return_value = mock_result
 
         with (
             patch.object(
                 migration_mgr.db_manager, "get_sqlite_session"
-            ) as mock_session_scope,
+            ) as mock_get_session,
             patch("app.database.migrations.inspect") as mock_inspect,
             patch("os.makedirs") as mock_makedirs,
             patch("builtins.open", create=True) as mock_open,
         ):
-            mock_session_scope.return_value.__enter__.return_value = mock_session
+            mock_get_session.return_value = mock_session
 
             mock_inspector = Mock()
             mock_inspector.get_table_names.return_value = ["users"]
@@ -532,6 +555,8 @@ class TestMigrationManager:
         assert result_path.startswith("./backups/backup_")
         assert result_path.endswith(".sql")
         mock_makedirs.assert_called_once()
+        # Verify session was closed
+        mock_session.close.assert_called_once()
 
     def test_backup_database_failure(self, migration_mgr):
         """Test backup_database handles errors"""
