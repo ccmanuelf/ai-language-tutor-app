@@ -372,12 +372,9 @@ class TestSyncUserProfiles:
         mock_filter.first.return_value = mock_user
 
         # Mock context manager
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
         # Add the method to the mock db_manager
-        service.db_manager.mariadb_session_scope = Mock(return_value=mock_session_scope)
+        service.db_manager.get_sqlite_session = Mock(return_value=mock_session)
 
         with patch.object(
             service.local_db_manager, "add_user_profile", return_value=True
@@ -400,11 +397,8 @@ class TestSyncUserProfiles:
         mock_filter = mock_query.filter.return_value
         mock_filter.first.return_value = None
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
-        service.db_manager.mariadb_session_scope = Mock(return_value=mock_session_scope)
+        service.db_manager.get_sqlite_session = Mock(return_value=mock_session)
         result = await service._sync_user_profiles("user123", SyncDirection.DOWN)
 
         assert result.success is True
@@ -428,15 +422,12 @@ class TestSyncUserProfiles:
         mock_filter = mock_query.filter.return_value
         mock_filter.first.return_value = mock_user
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
         with (
             patch.object(
                 service.db_manager,
-                "mariadb_session_scope",
-                return_value=mock_session_scope,
+                "get_sqlite_session",
+                return_value=mock_session,
             ),
             patch.object(
                 service.local_db_manager, "add_user_profile", return_value=False
@@ -471,15 +462,12 @@ class TestSyncUserProfiles:
         mock_filter = mock_query.filter.return_value
         mock_filter.first.return_value = mock_server_user
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
         with (
             patch.object(
                 service.db_manager,
-                "mariadb_session_scope",
-                return_value=mock_session_scope,
+                "get_sqlite_session",
+                return_value=mock_session,
             ),
             patch.object(
                 service.local_db_manager, "get_user_profile", return_value=local_profile
@@ -515,15 +503,12 @@ class TestSyncUserProfiles:
         mock_filter = mock_query.filter.return_value
         mock_filter.first.return_value = mock_server_user
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
         with (
             patch.object(
                 service.db_manager,
-                "mariadb_session_scope",
-                return_value=mock_session_scope,
+                "get_sqlite_session",
+                return_value=mock_session,
             ),
             patch.object(
                 service.local_db_manager, "get_user_profile", return_value=local_profile
@@ -572,15 +557,12 @@ class TestSyncUserProfiles:
         mock_filter = mock_query.filter.return_value
         mock_filter.first.return_value = mock_user
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
         with (
             patch.object(
                 service.db_manager,
-                "mariadb_session_scope",
-                return_value=mock_session_scope,
+                "get_sqlite_session",
+                return_value=mock_session,
             ),
             patch.object(
                 service.local_db_manager, "add_user_profile", return_value=True
@@ -603,7 +585,7 @@ class TestSyncUserProfiles:
 
         with patch.object(
             service.db_manager,
-            "mariadb_session_scope",
+            "get_sqlite_session",
             side_effect=Exception("DB error"),
         ):
             result = await service._sync_user_profiles("user123", SyncDirection.DOWN)
@@ -629,15 +611,12 @@ class TestSyncUserProfiles:
         mock_filter = mock_query.filter.return_value
         mock_filter.first.return_value = None
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
         with (
             patch.object(
                 service.db_manager,
-                "mariadb_session_scope",
-                return_value=mock_session_scope,
+                "get_sqlite_session",
+                return_value=mock_session,
             ),
             patch.object(
                 service.local_db_manager, "get_user_profile", return_value=local_profile
@@ -674,15 +653,12 @@ class TestSyncUserProfiles:
         mock_filter = mock_query.filter.return_value
         mock_filter.first.return_value = mock_server_user
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
         with (
             patch.object(
                 service.db_manager,
-                "mariadb_session_scope",
-                return_value=mock_session_scope,
+                "get_sqlite_session",
+                return_value=mock_session,
             ),
             patch.object(
                 service.local_db_manager, "get_user_profile", return_value=local_profile
@@ -804,15 +780,12 @@ class TestConversationSyncHelpers:
         mock_conv.conversation_id = "conv123"
 
         mock_session = MagicMock(spec=Session)
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
         with (
             patch.object(
                 service.db_manager,
-                "mariadb_session_scope",
-                return_value=mock_session_scope,
+                "get_sqlite_session",
+                return_value=mock_session,
             ),
             patch.object(
                 service, "_fetch_server_conversations", return_value=[mock_conv]
@@ -915,15 +888,12 @@ class TestConversationSyncHelpers:
         mock_filter = mock_query.filter.return_value
         mock_filter.first.return_value = None  # No user found
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
         with (
             patch.object(
                 service.db_manager,
-                "mariadb_session_scope",
-                return_value=mock_session_scope,
+                "get_sqlite_session",
+                return_value=mock_session,
             ),
             patch.object(
                 service.local_db_manager, "get_recent_conversations", return_value=[]
@@ -947,9 +917,6 @@ class TestConversationSyncHelpers:
         mock_filter = mock_query.filter.return_value
         mock_filter.first.return_value = mock_user
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
         recent_conversations = [
             {
@@ -962,8 +929,8 @@ class TestConversationSyncHelpers:
         with (
             patch.object(
                 service.db_manager,
-                "mariadb_session_scope",
-                return_value=mock_session_scope,
+                "get_sqlite_session",
+                return_value=mock_session,
             ),
             patch.object(
                 service.local_db_manager,
@@ -1179,11 +1146,8 @@ class TestSyncLearningProgress:
         mock_filter = mock_query.filter.return_value
         mock_filter.first.return_value = mock_user
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
-        service.db_manager.mariadb_session_scope = Mock(return_value=mock_session_scope)
+        service.db_manager.get_sqlite_session = Mock(return_value=mock_session)
         result = await service._sync_learning_progress("user123", SyncDirection.UP)
 
         assert result.success is True
@@ -1200,11 +1164,8 @@ class TestSyncLearningProgress:
         mock_filter = mock_query.filter.return_value
         mock_filter.first.return_value = None
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
-        service.db_manager.mariadb_session_scope = Mock(return_value=mock_session_scope)
+        service.db_manager.get_sqlite_session = Mock(return_value=mock_session)
         result = await service._sync_learning_progress("user123", SyncDirection.UP)
 
         assert result.success is True
@@ -1223,11 +1184,8 @@ class TestSyncLearningProgress:
         mock_filter = mock_query.filter.return_value
         mock_filter.first.return_value = mock_user
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
-        service.db_manager.mariadb_session_scope = Mock(return_value=mock_session_scope)
+        service.db_manager.get_sqlite_session = Mock(return_value=mock_session)
         result = await service._sync_learning_progress(
             "user123", SyncDirection.BIDIRECTIONAL
         )
@@ -1251,7 +1209,7 @@ class TestSyncLearningProgress:
 
         with patch.object(
             service.db_manager,
-            "mariadb_session_scope",
+            "get_sqlite_session",
             side_effect=Exception("DB error"),
         ):
             result = await service._sync_learning_progress("user123", SyncDirection.UP)
@@ -1331,15 +1289,12 @@ class TestSyncDocuments:
 
         mock_session.query.side_effect = query_side_effect
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
         with (
             patch.object(
                 service.db_manager,
-                "mariadb_session_scope",
-                return_value=mock_session_scope,
+                "get_sqlite_session",
+                return_value=mock_session,
             ),
             patch.object(service.chroma_manager, "add_document_embedding"),
         ):
@@ -1359,11 +1314,8 @@ class TestSyncDocuments:
         mock_filter = mock_query.filter.return_value
         mock_filter.first.return_value = None
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
-        service.db_manager.mariadb_session_scope = Mock(return_value=mock_session_scope)
+        service.db_manager.get_sqlite_session = Mock(return_value=mock_session)
         result = await service._sync_documents("user123", SyncDirection.DOWN)
 
         assert result.success is True
@@ -1396,11 +1348,8 @@ class TestSyncDocuments:
 
         mock_session.query.side_effect = query_side_effect
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
-        service.db_manager.mariadb_session_scope = Mock(return_value=mock_session_scope)
+        service.db_manager.get_sqlite_session = Mock(return_value=mock_session)
         result = await service._sync_documents("user123", SyncDirection.DOWN)
 
         assert result.success is True
@@ -1434,11 +1383,8 @@ class TestSyncDocuments:
 
         mock_session.query.side_effect = query_side_effect
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
-        service.db_manager.mariadb_session_scope = Mock(return_value=mock_session_scope)
+        service.db_manager.get_sqlite_session = Mock(return_value=mock_session)
         result = await service._sync_documents("user123", SyncDirection.DOWN)
 
         assert result.success is True
@@ -1477,15 +1423,12 @@ class TestSyncDocuments:
 
         mock_session.query.side_effect = query_side_effect
 
-        mock_session_scope = MagicMock()
-        mock_session_scope.__enter__ = Mock(return_value=mock_session)
-        mock_session_scope.__exit__ = Mock(return_value=False)
 
         with (
             patch.object(
                 service.db_manager,
-                "mariadb_session_scope",
-                return_value=mock_session_scope,
+                "get_sqlite_session",
+                return_value=mock_session,
             ),
             patch.object(
                 service.chroma_manager,
@@ -1516,7 +1459,7 @@ class TestSyncDocuments:
 
         with patch.object(
             service.db_manager,
-            "mariadb_session_scope",
+            "get_sqlite_session",
             side_effect=Exception("DB error"),
         ):
             result = await service._sync_documents("user123", SyncDirection.DOWN)
@@ -1765,7 +1708,7 @@ class TestSyncStatusMonitoring:
         """Test connectivity check when database is healthy"""
         service = DataSyncService()
 
-        service.db_manager.test_mariadb_connection = Mock(
+        service.db_manager.test_sqlite_connection = Mock(
             return_value={"status": "healthy"}
         )
         result = service._check_connectivity()
@@ -1775,7 +1718,7 @@ class TestSyncStatusMonitoring:
         """Test connectivity check when database is unhealthy"""
         service = DataSyncService()
 
-        service.db_manager.test_mariadb_connection = Mock(
+        service.db_manager.test_sqlite_connection = Mock(
             return_value={"status": "unhealthy"}
         )
         result = service._check_connectivity()
@@ -1787,7 +1730,7 @@ class TestSyncStatusMonitoring:
 
         with patch.object(
             service.db_manager,
-            "test_mariadb_connection",
+            "test_sqlite_connection",
             side_effect=Exception("Connection error"),
         ):
             result = service._check_connectivity()

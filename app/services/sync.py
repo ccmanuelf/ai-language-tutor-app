@@ -17,22 +17,22 @@ Features:
 
 import asyncio
 import logging
-from typing import Dict, List, Any
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from dataclasses import dataclass
+from typing import Any, Dict, List
+
 from sqlalchemy import and_
 
+from app.database.chromadb_config import chroma_manager
 from app.database.config import db_manager
 from app.database.local_config import local_db_manager
-from app.database.chromadb_config import chroma_manager
 from app.models.database import (
-    User,
     Conversation,
     ConversationMessage,
     Document,
+    User,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +195,8 @@ class DataSyncService:
         try:
             if direction in [SyncDirection.DOWN, SyncDirection.BIDIRECTIONAL]:
                 # Download from server to local
-                with self.db_manager.mariadb_session_scope() as session:
+                session = self.db_manager.get_sqlite_session()
+                try:
                     user = session.query(User).filter(User.user_id == user_id).first()
                     if user:
                         success = self.local_db_manager.add_user_profile(
@@ -210,13 +211,16 @@ class DataSyncService:
                         else:
                             result.items_failed += 1
                             result.errors.append("Failed to save user profile locally")
+                finally:
+                    session.close()
 
             if direction in [SyncDirection.UP, SyncDirection.BIDIRECTIONAL]:
                 # Upload from local to server (less common for profiles)
                 local_profile = self.local_db_manager.get_user_profile(user_id)
                 if local_profile:
                     # Compare with server version and handle conflicts
-                    with self.db_manager.mariadb_session_scope() as session:
+                    session = self.db_manager.get_sqlite_session()
+                    try:
                         server_user = (
                             session.query(User).filter(User.user_id == user_id).first()
                         )
@@ -233,6 +237,7 @@ class DataSyncService:
                                     "preferences", {}
                                 )
                                 server_user.updated_at = datetime.now()
+                                session.commit()
                                 result.items_processed += 1
                                 result.items_success += 1
                             elif server_updated > local_updated:
@@ -245,6 +250,8 @@ class DataSyncService:
                                 )
                                 result.items_processed += 1
                                 result.items_success += 1
+                    finally:
+                        session.close()
 
         except Exception as e:
             logger.error(f"Error syncing user profiles: {e}")
@@ -283,7 +290,8 @@ class DataSyncService:
         self, user_id: str, last_sync: datetime, result: SyncResult
     ) -> None:
         """Download recent conversations from server to local storage"""
-        with self.db_manager.mariadb_session_scope() as session:
+        session = self.db_manager.get_sqlite_session()
+        try:
             conversations = self._fetch_server_conversations(
                 session, user_id, last_sync
             )
@@ -291,6 +299,8 @@ class DataSyncService:
             for conv in conversations:
                 messages = self._fetch_conversation_messages(session, conv.id)
                 self._save_messages_locally(user_id, conv, messages, result)
+        finally:
+            session.close()
 
     def _fetch_server_conversations(self, session, user_id: str, last_sync: datetime):
         """Fetch conversations from server that were updated after last sync"""
@@ -348,7 +358,8 @@ class DataSyncService:
             recent_conversations
         )
 
-        with self.db_manager.mariadb_session_scope() as session:
+        session = self.db_manager.get_sqlite_session()
+        try:
             server_user = session.query(User).filter(User.user_id == user_id).first()
             if not server_user:
                 result.errors.append(f"User {user_id} not found on server")
@@ -357,6 +368,9 @@ class DataSyncService:
             self._sync_conversations_to_server(
                 session, server_user, conversations_to_sync, result
             )
+            session.commit()
+        finally:
+            session.close()
 
     def _group_messages_by_conversation(self, messages: list) -> dict:
         """Group messages by conversation ID"""
@@ -446,7 +460,8 @@ class DataSyncService:
         try:
             if direction in [SyncDirection.UP, SyncDirection.BIDIRECTIONAL]:
                 # This is typically more important - upload learning progress to server
-                with self.db_manager.mariadb_session_scope() as session:
+                session = self.db_manager.get_sqlite_session()
+                try:
                     server_user = (
                         session.query(User).filter(User.user_id == user_id).first()
                     )
@@ -455,6 +470,8 @@ class DataSyncService:
                         # For now, we'll just mark as processed
                         result.items_processed += 1
                         result.items_success += 1
+                finally:
+                    session.close()
 
         except Exception as e:
             logger.error(f"Error syncing learning progress: {e}")
@@ -480,7 +497,8 @@ class DataSyncService:
         try:
             if direction in [SyncDirection.DOWN, SyncDirection.BIDIRECTIONAL]:
                 # Sync document embeddings to ChromaDB
-                with self.db_manager.mariadb_session_scope() as session:
+                session = self.db_manager.get_sqlite_session()
+                try:
                     server_user = (
                         session.query(User).filter(User.user_id == user_id).first()
                     )
@@ -513,6 +531,8 @@ class DataSyncService:
                                         f"Failed to add document embedding: {e}"
                                     )
                                     result.items_failed += 1
+                finally:
+                    session.close()
 
         except Exception as e:
             logger.error(f"Error syncing documents: {e}")
@@ -594,7 +614,7 @@ class DataSyncService:
     def _check_connectivity(self) -> bool:
         """Check if we have connectivity to the server"""
         try:
-            health_check = self.db_manager.test_mariadb_connection()
+            health_check = self.db_manager.test_sqlite_connection()
             return health_check.get("status") == "healthy"
         except Exception:
             return False
