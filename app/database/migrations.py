@@ -9,22 +9,22 @@ This module provides database migration functionality including:
 - Initial data seeding
 """
 
-import os
 import logging
-from typing import Dict, List, Any, Optional
+import os
 from datetime import datetime
 from pathlib import Path
-from alembic import command
-from alembic.config import Config
-from alembic.script import ScriptDirectory
-from alembic.migration import MigrationContext
-from sqlalchemy import text, inspect
+from typing import Any, Dict, List, Optional
 
+from alembic.config import Config
+from alembic.migration import MigrationContext
+from alembic.script import ScriptDirectory
+from sqlalchemy import inspect, text
+
+from alembic import command
+from app.database.chromadb_config import chroma_manager
 from app.database.config import db_manager
 from app.database.local_config import local_db_manager
-from app.database.chromadb_config import chroma_manager
-from app.models.database import Base, User, Language, UserRole
-
+from app.models.database import Base, Language, User, UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +120,7 @@ version_path_separator = os
 # are written from script.py.mako
 # output_encoding = utf-8
 
-sqlalchemy.url = {db_manager.config.mariadb_url}
+sqlalchemy.url = {db_manager.config.sqlite_url}
 
 
 [post_write_hooks]
@@ -232,7 +232,7 @@ def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
 
     # Use our database manager's engine
-    connectable = db_manager.mariadb_engine
+    connectable = db_manager.sqlite_engine
 
     with connectable.connect() as connection:
         context.configure(
@@ -330,9 +330,12 @@ def downgrade() -> None:
             config = Config(self.alembic_config_path)
             script = ScriptDirectory.from_config(config)
 
-            with db_manager.mariadb_session_scope() as session:
+            session = db_manager.get_sqlite_session()
+            try:
                 context = MigrationContext.configure(session.connection())
                 current_rev = context.get_current_revision()
+            finally:
+                session.close()
 
             history = []
             for revision in script.walk_revisions():
@@ -386,7 +389,8 @@ def downgrade() -> None:
     def seed_initial_data(self) -> bool:
         """Seed initial data into databases"""
         try:
-            with db_manager.mariadb_session_scope() as session:
+            session = db_manager.get_sqlite_session()
+            try:
                 # Check if data already exists
                 if session.query(Language).count() > 0:
                     logger.info("Initial data already exists")
@@ -446,6 +450,13 @@ def downgrade() -> None:
                 )
                 session.add(admin_user)
 
+                session.commit()
+            except Exception:
+                session.rollback()
+                raise
+            finally:
+                session.close()
+
             logger.info("Initial data seeded successfully")
             return True
         except Exception as e:
@@ -461,10 +472,11 @@ def downgrade() -> None:
         os.makedirs(os.path.dirname(backup_path), exist_ok=True)
 
         try:
-            # Simple SQL dump (in production, use mysqldump or similar)
-            with db_manager.mariadb_session_scope() as session:
+            # Simple SQL dump for SQLite
+            session = db_manager.get_sqlite_session()
+            try:
                 # Get all table names
-                inspector = inspect(db_manager.mariadb_engine)
+                inspector = inspect(db_manager.sqlite_engine)
                 tables = inspector.get_table_names()
 
                 with open(backup_path, "w") as f:
@@ -479,6 +491,8 @@ def downgrade() -> None:
                             columns = list(result.keys())
                             f.write(f"-- Columns: {', '.join(columns)}\\n")
                             f.write(f"-- Rows: {len(rows)}\\n\\n")
+            finally:
+                session.close()
 
             logger.info(f"Database backup created: {backup_path}")
             return backup_path
@@ -490,22 +504,25 @@ def downgrade() -> None:
         """Check database integrity across all systems"""
         integrity_report = {
             "timestamp": datetime.now().isoformat(),
-            "mariadb": {},
+            "sqlite": {},
             "local_db": {},
             "chromadb": {},
         }
 
         # Check SQLite
         try:
-            with db_manager.mariadb_session_scope() as session:
+            session = db_manager.get_sqlite_session()
+            try:
                 # Count records in main tables
-                integrity_report["mariadb"] = {
+                integrity_report["sqlite"] = {
                     "users": session.query(User).count(),
                     "languages": session.query(Language).count(),
                     "status": "healthy",
                 }
+            finally:
+                session.close()
         except Exception as e:
-            integrity_report["mariadb"] = {"status": "error", "error": str(e)}
+            integrity_report["sqlite"] = {"status": "error", "error": str(e)}
 
         # Check local databases
         try:

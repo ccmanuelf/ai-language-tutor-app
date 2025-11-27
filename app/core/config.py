@@ -3,11 +3,12 @@ Core Configuration Module
 AI Language Tutor App - Personal Family Educational Tool
 """
 
-from pydantic_settings import BaseSettings
-from pydantic import Field, ConfigDict
-from typing import Optional
 import os
 from functools import lru_cache
+from typing import Optional
+
+from pydantic import ConfigDict, Field
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -25,8 +26,8 @@ class Settings(BaseSettings):
 
     # Database settings
     DATABASE_URL: str = Field(
-        default="mysql+pymysql://root:password@localhost/ai_language_tutor",
-        description="SQLite database connection URL",
+        default="sqlite:///./data/local/app.db",
+        description="Primary database connection URL (SQLite)",
     )
     CHROMADB_PATH: str = Field(
         default="./data/chromadb", description="ChromaDB storage path"
