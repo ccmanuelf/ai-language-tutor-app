@@ -13,7 +13,6 @@ from typing import Any, Dict
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-import pytest_asyncio
 
 from app.models.feature_toggle import (
     FeatureCondition,
@@ -45,12 +44,19 @@ def temp_storage():
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-@pytest_asyncio.fixture
-async def service(temp_storage):
+@pytest.fixture
+def service(temp_storage):
     """Create a fresh FeatureToggleService instance."""
-    svc = FeatureToggleService(storage_dir=temp_storage)
-    await svc.initialize()
-    return svc
+
+    # Return a function that creates and initializes the service
+    async def _create_service():
+        svc = FeatureToggleService(storage_dir=temp_storage)
+        await svc.initialize()
+        return svc
+
+    # Run the async function and return the service
+    loop = asyncio.get_event_loop()
+    return loop.run_until_complete(_create_service())
 
 
 @pytest.fixture
@@ -2654,12 +2660,159 @@ class TestRemainingCoverage:
         assert "test_feature" in service._user_access["new_user"]
         assert service._user_access["new_user"]["test_feature"].enabled is True
 
+    @pytest.mark.asyncio
+    async def test_delete_feature_when_feature_not_in_user_access(self, service):
+        """Test delete_feature when feature_id not in user_access dicts.
+
+        Covers branch 650->649: for loop iteration where feature_id NOT in user_access
+        """
+        # Create a feature
+        await service.create_feature(
+            FeatureToggleRequest(
+                name="Test Feature",
+                description="Test",
+                category=FeatureToggleCategory.EXPERIMENTAL,
+                scope=FeatureToggleScope.GLOBAL,
+                status=FeatureToggleStatus.ENABLED,
+            )
+        )
+        feature_id = list(service._features.keys())[0]
+
+        # Add user access for DIFFERENT feature
+        service._user_access["user1"] = {
+            "other_feature": UserFeatureAccess(
+                user_id="user1",
+                feature_id="other_feature",
+                enabled=True,
+            )
+        }
+
+        # Delete the feature - should iterate user_access but not find feature_id
+        result = await service.delete_feature(feature_id)
+
+        assert result is True
+        assert (
+            "other_feature" in service._user_access["user1"]
+        )  # Other feature preserved
+        assert feature_id not in service._features
+
+    @pytest.mark.asyncio
+    async def test_is_feature_enabled_with_stale_cache(self, service):
+        """Test is_feature_enabled when cache exists but is stale (age >= TTL).
+
+        Covers branch 688->692: cache_age >= self._cache_ttl
+        """
+        # Create enabled feature
+        feature = await service.create_feature(
+            FeatureToggleRequest(
+                name="Test Feature",
+                description="Test",
+                category=FeatureToggleCategory.EXPERIMENTAL,
+                scope=FeatureToggleScope.GLOBAL,
+                status=FeatureToggleStatus.ENABLED,
+            )
+        )
+
+        # Manually add stale cache entry (timestamp > TTL ago)
+        cache_key = f"{feature.id}:test_user"
+        old_timestamp = datetime.now() - timedelta(seconds=service._cache_ttl + 10)
+        service._feature_cache[cache_key] = {
+            "result": False,  # Cached as disabled
+            "timestamp": old_timestamp.isoformat(),
+        }
+
+        # Check feature - should ignore stale cache and re-evaluate
+        result = await service.is_feature_enabled(feature.id, "test_user")
+
+        # Should return True (actual state), not False (stale cache)
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_set_user_feature_access_for_existing_user(self, service):
+        """Test set_user_feature_access when user already exists in _user_access.
+
+        Covers branch 950->953: user_id IN self._user_access (skip dict creation)
+        """
+        # Create feature
+        feature = await service.create_feature(
+            FeatureToggleRequest(
+                name="Test Feature",
+                description="Test",
+                category=FeatureToggleCategory.EXPERIMENTAL,
+                scope=FeatureToggleScope.GLOBAL,
+                status=FeatureToggleStatus.ENABLED,
+            )
+        )
+
+        # Pre-populate user in _user_access with different feature
+        service._user_access["existing_user"] = {
+            "other_feature": UserFeatureAccess(
+                user_id="existing_user",
+                feature_id="other_feature",
+                enabled=True,
+            )
+        }
+
+        # Set access for the new feature - should NOT create new user dict
+        result = await service.set_user_feature_access(
+            user_id="existing_user",
+            feature_id=feature.id,
+            enabled=True,
+        )
+
+        assert result is True
+        assert len(service._user_access) == 1  # Still only one user
+        assert "existing_user" in service._user_access
+        assert feature.id in service._user_access["existing_user"]
+        assert (
+            "other_feature" in service._user_access["existing_user"]
+        )  # Other preserved
+
+    @pytest.mark.asyncio
+    async def test_create_feature_with_multiple_duplicate_ids(self, service):
+        """Test create_feature when feature ID has multiple duplicates.
+
+        Covers lines 405-406: counter += 1 in while loop
+        """
+        # Pre-populate with features that will conflict
+        service._features["experimental_my_feature"] = FeatureToggle(
+            id="experimental_my_feature",
+            name="Existing 1",
+            description="Test",
+            category=FeatureToggleCategory.EXPERIMENTAL,
+            scope=FeatureToggleScope.GLOBAL,
+            status=FeatureToggleStatus.ENABLED,
+        )
+        service._features["experimental_my_feature_1"] = FeatureToggle(
+            id="experimental_my_feature_1",
+            name="Existing 2",
+            description="Test",
+            category=FeatureToggleCategory.EXPERIMENTAL,
+            scope=FeatureToggleScope.GLOBAL,
+            status=FeatureToggleStatus.ENABLED,
+        )
+
+        # Create new feature with same base name - should increment counter twice
+        feature = await service.create_feature(
+            FeatureToggleRequest(
+                name="My Feature",  # Will generate "experimental_my_feature"
+                description="Test",
+                category=FeatureToggleCategory.EXPERIMENTAL,
+                scope=FeatureToggleScope.GLOBAL,
+                status=FeatureToggleStatus.ENABLED,
+            )
+        )
+
+        # Should have created with _2 suffix (counter incremented to 2)
+        assert feature.id == "experimental_my_feature_2"
+        assert "experimental_my_feature_2" in service._features
+
 
 # ============================================================================
 # FINAL TEST COUNT
 # ============================================================================
 
-# Total test count: 151 comprehensive tests covering:
+# Total test count: 154 comprehensive tests covering:
 # - Initialization & Storage (28 tests)
 # - Datetime Serialization (18 tests)
 # - CRUD Operations (22 tests)
@@ -2671,8 +2824,14 @@ class TestRemainingCoverage:
 # - Helper Methods (25 tests)
 # - Global Functions (2 tests)
 # - Edge Cases (11 tests)
-# - Remaining Coverage (3 tests) - Session 60
+# - Remaining Coverage (7 tests) - Sessions 60 & 64
+#   - Session 60: 3 tests (delete without user access, cache gaps, new user)
+#   - Session 64: 4 tests (branches 650/688/950, lines 405-406)
 #
 # Coverage target: 100% (464 statements, 216 branches)
 # Session 59: 98.38% achieved (460/464 statements, 209/216 branches)
-# Session 60: Additional tests for remaining branches
+# Session 64: Testing continues - lines 206/239 may be unreachable (Pydantic defensive code)
+#
+# NOTE: Lines 206 and 239 appear to be unreachable defensive code.
+# Pydantic's model_dump() always returns datetime objects as datetime (not strings),
+# making the isinstance() else branches impossible to trigger without breaking Pydantic internals.

@@ -468,7 +468,8 @@ class TestMigrationSystem:
 
             assert isinstance(integrity_report, dict)
             assert "timestamp" in integrity_report
-            assert "mariadb" in integrity_report
+            # Project uses SQLite, DuckDB, ChromaDB (NOT MariaDB)
+            assert "sqlite" in integrity_report
             assert "local_db" in integrity_report
             assert "chromadb" in integrity_report
         except Exception as e:
