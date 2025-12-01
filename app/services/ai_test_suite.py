@@ -7,14 +7,14 @@ performance testing, and end-to-end validation.
 
 import asyncio
 import logging
-import time
 import statistics
-from typing import Dict, List, Any, Optional, Union
-from datetime import datetime
-from dataclasses import dataclass
-from enum import Enum
 import sys
+import time
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 
 def safe_mean(values: List[Union[int, float]], default: float = 0.0) -> float:
@@ -30,7 +30,9 @@ sys.path.append(str(Path(__file__).parent.parent))
 logger = logging.getLogger(__name__)
 
 
-class TestResult(Enum):
+class SuiteResultStatus(Enum):
+    """Test execution result status"""
+
     PASSED = "passed"
     FAILED = "failed"
     SKIPPED = "skipped"
@@ -38,11 +40,11 @@ class TestResult(Enum):
 
 
 @dataclass
-class TestReport:
+class SuiteExecutionReport:
     """Test execution report"""
 
     test_name: str
-    result: TestResult
+    result: SuiteResultStatus
     execution_time: float
     error_message: Optional[str] = None
 
@@ -51,7 +53,7 @@ class AIServicesTestSuite:
     """Main AI services testing suite"""
 
     def __init__(self):
-        self.test_results: List[TestReport] = []
+        self.test_results: List[SuiteExecutionReport] = []
         self.performance_metrics = {}
 
     async def run_all_tests(self) -> Dict[str, Any]:
@@ -91,9 +93,9 @@ class AIServicesTestSuite:
                 execution_time = time.time() - start_time
 
                 self.test_results.append(
-                    TestReport(
+                    SuiteExecutionReport(
                         test_name=test_name,
-                        result=TestResult.PASSED,
+                        result=SuiteResultStatus.PASSED,
                         execution_time=execution_time,
                     )
                 )
@@ -103,9 +105,9 @@ class AIServicesTestSuite:
             except AssertionError as e:
                 execution_time = time.time() - start_time
                 self.test_results.append(
-                    TestReport(
+                    SuiteExecutionReport(
                         test_name=test_name,
-                        result=TestResult.FAILED,
+                        result=SuiteResultStatus.FAILED,
                         execution_time=execution_time,
                         error_message=str(e),
                     )
@@ -118,9 +120,9 @@ class AIServicesTestSuite:
                 # Check if it's an expected skip condition
                 if "not configured" in str(e) or "not available" in str(e):
                     self.test_results.append(
-                        TestReport(
+                        SuiteExecutionReport(
                             test_name=test_name,
-                            result=TestResult.SKIPPED,
+                            result=SuiteResultStatus.SKIPPED,
                             execution_time=execution_time,
                             error_message=str(e),
                         )
@@ -129,9 +131,9 @@ class AIServicesTestSuite:
                     print(f"   ⏭️  SKIPPED: {str(e)}")
                 else:
                     self.test_results.append(
-                        TestReport(
+                        SuiteExecutionReport(
                             test_name=test_name,
-                            result=TestResult.ERROR,
+                            result=SuiteResultStatus.ERROR,
                             execution_time=execution_time,
                             error_message=str(e),
                         )
@@ -162,7 +164,7 @@ class AIServicesTestSuite:
 
     async def test_ai_service_base(self):
         """Test BaseAIService functionality"""
-        from app.services.ai_service_base import MockAIService, AIResponse
+        from app.services.ai_service_base import AIResponse, MockAIService
 
         mock_service = MockAIService()
         assert mock_service.service_name == "mock"
@@ -232,7 +234,7 @@ class AIServicesTestSuite:
 
     async def test_speech_processor(self):
         """Test speech processing functionality"""
-        from app.services.speech_processor import speech_processor, AudioFormat
+        from app.services.speech_processor import AudioFormat, speech_processor
 
         status = await speech_processor.get_speech_pipeline_status()
         assert "supported_formats" in status
@@ -338,8 +340,8 @@ class AIServicesTestSuite:
 
     async def test_budget_fallback(self):
         """Test budget exhaustion fallback"""
-        from app.services.budget_manager import budget_manager
         from app.services.ai_router import ai_router
+        from app.services.budget_manager import budget_manager
 
         initial_status = budget_manager.get_current_budget_status()
 
