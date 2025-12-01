@@ -198,12 +198,7 @@ class FeatureToggleService:
         try:
             features_data = []
             for feature in self._features.values():
-                feature_dict = feature.model_dump()
-                # Convert datetime objects to ISO strings (if not already strings)
-                for field in ["created_at", "updated_at"]:
-                    if field in feature_dict and feature_dict[field]:
-                        if isinstance(feature_dict[field], datetime):
-                            feature_dict[field] = feature_dict[field].isoformat()
+                feature_dict = feature.model_dump(mode="json")
                 features_data.append(feature_dict)
 
             data = {
@@ -231,14 +226,7 @@ class FeatureToggleService:
             for user_id, access_dict in self._user_access.items():
                 user_access_data[user_id] = {}
                 for feature_id, access in access_dict.items():
-                    access_dict_data = access.model_dump()
-                    # Convert datetime objects to ISO strings (if not already strings)
-                    for field in ["granted_at", "override_expires", "last_used"]:
-                        if field in access_dict_data and access_dict_data[field]:
-                            if isinstance(access_dict_data[field], datetime):
-                                access_dict_data[field] = access_dict_data[
-                                    field
-                                ].isoformat()
+                    access_dict_data = access.model_dump(mode="json")
                     user_access_data[user_id][feature_id] = access_dict_data
 
             data = {
@@ -396,14 +384,10 @@ class FeatureToggleService:
 
         for feature_data in default_features:
             # Create feature directly without calling create_feature to avoid recursion
-            feature_id = f"{feature_data['category'].value}_{feature_data['name'].lower().replace(' ', '_')}"
-
-            # Ensure uniqueness
-            counter = 1
-            original_id = feature_id
-            while feature_id in self._features:
-                feature_id = f"{original_id}_{counter}"
-                counter += 1
+            feature_id = (
+                feature_data.get("id")
+                or f"{feature_data['category'].value}_{feature_data['name'].lower().replace(' ', '_')}"
+            )
 
             feature = FeatureToggle(
                 id=feature_id,
