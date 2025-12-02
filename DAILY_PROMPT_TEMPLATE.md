@@ -2,29 +2,30 @@
 
 **Project**: AI Language Tutor App  
 **Phase**: 4 - Extended Services - **PHASE 4: 80% COMPLETE!** 🚀⭐🎊  
-**Last Updated**: 2025-12-02 (Post-Session 72 - **scenario_factory.py TRUE 100%!** ✅🎊)  
+**Last Updated**: 2025-12-02 (Post-Session 73 - **spaced_repetition_manager.py TRUE 100%!** ✅🎊)  
 **Next Session Date**: TBD  
-**Status**: ✅ **PHASE 4: 40/90+ MODULES TRUE 100% - Session 73: Phase 4 Tier 2 Continuing!** 🎯🚀
+**Status**: ✅ **PHASE 4: 41/90+ MODULES TRUE 100% - Session 74: Phase 4 Tier 2 Continuing!** 🎯🚀
 
 ---
 
-## 🎊 SESSION 72 ACHIEVEMENT - 40TH MODULE! 🎊
+## 🎊 SESSION 73 ACHIEVEMENT - 41ST MODULE! 🎊
 
-**Module Completed**: `app/services/scenario_factory.py`  
-**Coverage**: TRUE 100% (61/61 statements, 14/14 branches) ✅  
-**Tests**: 35 comprehensive tests (10 test classes)  
-**Strategic Value**: ⭐⭐⭐ HIGH (Scenario generation foundation)  
-**Total Project Tests**: 3,256 passing (was 3,221, +35 new)  
+**Module Completed**: `app/services/spaced_repetition_manager.py`  
+**Coverage**: TRUE 100% (58/58 statements, 11/11 branches) ✅  
+**Tests**: 18 comprehensive tests (10 test classes)  
+**Strategic Value**: ⭐⭐⭐ HIGH (Spaced Repetition Facade)  
+**Total Project Tests**: 3,274 passing (was 3,256, +18 new)  
 **Zero Regressions**: All tests passing ✅
 
-**Strategy Validated - 5th Consecutive Success!**
+**Strategy Validated - 6th Consecutive Success!**
 - Session 68: scenario_templates_extended.py (116 statements) ✅
 - Session 69: scenario_templates.py (134 statements) ✅
 - Session 70: response_cache.py (129 statements) ✅
 - Session 71: tutor_mode_manager.py (149 statements) ✅
 - Session 72: scenario_factory.py (61 statements) ✅
+- Session 73: spaced_repetition_manager.py (58 statements) ✅
 
-**"Tackle Large Modules First"** - PROVEN EFFECTIVE FOR 5 SESSIONS!
+**"Tackle Large Modules First"** - PROVEN EFFECTIVE FOR 6 SESSIONS!
 
 ---
 
@@ -57,23 +58,23 @@ source ai-tutor-env/bin/activate && \
 
 ---
 
-## 🎯 SESSION 73 PRIMARY GOAL
+## 🎯 SESSION 74 PRIMARY GOAL
 
 ### **Continue "Tackle Large Modules First" Strategy**
 
-**Objective**: Complete spaced_repetition_manager.py - a medium-sized, high-impact module from Phase 4 Tier 2.
+**Objective**: Complete another medium-sized, high-impact module from Phase 4 Tier 2.
 
 **Selection Criteria**:
-1. **Size**: Medium modules (50-70 statements preferred)
-2. **Strategic Value**: HIGH priority (learning system core)
-3. **Current Coverage**: 43.48% (28 missing statements)
-4. **Impact**: Core functionality for spaced repetition learning
+1. **Size**: Medium modules (50-100 statements preferred)
+2. **Strategic Value**: HIGH priority (core functionality)
+3. **Current Coverage**: < 50% (significant improvement potential)
+4. **Impact**: Important for system functionality
 
-**Expected Outcome**: TRUE 100% coverage on spaced_repetition_manager.py (41st module!)
+**Expected Outcome**: TRUE 100% coverage on selected module (42nd module!)
 
 ---
 
-## 📋 SESSION 73 WORKFLOW
+## 📋 SESSION 74 WORKFLOW
 
 ### **Step 1: Module Identification & Selection** (15-20 minutes)
 
@@ -85,6 +86,10 @@ pytest tests/ --cov=app/services --cov-report=term-missing -q
 ```
 
 **Selection Matrix**: Size + Strategic Value = Priority
+
+**Potential Candidates**:
+- scenario_io.py (47 statements, 25% coverage) - I/O operations
+- Other medium-sized services modules (50-100 statements)
 
 ### **Step 2: Module Audit & Analysis** (30-45 minutes)
 
@@ -104,13 +109,13 @@ pytest tests/ --cov=app/services --cov-report=term-missing -q
 
 ### **Step 4: Test Implementation** (60-90 minutes)
 
-**Best Practices from Session 72**:
-- ✅ Use unique test data prefixes to avoid conflicts
-- ✅ Include all dict keys when creating objects from dicts
-- ✅ Mock `builtins.__import__` for import failure testing
-- ✅ Use tmp_path + `__file__` patching for path-dependent code
-- ✅ Distinguish between processing counts and storage counts
-- ✅ Test logger messages with specific logger names
+**Best Practices from Session 73**:
+- ✅ Use MagicMock for context managers (not Mock!)
+- ✅ Test delegation thoroughly in facade patterns
+- ✅ Verify parameter passing including kwargs
+- ✅ Test both success and failure paths
+- ✅ Check config synchronization where applicable
+- ✅ Test singleton caching logic (if applicable)
 - ✅ Run tests frequently (every 10-20 functions)
 - ✅ Organize tests by logical groupings
 
@@ -132,37 +137,37 @@ source ai-tutor-env/bin/activate && \
 pytest tests/ -q --tb=no
 ```
 
-Expected: 3,256+ tests passing
+Expected: 3,274+ tests passing
 
 ### **Step 7: Documentation & Wrap-Up** (20-30 minutes)
 
 Create documentation:
-- `docs/SESSION_73_SUMMARY.md`
-- `docs/COVERAGE_TRACKER_SESSION_73.md`
-- `docs/LESSONS_LEARNED_SESSION_73.md`
-- Update this file for Session 74
+- `docs/SESSION_74_SUMMARY.md`
+- `docs/COVERAGE_TRACKER_SESSION_74.md`
+- `docs/LESSONS_LEARNED_SESSION_74.md`
+- Update this file for Session 75
 - Commit and push to GitHub
 
 ---
 
-## 📚 SESSION 72 LESSONS TO APPLY
+## 📚 SESSION 73 LESSONS TO APPLY
 
-### **Key Lessons for Session 73**
+### **Key Lessons for Session 74**
 
-1. **Test Data Isolation** - Use unique prefixes (e.g., "test_", "mock_") to prevent conflicts
-2. **Complete Dict Structures** - Include all fields in test dicts, even optional ones with defaults
-3. **Import Mocking** - Use `builtins.__import__` patching for fine-grained import control
-4. **Temporary Paths** - Combine tmp_path fixture with `__file__` patching for path tests
-5. **Processing vs. Storage** - Distinguish between items processed (logs) and items stored (dict keys)
-6. **Logger Testing** - Specify exact logger name in caplog.at_level()
-7. **Dataclass Limitations** - `__post_init__` doesn't help with missing dict keys
-8. **Module Restoration** - Always restore sys.modules state in finally blocks
-9. **Mock Timing** - Mock before the code is executed, not after import
+1. **MagicMock for Context Managers** - CRITICAL! Use MagicMock (not Mock) for any object used with `with` statements
+2. **Facade Delegation Testing** - Focus on verifying delegation, not implementation
+3. **Config Synchronization** - Test both success (updates config) and failure (preserves config)
+4. **Achievement Integration** - Use call_args to verify complex object construction
+5. **Singleton Pattern** - Test three scenarios: same params, different params, defaults
+6. **Database Row Mocking** - Use dict for mock rows, include all accessed fields
+7. **Error Path Testing** - Explicitly test item not found and failure scenarios
+8. **Parameter Verification** - Check that kwargs are passed through correctly
+9. **Identity Checks** - Use `is` (not `==`) for singleton testing
 10. **Strategic Selection** - Continue "Tackle Large Modules First" for high-value targets
 
 ---
 
-## 🚀 QUICK START - SESSION 73
+## 🚀 QUICK START - SESSION 74
 
 ```bash
 # 1. Check git status:
@@ -203,9 +208,9 @@ pytest tests/ --cov=app/services --cov-report=term-missing -q
 ## 📊 PROJECT STATUS
 
 **Overall Progress:**
-- **Modules at TRUE 100%**: 40 (as of Session 72) 🎊
-- **Total Tests**: 3,256 passing
-- **Strategy**: "Tackle Large Modules First" - VALIDATED (5 consecutive wins!)
+- **Modules at TRUE 100%**: 41 (as of Session 73) 🎊
+- **Total Tests**: 3,274 passing
+- **Strategy**: "Tackle Large Modules First" - VALIDATED (6 consecutive wins!)
 - **Phase**: PHASE 4 TIER 2 - TRUE 100% Coverage Campaign
 
 **Recent Achievements:**
@@ -214,28 +219,47 @@ pytest tests/ --cov=app/services --cov-report=term-missing -q
 - Session 70: response_cache.py ✅
 - Session 71: tutor_mode_manager.py ✅
 - Session 72: scenario_factory.py ✅
-- Session 73: spaced_repetition_manager.py 🎯
+- Session 73: spaced_repetition_manager.py ✅
+- Session 74: [Next target] 🎯
 
 ---
 
 ## 📁 KEY DOCUMENTATION REFERENCES
 
-### Session 72 Documentation
-- `docs/SESSION_72_SUMMARY.md` - Complete session details
-- `docs/COVERAGE_TRACKER_SESSION_72.md` - Coverage statistics
-- `docs/LESSONS_LEARNED_SESSION_72.md` - Key learnings (import mocking, tmp_path)
-- `tests/test_scenario_factory.py` - Example test organization (10 classes, 35 tests)
+### Session 73 Documentation
+- `docs/SESSION_73_SUMMARY.md` - Complete session details
+- `docs/COVERAGE_TRACKER_SESSION_73.md` - Coverage statistics
+- `docs/LESSONS_LEARNED_SESSION_73.md` - Key learnings (MagicMock, facade testing)
+- `tests/test_spaced_repetition_manager.py` - Example test organization (10 classes, 18 tests)
+
+### Critical Patterns from Session 73
+```python
+# Pattern 1: Context Manager Mocking (CRITICAL!)
+mock_db_manager = MagicMock()  # MUST be MagicMock!
+mock_conn = MagicMock()
+mock_db_manager.get_connection.return_value.__enter__.return_value = mock_conn
+
+# Pattern 2: Delegation Testing
+mock_submodule.method.return_value = expected_result
+result = facade.method(param1, param2)
+mock_submodule.method.assert_called_once_with(param1, param2)
+
+# Pattern 3: Singleton Testing
+instance1 = get_singleton(param1)
+instance2 = get_singleton(param1)
+assert instance1 is instance2  # Use 'is' for identity
+```
 
 ### Historical Context
 - Previous sessions show consistent progress
 - Strategy evolution documented
 - Lessons learned accumulated
-- 5 consecutive medium/large module successes
+- 6 consecutive medium/large module successes
 
 ---
 
-**Session 73 Mission**: Continue "Tackle Large Modules First" and achieve 41st module at TRUE 100%! 🎯
+**Session 74 Mission**: Continue "Tackle Large Modules First" and achieve 42nd module at TRUE 100%! 🎯
 
 **Remember**: "We have plenty of time to do this right, no excuses." 💯
 
-**Strategy**: 5 consecutive successes prove this approach works! Continue! 🚀
+**Strategy**: 6 consecutive successes prove this approach works! Continue! 🚀
