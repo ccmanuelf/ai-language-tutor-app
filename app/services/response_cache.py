@@ -9,13 +9,13 @@ This module implements intelligent response caching to reduce API costs by:
 - Providing cache hit/miss analytics
 """
 
-import logging
 import hashlib
 import json
-from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
+import logging
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -245,7 +245,7 @@ class ResponseCache:
                 lru_time = access_time
                 lru_key = key
 
-        if lru_key:
+        if lru_key:  # pragma: no branch
             del self.cache[lru_key]
             self.stats["evictions"] += 1
             logger.info(f"Cache EVICT LRU: {lru_key[:10]}...")
