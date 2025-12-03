@@ -743,6 +743,413 @@ class TestServiceInfo:
 
 
 # =============================================================================
+# Text Chunking Tests (Lines 195-220) - NEW IN SESSION 77!
+# =============================================================================
+
+
+class TestTextChunking:
+    """Test the _chunk_text method added in Session 77"""
+
+    def test_chunk_text_empty_string(self):
+        """Test _chunk_text with empty string (line 198)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            # Line 198: Empty text should return single chunk
+            chunks = service._chunk_text("", max_chunk_size=200)
+            assert chunks == [""]
+
+    def test_chunk_text_shorter_than_max(self):
+        """Test _chunk_text with text shorter than max_chunk_size (line 198)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            text = "Hello world"
+            # Line 198: Should return single chunk
+            chunks = service._chunk_text(text, max_chunk_size=200)
+            assert len(chunks) == 1
+            assert chunks[0] == "Hello world"
+
+    def test_chunk_text_exactly_max_size(self):
+        """Test _chunk_text with text exactly at max_chunk_size (line 198)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            text = "x" * 200
+            # Line 198: Should return single chunk
+            chunks = service._chunk_text(text, max_chunk_size=200)
+            assert len(chunks) == 1
+            assert chunks[0] == text
+
+    def test_chunk_text_slightly_over_max(self):
+        """Test _chunk_text with text just over max_chunk_size (lines 200-217)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            # Text with sentence boundary
+            text = "This is sentence one. This is sentence two."
+            # Lines 200-217: Should split at sentence boundary
+            chunks = service._chunk_text(text, max_chunk_size=25)
+            assert len(chunks) == 2
+            assert "sentence one." in chunks[0]
+            assert "sentence two." in chunks[1]
+
+    def test_chunk_text_multiple_sentences(self):
+        """Test _chunk_text with multiple sentences requiring chunking (lines 200-217)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            text = "First sentence here! Second sentence follows. Third one too? Fourth sentence."
+            # Lines 200-217: Should create multiple chunks
+            chunks = service._chunk_text(text, max_chunk_size=30)
+
+            assert len(chunks) > 1
+            # Verify all text is preserved
+            combined = " ".join(chunks)
+            assert "First sentence" in combined
+            assert "Fourth sentence" in combined
+
+    def test_chunk_text_no_sentence_boundaries(self):
+        """Test _chunk_text with long text without punctuation (lines 200-217)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            # Very long word without punctuation
+            text = "x" * 500
+            # Lines 200-217: Should handle text without sentence boundaries
+            chunks = service._chunk_text(text, max_chunk_size=200)
+
+            # Should still return chunks (fallback behavior)
+            assert len(chunks) >= 1
+
+    def test_chunk_text_various_punctuation(self):
+        """Test _chunk_text with different punctuation marks (lines 203-205)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            # Test period
+            text = "Statement one. Statement two."
+            chunks = service._chunk_text(text, max_chunk_size=20)
+            assert len(chunks) == 2
+
+            # Test exclamation
+            text = "Exciting news! More news!"
+            chunks = service._chunk_text(text, max_chunk_size=20)
+            assert len(chunks) == 2
+
+            # Test question mark
+            text = "First question? Second question?"
+            chunks = service._chunk_text(text, max_chunk_size=20)
+            assert len(chunks) == 2
+
+    def test_chunk_text_preserves_delimiters(self):
+        """Test _chunk_text preserves sentence delimiters (lines 208-209)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            text = "First sentence. Second sentence."
+            chunks = service._chunk_text(text, max_chunk_size=20)
+
+            # Verify delimiters are preserved
+            assert chunks[0].endswith(".")
+            if len(chunks) > 1:
+                assert chunks[1].endswith(".")
+
+    def test_chunk_text_boundary_decision(self):
+        """Test _chunk_text chunk boundary decision logic (lines 211-215)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            # Create text where adding next sentence would exceed limit
+            text = "This is a sentence. Another sentence here."
+            chunks = service._chunk_text(text, max_chunk_size=25)
+
+            # Line 211-215: Should split when adding would exceed limit
+            assert len(chunks) == 2
+
+    def test_chunk_text_strips_whitespace(self):
+        """Test _chunk_text strips whitespace from chunks (line 213)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            text = "   Sentence one.    Sentence two.   "
+            chunks = service._chunk_text(text, max_chunk_size=20)
+
+            # Line 213: Chunks should be stripped
+            for chunk in chunks:
+                assert chunk == chunk.strip()
+                assert not chunk.startswith(" ")
+                assert (
+                    not chunk.endswith(" ")
+                    or chunk.endswith(". ")
+                    or chunk.endswith("! ")
+                    or chunk.endswith("? ")
+                )
+
+    def test_chunk_text_empty_after_strip(self):
+        """Test _chunk_text handles empty chunks after strip (line 216)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            # Text that might produce empty chunks
+            text = "   .   "
+            chunks = service._chunk_text(text, max_chunk_size=10)
+
+            # Line 216: Should only include non-empty chunks
+            for chunk in chunks:
+                assert len(chunk.strip()) > 0
+
+    def test_chunk_text_fallback_to_original(self):
+        """Test _chunk_text fallback when no chunks created (line 219)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            # Edge case: text that might not produce chunks
+            text = "text"
+            chunks = service._chunk_text(text, max_chunk_size=10)
+
+            # Line 219: Should return at least the original text
+            assert len(chunks) >= 1
+            assert "text" in "".join(chunks)
+
+    def test_chunk_text_only_whitespace_produces_empty_chunk(self):
+        """Test _chunk_text with text that becomes empty after processing (line 217->220)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            # Text with only whitespace and delimiters that exceed chunk size
+            # This should trigger the branch where current_chunk.strip() is empty
+            text = "      .      "  # Long whitespace with delimiter
+            chunks = service._chunk_text(text, max_chunk_size=5)
+
+            # Line 217 (if condition fails) -> Line 220 (fallback)
+            # Should return the original text as fallback
+            assert len(chunks) >= 1
+
+
+# =============================================================================
+# Chunk Synthesis Exception Tests (Lines 247-253) - SESSION 77 ADDITION!
+# =============================================================================
+
+
+class TestChunkSynthesisExceptions:
+    """Test exception handling in chunk-based synthesis (lines 247-253)"""
+
+    def test_synthesize_sync_chunk_exception_logged(self):
+        """Test that chunk synthesis exceptions are logged (line 249-250)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            voice_info = {
+                "model_path": "/path/to/model.onnx",
+                "config_path": "/path/to/config.json",
+                "sample_rate": 22050,
+            }
+
+            # Create long text to trigger chunking
+            long_text = "Sentence one. " * 50  # Will create multiple chunks
+
+            # Mock voice to fail on specific chunks
+            mock_voice = MagicMock()
+            call_count = [0]
+
+            def mock_synthesize(text):
+                call_count[0] += 1
+                if call_count[0] == 2:  # Fail on second chunk
+                    # Line 249-250: Exception should be caught and logged
+                    raise Exception("Chunk synthesis failed")
+
+                # Succeed on other chunks
+                chunk = MagicMock()
+                chunk.audio_int16_bytes = b"\x00\x01" * 1000
+                return [chunk]
+
+            mock_voice.synthesize = mock_synthesize
+
+            with (
+                patch("app.services.piper_tts_service.PiperVoice") as MockPiperVoice,
+                patch("app.services.piper_tts_service.logger") as mock_logger,
+            ):
+                MockPiperVoice.load.return_value = mock_voice
+
+                # Lines 247-253: Should continue despite chunk failure
+                audio_data = service._synthesize_sync(long_text, voice_info)
+
+                # Verify warning was logged (line 249)
+                assert mock_logger.warning.called
+                warning_call = mock_logger.warning.call_args[0][0]
+                assert "Failed to synthesize chunk" in warning_call
+
+                # Verify audio was still generated from successful chunks
+                assert len(audio_data) > 0
+
+    def test_synthesize_sync_first_chunk_fails(self):
+        """Test synthesis when first chunk fails (line 251 - continue)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            voice_info = {
+                "model_path": "/path/to/model.onnx",
+                "config_path": "/path/to/config.json",
+                "sample_rate": 22050,
+            }
+
+            # Use longer text to ensure multiple chunks are created
+            long_text = (
+                "First sentence here. " * 15
+            )  # Will definitely create multiple chunks
+
+            mock_voice = MagicMock()
+            call_count = [0]
+
+            def mock_synthesize(text):
+                call_count[0] += 1
+                if call_count[0] == 1:  # Fail first chunk
+                    raise Exception("First chunk failed")
+
+                chunk = MagicMock()
+                chunk.audio_int16_bytes = b"\x00\x01" * 1000
+                return [chunk]
+
+            mock_voice.synthesize = mock_synthesize
+
+            with patch("app.services.piper_tts_service.PiperVoice") as MockPiperVoice:
+                MockPiperVoice.load.return_value = mock_voice
+
+                # Line 251: Should continue with remaining chunks
+                audio_data = service._synthesize_sync(long_text, voice_info)
+
+                # Should still generate audio from other chunks
+                assert len(audio_data) > 0
+
+    def test_synthesize_sync_middle_chunk_fails(self):
+        """Test synthesis when middle chunk fails (line 251 - continue)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            voice_info = {
+                "model_path": "/path/to/model.onnx",
+                "config_path": "/path/to/config.json",
+                "sample_rate": 22050,
+            }
+
+            long_text = "One. Two. Three. Four."
+
+            mock_voice = MagicMock()
+            call_count = [0]
+
+            def mock_synthesize(text):
+                call_count[0] += 1
+                if call_count[0] == 2:  # Fail middle chunk
+                    raise Exception("Middle chunk failed")
+
+                chunk = MagicMock()
+                chunk.audio_int16_bytes = b"\x00\x01" * 500
+                return [chunk]
+
+            mock_voice.synthesize = mock_synthesize
+
+            with patch("app.services.piper_tts_service.PiperVoice") as MockPiperVoice:
+                MockPiperVoice.load.return_value = mock_voice
+
+                # Line 251: Should continue processing
+                audio_data = service._synthesize_sync(long_text, voice_info)
+
+                assert len(audio_data) > 0
+
+    def test_synthesize_sync_last_chunk_fails(self):
+        """Test synthesis when last chunk fails (line 251 - continue)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            voice_info = {
+                "model_path": "/path/to/model.onnx",
+                "config_path": "/path/to/config.json",
+                "sample_rate": 22050,
+            }
+
+            long_text = "First. Second. Third."
+
+            mock_voice = MagicMock()
+            call_count = [0]
+
+            def mock_synthesize(text):
+                call_count[0] += 1
+                if call_count[0] == 3:  # Fail last chunk
+                    raise Exception("Last chunk failed")
+
+                chunk = MagicMock()
+                chunk.audio_int16_bytes = b"\x00\x01" * 1000
+                return [chunk]
+
+            mock_voice.synthesize = mock_synthesize
+
+            with patch("app.services.piper_tts_service.PiperVoice") as MockPiperVoice:
+                MockPiperVoice.load.return_value = mock_voice
+
+                # Line 251: Should have audio from successful chunks
+                audio_data = service._synthesize_sync(long_text, voice_info)
+
+                assert len(audio_data) > 0
+
+    def test_synthesize_sync_all_chunks_fail(self):
+        """Test synthesis when all chunks fail (lines 254-255 - no audio error)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            voice_info = {
+                "model_path": "/path/to/model.onnx",
+                "config_path": "/path/to/config.json",
+                "sample_rate": 22050,
+            }
+
+            long_text = "First. Second. Third."
+
+            mock_voice = MagicMock()
+            # Always fail
+            mock_voice.synthesize.side_effect = Exception("All chunks fail")
+
+            with patch("app.services.piper_tts_service.PiperVoice") as MockPiperVoice:
+                MockPiperVoice.load.return_value = mock_voice
+
+                # Lines 254-255: Should raise "No audio data generated"
+                with pytest.raises(RuntimeError, match="No audio data generated"):
+                    service._synthesize_sync(long_text, voice_info)
+
+    def test_synthesize_sync_voice_reload_per_chunk(self):
+        """Test that voice is reloaded for each chunk (line 246)"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            voice_info = {
+                "model_path": "/path/to/model.onnx",
+                "config_path": "/path/to/config.json",
+                "sample_rate": 22050,
+            }
+
+            # Long text to create multiple chunks
+            long_text = "Sentence one. " * 30
+
+            mock_voice = MagicMock()
+            mock_chunk = MagicMock()
+            mock_chunk.audio_int16_bytes = b"\x00\x01" * 500
+            mock_voice.synthesize.return_value = [mock_chunk]
+
+            with patch("app.services.piper_tts_service.PiperVoice") as MockPiperVoice:
+                MockPiperVoice.load.return_value = mock_voice
+
+                audio_data = service._synthesize_sync(long_text, voice_info)
+
+                # Line 246: Voice should be reloaded multiple times
+                assert MockPiperVoice.load.call_count > 1
+
+                # Verify each load used correct paths
+                for call in MockPiperVoice.load.call_args_list:
+                    assert call[0][0] == "/path/to/model.onnx"
+                    assert call[0][1] == "/path/to/config.json"
+
+
+# =============================================================================
 # Integration Tests
 # =============================================================================
 
