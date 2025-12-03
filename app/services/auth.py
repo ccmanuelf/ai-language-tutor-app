@@ -9,20 +9,20 @@ This module provides secure authentication features including:
 - Security utilities and validation
 """
 
-import secrets
 import hashlib
-from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any, Tuple
-import jwt
-import bcrypt
-from pydantic import BaseModel, Field
-from fastapi import HTTPException, status, Depends, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import logging
+import secrets
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Optional, Tuple
+
+import bcrypt
+import jwt
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel, Field
 
 from app.core.config import get_settings
 from app.models.schemas import UserRoleEnum
-
 
 logger = logging.getLogger(__name__)
 
@@ -478,12 +478,15 @@ class AuthenticationService:
                 count += 1
 
         # Clean expired refresh tokens
-        for jti, token_data in list(self.refresh_tokens.items()):
-            if token_data["created_at"] < now - timedelta(
-                days=self.config.REFRESH_TOKEN_EXPIRE_DAYS
-            ):
-                del self.refresh_tokens[jti]
-                count += 1
+        expired_tokens = [
+            jti
+            for jti, token_data in self.refresh_tokens.items()
+            if token_data["created_at"]
+            < now - timedelta(days=self.config.REFRESH_TOKEN_EXPIRE_DAYS)
+        ]
+        for jti in expired_tokens:
+            del self.refresh_tokens[jti]
+            count += 1
 
         return count
 
