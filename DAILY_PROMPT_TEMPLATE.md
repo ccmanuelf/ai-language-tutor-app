@@ -1,23 +1,23 @@
 # AI Language Tutor App - Daily Project Resumption Prompt Template
 
 **Project**: AI Language Tutor App  
-**Phase**: 4 - Extended Services - **PHASE 4: 82% COMPLETE!** 🚀⭐🎊  
-**Last Updated**: 2025-12-02 (Post-Session 74 - **scenario_io.py TRUE 100%!** ✅🎊)  
+**Phase**: 4 - Extended Services - **PHASE 4: 83% COMPLETE!** 🚀⭐🎊  
+**Last Updated**: 2025-12-02 (Post-Session 75 - **spaced_repetition_manager_refactored.py TRUE 100%!** ✅🎊)  
 **Next Session Date**: TBD  
-**Status**: ✅ **PHASE 4: 42/90+ MODULES TRUE 100% - Session 75: Phase 4 Tier 2 Continuing!** 🎯🚀
+**Status**: ✅ **PHASE 4: 43/90+ MODULES TRUE 100% - Session 76: Phase 4 Tier 2 Continuing!** 🎯🚀
 
 ---
 
-## 🎊 SESSION 74 ACHIEVEMENT - 42ND MODULE! 🎊
+## 🎊 SESSION 75 ACHIEVEMENT - 43RD MODULE! 🎊
 
-**Module Completed**: `app/services/scenario_io.py`  
-**Coverage**: TRUE 100% (47/47 statements, 16/16 branches) ✅  
-**Tests**: 19 comprehensive tests (4 test classes)  
-**Strategic Value**: ⭐⭐⭐ HIGH (Scenario Persistence I/O)  
-**Total Project Tests**: 3,293 passing (was 3,274, +19 new)  
+**Module Completed**: `app/services/spaced_repetition_manager_refactored.py`  
+**Coverage**: TRUE 100% (58/58 statements, 11/11 branches) ✅  
+**Tests**: 18 comprehensive tests (10 test classes)  
+**Strategic Value**: ⭐⭐⭐ HIGH (Refactored Spaced Repetition Facade)  
+**Total Project Tests**: 3,311 passing (was 3,293, +18 new)  
 **Zero Regressions**: All tests passing ✅
 
-**Strategy Validated - 7th Consecutive Success!**
+**Strategy Validated - 8th Consecutive Success!**
 - Session 68: scenario_templates_extended.py (116 statements) ✅
 - Session 69: scenario_templates.py (134 statements) ✅
 - Session 70: response_cache.py (129 statements) ✅
@@ -25,8 +25,9 @@
 - Session 72: scenario_factory.py (61 statements) ✅
 - Session 73: spaced_repetition_manager.py (58 statements) ✅
 - Session 74: scenario_io.py (47 statements) ✅
+- Session 75: spaced_repetition_manager_refactored.py (58 statements) ✅
 
-**"Tackle Large Modules First"** - PROVEN EFFECTIVE FOR 7 SESSIONS!
+**"Tackle Large Modules First"** - PROVEN EFFECTIVE FOR 8 SESSIONS!
 
 ---
 
@@ -59,7 +60,7 @@ source ai-tutor-env/bin/activate && \
 
 ---
 
-## 🎯 SESSION 75 PRIMARY GOAL
+## 🎯 SESSION 76 PRIMARY GOAL
 
 ### **Continue "Tackle Large Modules First" Strategy**
 
@@ -71,11 +72,11 @@ source ai-tutor-env/bin/activate && \
 3. **Current Coverage**: < 50% (significant improvement potential)
 4. **Impact**: Important for system functionality
 
-**Expected Outcome**: TRUE 100% coverage on selected module (43rd module!)
+**Expected Outcome**: TRUE 100% coverage on selected module (44th module!)
 
 ---
 
-## 📋 SESSION 75 WORKFLOW
+## 📋 SESSION 76 WORKFLOW
 
 ### **Step 1: Module Identification & Selection** (15-20 minutes)
 
@@ -152,24 +153,24 @@ Create documentation:
 
 ---
 
-## 📚 SESSION 74 LESSONS TO APPLY
+## 📚 SESSION 75 LESSONS TO APPLY
 
-### **Key Lessons for Session 75**
+### **Key Lessons for Session 76**
 
-1. **Enum Value Verification** - CRITICAL! Always check enum values before using them
-2. **Mock Call Arguments** - Understand call_args[0] (positional) vs call_args[1] (kwargs)
-3. **Constructor Signatures** - Use inspect.signature() to verify required parameters
-4. **Bulk Editing** - Use Python scripts with regex for repetitive code changes
-5. **Test Actual Behavior** - Don't assume defaults, verify and test actual behavior
-6. **Small Module Value** - Size ≠ importance; small modules can be critical
-7. **Datetime Patterns** - Complex conditional logic requires multiple test cases
-8. **Mock File I/O** - Always mock file operations for deterministic tests
-9. **Error Path Testing** - Test all exception handlers for branch coverage
-10. **Round-Trip Testing** - Test both serialization and deserialization
+1. **Leverage Existing Tests** - Check for similar modules with tests FIRST before writing from scratch
+2. **Use diff for Comparison** - Identify ALL API differences between similar modules upfront
+3. **Small API Changes Matter** - Parameter order, types, signatures must be carefully updated
+4. **Facade Pattern Testing** - Focus on delegation verification, not business logic
+5. **Mock Path Management** - Update ALL @patch decorators when adapting tests
+6. **Test Adaptation Workflow** - Follow systematic workflow: identify → compare → adapt → validate
+7. **Time Savings** - Adapting tests can save 30-50% time vs. writing from scratch
+8. **Singleton Pattern Testing** - Test instance management: same instance, new instance, defaults
+9. **Code Duplication Signals** - Two similar modules may indicate unclear deprecation path
+10. **Documentation with Refactoring** - Code changes should include documentation updates
 
 ---
 
-## 🚀 QUICK START - SESSION 75
+## 🚀 QUICK START - SESSION 76
 
 ```bash
 # 1. Check git status:
@@ -210,60 +211,69 @@ pytest tests/ --cov=app/services --cov-report=term-missing -q
 ## 📊 PROJECT STATUS
 
 **Overall Progress:**
-- **Modules at TRUE 100%**: 42 (as of Session 74) 🎊
-- **Total Tests**: 3,293 passing
-- **Strategy**: "Tackle Large Modules First" - VALIDATED (7 consecutive wins!)
+- **Modules at TRUE 100%**: 43 (as of Session 75) 🎊
+- **Total Tests**: 3,311 passing
+- **Strategy**: "Tackle Large Modules First" - VALIDATED (8 consecutive wins!)
 - **Phase**: PHASE 4 TIER 2 - TRUE 100% Coverage Campaign
 
 **Recent Achievements:**
-- Session 68: scenario_templates_extended.py ✅
 - Session 69: scenario_templates.py ✅
 - Session 70: response_cache.py ✅
 - Session 71: tutor_mode_manager.py ✅
 - Session 72: scenario_factory.py ✅
 - Session 73: spaced_repetition_manager.py ✅
 - Session 74: scenario_io.py ✅
-- Session 75: [Next target] 🎯
+- Session 75: spaced_repetition_manager_refactored.py ✅
+- Session 76: [Next target] 🎯
 
 ---
 
 ## 📁 KEY DOCUMENTATION REFERENCES
 
-### Session 74 Documentation
-- `docs/SESSION_74_SUMMARY.md` - Complete session details
-- `docs/COVERAGE_TRACKER_SESSION_74.md` - Coverage statistics
-- `docs/LESSONS_LEARNED_SESSION_74.md` - Key learnings (enum verification, mocking)
-- `tests/test_scenario_io.py` - Example test organization (4 classes, 19 tests)
+### Session 75 Documentation
+- `docs/SESSION_75_SUMMARY.md` - Complete session details
+- `docs/COVERAGE_TRACKER_SESSION_75.md` - Coverage statistics
+- `docs/LESSONS_LEARNED_SESSION_75.md` - Key learnings (test adaptation, facade patterns)
+- `tests/test_spaced_repetition_manager_refactored.py` - Example test organization (10 classes, 18 tests)
 
-### Critical Patterns from Session 74
+### Critical Patterns from Session 75
 ```python
-# Pattern 1: Verify Enum Values First
-python -c "from module import Enum; print(list(Enum))"
+# Pattern 1: Check for Similar Modules First
+# Use diff to identify ALL differences
+diff -u original.py refactored.py
 
-# Pattern 2: Check Constructor Signatures
-import inspect
-print(inspect.signature(Class.__init__))
+# Pattern 2: Test Adaptation Workflow
+# 1. Identify similar module with tests
+# 2. Compare APIs using diff
+# 3. Copy and rename test file
+# 4. Update all imports and @patch paths
+# 5. Adjust for API differences
+# 6. Validate coverage
 
-# Pattern 3: Mock File I/O
-with patch('pathlib.Path.exists', return_value=True), \
-     patch('builtins.open', mock_open(read_data=data)):
-    result = await load_function()
+# Pattern 3: Facade Pattern Testing - Delegation Verification
+def test_method_delegates_to_submodule(self):
+    mock_submodule.method.return_value = expected_result
+    result = facade.method(params)
+    assert result == expected_result
+    mock_submodule.method.assert_called_once_with(params)
 
-# Pattern 4: Access Mock Call Args Correctly
-call_args = mock_func.call_args[0]    # positional
-call_kwargs = mock_func.call_args[1]  # keyword
+# Pattern 4: Singleton Pattern Testing
+def test_singleton_returns_same_instance(self):
+    instance1 = get_singleton("db.db")
+    instance2 = get_singleton("db.db")
+    assert instance1 is instance2
 ```
 
 ### Historical Context
 - Previous sessions show consistent progress
 - Strategy evolution documented
 - Lessons learned accumulated
-- 7 consecutive medium/small module successes
+- 8 consecutive medium/small module successes
 
 ---
 
-**Session 75 Mission**: Continue "Tackle Large Modules First" and achieve 43rd module at TRUE 100%! 🎯
+**Session 76 Mission**: Continue "Tackle Large Modules First" and achieve 44th module at TRUE 100%! 🎯
 
 **Remember**: "We have plenty of time to do this right, no excuses." 💯
 
-**Strategy**: 7 consecutive successes prove this approach works! Continue! 🚀
+**Strategy**: 8 consecutive successes prove this approach works! Continue! 🚀
