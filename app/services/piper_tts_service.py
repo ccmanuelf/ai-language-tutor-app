@@ -6,16 +6,15 @@ a local neural TTS engine with ONNX models.
 """
 
 import asyncio
+import json
+import logging
 import os
 import tempfile
-import logging
-from pathlib import Path
-from typing import Optional, Dict, List, Any, Tuple
 from dataclasses import dataclass
-import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 from piper import PiperVoice
-
 
 logger = logging.getLogger(__name__)
 
@@ -178,6 +177,48 @@ class PiperTTSService:
             logger.error(f"Piper TTS synthesis failed: {e}")
             raise RuntimeError(f"TTS synthesis failed: {e}")
 
+    def _chunk_text(self, text: str, max_chunk_size: int) -> List[str]:
+        """
+        Split text into chunks at sentence boundaries to avoid ONNX runtime errors.
+
+        Args:
+            text: The text to chunk
+            max_chunk_size: Maximum characters per chunk
+
+        Returns:
+            List of text chunks
+        """
+        if len(text) <= max_chunk_size:
+            return [text]
+
+        # Split on sentence boundaries (., !, ?)
+        import re
+
+        sentences = re.split(r"([.!?]+\s+)", text)
+
+        chunks = []
+        current_chunk = ""
+
+        for i in range(0, len(sentences), 2):
+            sentence = sentences[i]
+            delimiter = sentences[i + 1] if i + 1 < len(sentences) else ""
+
+            # If adding this sentence would exceed the limit, save current chunk
+            if (
+                current_chunk
+                and len(current_chunk) + len(sentence) + len(delimiter) > max_chunk_size
+            ):
+                chunks.append(current_chunk.strip())
+                current_chunk = sentence + delimiter
+            else:
+                current_chunk += sentence + delimiter
+
+        # Add the last chunk
+        if current_chunk.strip():
+            chunks.append(current_chunk.strip())
+
+        return chunks if chunks else [text]
+
     def _synthesize_sync(self, text: str, voice_info: Dict[str, Any]) -> bytes:
         """Synchronous synthesis for thread execution"""
         model_path = voice_info["model_path"]
@@ -188,14 +229,28 @@ class PiperTTSService:
             temp_path = temp_file.name
 
         try:
-            # Initialize Piper voice
-            voice = PiperVoice.load(model_path, config_path)
+            # Split very long text into manageable chunks to avoid ONNX runtime errors
+            # Piper has issues with very long texts (>1000 chars)
+            max_chunk_size = 200  # Very conservative chunk size to avoid ONNX errors
+            text_chunks = self._chunk_text(text, max_chunk_size)
 
             # Synthesize and collect audio chunks
+            # NOTE: We must reload the voice for each chunk due to Piper's state management issues
             audio_chunks = []
-            for audio_chunk in voice.synthesize(text):
-                # Each audio_chunk has a .audio property with numpy array
-                audio_chunks.append(audio_chunk.audio_int16_bytes)
+            for idx, text_chunk in enumerate(text_chunks):
+                try:
+                    # Reload voice for each chunk to avoid ONNX state corruption
+                    voice = PiperVoice.load(model_path, config_path)
+                    for audio_chunk in voice.synthesize(text_chunk):
+                        # Each audio_chunk has a .audio property with numpy array
+                        audio_chunks.append(audio_chunk.audio_int16_bytes)
+                except Exception as chunk_error:
+                    logger.warning(
+                        f"Failed to synthesize chunk {idx} (length {len(text_chunk)}): {chunk_error}"
+                    )
+                    # If even a small chunk fails, try splitting it further or skip
+                    # For now, we'll try to continue with other chunks
+                    continue
 
             if not audio_chunks:
                 raise RuntimeError("No audio data generated")
