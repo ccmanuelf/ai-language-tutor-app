@@ -16,15 +16,16 @@ Provides comprehensive API for admin model management interface.
 """
 
 import logging
-from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
-from fastapi import APIRouter, HTTPException, Depends, Query, Path, Body
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from app.services.ai_model_manager import ai_model_manager, ModelCategory, ModelStatus
-from app.services.ai_router import ai_router
 from app.services.admin_auth import require_admin_access
+from app.services.ai_model_manager import ModelCategory, ModelStatus, ai_model_manager
+from app.services.ai_router import ai_router
 
 logger = logging.getLogger(__name__)
 
@@ -583,9 +584,13 @@ def _calculate_provider_breakdown(models: list) -> dict:
         )
 
     # Calculate averages for providers
-    for provider_name, stats in provider_stats.items():
-        if stats["models"] > 0:
-            stats["avg_success_rate"] /= stats["models"]
+    providers_with_models = [
+        (provider_name, stats)
+        for provider_name, stats in provider_stats.items()
+        if stats["models"] > 0
+    ]
+    for provider_name, stats in providers_with_models:
+        stats["avg_success_rate"] /= stats["models"]
 
     return provider_stats
 
@@ -721,6 +726,10 @@ async def export_model_data(
                     "Content-Disposition": "attachment; filename=ai_models_export.csv"
                 },
             )
+        else:
+            # This should never be reached due to Query parameter validation
+            # but included for completeness
+            return JSONResponse(content=export_data)
 
     except Exception as e:
         logger.error(f"Failed to export model data: {e}")
