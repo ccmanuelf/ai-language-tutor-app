@@ -1022,5 +1022,483 @@ class TestSTTExceptionHandler:
         app.dependency_overrides.clear()
 
 
+# ============================================================================
+# TEST CLASS 11: GET /available-voices - Voice Persona Selection
+# ============================================================================
+
+
+class TestGetAvailableVoices:
+    """Test the GET /available-voices endpoint - Session 81 addition"""
+
+    @patch("app.api.conversations.speech_processor")
+    def test_get_available_voices_all(self, mock_processor, client):
+        """Test getting all available voices without filter"""
+        # Mock the piper TTS service
+        mock_piper_service = Mock()
+        mock_piper_service.get_available_voices.return_value = [
+            {
+                "voice_id": "en_US-lessac-medium",
+                "persona": "lessac",
+                "language": "en",
+                "accent": "United States",
+                "quality": "medium",
+                "gender": "male",
+                "sample_rate": 22050,
+                "is_default": True,
+            },
+            {
+                "voice_id": "es_AR-daniela-high",
+                "persona": "daniela",
+                "language": "es",
+                "accent": "Argentina",
+                "quality": "high",
+                "gender": "female",
+                "sample_rate": 22050,
+                "is_default": False,
+            },
+        ]
+        mock_processor.piper_tts_service = mock_piper_service
+
+        response = client.get("/api/v1/conversations/available-voices")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "voices" in data
+        assert "count" in data
+        assert data["count"] == 2
+        assert len(data["voices"]) == 2
+
+        # Verify voice structure
+        voice = data["voices"][0]
+        assert "voice_id" in voice
+        assert "persona" in voice
+        assert "language" in voice
+        assert "accent" in voice
+        assert "quality" in voice
+        assert "gender" in voice
+        assert "sample_rate" in voice
+        assert "is_default" in voice
+
+    @patch("app.api.conversations.speech_processor")
+    def test_get_available_voices_filtered_by_language(self, mock_processor, client):
+        """Test filtering voices by language"""
+        mock_piper_service = Mock()
+        mock_piper_service.get_available_voices.return_value = [
+            {
+                "voice_id": "es_AR-daniela-high",
+                "persona": "daniela",
+                "language": "es",
+                "accent": "Argentina",
+                "quality": "high",
+                "gender": "female",
+                "sample_rate": 22050,
+                "is_default": False,
+            },
+            {
+                "voice_id": "es_MX-claude-high",
+                "persona": "claude",
+                "language": "es",
+                "accent": "Mexico",
+                "quality": "high",
+                "gender": "male",
+                "sample_rate": 22050,
+                "is_default": True,
+            },
+        ]
+        mock_processor.piper_tts_service = mock_piper_service
+
+        response = client.get("/api/v1/conversations/available-voices?language=es")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 2
+        # Verify all returned voices are Spanish
+        for voice in data["voices"]:
+            assert voice["language"] == "es"
+
+        # Verify the service was called with language filter
+        mock_piper_service.get_available_voices.assert_called_once_with(language="es")
+
+    @patch("app.api.conversations.speech_processor")
+    def test_get_available_voices_empty_result(self, mock_processor, client):
+        """Test when no voices match the filter"""
+        mock_piper_service = Mock()
+        mock_piper_service.get_available_voices.return_value = []
+        mock_processor.piper_tts_service = mock_piper_service
+
+        response = client.get("/api/v1/conversations/available-voices?language=xy")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 0
+        assert data["voices"] == []
+
+    @patch("app.api.conversations.speech_processor")
+    def test_get_available_voices_no_service(self, mock_processor, client):
+        """Test error when TTS service not available"""
+        mock_processor.piper_tts_service = None
+
+        response = client.get("/api/v1/conversations/available-voices")
+
+        # When service is None, get_available_voices() call fails with AttributeError
+        # which is caught by the except block and returns 500
+        assert response.status_code == 500
+        data = response.json()
+        assert "detail" in data
+        assert "Failed to retrieve voices" in data["detail"]
+
+    @patch("app.api.conversations.speech_processor")
+    def test_get_available_voices_service_error(self, mock_processor, client):
+        """Test error handling when service raises exception"""
+        mock_piper_service = Mock()
+        mock_piper_service.get_available_voices.side_effect = Exception(
+            "Voice database error"
+        )
+        mock_processor.piper_tts_service = mock_piper_service
+
+        response = client.get("/api/v1/conversations/available-voices")
+
+        assert response.status_code == 500
+        data = response.json()
+        assert "detail" in data
+        assert "Failed to retrieve voices" in data["detail"]
+
+    @patch("app.api.conversations.speech_processor")
+    def test_get_available_voices_includes_all_metadata(self, mock_processor, client):
+        """Test that all metadata fields are included"""
+        mock_piper_service = Mock()
+        mock_piper_service.get_available_voices.return_value = [
+            {
+                "voice_id": "it_IT-paola-medium",
+                "persona": "paola",
+                "language": "it",
+                "accent": "Italy",
+                "quality": "medium",
+                "gender": "female",
+                "sample_rate": 22050,
+                "is_default": True,
+            }
+        ]
+        mock_processor.piper_tts_service = mock_piper_service
+
+        response = client.get("/api/v1/conversations/available-voices")
+
+        data = response.json()
+        voice = data["voices"][0]
+
+        # Verify all metadata fields present
+        required_fields = [
+            "voice_id",
+            "persona",
+            "language",
+            "accent",
+            "quality",
+            "gender",
+            "sample_rate",
+            "is_default",
+        ]
+        for field in required_fields:
+            assert field in voice, f"Missing field: {field}"
+
+    @patch("app.api.conversations.speech_processor")
+    def test_get_available_voices_multiple_languages(self, mock_processor, client):
+        """Test getting voices for multiple languages"""
+        mock_piper_service = Mock()
+        mock_piper_service.get_available_voices.return_value = [
+            {
+                "voice_id": "en_US-lessac-medium",
+                "persona": "lessac",
+                "language": "en",
+                "accent": "United States",
+                "quality": "medium",
+                "gender": "male",
+                "sample_rate": 22050,
+                "is_default": True,
+            },
+            {
+                "voice_id": "fr_FR-siwis-medium",
+                "persona": "siwis",
+                "language": "fr",
+                "accent": "France",
+                "quality": "medium",
+                "gender": "female",
+                "sample_rate": 22050,
+                "is_default": True,
+            },
+            {
+                "voice_id": "de_DE-thorsten-medium",
+                "persona": "thorsten",
+                "language": "de",
+                "accent": "Germany",
+                "quality": "medium",
+                "gender": "male",
+                "sample_rate": 22050,
+                "is_default": True,
+            },
+        ]
+        mock_processor.piper_tts_service = mock_piper_service
+
+        response = client.get("/api/v1/conversations/available-voices")
+
+        data = response.json()
+        assert data["count"] == 3
+        languages = {voice["language"] for voice in data["voices"]}
+        assert languages == {"en", "fr", "de"}
+
+
+# ============================================================================
+# TEST CLASS 12: POST /text-to-speech with Voice Selection
+# ============================================================================
+
+
+class TestTextToSpeechWithVoiceSelection:
+    """Test enhanced POST /text-to-speech with voice persona selection - Session 81"""
+
+    @patch("app.services.speech_processor.speech_processor")
+    def test_tts_with_specific_voice_persona(
+        self, mock_processor, client, sample_user, mock_tts_result
+    ):
+        """Test TTS with specific voice persona"""
+        app.dependency_overrides[require_auth] = lambda: sample_user
+
+        mock_processor.process_text_to_speech = AsyncMock(return_value=mock_tts_result)
+
+        response = client.post(
+            "/api/v1/conversations/text-to-speech",
+            json={
+                "text": "Hola, ¿cómo estás?",
+                "language": "es",
+                "voice": "es_AR-daniela-high",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "audio_data" in data
+
+        # Verify voice parameter was passed
+        mock_processor.process_text_to_speech.assert_called_once()
+        call_args = mock_processor.process_text_to_speech.call_args
+        assert call_args.kwargs["voice"] == "es_AR-daniela-high"
+
+        app.dependency_overrides.clear()
+
+    @patch("app.services.speech_processor.speech_processor")
+    def test_tts_with_female_voice_spanish(
+        self, mock_processor, client, sample_user, mock_tts_result
+    ):
+        """Test Spanish with daniela (female voice)"""
+        app.dependency_overrides[require_auth] = lambda: sample_user
+
+        mock_processor.process_text_to_speech = AsyncMock(return_value=mock_tts_result)
+
+        response = client.post(
+            "/api/v1/conversations/text-to-speech",
+            json={
+                "text": "Buenos días",
+                "language": "es",
+                "voice": "es_AR-daniela-high",
+            },
+        )
+
+        assert response.status_code == 200
+        call_args = mock_processor.process_text_to_speech.call_args
+        assert call_args.kwargs["voice"] == "es_AR-daniela-high"
+
+        app.dependency_overrides.clear()
+
+    @patch("app.services.speech_processor.speech_processor")
+    def test_tts_with_male_voice_spanish(
+        self, mock_processor, client, sample_user, mock_tts_result
+    ):
+        """Test Spanish with claude (male voice)"""
+        app.dependency_overrides[require_auth] = lambda: sample_user
+
+        mock_processor.process_text_to_speech = AsyncMock(return_value=mock_tts_result)
+
+        response = client.post(
+            "/api/v1/conversations/text-to-speech",
+            json={
+                "text": "Buenas tardes",
+                "language": "es",
+                "voice": "es_MX-claude-high",
+            },
+        )
+
+        assert response.status_code == 200
+        call_args = mock_processor.process_text_to_speech.call_args
+        assert call_args.kwargs["voice"] == "es_MX-claude-high"
+
+        app.dependency_overrides.clear()
+
+    @patch("app.services.speech_processor.speech_processor")
+    def test_tts_with_female_voice_italian(
+        self, mock_processor, client, sample_user, mock_tts_result
+    ):
+        """Test Italian with paola (female voice)"""
+        app.dependency_overrides[require_auth] = lambda: sample_user
+
+        mock_processor.process_text_to_speech = AsyncMock(return_value=mock_tts_result)
+
+        response = client.post(
+            "/api/v1/conversations/text-to-speech",
+            json={
+                "text": "Ciao, come stai?",
+                "language": "it",
+                "voice": "it_IT-paola-medium",
+            },
+        )
+
+        assert response.status_code == 200
+        call_args = mock_processor.process_text_to_speech.call_args
+        assert call_args.kwargs["voice"] == "it_IT-paola-medium"
+
+        app.dependency_overrides.clear()
+
+    @patch("app.services.speech_processor.speech_processor")
+    def test_tts_with_male_voice_italian(
+        self, mock_processor, client, sample_user, mock_tts_result
+    ):
+        """Test Italian with riccardo (male voice)"""
+        app.dependency_overrides[require_auth] = lambda: sample_user
+
+        mock_processor.process_text_to_speech = AsyncMock(return_value=mock_tts_result)
+
+        response = client.post(
+            "/api/v1/conversations/text-to-speech",
+            json={
+                "text": "Buongiorno",
+                "language": "it",
+                "voice": "it_IT-riccardo-x_low",
+            },
+        )
+
+        assert response.status_code == 200
+        call_args = mock_processor.process_text_to_speech.call_args
+        assert call_args.kwargs["voice"] == "it_IT-riccardo-x_low"
+
+        app.dependency_overrides.clear()
+
+    @patch("app.services.speech_processor.speech_processor")
+    def test_tts_backwards_compatibility_no_voice(
+        self, mock_processor, client, sample_user, mock_tts_result
+    ):
+        """Test that omitting voice parameter still works (backwards compatibility)"""
+        app.dependency_overrides[require_auth] = lambda: sample_user
+
+        mock_processor.process_text_to_speech = AsyncMock(return_value=mock_tts_result)
+
+        response = client.post(
+            "/api/v1/conversations/text-to-speech",
+            json={"text": "Hello world", "language": "en"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "audio_data" in data
+
+        # Verify voice parameter is None (default)
+        call_args = mock_processor.process_text_to_speech.call_args
+        assert call_args.kwargs["voice"] is None
+
+        app.dependency_overrides.clear()
+
+    @patch("app.services.speech_processor.speech_processor")
+    def test_tts_voice_with_all_parameters(
+        self, mock_processor, client, sample_user, mock_tts_result
+    ):
+        """Test TTS with voice plus all other parameters"""
+        app.dependency_overrides[require_auth] = lambda: sample_user
+
+        mock_processor.process_text_to_speech = AsyncMock(return_value=mock_tts_result)
+
+        response = client.post(
+            "/api/v1/conversations/text-to-speech",
+            json={
+                "text": "Test message",
+                "language": "es",
+                "voice_type": "neural",
+                "voice": "es_ES-davefx-medium",
+            },
+        )
+
+        assert response.status_code == 200
+
+        # Verify all parameters passed correctly
+        call_args = mock_processor.process_text_to_speech.call_args
+        assert call_args.kwargs["text"] == "Test message"
+        assert call_args.kwargs["language"] == "es"
+        assert call_args.kwargs["voice_type"] == "neural"
+        assert call_args.kwargs["voice"] == "es_ES-davefx-medium"
+
+        app.dependency_overrides.clear()
+
+    @patch("app.services.speech_processor.speech_processor")
+    def test_tts_voice_different_accents_spanish(
+        self, mock_processor, client, sample_user, mock_tts_result
+    ):
+        """Test Spanish with different accent options"""
+        app.dependency_overrides[require_auth] = lambda: sample_user
+
+        mock_processor.process_text_to_speech = AsyncMock(return_value=mock_tts_result)
+
+        spanish_voices = [
+            "es_AR-daniela-high",  # Argentina
+            "es_ES-davefx-medium",  # Spain
+            "es_MX-claude-high",  # Mexico
+        ]
+
+        for voice in spanish_voices:
+            response = client.post(
+                "/api/v1/conversations/text-to-speech",
+                json={"text": "Hola", "language": "es", "voice": voice},
+            )
+            assert response.status_code == 200
+
+        app.dependency_overrides.clear()
+
+    @patch("app.services.speech_processor.speech_processor")
+    def test_tts_voice_parameter_none_explicitly(
+        self, mock_processor, client, sample_user, mock_tts_result
+    ):
+        """Test TTS with voice explicitly set to None"""
+        app.dependency_overrides[require_auth] = lambda: sample_user
+
+        mock_processor.process_text_to_speech = AsyncMock(return_value=mock_tts_result)
+
+        response = client.post(
+            "/api/v1/conversations/text-to-speech",
+            json={"text": "Hello", "language": "en", "voice": None},
+        )
+
+        assert response.status_code == 200
+        call_args = mock_processor.process_text_to_speech.call_args
+        assert call_args.kwargs["voice"] is None
+
+        app.dependency_overrides.clear()
+
+    @patch("app.services.speech_processor.speech_processor")
+    def test_tts_with_voice_error_handling(self, mock_processor, client, sample_user):
+        """Test TTS error handling when invalid voice provided"""
+        app.dependency_overrides[require_auth] = lambda: sample_user
+
+        # Mock TTS to raise exception for invalid voice
+        mock_processor.process_text_to_speech = AsyncMock(
+            side_effect=Exception("Invalid voice: nonexistent_voice")
+        )
+
+        response = client.post(
+            "/api/v1/conversations/text-to-speech",
+            json={"text": "Hello", "language": "en", "voice": "nonexistent_voice"},
+        )
+
+        assert response.status_code == 500
+        data = response.json()
+        assert "detail" in data
+        assert "Text-to-speech failed" in data["detail"]
+
+        app.dependency_overrides.clear()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

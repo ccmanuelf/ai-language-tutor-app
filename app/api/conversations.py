@@ -254,21 +254,34 @@ async def speech_to_text(
 async def text_to_speech(
     request: dict, current_user: SimpleUser = Depends(require_auth)
 ):
-    """Convert text to speech using Watson TTS and return audio data"""
+    """
+    Convert text to speech and return audio data
+
+    Args:
+        request: Dictionary containing:
+            - text: Text to synthesize (required)
+            - language: Target language (default: "en")
+            - voice_type: Voice type - "neural" or "standard" (default: "neural")
+            - voice: Optional specific voice persona (e.g., "es_AR-daniela-high")
+
+    Returns:
+        Audio data as base64-encoded string with metadata
+    """
     try:
         # Get text and language from request
         text = request.get("text")
         language = request.get("language", "en")
         voice_type = request.get("voice_type", "neural")
+        voice = request.get("voice")  # Optional voice persona
 
         if not text:
             raise HTTPException(status_code=400, detail="No text provided")
 
-        # Process text-to-speech using IBM Watson
+        # Process text-to-speech with optional voice selection
         from app.services.speech_processor import speech_processor
 
         tts_result = await speech_processor.process_text_to_speech(
-            text=text, language=language, voice_type=voice_type
+            text=text, language=language, voice_type=voice_type, voice=voice
         )
 
         # Encode audio data as base64 for transmission
@@ -331,6 +344,44 @@ async def get_supported_languages():
             },
         ]
     }
+
+
+@router.get("/available-voices")
+async def get_available_voices(language: Optional[str] = None):
+    """
+    Get list of available voice personas for text-to-speech
+
+    Args:
+        language: Optional language filter (e.g., "en", "es")
+
+    Returns:
+        List of available voices with metadata including:
+        - voice_id: Full voice identifier (e.g., "es_AR-daniela-high")
+        - persona: Voice persona name (e.g., "daniela")
+        - language: Language code (e.g., "es")
+        - accent: Accent/region (e.g., "Argentina")
+        - quality: Voice quality (e.g., "high", "medium")
+        - gender: Inferred gender (e.g., "female", "male")
+        - sample_rate: Audio sample rate
+        - is_default: Whether this is the default voice for the language
+    """
+    try:
+        # Get voices from Piper TTS service via speech processor
+        if not speech_processor.piper_tts_service:
+            raise HTTPException(
+                status_code=503, detail="Text-to-speech service not available"
+            )
+
+        voices = speech_processor.piper_tts_service.get_available_voices(
+            language=language
+        )
+
+        return {"voices": voices, "count": len(voices)}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve voices: {str(e)}"
+        )
 
 
 @router.delete("/clear/{conversation_id}")

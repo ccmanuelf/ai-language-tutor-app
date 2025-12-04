@@ -425,6 +425,7 @@ class SpeechProcessor:
         speaking_rate: float = 1.0,
         emphasis_words: Optional[List[str]] = None,
         provider: str = "auto",
+        voice: Optional[str] = None,
     ) -> SpeechSynthesisResult:
         """
         Convert text to speech with language learning optimizations
@@ -436,6 +437,7 @@ class SpeechProcessor:
             speaking_rate: Speaking speed (0.5-2.0)
             emphasis_words: Words to emphasize for learning
             provider: TTS provider ("auto", "piper" - Watson deprecated in Phase 2A)
+            voice: Optional specific voice persona (e.g., "es_AR-daniela-high")
 
         Returns:
             Speech synthesis result
@@ -459,6 +461,7 @@ class SpeechProcessor:
                 speaking_rate=speaking_rate,
                 provider=provider,
                 original_text=text,  # Pass original text for Piper TTS
+                voice=voice,  # Pass voice parameter for voice selection
             )
 
             synthesis_result.processing_time = (
@@ -479,19 +482,20 @@ class SpeechProcessor:
         speaking_rate: float,
         provider: str = "auto",
         original_text: str = None,
+        voice: Optional[str] = None,
     ) -> SpeechSynthesisResult:
         """Select TTS provider and process text-to-speech with fallback logic"""
         if provider == "auto":
             return await self._process_auto_provider(
-                text, original_text, language, voice_type, speaking_rate
+                text, original_text, language, voice_type, speaking_rate, voice
             )
         elif provider == "piper_fallback":
             return await self._process_piper_fallback(
-                text, original_text, language, voice_type, speaking_rate
+                text, original_text, language, voice_type, speaking_rate, voice
             )
         elif provider == "piper":
             return await self._process_piper_provider(
-                text, original_text, language, voice_type, speaking_rate
+                text, original_text, language, voice_type, speaking_rate, voice
             )
         elif provider == "watson":
             raise Exception("Watson TTS deprecated - use 'auto' or 'piper' providers")
@@ -505,6 +509,7 @@ class SpeechProcessor:
         language: str,
         voice_type: str,
         speaking_rate: float,
+        voice: Optional[str] = None,
     ) -> SpeechSynthesisResult:
         """Process TTS with auto provider selection (Piper only)"""
         if not self.piper_tts_available:
@@ -517,6 +522,7 @@ class SpeechProcessor:
                 language=language,
                 voice_type=voice_type,
                 speaking_rate=speaking_rate,
+                voice=voice,
             )
             logger.info("TTS synthesis successful using Piper (cost: $0.00)")
             return result
@@ -531,6 +537,7 @@ class SpeechProcessor:
         language: str,
         voice_type: str,
         speaking_rate: float,
+        voice: Optional[str] = None,
     ) -> SpeechSynthesisResult:
         """Process TTS with Piper (Watson removed in Phase 2A)"""
         if not self.piper_tts_available:
@@ -542,6 +549,7 @@ class SpeechProcessor:
             language=language,
             voice_type=voice_type,
             speaking_rate=speaking_rate,
+            voice=voice,
         )
         logger.info("TTS synthesis successful using Piper (cost: $0.00)")
         return result
@@ -553,6 +561,7 @@ class SpeechProcessor:
         language: str,
         voice_type: str,
         speaking_rate: float,
+        voice: Optional[str] = None,
     ) -> SpeechSynthesisResult:
         """Process TTS with Piper provider explicitly"""
         if not self.piper_tts_available:
@@ -564,6 +573,7 @@ class SpeechProcessor:
             language=language,
             voice_type=voice_type,
             speaking_rate=speaking_rate,
+            voice=voice,
         )
 
     async def analyze_pronunciation_quality(
@@ -753,7 +763,12 @@ class SpeechProcessor:
     # Watson TTS method removed - deprecated in Phase 2A migration
 
     async def _text_to_speech_piper(
-        self, text: str, language: str, voice_type: str, speaking_rate: float
+        self,
+        text: str,
+        language: str,
+        voice_type: str,
+        speaking_rate: float,
+        voice: Optional[str] = None,
     ) -> SpeechSynthesisResult:
         """Piper Text-to-Speech implementation with local processing"""
 
@@ -765,9 +780,9 @@ class SpeechProcessor:
         try:
             start_time = asyncio.get_event_loop().time()
 
-            # Use Piper TTS service
+            # Use Piper TTS service with optional voice parameter
             audio_data, metadata = await self.piper_tts_service.synthesize_speech(
-                text=text, language=language, audio_format="wav"
+                text=text, language=language, voice=voice, audio_format="wav"
             )
 
             processing_time = asyncio.get_event_loop().time() - start_time
