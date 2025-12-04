@@ -2,19 +2,19 @@
 Conversation API endpoints for AI chat functionality
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from pydantic import BaseModel
-from typing import Optional, List, Dict
 import uuid
 from datetime import datetime
+from typing import Dict, List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from app.core.security import require_auth
 from app.database.config import get_primary_db_session
 from app.models.simple_user import SimpleUser
 from app.services.ai_router import EnhancedAIRouter
 from app.services.speech_processor import speech_processor
-
 
 router = APIRouter(prefix="/api/v1/conversations", tags=["conversations"])
 
@@ -46,7 +46,6 @@ class ConversationHistory(BaseModel):
     started_at: str
 
 
-@router.post("/chat", response_model=ChatResponse)
 def _parse_language_and_provider(language: str) -> tuple[str, str]:
     """Parse language code and AI provider from language string"""
     language_parts = language.split("-")
@@ -128,6 +127,7 @@ async def _generate_speech_if_requested(
         return None
 
 
+@router.post("/chat", response_model=ChatResponse)
 async def chat_with_ai(
     request: ChatRequest,
     current_user: SimpleUser = Depends(require_auth),
@@ -230,7 +230,7 @@ async def speech_to_text(
         audio_data = base64.b64decode(audio_data_base64)
 
         # Process speech-to-text using IBM Watson
-        from app.services.speech_processor import speech_processor, AudioFormat
+        from app.services.speech_processor import AudioFormat, speech_processor
 
         recognition_result, _ = await speech_processor.process_speech_to_text(
             audio_data=audio_data, language=language, audio_format=AudioFormat.WAV
