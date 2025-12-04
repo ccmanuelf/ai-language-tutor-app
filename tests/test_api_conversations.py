@@ -118,6 +118,40 @@ class TestGetSupportedLanguages:
         assert "zh" in language_codes
         assert "ja" in language_codes
 
+    def test_all_advertised_languages_have_fallbacks(self, client):
+        """Test that all advertised languages have corresponding fallback texts"""
+        from app.api.conversations import (
+            _get_demo_fallback_responses,
+            _get_fallback_texts,
+        )
+
+        # Get advertised languages from endpoint
+        response = client.get("/api/v1/conversations/languages")
+        data = response.json()
+        advertised_codes = [lang["code"] for lang in data["languages"]]
+
+        # Get fallback dictionaries
+        fallback_texts = _get_fallback_texts()
+        demo_fallbacks = _get_demo_fallback_responses()
+
+        # Verify every advertised language has fallback text
+        for lang_code in advertised_codes:
+            assert lang_code in fallback_texts, (
+                f"Language '{lang_code}' advertised but missing in _get_fallback_texts()"
+            )
+            assert lang_code in demo_fallbacks, (
+                f"Language '{lang_code}' advertised but missing in _get_demo_fallback_responses()"
+            )
+
+        # Verify fallback text is non-empty
+        for lang_code in advertised_codes:
+            assert fallback_texts[lang_code].strip() != "", (
+                f"Empty fallback text for language '{lang_code}'"
+            )
+            assert demo_fallbacks[lang_code].strip() != "", (
+                f"Empty demo fallback for language '{lang_code}'"
+            )
+
 
 # ============================================================================
 # TEST CLASS 2: GET /history - Conversation History
