@@ -1,11 +1,13 @@
 """
 API Key Validation Utility for AI Language Tutor App
+Session 82 - Removed deprecated Watson references
 
 This utility helps validate API keys for all integrated services:
 - Anthropic Claude
 - Mistral AI
 - Qwen
-- IBM Watson Speech Services
+
+Current TTS/STT: Piper TTS (local, offline, no API key required)
 
 Usage:
     python -m app.utils.api_key_validator
@@ -16,16 +18,16 @@ Security:
 - Reports validation results safely
 """
 
-import os
 import asyncio
 import logging
-from typing import Dict, Any
+import os
+from typing import Any, Dict
+
 from dotenv import load_dotenv
 
 # Suppress HTTP request logs for cleaner output
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("anthropic").setLevel(logging.WARNING)
-logging.getLogger("ibm_watson").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
@@ -158,104 +160,6 @@ class APIKeyValidator:
                 "service": "Qwen (Alibaba Cloud)",
             }
 
-    async def validate_watson_stt_api(self) -> Dict[str, Any]:
-        """Validate IBM Watson Speech-to-Text API"""
-        try:
-            api_key = os.getenv("WATSON_STT_API_KEY")
-            url = os.getenv("WATSON_STT_URL")
-
-            if not api_key or api_key == "your_ibm_watson_stt_api_key_here":
-                return {
-                    "status": "not_configured",
-                    "message": "API key not provided",
-                    "service": "IBM Watson STT",
-                }
-
-            if not url or url == "your_ibm_watson_stt_url_here":
-                return {
-                    "status": "misconfigured",
-                    "message": "Service URL not provided",
-                    "service": "IBM Watson STT",
-                }
-
-            from ibm_watson import SpeechToTextV1
-            from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-
-            authenticator = IAMAuthenticator(api_key)
-            speech_to_text = SpeechToTextV1(authenticator=authenticator)
-            speech_to_text.set_service_url(url)
-
-            # Test by listing available models
-            models = speech_to_text.list_models().get_result()
-
-            return {
-                "status": "valid",
-                "message": "API key is valid and working",
-                "service": "IBM Watson STT",
-                "available_models": len(models.get("models", [])),
-                "service_url": url[:50] + "..." if len(url) > 50 else url,
-            }
-
-        except Exception as e:
-            error_msg = str(e)
-            if "unauthorized" in error_msg.lower() or "forbidden" in error_msg.lower():
-                error_msg = "Authentication failed - check API key and service URL"
-
-            return {
-                "status": "invalid",
-                "message": f"Validation failed: {error_msg}",
-                "service": "IBM Watson STT",
-            }
-
-    async def validate_watson_tts_api(self) -> Dict[str, Any]:
-        """Validate IBM Watson Text-to-Speech API"""
-        try:
-            api_key = os.getenv("WATSON_TTS_API_KEY")
-            url = os.getenv("WATSON_TTS_URL")
-
-            if not api_key or api_key == "your_ibm_watson_tts_api_key_here":
-                return {
-                    "status": "not_configured",
-                    "message": "API key not provided",
-                    "service": "IBM Watson TTS",
-                }
-
-            if not url or url == "your_ibm_watson_tts_url_here":
-                return {
-                    "status": "misconfigured",
-                    "message": "Service URL not provided",
-                    "service": "IBM Watson TTS",
-                }
-
-            from ibm_watson import TextToSpeechV1
-            from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-
-            authenticator = IAMAuthenticator(api_key)
-            text_to_speech = TextToSpeechV1(authenticator=authenticator)
-            text_to_speech.set_service_url(url)
-
-            # Test by listing available voices
-            voices = text_to_speech.list_voices().get_result()
-
-            return {
-                "status": "valid",
-                "message": "API key is valid and working",
-                "service": "IBM Watson TTS",
-                "available_voices": len(voices.get("voices", [])),
-                "service_url": url[:50] + "..." if len(url) > 50 else url,
-            }
-
-        except Exception as e:
-            error_msg = str(e)
-            if "unauthorized" in error_msg.lower() or "forbidden" in error_msg.lower():
-                error_msg = "Authentication failed - check API key and service URL"
-
-            return {
-                "status": "invalid",
-                "message": f"Validation failed: {error_msg}",
-                "service": "IBM Watson TTS",
-            }
-
     async def validate_all_apis(self) -> Dict[str, Dict[str, Any]]:
         """Validate all API keys"""
         print("🔍 Validating API Keys for AI Language Tutor App...")
@@ -265,8 +169,6 @@ class APIKeyValidator:
             ("anthropic", self.validate_anthropic_api),
             ("mistral", self.validate_mistral_api),
             ("qwen", self.validate_qwen_api),
-            ("watson_stt", self.validate_watson_stt_api),
-            ("watson_tts", self.validate_watson_tts_api),
         ]
 
         results = {}
@@ -345,6 +247,8 @@ class APIKeyValidator:
             print("   3. Run this validator again")
         else:
             print("   1. All APIs configured! Ready to proceed with development")
+
+        print("\n📝 Note: TTS/STT now uses Piper (local, offline, no API key required)")
 
     def _print_summary(self, results: Dict[str, Dict[str, Any]]):
         """Print validation summary"""
