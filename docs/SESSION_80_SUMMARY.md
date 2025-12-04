@@ -295,6 +295,54 @@ Nested try/except blocks require careful testing:
 
 ---
 
+## 🚨 CRITICAL POST-SESSION DISCOVERY: VOICE PERSONA FEATURE GAP
+
+### Discovery During Post-Session Analysis
+
+**Issue**: Users **CANNOT** select voice personas (male/female voices) at the API level!
+
+**Impact**: 🔴 **CRITICAL UX ISSUE** - May prevent user adoption
+
+**Details**:
+- System has **11 voice personas** (daniela, claude, paola, riccardo, thorsten, etc.)
+- Spanish has 4 voices: 1 female (daniela), 3 male (davefx, ald, claude)
+- Italian has 2 voices: 1 female (paola), 1 male (riccardo)
+- **BUT** users are locked into hardcoded defaults per language
+- No API parameter exists to select different personas
+
+**Current Behavior**:
+```python
+language="es" → Always uses "es_MX-claude-high" (Mexican male)
+language="it" → Always uses "it_IT-paola-medium" (Italian female)
+# User cannot choose daniela (female) or davefx (male) for Spanish
+# User cannot choose riccardo (male) for Italian
+```
+
+**Why This Matters**:
+- Some users prefer male voices, others female
+- Some users prefer different accents (Spain vs Mexico vs Argentina Spanish)
+- Lack of choice may halt user adoption
+- This is a fundamental UX requirement for language learning apps
+
+**Root Cause**:
+- `piper_tts_service.synthesize_speech()` accepts `voice` parameter
+- `speech_processor` never passes the `voice` parameter
+- `conversations.py` API doesn't expose voice selection
+- Hardcoded mapping in `language_voice_map` dictionary
+
+**Files Affected**:
+- ✅ `app/api/conversations.py` - Needs `voice` parameter added
+- ✅ `app/services/speech_processor.py` - Needs to pass `voice` through
+- ✅ `app/services/piper_tts_service.py` - Already supports `voice` (no changes needed!)
+- ⚠️ All previously completed modules with TRUE 100% coverage need regression assessment
+
+**Documentation Created**:
+- 📄 `docs/VOICE_PERSONA_ANALYSIS.md` - Complete technical analysis
+
+**Next Session Priority**: 🔴 **IMMEDIATE** - Session 81 must address this before continuing
+
+---
+
 ## 🚀 WHAT'S NEXT?
 
 ### Recommended Targets for Session 81
