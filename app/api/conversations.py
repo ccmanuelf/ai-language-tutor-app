@@ -96,6 +96,7 @@ def _get_fallback_texts() -> Dict[str, str]:
         "fr": "Salut ! J'ai entendu '{message}' - super ! Je suis ta partenaire de conversation française. De quoi veux-tu parler ?",
         "zh": "你好！我听到你说了'{message}' - 很好！我是你的中文对话伙伴。你想聊什么？",
         "ja": "こんにちは！'{message}'と言いましたね - いいですね！私はあなたの日本語会話パートナーです。何について話しましょうか？",
+        "de": "Hallo! Ich habe gehört, dass du '{message}' gesagt hast - super! Ich bin dein deutscher Gesprächspartner. Worüber möchtest du sprechen?",
     }
 
 
@@ -107,6 +108,7 @@ def _get_demo_fallback_responses() -> Dict[str, str]:
         "fr": "Salut ! J'ai entendu que tu as dit '{message}' - c'est formidable ! Je suis Sophie, ta partenaire de conversation française. J'adore discuter de tout - cuisine, voyages, loisirs, films, tout m'intéresse ! Alors, qu'est-ce qui t'a plu récemment ?",
         "zh": "你好！我听到你说了'{message}' - 很棒！私は小李，你的中文对话伙伴。我喜欢聊各种话题 - 美食、旅行、电影、音乐，什么都可以！你今天过得怎么样？有什么有趣的事情想分享吗？",
         "ja": "こんにちは！'{message}'と言ったのを聞きました - 素晴らしいです！私は優子、あなたの日本語会話パートナーです。趣味、旅行、食べ物、映画など、何でも話すのが大好きです！最近何か面白いことがありましたか？",
+        "de": "Hallo! Ich habe gehört, dass du '{message}' gesagt hast - das ist großartige Übung! Ich bin Klaus, dein deutscher Gesprächspartner. Ich liebe es, über alles zu sprechen - Hobbys, Reisen, Essen, Filme, was auch immer! Was war kürzlich etwas Interessantes, das dir passiert ist?",
     }
 
 
