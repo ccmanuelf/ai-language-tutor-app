@@ -1,6 +1,7 @@
 """
 Tests for app/api/conversations.py - Conversation API endpoints
 Session 80 - Target: TRUE 100% coverage
+Session 82 - AI Testing Architecture: Proper AI mocking instead of fallback reliance
 """
 
 import base64
@@ -15,6 +16,14 @@ from app.core.security import require_auth
 from app.database.config import get_primary_db_session
 from app.main import app
 from app.models.simple_user import SimpleUser
+from tests.test_helpers.ai_mocks import (
+    get_successful_claude_mock,
+    get_successful_mistral_mock,
+    get_successful_qwen_mock,
+    mock_ai_router,
+    mock_failing_ai_service,
+    mock_no_ai_service_available,
+)
 
 # ============================================================================
 # FIXTURES
@@ -697,10 +706,15 @@ class TestChatEndpoint:
         response = client.post("/api/v1/conversations/chat", json={"message": "Hello"})
         assert response.status_code in [401, 403]
 
-    def test_chat_basic_message(self, client, sample_user, mock_db):
-        """Test basic chat message"""
+    @patch("app.api.conversations.ai_router")
+    def test_chat_basic_message(self, mock_router, client, sample_user, mock_db):
+        """Test basic chat message with AI service properly mocked"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
+
+        # Mock AI service to return specific response
+        mock_router.return_value = get_successful_claude_mock()
+        mock_router.select_provider = get_successful_claude_mock().select_provider
 
         response = client.post(
             "/api/v1/conversations/chat",
@@ -720,19 +734,39 @@ class TestChatEndpoint:
         assert "ai_provider" in data
         assert "estimated_cost" in data
 
+        # Verify AI service was actually called
+        mock_router.select_provider.assert_called()
+
+        # Verify we got AI response, NOT fallback
+        assert "Hey!" not in data["response"]  # Fallback starts with "Hey!"
+        assert data["response"] != ""  # Should have actual content
+
         # Verify conversation ID format
         assert data["conversation_id"].startswith(f"conv_{sample_user.user_id}_")
 
         app.dependency_overrides.clear()
 
-    def test_chat_with_different_languages(self, client, sample_user, mock_db):
-        """Test chat with different language codes"""
+    @patch("app.api.conversations.ai_router")
+    def test_chat_with_different_languages(
+        self, mock_router, client, sample_user, mock_db
+    ):
+        """Test chat with different language codes and AI services properly mocked"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
 
-        languages = ["en-claude", "es-claude", "fr-mistral", "zh-qwen", "ja-claude"]
+        # Test different providers with appropriate mocks
+        test_cases = [
+            ("en-claude", get_successful_claude_mock()),
+            ("es-claude", get_successful_claude_mock()),
+            ("fr-mistral", get_successful_mistral_mock()),
+            ("zh-qwen", get_successful_qwen_mock()),
+            ("ja-claude", get_successful_claude_mock()),
+        ]
 
-        for lang in languages:
+        for lang, ai_mock in test_cases:
+            # Configure mock for this specific test
+            mock_router.select_provider = ai_mock.select_provider
+
             response = client.post(
                 "/api/v1/conversations/chat",
                 json={"message": "Hello", "language": lang},
@@ -740,16 +774,29 @@ class TestChatEndpoint:
             assert response.status_code == 200
             data = response.json()
             assert "response" in data
+
+            # Verify AI service was called
+            mock_router.select_provider.assert_called()
+
+            # Verify NOT fallback response
+            assert "Hey!" not in data["response"]
+
             # Verify language code extracted correctly
             expected_lang_code = lang.split("-")[0]
             assert data["language"] == expected_lang_code
 
         app.dependency_overrides.clear()
 
-    def test_chat_with_conversation_history(self, client, sample_user, mock_db):
-        """Test chat with conversation history"""
+    @patch("app.api.conversations.ai_router")
+    def test_chat_with_conversation_history(
+        self, mock_router, client, sample_user, mock_db
+    ):
+        """Test chat with conversation history - AI service properly mocked"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
+
+        # Mock AI service
+        mock_router.select_provider = get_successful_claude_mock().select_provider
 
         conversation_history = [
             {"role": "user", "content": "Hello"},
@@ -769,12 +816,22 @@ class TestChatEndpoint:
         data = response.json()
         assert "response" in data
 
+        # Verify AI service was called
+        mock_router.select_provider.assert_called()
+
+        # Verify we got AI response, not fallback
+        assert "Hey!" not in data["response"]
+
         app.dependency_overrides.clear()
 
-    def test_chat_with_speech_enabled(self, client, sample_user, mock_db):
-        """Test chat with speech generation enabled"""
+    @patch("app.api.conversations.ai_router")
+    def test_chat_with_speech_enabled(self, mock_router, client, sample_user, mock_db):
+        """Test chat with speech generation enabled - AI service properly mocked"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
+
+        # Mock AI service
+        mock_router.select_provider = get_successful_claude_mock().select_provider
 
         response = client.post(
             "/api/v1/conversations/chat",
@@ -790,12 +847,21 @@ class TestChatEndpoint:
         # audio_url may be None if TTS fails, but should be present
         assert "audio_url" in data
 
+        # Verify AI service was called
+        mock_router.select_provider.assert_called()
+
         app.dependency_overrides.clear()
 
-    def test_chat_language_only_without_provider(self, client, sample_user, mock_db):
-        """Test chat with language code only (no provider specified)"""
+    @patch("app.api.conversations.ai_router")
+    def test_chat_language_only_without_provider(
+        self, mock_router, client, sample_user, mock_db
+    ):
+        """Test chat with language code only (no provider specified) - AI properly mocked"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
+
+        # Mock AI service (should default to Claude)
+        mock_router.select_provider = get_successful_claude_mock().select_provider
 
         response = client.post(
             "/api/v1/conversations/chat",
@@ -810,12 +876,19 @@ class TestChatEndpoint:
         assert data["language"] == "en"
         assert data["ai_provider"] == "claude"  # Should default to claude
 
+        # Verify AI service was called
+        mock_router.select_provider.assert_called()
+
         app.dependency_overrides.clear()
 
-    def test_chat_empty_message(self, client, sample_user, mock_db):
-        """Test chat with empty message"""
+    @patch("app.api.conversations.ai_router")
+    def test_chat_empty_message(self, mock_router, client, sample_user, mock_db):
+        """Test chat with empty message - AI service properly mocked"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
+
+        # Mock AI service
+        mock_router.select_provider = get_successful_claude_mock().select_provider
 
         response = client.post(
             "/api/v1/conversations/chat", json={"message": "", "language": "en-claude"}
@@ -826,12 +899,19 @@ class TestChatEndpoint:
         data = response.json()
         assert "response" in data
 
+        # Verify AI service was called
+        mock_router.select_provider.assert_called()
+
         app.dependency_overrides.clear()
 
-    def test_chat_default_language(self, client, sample_user, mock_db):
-        """Test chat uses default language when not specified"""
+    @patch("app.api.conversations.ai_router")
+    def test_chat_default_language(self, mock_router, client, sample_user, mock_db):
+        """Test chat uses default language when not specified - AI properly mocked"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
+
+        # Mock AI service
+        mock_router.select_provider = get_successful_claude_mock().select_provider
 
         response = client.post("/api/v1/conversations/chat", json={"message": "Hello"})
 
@@ -840,12 +920,19 @@ class TestChatEndpoint:
         # Should use default 'en-claude'
         assert data["language"] == "en"
 
+        # Verify AI service was called
+        mock_router.select_provider.assert_called()
+
         app.dependency_overrides.clear()
 
-    def test_chat_response_structure(self, client, sample_user, mock_db):
-        """Test chat response has all required fields"""
+    @patch("app.api.conversations.ai_router")
+    def test_chat_response_structure(self, mock_router, client, sample_user, mock_db):
+        """Test chat response has all required fields - AI properly mocked"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
+
+        # Mock AI service
+        mock_router.select_provider = get_successful_claude_mock().select_provider
 
         response = client.post(
             "/api/v1/conversations/chat",
@@ -876,12 +963,21 @@ class TestChatEndpoint:
         assert isinstance(data["ai_provider"], str)
         assert isinstance(data["estimated_cost"], (int, float))
 
+        # Verify AI service was called
+        mock_router.select_provider.assert_called()
+
         app.dependency_overrides.clear()
 
-    def test_chat_generates_unique_message_ids(self, client, sample_user, mock_db):
-        """Test that each chat generates unique message IDs"""
+    @patch("app.api.conversations.ai_router")
+    def test_chat_generates_unique_message_ids(
+        self, mock_router, client, sample_user, mock_db
+    ):
+        """Test that each chat generates unique message IDs - AI properly mocked"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
+
+        # Mock AI service
+        mock_router.select_provider = get_successful_claude_mock().select_provider
 
         message_ids = set()
 
@@ -896,12 +992,21 @@ class TestChatEndpoint:
         # All message IDs should be unique
         assert len(message_ids) == 3
 
+        # Verify AI service was called 3 times
+        assert mock_router.select_provider.call_count == 3
+
         app.dependency_overrides.clear()
 
-    def test_chat_with_special_characters(self, client, sample_user, mock_db):
-        """Test chat with special characters in message"""
+    @patch("app.api.conversations.ai_router")
+    def test_chat_with_special_characters(
+        self, mock_router, client, sample_user, mock_db
+    ):
+        """Test chat with special characters in message - AI properly mocked"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
+
+        # Mock AI service
+        mock_router.select_provider = get_successful_claude_mock().select_provider
 
         special_messages = [
             "Hello! How are you? 😊",
@@ -918,12 +1023,19 @@ class TestChatEndpoint:
             )
             assert response.status_code == 200
 
+        # Verify AI service was called for each message
+        assert mock_router.select_provider.call_count == len(special_messages)
+
         app.dependency_overrides.clear()
 
-    def test_chat_cost_estimate(self, client, sample_user, mock_db):
-        """Test that chat returns cost estimate"""
+    @patch("app.api.conversations.ai_router")
+    def test_chat_cost_estimate(self, mock_router, client, sample_user, mock_db):
+        """Test that chat returns cost estimate from AI service"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
+
+        # Mock AI service with specific cost
+        mock_router.select_provider = get_successful_claude_mock().select_provider
 
         response = client.post(
             "/api/v1/conversations/chat",
@@ -934,20 +1046,27 @@ class TestChatEndpoint:
         assert "estimated_cost" in data
         assert data["estimated_cost"] >= 0
 
+        # Verify AI service was called
+        mock_router.select_provider.assert_called()
+
         app.dependency_overrides.clear()
 
-    def test_chat_uses_fallback_on_unsupported_language(
-        self, client, sample_user, mock_db
+    @patch("app.api.conversations.ai_router")
+    def test_chat_uses_fallback_on_ai_failure(
+        self, mock_router, client, sample_user, mock_db
     ):
-        """Test chat handles unsupported language gracefully"""
+        """Test chat uses fallback when AI service fails - PROPER FALLBACK TEST"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
+
+        # Mock AI service to FAIL - this is the proper way to test fallback
+        mock_router.select_provider = mock_failing_ai_service().select_provider
 
         response = client.post(
             "/api/v1/conversations/chat",
             json={
                 "message": "Hello",
-                "language": "xy-unknown",  # Unsupported language
+                "language": "en-claude",
             },
         )
 
@@ -955,6 +1074,13 @@ class TestChatEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert "response" in data
+
+        # Verify AI service was attempted
+        mock_router.select_provider.assert_called()
+
+        # Verify we got FALLBACK, not AI response
+        # Fallback text contains "Hey!" for English
+        assert "Hey!" in data["response"] or "[Demo Mode]" in data["response"]
 
         app.dependency_overrides.clear()
 

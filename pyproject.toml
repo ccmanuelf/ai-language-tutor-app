@@ -20,9 +20,10 @@ filterwarnings = [
     "ignore:coroutine.*was never awaited:RuntimeWarning",
 ]
 markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
-    "api: API tests",
+    "unit: Unit tests (fast, fully mocked, no external calls)",
+    "integration: Integration tests (mocked external APIs, real internal services)",
+    "e2e: End-to-end tests (real APIs, COSTS MONEY, manual execution only)",
+    "api: API endpoint tests",
     "speech: Speech processing tests",
     "llm: LLM integration tests",
     "slow: Slow tests",
