@@ -466,6 +466,96 @@ class TestSpeechToText:
 
 ---
 
+## 🚨 CRITICAL POST-SESSION DISCOVERY
+
+### Lesson 11: Always Question Missing Parameters in User-Facing APIs ⭐⭐⭐ **CRITICAL UX!**
+
+**What We Discovered AFTER Achieving 100% Coverage**:
+
+During post-session analysis, we discovered that users **CANNOT** select voice personas (male/female voices) despite the system having 11 different voices available!
+
+**The Problem**:
+```python
+# Available in system:
+- Spanish: daniela (female), davefx (male), ald, claude (male) 
+- Italian: paola (female), riccardo (male)
+
+# What users can do:
+language="es" → Hardcoded to "claude" (male) only
+language="it" → Hardcoded to "paola" (female) only
+
+# What users CANNOT do:
+- Choose between male/female voices
+- Choose between accents (Spain vs Mexico vs Argentina)
+- Customize their learning experience
+```
+
+**Why This Matters - A LOT**:
+- 🔴 **User Adoption**: May prevent users from adopting the application
+- 🔴 **Learning Experience**: Voice preference affects learning comfort
+- 🔴 **Accessibility**: Some users need specific voice types
+- 🔴 **Competitive Disadvantage**: Other language apps offer voice selection
+
+**Root Cause - The Chain of Missing Parameters**:
+```python
+# 1. piper_tts_service.py - GOOD (has voice parameter)
+async def synthesize_speech(
+    text: str,
+    voice: Optional[str] = None,  # ← EXISTS but never used!
+):
+
+# 2. speech_processor.py - BAD (doesn't pass voice)
+async def _text_to_speech_piper(self, text, language, voice_type, speaking_rate):
+    await self.piper_tts_service.synthesize_speech(
+        text=text, 
+        language=language  
+        # ← Missing: voice parameter!
+    )
+
+# 3. conversations.py API - BAD (doesn't expose voice)
+@router.post("/text-to-speech")
+async def text_to_speech(request: dict, ...):
+    text = request.get("text")
+    language = request.get("language", "en")
+    voice_type = request.get("voice_type", "neural")
+    # ← Missing: voice = request.get("voice")
+```
+
+**How We Missed This During Testing**:
+- ✅ Achieved TRUE 100% coverage (all code paths tested)
+- ✅ All tests passing (API works as designed)
+- ❌ Never questioned WHY voice selection wasn't available
+- ❌ Never validated that the API contract matches user needs
+
+**The Crucial Lesson**:
+> **100% code coverage ≠ Complete feature coverage**
+> 
+> Testing should validate not just "does the code work" but "does the code provide the features users need"
+
+**Prevention Strategy for Future Sessions**:
+1. **Question the API Contract**: Before testing, ask "Can users do everything they should be able to do?"
+2. **Review Available Infrastructure**: Check what the underlying services support
+3. **Compare Parameters**: Match API parameters against service capabilities
+4. **Think Like a User**: What would users expect to customize?
+5. **Check Competitor Features**: What do similar apps offer?
+
+**When to Question Missing Parameters**:
+- 🚩 Service has a parameter that API doesn't expose
+- 🚩 Multiple options exist (11 voices) but only 1 is accessible
+- 🚩 User-facing features (voice selection) seem missing
+- 🚩 Hardcoded values where user choice would be valuable
+
+**Impact Assessment**:
+- 3 files need modification (conversations.py, speech_processor.py, tests)
+- All 48 modules with TRUE 100% need regression assessment
+- Frontend needs voice selection UI
+- API documentation needs updating
+- This is a **CRITICAL** issue that must be fixed before production
+
+**Applies To**: ALL API design and testing
+
+---
+
 ## 🚀 FOR NEXT SESSION
 
 **Remember**:

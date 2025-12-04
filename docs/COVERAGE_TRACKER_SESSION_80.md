@@ -352,10 +352,47 @@ Created specific tests for each exception path:
 
 ---
 
+## 🚨 POST-SESSION DISCOVERY: Critical Feature Gap
+
+### Voice Persona Selection Missing
+
+**Discovery Date**: 2025-12-04 (Post-Session Analysis)  
+**Severity**: 🔴 CRITICAL - User adoption blocker
+
+**Issue**: 
+- System has 11 voice personas (male/female, different accents)
+- Users CANNOT select voice personas at API level
+- Hardcoded language-to-voice mapping prevents choice
+
+**Impact on Coverage**:
+- ✅ Code coverage remains TRUE 100% (all code paths tested)
+- ❌ Feature coverage incomplete (voice selection not exposed)
+- ⚠️ Lesson: **100% code coverage ≠ Complete feature coverage**
+
+**Files Identified for Session 81**:
+1. `app/api/conversations.py` - Add voice parameter + GET /available-voices endpoint
+2. `app/services/speech_processor.py` - Pass voice parameter through
+3. `app/services/piper_tts_service.py` - Already supports voice (no changes needed!)
+
+**Testing Impact for Session 81**:
+- Estimated +30 new tests across 3 modules
+- Regression testing required on ALL previously completed modules
+- TRUE 100% coverage must be maintained on modified modules
+
+**Documentation Created**:
+- `docs/VOICE_PERSONA_ANALYSIS.md` - Complete technical analysis
+- `docs/DAILY_PROMPT_TEMPLATE_SESSION_81.md` - Implementation plan
+
+**Next Session Priority**: 🔴 **IMMEDIATE** - Feature enhancement before continuing with other modules
+
+---
+
 **Session 80 Complete**: app/api/conversations.py - TRUE 100.00% Coverage! 🎊
 
 **Module #48** at TRUE 100%!
 
-**Tests**: 49 new tests, 3,592 total project tests
+**Tests**: 49 new tests, 3,593 total project tests (post-German bug fix: 50 tests)
 
 **Bug Fixed**: Critical decorator placement issue corrected
+
+**Post-Session Update**: German language support added (+1 test), voice persona gap identified for Session 81
