@@ -465,7 +465,9 @@ class TestAudioQuality:
     @pytest.mark.asyncio
     async def test_audio_format_consistency(self, tts_service):
         """Test that all voices produce consistent audio format"""
-        for voice_name in tts_service.get_available_voices():
+        # get_available_voices() now returns list of dicts with metadata
+        for voice_info in tts_service.get_available_voices():
+            voice_name = voice_info["voice_id"]  # Extract voice_id from dict
             audio_data, metadata = await tts_service.synthesize_speech(
                 "Test audio format.", voice=voice_name
             )
@@ -503,7 +505,9 @@ class TestAudioQuality:
         """Test that all voices produce reasonable audio size"""
         test_text = "This is a test sentence."
 
-        for voice_name in tts_service.get_available_voices():
+        # get_available_voices() now returns list of dicts with metadata
+        for voice_info in tts_service.get_available_voices():
+            voice_name = voice_info["voice_id"]  # Extract voice_id from dict
             audio_data, metadata = await tts_service.synthesize_speech(
                 test_text, voice=voice_name
             )

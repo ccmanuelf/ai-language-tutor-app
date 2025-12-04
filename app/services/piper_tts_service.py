@@ -97,8 +97,129 @@ class PiperTTSService:
                 except Exception as e:
                     logger.error(f"Failed to load voice config {config_file}: {e}")
 
-    def get_available_voices(self) -> List[str]:
-        """Get list of available voice names"""
+    def get_available_voices(
+        self, language: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Get list of available voice personas with detailed metadata
+
+        Args:
+            language: Optional language filter (e.g., "en", "es")
+
+        Returns:
+            List of voice dictionaries with metadata:
+            - voice_id: Full voice identifier (e.g., "es_AR-daniela-high")
+            - persona: Voice persona name (e.g., "daniela")
+            - language: Language code (e.g., "es")
+            - accent: Accent/region (e.g., "Argentina")
+            - quality: Voice quality (e.g., "high", "medium", "x_low")
+            - gender: Inferred gender (e.g., "female", "male", "unknown")
+            - sample_rate: Audio sample rate
+            - is_default: Whether this is the default voice for the language
+        """
+        voices_list = []
+
+        for voice_id, voice_info in self.voices.items():
+            voice_language = voice_info["language"]
+
+            # Apply language filter if provided
+            if language and not voice_language.startswith(language):
+                continue
+
+            # Parse voice ID to extract components
+            # Format: language_region-persona-quality (e.g., "es_AR-daniela-high")
+            parts = voice_id.split("-")
+            language_region = parts[0] if len(parts) > 0 else ""
+            persona = parts[1] if len(parts) > 1 else "default"
+            quality = parts[2] if len(parts) > 2 else "medium"
+
+            # Extract language and region
+            lang_parts = language_region.split("_")
+            lang_code = lang_parts[0] if len(lang_parts) > 0 else voice_language
+            region_code = lang_parts[1] if len(lang_parts) > 1 else ""
+
+            # Map region codes to human-readable accents
+            accent_map = {
+                "US": "United States",
+                "GB": "United Kingdom",
+                "AR": "Argentina",
+                "ES": "Spain",
+                "MX": "Mexico",
+                "FR": "France",
+                "DE": "Germany",
+                "IT": "Italy",
+                "BR": "Brazil",
+                "CN": "China",
+            }
+            accent = accent_map.get(region_code, region_code or "Standard")
+
+            # Infer gender from persona name (heuristic-based)
+            gender = self._infer_gender(persona)
+
+            # Check if this is the default voice for the language
+            is_default = self.language_voice_map.get(lang_code) == voice_id
+
+            voice_metadata = {
+                "voice_id": voice_id,
+                "persona": persona,
+                "language": lang_code,
+                "accent": accent,
+                "quality": quality,
+                "gender": gender,
+                "sample_rate": voice_info["sample_rate"],
+                "is_default": is_default,
+            }
+
+            voices_list.append(voice_metadata)
+
+        return voices_list
+
+    def _infer_gender(self, persona: str) -> str:
+        """
+        Infer gender from persona name using heuristics
+
+        Args:
+            persona: Persona name (e.g., "daniela", "claude")
+
+        Returns:
+            Gender: "female", "male", or "unknown"
+        """
+        # Common female names/patterns
+        female_names = {
+            "daniela",
+            "paola",
+            "siwis",
+            "maria",
+            "sophie",
+            "sarah",
+            "emma",
+            "lisa",
+        }
+
+        # Common male names/patterns
+        male_names = {
+            "claude",
+            "davefx",
+            "thorsten",
+            "riccardo",
+            "lessac",
+            "faber",
+            "john",
+            "david",
+            "michael",
+        }
+
+        persona_lower = persona.lower()
+
+        if persona_lower in female_names:
+            return "female"
+        elif persona_lower in male_names:
+            return "male"
+        else:
+            return "unknown"
+
+    def get_voice_names(self) -> List[str]:
+        """Get simple list of available voice names (legacy method)"""
         return list(self.voices.keys())
 
     def get_voice_for_language(self, language: str) -> Optional[str]:

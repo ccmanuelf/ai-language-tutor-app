@@ -237,17 +237,19 @@ class TestVoiceLoading:
         with patch.object(PiperTTSService, "_initialize_voices"):
             service = PiperTTSService()
             service.voices = {
-                "en_US-lessac-medium": {},
-                "es_MX-claude-high": {},
-                "fr_FR-siwis-medium": {},
+                "en_US-lessac-medium": {"language": "en", "sample_rate": 22050},
+                "es_MX-claude-high": {"language": "es", "sample_rate": 22050},
+                "fr_FR-siwis-medium": {"language": "fr", "sample_rate": 22050},
             }
 
             voices = service.get_available_voices()
 
             assert len(voices) == 3
-            assert "en_US-lessac-medium" in voices
-            assert "es_MX-claude-high" in voices
-            assert "fr_FR-siwis-medium" in voices
+            # Now returns list of dicts with metadata
+            voice_ids = [v["voice_id"] for v in voices]
+            assert "en_US-lessac-medium" in voice_ids
+            assert "es_MX-claude-high" in voice_ids
+            assert "fr_FR-siwis-medium" in voice_ids
 
 
 # =============================================================================
@@ -693,6 +695,119 @@ class TestHealthCheck:
 
                 # Lines 244-245, 251: Should return False on exception
                 assert result is False
+
+
+# =============================================================================
+# Voice Persona Selection Tests (Session 81 - New Methods)
+# =============================================================================
+
+
+class TestVoicePersonaSelection:
+    """Test new voice persona selection methods added in Session 81"""
+
+    def test_get_available_voices_with_metadata(self):
+        """Test get_available_voices returns detailed metadata"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+            service.voices = {
+                "es_AR-daniela-high": {"language": "es", "sample_rate": 22050},
+                "es_MX-claude-high": {"language": "es", "sample_rate": 22050},
+            }
+            service.language_voice_map = {"es": "es_MX-claude-high"}
+
+            voices = service.get_available_voices()
+
+            assert len(voices) == 2
+            # Verify metadata structure
+            for voice in voices:
+                assert "voice_id" in voice
+                assert "persona" in voice
+                assert "language" in voice
+                assert "accent" in voice
+                assert "quality" in voice
+                assert "gender" in voice
+                assert "sample_rate" in voice
+                assert "is_default" in voice
+
+    def test_get_available_voices_filtered_by_language(self):
+        """Test language filtering in get_available_voices"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+            service.voices = {
+                "en_US-lessac-medium": {"language": "en", "sample_rate": 22050},
+                "es_AR-daniela-high": {"language": "es", "sample_rate": 22050},
+                "fr_FR-siwis-medium": {"language": "fr", "sample_rate": 22050},
+            }
+
+            voices = service.get_available_voices(language="es")
+
+            assert len(voices) == 1
+            assert voices[0]["language"] == "es"
+            assert voices[0]["voice_id"] == "es_AR-daniela-high"
+
+    def test_infer_gender_female(self):
+        """Test gender inference for female names"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            assert service._infer_gender("daniela") == "female"
+            assert service._infer_gender("paola") == "female"
+            assert service._infer_gender("siwis") == "female"
+
+    def test_infer_gender_male(self):
+        """Test gender inference for male names"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            assert service._infer_gender("claude") == "male"
+            assert service._infer_gender("lessac") == "male"
+            assert service._infer_gender("thorsten") == "male"
+
+    def test_infer_gender_unknown(self):
+        """Test gender inference for unknown names"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+
+            assert service._infer_gender("unknown") == "unknown"
+            assert service._infer_gender("ald") == "unknown"
+            assert service._infer_gender("huayan") == "unknown"
+
+    def test_get_voice_names_legacy(self):
+        """Test legacy get_voice_names method still works"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+            service.voices = {
+                "en_US-lessac-medium": {"language": "en", "sample_rate": 22050},
+                "es_MX-claude-high": {"language": "es", "sample_rate": 22050},
+            }
+
+            voice_names = service.get_voice_names()
+
+            assert isinstance(voice_names, list)
+            assert len(voice_names) == 2
+            assert "en_US-lessac-medium" in voice_names
+            assert "es_MX-claude-high" in voice_names
+
+    def test_voice_metadata_is_default_flag(self):
+        """Test is_default flag is set correctly"""
+        with patch.object(PiperTTSService, "_initialize_voices"):
+            service = PiperTTSService()
+            service.voices = {
+                "es_AR-daniela-high": {"language": "es", "sample_rate": 22050},
+                "es_MX-claude-high": {"language": "es", "sample_rate": 22050},
+            }
+            service.language_voice_map = {"es": "es_MX-claude-high"}
+
+            voices = service.get_available_voices(language="es")
+
+            # Find the default voice
+            default_voices = [v for v in voices if v["is_default"]]
+            non_default_voices = [v for v in voices if not v["is_default"]]
+
+            assert len(default_voices) == 1
+            assert default_voices[0]["voice_id"] == "es_MX-claude-high"
+            assert len(non_default_voices) == 1
+            assert non_default_voices[0]["voice_id"] == "es_AR-daniela-high"
 
 
 # =============================================================================
