@@ -13,26 +13,27 @@ Features:
 - Scenario validation and testing
 """
 
-from fastapi import APIRouter, HTTPException, Depends, status, Query
-from fastapi.responses import JSONResponse
-from typing import List, Optional
-from pydantic import BaseModel, Field, field_validator
 import logging
 from datetime import datetime
+from typing import List, Optional
 from uuid import uuid4
 
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, field_validator
+
 from app.services.admin_auth import (
+    AdminPermission,
     require_admin_access,
     require_permission,
-    AdminPermission,
 )
 from app.services.scenario_manager import (
-    scenario_manager,
+    ConversationRole,
     ConversationScenario,
     ScenarioCategory,
     ScenarioDifficulty,
-    ConversationRole,
     ScenarioPhase,
+    scenario_manager,
 )
 
 logger = logging.getLogger(__name__)
@@ -437,7 +438,7 @@ async def update_scenario(
     try:
         sm = await ensure_scenario_manager_initialized()
         existing_scenario = await _get_scenario_or_404(sm, scenario_id)
-        updates = scenario_data.dict(exclude_unset=True)
+        updates = scenario_data.model_dump(exclude_unset=True)
         _apply_scenario_updates(existing_scenario, updates)
         existing_scenario.updated_at = datetime.now()
         await sm.save_scenario(existing_scenario)
@@ -504,6 +505,9 @@ def _update_enum_field(scenario, field: str, value: str) -> None:
         setattr(scenario, field, ScenarioDifficulty(value))
     elif field in ["user_role", "ai_role"]:
         setattr(scenario, field, ConversationRole(value))
+    else:
+        # Field is not an enum field - do nothing (defensive programming)
+        logger.debug(f"Field '{field}' is not an enum field, skipping enum conversion")
 
 
 @router.delete("/scenarios/{scenario_id}")
@@ -617,6 +621,16 @@ async def bulk_scenario_operations(
                 elif operation_data.operation == "export":
                     # Export functionality would be implemented here
                     results.append({"scenario_id": scenario_id, "status": "exported"})
+                else:
+                    # Should never reach here due to Pydantic validation, but defensive programming
+                    logger.error(f"Invalid bulk operation: {operation_data.operation}")
+                    results.append(
+                        {
+                            "scenario_id": scenario_id,
+                            "status": "error",
+                            "error": "Invalid operation",
+                        }
+                    )
             except Exception as e:
                 results.append(
                     {"scenario_id": scenario_id, "status": "error", "error": str(e)}
