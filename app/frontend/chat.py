@@ -10,6 +10,7 @@ Provides comprehensive conversation interface with:
 """
 
 from fasthtml.common import *
+
 from .layout import create_layout
 
 
@@ -35,6 +36,24 @@ def create_chat_route(app):
                             id="language-select",
                             cls="form-input",
                             style="margin-bottom: 1rem;",
+                        ),
+                        # Voice Selection Component
+                        Div(
+                            Label(
+                                "🎤 Voice Persona:",
+                                style="font-weight: bold; margin-bottom: 0.5rem; display: block;",
+                            ),
+                            Select(
+                                Option("Loading voices...", value="", disabled=True),
+                                id="voice-select",
+                                cls="form-input",
+                                style="margin-bottom: 1rem;",
+                            ),
+                            Div(
+                                id="voice-metadata",
+                                style="font-size: 0.85rem; color: #666; margin-bottom: 1rem; min-height: 20px;",
+                            ),
+                            cls="form-group",
                         ),
                         Div(
                             Label(
@@ -245,7 +264,8 @@ def create_chat_route(app):
                 # Real-Time Analysis Panel
                 Div(
                     H2(
-                        "🎯 Real-Time Analysis (speech analysis)", style="margin-bottom: 1rem;"
+                        "🎯 Real-Time Analysis (speech analysis)",
+                        style="margin-bottom: 1rem;",
                     ),
                     Div(
                         Div(
@@ -357,6 +377,10 @@ def _create_chat_scripts():
                 // Tutor mode properties
                 this.isTutorMode = false;
                 this.currentTutorMode = null;
+
+                // Voice selection properties
+                this.availableVoices = [];
+                this.selectedVoice = null;
                 this.availableTutorModes = [];
                 this.activeTutorSession = null;
                 this.conversationStarted = false;
@@ -364,6 +388,7 @@ def _create_chat_scripts():
                 this.setupEventListeners();
                 this.initializeAudioContext();
                 this.loadScenarios();
+                this.loadVoicesForLanguage(); // Load initial voices
             }
 
             async initializeAudioContext() {
@@ -420,6 +445,13 @@ def _create_chat_scripts():
                 document.getElementById('language-select')?.addEventListener('change', (e) => {
                     this.currentLanguage = e.target.value;
                     this.updateLanguagePersonality();
+                    this.loadVoicesForLanguage(); // Load voices when language changes
+                });
+
+                // Voice selection
+                document.getElementById('voice-select')?.addEventListener('change', (e) => {
+                    this.selectedVoice = e.target.value;
+                    this.updateVoiceMetadata();
                 });
 
                 // Practice mode selection
@@ -624,10 +656,8 @@ def _create_chat_scripts():
                             this.hideLoadingIndicator();
                             this.addMessageToHistory('ai', data.response);
 
-                            // Play AI response audio if available
-                            if (data.audio_data) {
-                                this.playAudioResponse(data.audio_data);
-                            }
+                            // Generate speech with selected voice if available
+                            await this.generateSpeechForResponse(data.response, this.currentLanguage.split('-')[0]);
 
                             this.updateSpeechStatus('🎤 Click microphone to speak');
 
@@ -703,6 +733,45 @@ def _create_chat_scripts():
                 const loadingDiv = document.getElementById('loading-indicator');
                 if (loadingDiv) {
                     loadingDiv.remove();
+                }
+            }
+
+            async generateSpeechForResponse(text, language) {
+                try {
+                    const token = localStorage.getItem('auth_token');
+                    if (!token) return;
+
+                    // Build request body with optional voice parameter
+                    const requestBody = {
+                        text: text,
+                        language: language,
+                        voice_type: 'neural'
+                    };
+
+                    // Add selected voice if available
+                    if (this.selectedVoice && this.selectedVoice !== '') {
+                        requestBody.voice = this.selectedVoice;
+                    }
+
+                    const response = await fetch('http://localhost:8000/api/v1/conversations/text-to-speech', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.audio_data) {
+                            this.playAudioResponse(data.audio_data);
+                        }
+                    } else {
+                        console.error('TTS failed:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('TTS error:', error);
                 }
             }
 
@@ -1221,6 +1290,86 @@ def _create_chat_scripts():
                     }
                 } catch (error) {
                     console.error('Failed to load scenarios:', error);
+                }
+            }
+
+            async loadVoicesForLanguage() {
+                try {
+                    const token = localStorage.getItem('auth_token');
+                    if (!token) return;
+
+                    // Extract language code from format "en-claude" -> "en"
+                    const languageCode = this.currentLanguage.split('-')[0];
+
+                    const response = await fetch(`http://localhost:8000/api/v1/conversations/available-voices?language=${languageCode}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.availableVoices = data.voices || [];
+                        this.populateVoiceSelect();
+                    } else {
+                        console.error('Failed to load voices:', response.statusText);
+                        this.populateVoiceSelect(); // Show empty state
+                    }
+                } catch (error) {
+                    console.error('Failed to load voices:', error);
+                    this.populateVoiceSelect(); // Show empty state
+                }
+            }
+
+            populateVoiceSelect() {
+                const voiceSelect = document.getElementById('voice-select');
+                if (!voiceSelect) return;
+
+                if (this.availableVoices.length === 0) {
+                    voiceSelect.innerHTML = '<option value="">No voices available</option>';
+                    this.selectedVoice = null;
+                    this.updateVoiceMetadata();
+                    return;
+                }
+
+                // Add default option
+                voiceSelect.innerHTML = '<option value="">Default voice</option>';
+
+                // Add available voices with metadata
+                this.availableVoices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.voice_id;
+
+                    // Format: "Daniela (Female, Argentina) - High Quality"
+                    const genderIcon = voice.gender === 'female' ? '♀' : '♂';
+                    const qualityLabel = voice.quality.charAt(0).toUpperCase() + voice.quality.slice(1);
+                    option.textContent = `${genderIcon} ${voice.persona.charAt(0).toUpperCase() + voice.persona.slice(1)} (${voice.accent}) - ${qualityLabel}`;
+
+                    // Mark default voice
+                    if (voice.is_default) {
+                        option.selected = true;
+                        this.selectedVoice = voice.voice_id;
+                    }
+
+                    voiceSelect.appendChild(option);
+                });
+
+                this.updateVoiceMetadata();
+            }
+
+            updateVoiceMetadata() {
+                const metadataDiv = document.getElementById('voice-metadata');
+                if (!metadataDiv) return;
+
+                if (!this.selectedVoice || this.selectedVoice === '') {
+                    metadataDiv.textContent = 'Using default voice for this language';
+                    return;
+                }
+
+                const voice = this.availableVoices.find(v => v.voice_id === this.selectedVoice);
+                if (voice) {
+                    const genderIcon = voice.gender === 'female' ? '♀️' : '♂️';
+                    metadataDiv.innerHTML = `${genderIcon} <strong>${voice.persona}</strong> · ${voice.accent} accent · ${voice.quality} quality · ${voice.sample_rate}Hz`;
+                } else {
+                    metadataDiv.textContent = '';
                 }
             }
 
