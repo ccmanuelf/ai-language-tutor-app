@@ -4,30 +4,32 @@ Provides REST API for dynamic feature control and management.
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any
-from fastapi import APIRouter, HTTPException, Depends, Query, Path, status
+from typing import Any, Dict, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import status as http_status
 from fastapi.security import HTTPBearer
 from pydantic import ValidationError
 
+from app.models.database import User
 from app.models.feature_toggle import (
     FeatureToggle,
-    FeatureToggleRequest,
-    FeatureToggleUpdateRequest,
-    FeatureToggleResponse,
-    FeatureToggleListResponse,
-    UserFeatureStatusResponse,
-    FeatureToggleStatsResponse,
-    FeatureToggleScope,
-    FeatureToggleStatus,
     FeatureToggleCategory,
+    FeatureToggleListResponse,
+    FeatureToggleRequest,
+    FeatureToggleResponse,
+    FeatureToggleScope,
+    FeatureToggleStatsResponse,
+    FeatureToggleStatus,
+    FeatureToggleUpdateRequest,
+    UserFeatureStatusResponse,
 )
-from app.services.feature_toggle_service import get_feature_toggle_service
 from app.services.admin_auth import (
-    get_current_admin_user,
     AdminPermission,
     check_admin_permission,
+    get_current_admin_user,
 )
-from app.models.database import User
+from app.services.feature_toggle_service import get_feature_toggle_service
 
 router = APIRouter(prefix="/api/admin/feature-toggles", tags=["Feature Toggles"])
 security = HTTPBearer()
@@ -75,7 +77,7 @@ async def list_features(
 
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve features: {str(e)}",
         )
 
@@ -101,7 +103,7 @@ async def get_feature(
 
         if not feature:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Feature toggle '{feature_id}' not found",
             )
 
@@ -111,7 +113,7 @@ async def get_feature(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve feature: {str(e)}",
         )
 
@@ -119,7 +121,7 @@ async def get_feature(
 @router.post(
     "/features",
     response_model=FeatureToggleResponse,
-    status_code=status.HTTP_201_CREATED,
+    status_code=http_status.HTTP_201_CREATED,
     summary="Create new feature toggle",
     description="Create a new feature toggle with specified configuration",
 )
@@ -144,12 +146,12 @@ async def create_feature(
 
     except ValidationError as e:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Validation error: {str(e)}",
         )
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create feature toggle: {str(e)}",
         )
 
@@ -178,7 +180,7 @@ async def update_feature(
 
         if not feature:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Feature toggle '{feature_id}' not found",
             )
 
@@ -192,12 +194,12 @@ async def update_feature(
         raise
     except ValidationError as e:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Validation error: {str(e)}",
         )
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update feature toggle: {str(e)}",
         )
 
@@ -223,7 +225,7 @@ async def delete_feature(
 
         if not success:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Feature toggle '{feature_id}' not found",
             )
 
@@ -235,7 +237,7 @@ async def delete_feature(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete feature toggle: {str(e)}",
         )
 
@@ -264,7 +266,7 @@ async def enable_feature(
 
         if not feature:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Feature toggle '{feature_id}' not found",
             )
 
@@ -278,7 +280,7 @@ async def enable_feature(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to enable feature toggle: {str(e)}",
         )
 
@@ -307,7 +309,7 @@ async def disable_feature(
 
         if not feature:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Feature toggle '{feature_id}' not found",
             )
 
@@ -321,7 +323,7 @@ async def disable_feature(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to disable feature toggle: {str(e)}",
         )
 
@@ -352,7 +354,7 @@ async def check_user_feature_status(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to check user feature status: {str(e)}",
         )
 
@@ -367,7 +369,7 @@ async def _get_feature_or_404(service, feature_id: str):
     feature = await service.get_feature(feature_id)
     if not feature:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=f"Feature toggle '{feature_id}' not found",
         )
     return feature
@@ -490,7 +492,7 @@ async def set_user_feature_access(
 
         if not success:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=f"Feature toggle '{feature_id}' not found",
             )
 
@@ -504,7 +506,7 @@ async def set_user_feature_access(
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to set user feature access: {str(e)}",
         )
 
@@ -536,7 +538,7 @@ async def get_user_features(
 
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get user features: {str(e)}",
         )
 
@@ -575,7 +577,7 @@ async def get_feature_statistics(current_user: User = Depends(get_current_admin_
 
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get feature statistics: {str(e)}",
         )
 
@@ -622,7 +624,7 @@ async def bulk_update_features(
 
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to bulk update features: {str(e)}",
         )
 
@@ -656,6 +658,6 @@ async def public_check_feature(
 
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to check feature status: {str(e)}",
         )
