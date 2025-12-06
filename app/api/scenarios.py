@@ -14,23 +14,24 @@ Features:
 """
 
 import logging
-from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, Depends
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.services.scenario_manager import (
-    scenario_manager,
-    ScenarioCategory,
-    ScenarioDifficulty,
-    get_available_scenarios,
-    get_scenario_status,
-    finish_scenario,
-)
+from app.models.database import User
+from app.services.auth import get_current_user
 from app.services.conversation_manager import conversation_manager
 from app.services.conversation_models import LearningFocus
-from app.services.auth import get_current_user
-from app.models.database import User
+from app.services.scenario_manager import (
+    ScenarioCategory,
+    ScenarioDifficulty,
+    finish_scenario,
+    get_available_scenarios,
+    get_scenario_status,
+    scenario_manager,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +107,8 @@ async def list_scenarios(
         scenarios = _add_user_recommendations(scenarios, user_level)
         logger.info(f"Retrieved {len(scenarios)} scenarios for user {current_user.id}")
         return _build_scenarios_response(scenarios)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to list scenarios for user {current_user.id}: {e}")
         raise HTTPException(
