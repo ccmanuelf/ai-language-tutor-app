@@ -8,20 +8,21 @@ gamification, and learning analytics management.
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
-from fastapi import APIRouter, HTTPException, Depends, Query
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from enum import Enum
 
-from app.services.spaced_repetition_manager import (
-    SpacedRepetitionManager,
-    ItemType,
-    SessionType,
-    ReviewResult,
-)
-from app.services.admin_auth import get_current_admin_user
 from app.models.database import User
+from app.services.admin_auth import get_current_admin_user
+from app.services.spaced_repetition_manager import (
+    ItemType,
+    ReviewResult,
+    SessionType,
+    SpacedRepetitionManager,
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -247,6 +248,8 @@ async def review_item(request: ReviewItemRequest) -> JSONResponse:
         else:
             raise HTTPException(status_code=404, detail="Item not found")
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error reviewing item: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -340,6 +343,8 @@ async def end_learning_session(request: EndSessionRequest) -> JSONResponse:
         else:
             raise HTTPException(status_code=404, detail="Session not found")
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error ending learning session: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -513,7 +518,9 @@ async def update_algorithm_config(
     """Update spaced repetition algorithm configuration (admin only)"""
     try:
         # Filter out None values
-        config_updates = {k: v for k, v in request.dict().items() if v is not None}
+        config_updates = {
+            k: v for k, v in request.model_dump().items() if v is not None
+        }
 
         if not config_updates:
             raise HTTPException(
@@ -536,6 +543,8 @@ async def update_algorithm_config(
                 status_code=500, detail="Failed to update configuration"
             )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error updating algorithm config: {e}")
         raise HTTPException(status_code=500, detail=str(e))
