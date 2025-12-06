@@ -17,23 +17,24 @@ Features:
 - Analytics dashboard endpoints
 """
 
-import logging
-from typing import Dict, List, Any, Optional
-from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel, Field
 import base64
+import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from app.services.realtime_analyzer import (
-    realtime_analyzer,
-    AnalysisType,
-    start_realtime_analysis,
-    analyze_speech_realtime,
-    get_realtime_analytics,
-    end_realtime_session,
-)
-from app.services.auth import get_current_user
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel, Field
+
 from app.models.database import User
+from app.services.auth import get_current_user
+from app.services.realtime_analyzer import (
+    AnalysisType,
+    analyze_speech_realtime,
+    end_realtime_session,
+    get_realtime_analytics,
+    realtime_analyzer,
+    start_realtime_analysis,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -203,6 +204,8 @@ async def start_analysis_session(
         logger.info(f"Started analysis session {session_id} for user {current_user.id}")
         return response
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error starting analysis session: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -283,7 +286,7 @@ async def _send_websocket_feedback(
             "session_id": session_id,
             "timestamp": datetime.now().isoformat(),
             "feedback": [
-                feedback_response.dict() for feedback_response in response_list
+                feedback_response.model_dump() for feedback_response in response_list
             ],
         }
         await websocket_manager.send_feedback(session_id, websocket_data)
@@ -379,6 +382,8 @@ async def end_analysis_session(
             "final_analytics": final_analytics,
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error ending analysis session: {e}")
         raise HTTPException(status_code=500, detail=str(e))
