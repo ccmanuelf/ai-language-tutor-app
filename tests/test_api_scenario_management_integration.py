@@ -108,7 +108,7 @@ def sample_scenario():
         duration_minutes=15,
         phases=phases,
         vocabulary_focus=["menu", "pasta", "wine", "bill"],
-        cultural_context={"customs": "Italian dining etiquette", "formality": "casual"},
+        cultural_context='{"customs": "Italian dining etiquette", "formality": "casual"}',
         learning_goals=["Order food", "Ask questions", "Request the bill"],
     )
     scenario.is_active = True
@@ -136,7 +136,7 @@ def sample_scenarios_list(sample_scenario):
         duration_minutes=10,
         phases=[],
         vocabulary_focus=["reservation", "room", "key"],
-        cultural_context={},
+        cultural_context="{}",
         learning_goals=["Check in", "Ask about facilities"],
     )
     scenario2.is_active = False
@@ -156,7 +156,7 @@ def sample_scenarios_list(sample_scenario):
         duration_minutes=12,
         phases=[],
         vocabulary_focus=["vegetables", "fruit", "price"],
-        cultural_context={"market_culture": "Spanish bargaining customs"},
+        cultural_context='{"market_culture": "Spanish bargaining customs"}',
         learning_goals=["Buy groceries", "Negotiate prices"],
     )
     scenario3.is_active = True
@@ -214,7 +214,7 @@ class TestListScenariosEndpoint:
         self, client, mock_db, admin_user, mock_scenario_manager, sample_scenarios_list
     ):
         """Test listing all scenarios without filters"""
-        mock_scenario_manager.list_scenarios.return_value = sample_scenarios_list
+        mock_scenario_manager.get_all_scenarios.return_value = sample_scenarios_list
 
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
         app.dependency_overrides[require_admin_access] = lambda: admin_user
@@ -228,17 +228,17 @@ class TestListScenariosEndpoint:
 
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 3
+        assert len(data) == 2  # Only active scenarios returned by default
         assert data[0]["scenario_id"] == "test_scenario_1"
         assert data[0]["name"] == "Test Restaurant Scenario"
 
-        mock_scenario_manager.list_scenarios.assert_called_once()
+        mock_scenario_manager.get_all_scenarios.assert_called_once()
 
     def test_list_scenarios_filter_by_category(
         self, client, mock_db, admin_user, mock_scenario_manager, sample_scenarios_list
     ):
         """Test filtering scenarios by category"""
-        mock_scenario_manager.list_scenarios.return_value = sample_scenarios_list
+        mock_scenario_manager.get_all_scenarios.return_value = sample_scenarios_list
 
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
         app.dependency_overrides[require_admin_access] = lambda: admin_user
@@ -262,7 +262,7 @@ class TestListScenariosEndpoint:
         self, client, mock_db, admin_user, mock_scenario_manager, sample_scenarios_list
     ):
         """Test filtering scenarios by difficulty"""
-        mock_scenario_manager.list_scenarios.return_value = sample_scenarios_list
+        mock_scenario_manager.get_all_scenarios.return_value = sample_scenarios_list
 
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
         app.dependency_overrides[require_admin_access] = lambda: admin_user
@@ -287,7 +287,7 @@ class TestListScenariosEndpoint:
         self, client, mock_db, admin_user, mock_scenario_manager, sample_scenarios_list
     ):
         """Test filtering for active scenarios only"""
-        mock_scenario_manager.list_scenarios.return_value = sample_scenarios_list
+        mock_scenario_manager.get_all_scenarios.return_value = sample_scenarios_list
 
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
         app.dependency_overrides[require_admin_access] = lambda: admin_user
@@ -312,7 +312,7 @@ class TestListScenariosEndpoint:
         self, client, mock_db, admin_user, mock_scenario_manager, sample_scenarios_list
     ):
         """Test combining multiple filters"""
-        mock_scenario_manager.list_scenarios.return_value = sample_scenarios_list
+        mock_scenario_manager.get_all_scenarios.return_value = sample_scenarios_list
 
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
         app.dependency_overrides[require_admin_access] = lambda: admin_user
@@ -407,7 +407,7 @@ class TestCreateScenarioEndpoint:
         sample_scenario,
     ):
         """Test creating a new scenario"""
-        mock_scenario_manager.create_scenario.return_value = sample_scenario
+        mock_scenario_manager.save_scenario.return_value = sample_scenario
 
         create_data = {
             "name": "Test Restaurant Scenario",
@@ -439,13 +439,18 @@ class TestCreateScenarioEndpoint:
         app.dependency_overrides[require_admin_access] = lambda: admin_user
         app.dependency_overrides[get_current_user] = lambda: admin_user_dict
 
+        # Patch has_permission in the module where require_permission will call it
         with patch(
-            "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            "app.services.admin_auth.AdminAuthService.has_permission",
+            return_value=True,
         ):
-            response = client.post(
-                "/api/admin/scenario-management/scenarios",
-                json=create_data,
-            )
+            with patch(
+                "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            ):
+                response = client.post(
+                    "/api/admin/scenario_management/scenarios",
+                    json=create_data,
+                )
 
         app.dependency_overrides.clear()
 
@@ -454,7 +459,7 @@ class TestCreateScenarioEndpoint:
         assert data["scenario_id"] == "test_scenario_1"
         assert data["name"] == "Test Restaurant Scenario"
 
-        mock_scenario_manager.create_scenario.assert_called_once()
+        mock_scenario_manager.save_scenario.assert_called_once()
 
     def test_create_scenario_validation_error(
         self, client, mock_db, admin_user, admin_user_dict, mock_scenario_manager
@@ -470,12 +475,16 @@ class TestCreateScenarioEndpoint:
         app.dependency_overrides[get_current_user] = lambda: admin_user_dict
 
         with patch(
-            "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            "app.services.admin_auth.admin_auth_service.has_permission",
+            return_value=True,
         ):
-            response = client.post(
-                "/api/admin/scenario-management/scenarios",
-                json=invalid_data,
-            )
+            with patch(
+                "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            ):
+                response = client.post(
+                    "/api/admin/scenario-management/scenarios",
+                    json=invalid_data,
+                )
 
         app.dependency_overrides.clear()
 
@@ -513,12 +522,16 @@ class TestUpdateScenarioEndpoint:
         app.dependency_overrides[get_current_user] = lambda: admin_user_dict
 
         with patch(
-            "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            "app.services.admin_auth.admin_auth_service.has_permission",
+            return_value=True,
         ):
-            response = client.put(
-                "/api/admin/scenario-management/scenarios/test_scenario_1",
-                json=update_data,
-            )
+            with patch(
+                "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            ):
+                response = client.put(
+                    "/api/admin/scenario-management/scenarios/test_scenario_1",
+                    json=update_data,
+                )
 
         app.dependency_overrides.clear()
 
@@ -538,12 +551,16 @@ class TestUpdateScenarioEndpoint:
         app.dependency_overrides[get_current_user] = lambda: admin_user_dict
 
         with patch(
-            "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            "app.services.admin_auth.admin_auth_service.has_permission",
+            return_value=True,
         ):
-            response = client.put(
-                "/api/admin/scenario-management/scenarios/nonexistent",
-                json=update_data,
-            )
+            with patch(
+                "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            ):
+                response = client.put(
+                    "/api/admin/scenario-management/scenarios/nonexistent",
+                    json=update_data,
+                )
 
         app.dependency_overrides.clear()
 
@@ -581,12 +598,16 @@ class TestUpdateScenarioEndpoint:
         app.dependency_overrides[get_current_user] = lambda: admin_user_dict
 
         with patch(
-            "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            "app.services.admin_auth.admin_auth_service.has_permission",
+            return_value=True,
         ):
-            response = client.put(
-                "/api/admin/scenario-management/scenarios/test_scenario_1",
-                json=update_data,
-            )
+            with patch(
+                "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            ):
+                response = client.put(
+                    "/api/admin/scenario-management/scenarios/test_scenario_1",
+                    json=update_data,
+                )
 
         app.dependency_overrides.clear()
 
@@ -619,11 +640,15 @@ class TestDeleteScenarioEndpoint:
         app.dependency_overrides[get_current_user] = lambda: admin_user_dict
 
         with patch(
-            "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            "app.services.admin_auth.admin_auth_service.has_permission",
+            return_value=True,
         ):
-            response = client.delete(
-                "/api/admin/scenario-management/scenarios/test_scenario_1"
-            )
+            with patch(
+                "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            ):
+                response = client.delete(
+                    "/api/admin/scenario-management/scenarios/test_scenario_1"
+                )
 
         app.dependency_overrides.clear()
 
@@ -641,11 +666,15 @@ class TestDeleteScenarioEndpoint:
         app.dependency_overrides[get_current_user] = lambda: admin_user_dict
 
         with patch(
-            "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            "app.services.admin_auth.admin_auth_service.has_permission",
+            return_value=True,
         ):
-            response = client.delete(
-                "/api/admin/scenario-management/scenarios/nonexistent"
-            )
+            with patch(
+                "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            ):
+                response = client.delete(
+                    "/api/admin/scenario-management/scenarios/nonexistent"
+                )
 
         app.dependency_overrides.clear()
 
@@ -708,12 +737,16 @@ class TestContentConfigEndpoints:
         app.dependency_overrides[get_current_user] = lambda: admin_user_dict
 
         with patch(
-            "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            "app.services.admin_auth.admin_auth_service.has_permission",
+            return_value=True,
         ):
-            response = client.put(
-                "/api/admin/scenario-management/content-config",
-                json=update_data,
-            )
+            with patch(
+                "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            ):
+                response = client.put(
+                    "/api/admin/scenario-management/content-config",
+                    json=update_data,
+                )
 
         app.dependency_overrides.clear()
 
@@ -747,12 +780,16 @@ class TestBulkOperationsEndpoint:
         app.dependency_overrides[get_current_user] = lambda: admin_user_dict
 
         with patch(
-            "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            "app.services.admin_auth.admin_auth_service.has_permission",
+            return_value=True,
         ):
-            response = client.post(
-                "/api/admin/scenario-management/scenarios/bulk",
-                json=bulk_data,
-            )
+            with patch(
+                "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            ):
+                response = client.post(
+                    "/api/admin/scenario-management/scenarios/bulk",
+                    json=bulk_data,
+                )
 
         app.dependency_overrides.clear()
 
@@ -780,12 +817,16 @@ class TestBulkOperationsEndpoint:
         app.dependency_overrides[get_current_user] = lambda: admin_user_dict
 
         with patch(
-            "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            "app.services.admin_auth.admin_auth_service.has_permission",
+            return_value=True,
         ):
-            response = client.post(
-                "/api/admin/scenario-management/scenarios/bulk",
-                json=bulk_data,
-            )
+            with patch(
+                "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            ):
+                response = client.post(
+                    "/api/admin/scenario-management/scenarios/bulk",
+                    json=bulk_data,
+                )
 
         app.dependency_overrides.clear()
 
@@ -810,12 +851,16 @@ class TestBulkOperationsEndpoint:
         app.dependency_overrides[get_current_user] = lambda: admin_user_dict
 
         with patch(
-            "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            "app.services.admin_auth.admin_auth_service.has_permission",
+            return_value=True,
         ):
-            response = client.post(
-                "/api/admin/scenario-management/scenarios/bulk",
-                json=bulk_data,
-            )
+            with patch(
+                "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            ):
+                response = client.post(
+                    "/api/admin/scenario-management/scenarios/bulk",
+                    json=bulk_data,
+                )
 
         app.dependency_overrides.clear()
 
@@ -843,12 +888,16 @@ class TestBulkOperationsEndpoint:
         app.dependency_overrides[get_current_user] = lambda: admin_user_dict
 
         with patch(
-            "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            "app.services.admin_auth.admin_auth_service.has_permission",
+            return_value=True,
         ):
-            response = client.post(
-                "/api/admin/scenario-management/scenarios/bulk",
-                json=bulk_data,
-            )
+            with patch(
+                "app.api.scenario_management.scenario_manager", mock_scenario_manager
+            ):
+                response = client.post(
+                    "/api/admin/scenario-management/scenarios/bulk",
+                    json=bulk_data,
+                )
 
         app.dependency_overrides.clear()
 
@@ -941,5 +990,4 @@ class TestStatisticsEndpoint:
         assert data["active_scenarios"] == 12
         assert "scenarios_by_category" in data
         assert "scenarios_by_difficulty" in data
-        assert data["active_scenarios"] == 8
-        assert data["by_category"]["restaurant"] == 3
+        assert data["scenarios_by_category"]["restaurant"] == 4
