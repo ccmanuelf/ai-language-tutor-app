@@ -482,17 +482,32 @@ def _convert_phase_data_to_objects(phase_data_list: list) -> list:
     """Convert phase data to ScenarioPhase objects - A(2)"""
     phases = []
     for phase_data in phase_data_list:
-        phase = ScenarioPhase(
-            phase_id=phase_data.phase_id,
-            name=phase_data.name,
-            description=phase_data.description,
-            expected_duration_minutes=phase_data.expected_duration_minutes,
-            key_vocabulary=phase_data.key_vocabulary,
-            essential_phrases=phase_data.essential_phrases,
-            learning_objectives=phase_data.learning_objectives,
-            cultural_notes=phase_data.cultural_notes,
-            success_criteria=phase_data.success_criteria,
-        )
+        # Handle both dict and object formats
+        if isinstance(phase_data, dict):
+            phase = ScenarioPhase(
+                phase_id=phase_data.get("phase_id"),
+                name=phase_data.get("name"),
+                description=phase_data.get("description"),
+                expected_duration_minutes=phase_data.get("expected_duration_minutes"),
+                key_vocabulary=phase_data.get("key_vocabulary", []),
+                essential_phrases=phase_data.get("essential_phrases", []),
+                learning_objectives=phase_data.get("learning_objectives", []),
+                cultural_notes=phase_data.get("cultural_notes"),
+                success_criteria=phase_data.get("success_criteria", []),
+            )
+        else:
+            # Already a Pydantic object
+            phase = ScenarioPhase(
+                phase_id=phase_data.phase_id,
+                name=phase_data.name,
+                description=phase_data.description,
+                expected_duration_minutes=phase_data.expected_duration_minutes,
+                key_vocabulary=phase_data.key_vocabulary,
+                essential_phrases=phase_data.essential_phrases,
+                learning_objectives=phase_data.learning_objectives,
+                cultural_notes=phase_data.cultural_notes,
+                success_criteria=phase_data.success_criteria,
+            )
         phases.append(phase)
     return phases
 
