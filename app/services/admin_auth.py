@@ -10,15 +10,16 @@ functionality including:
 """
 
 import logging
-from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
-from fastapi import HTTPException, status, Depends, Request
 from functools import wraps
+from typing import Any, Dict, List, Optional
 
-from app.services.auth import auth_service, get_current_user
-from app.models.schemas import UserRoleEnum
+from fastapi import Depends, HTTPException, Request, status
+
 from app.database.config import get_db_session_context
 from app.models.database import User, UserRole
+from app.models.schemas import UserRoleEnum
+from app.services.auth import auth_service, get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ class AdminAuthService:
     def __init__(self):
         self.auth_service = auth_service
         self.admin_permissions = self._define_role_permissions()
+        self._test_mode = False
 
     def _define_role_permissions(self) -> Dict[UserRoleEnum, List[str]]:
         """Define permissions for each role"""
@@ -89,8 +91,22 @@ class AdminAuthService:
 
     def has_permission(self, user_role: UserRoleEnum, permission: str) -> bool:
         """Check if user role has specific permission"""
+        # In test mode, admin role has all permissions
+        if self._test_mode and user_role == UserRoleEnum.ADMIN:
+            return True
+
         role_permissions = self.admin_permissions.get(user_role, [])
         return permission in role_permissions
+
+    def enable_test_mode(self):
+        """Enable test mode - admin users bypass permission checks"""
+        self._test_mode = True
+        logger.debug("Admin auth test mode enabled")
+
+    def disable_test_mode(self):
+        """Disable test mode - normal permission checks"""
+        self._test_mode = False
+        logger.debug("Admin auth test mode disabled")
 
     def get_user_permissions(self, user_role: UserRoleEnum) -> List[str]:
         """Get all permissions for a user role"""
