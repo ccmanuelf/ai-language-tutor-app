@@ -239,7 +239,7 @@ async def update_model(
             raise HTTPException(status_code=404, detail="Model not found")
 
         # Convert to dict and filter out None values
-        updates = {k: v for k, v in update_data.dict().items() if v is not None}
+        updates = {k: v for k, v in update_data.model_dump().items() if v is not None}
 
         # Validate status if provided
         if "status" in updates:
@@ -418,7 +418,7 @@ async def optimize_model_selection(
         return JSONResponse(
             content={
                 "recommendations": recommended_models,
-                "optimization_params": request.dict(),
+                "optimization_params": request.model_dump(),
                 "message": f"Found {len(recommended_models)} optimized models for {request.use_case} in {request.language}",
             }
         )

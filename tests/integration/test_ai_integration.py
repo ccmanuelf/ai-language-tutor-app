@@ -109,6 +109,9 @@ class TestConversationAIIntegration:
         from app.database.config import get_primary_db_session
         from app.main import app
         from app.models.simple_user import SimpleUser
+        from app.services.budget_manager import BudgetAlert, BudgetStatus
+        from app.services.claude_service import claude_service
+        from app.services.mistral_service import mistral_service
 
         # Create test user
         test_user = SimpleUser(
@@ -124,11 +127,36 @@ class TestConversationAIIntegration:
         app.dependency_overrides[require_auth] = lambda: test_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
 
-        # Mock AI services but NOT the router (test real routing logic)
-        with patch(
-            "app.services.claude_service.ClaudeService.generate_response",
-            new_callable=AsyncMock,
-        ) as mock_claude:
+        # Mock budget manager to avoid budget exceeded isolation issue
+        mock_budget_status = BudgetStatus(
+            total_budget=30.0,
+            used_budget=5.0,
+            remaining_budget=25.0,
+            percentage_used=16.67,
+            alert_level=BudgetAlert.GREEN,
+            days_remaining=20,
+            projected_monthly_cost=7.5,
+            is_over_budget=False,
+        )
+
+        # Mock both Mistral and Claude services to test real router logic
+        # Router uses cost optimization and may select either one
+        with (
+            patch(
+                "app.services.ai_router.budget_manager.get_current_budget_status",
+                return_value=mock_budget_status,
+            ),
+            patch.object(
+                mistral_service, "generate_response", new_callable=AsyncMock
+            ) as mock_mistral,
+            patch.object(
+                claude_service, "generate_response", new_callable=AsyncMock
+            ) as mock_claude,
+        ):
+            # Set up both mocks
+            mock_mistral.return_value = Mock(
+                content="Hello! I'm your AI tutor.", cost=0.02
+            )
             mock_claude.return_value = Mock(
                 content="Hello! I'm your AI tutor.", cost=0.02
             )
@@ -142,8 +170,9 @@ class TestConversationAIIntegration:
             assert response.status_code == 200
             data = response.json()
 
-            # Verify AI service was actually called through router
-            assert mock_claude.called
+            # Verify that ONE of the AI services was actually called through router
+            # Router uses cost optimization, so it may choose Mistral over Claude
+            assert mock_mistral.called or mock_claude.called
 
             # Verify response structure
             assert "response" in data
@@ -227,6 +256,9 @@ class TestSpeechProcessingIntegration:
         from app.database.config import get_primary_db_session
         from app.main import app
         from app.models.simple_user import SimpleUser
+        from app.services.budget_manager import BudgetAlert, BudgetStatus
+        from app.services.claude_service import claude_service
+        from app.services.mistral_service import mistral_service
 
         test_user = SimpleUser(
             id=1,
@@ -240,17 +272,37 @@ class TestSpeechProcessingIntegration:
         app.dependency_overrides[require_auth] = lambda: test_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
 
-        # Mock AI service and TTS
+        # Mock budget manager to avoid budget exceeded isolation issue
+        mock_budget_status = BudgetStatus(
+            total_budget=30.0,
+            used_budget=5.0,
+            remaining_budget=25.0,
+            percentage_used=16.67,
+            alert_level=BudgetAlert.GREEN,
+            days_remaining=20,
+            projected_monthly_cost=7.5,
+            is_over_budget=False,
+        )
+
+        # Mock both AI services and TTS to test real router logic
         with (
             patch(
-                "app.services.claude_service.ClaudeService.generate_response",
-                new_callable=AsyncMock,
+                "app.services.ai_router.budget_manager.get_current_budget_status",
+                return_value=mock_budget_status,
+            ),
+            patch.object(
+                mistral_service, "generate_response", new_callable=AsyncMock
+            ) as mock_mistral,
+            patch.object(
+                claude_service, "generate_response", new_callable=AsyncMock
             ) as mock_claude,
             patch(
                 "app.services.speech_processor.speech_processor.process_text_to_speech",
                 new_callable=AsyncMock,
             ) as mock_tts,
         ):
+            # Set up both AI mocks
+            mock_mistral.return_value = Mock(content="Hello! How are you?", cost=0.02)
             mock_claude.return_value = Mock(content="Hello! How are you?", cost=0.02)
 
             mock_tts_result = Mock()
@@ -270,8 +322,10 @@ class TestSpeechProcessingIntegration:
             assert response.status_code == 200
             data = response.json()
 
-            # Verify both AI and TTS were called
-            assert mock_claude.called
+            # Verify that ONE of the AI services was called through router
+            assert mock_mistral.called or mock_claude.called
+
+            # Verify TTS was called
             assert mock_tts.called
 
             # Verify audio URL is generated

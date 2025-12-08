@@ -18,6 +18,8 @@ filterwarnings = [
     "ignore:Type google.protobuf.pyext._message.*:DeprecationWarning",
     # Ignore spurious async warnings from unittest.mock internals
     "ignore:coroutine.*was never awaited:RuntimeWarning",
+    # Ignore datetime.utcnow() deprecation in python-jose library
+    "ignore:datetime.datetime.utcnow.*:DeprecationWarning:jose",
 ]
 markers = [
     "unit: Unit tests (fast, fully mocked, no external calls)",
