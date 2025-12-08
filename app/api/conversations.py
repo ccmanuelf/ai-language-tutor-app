@@ -13,13 +13,12 @@ from sqlalchemy.orm import Session
 from app.core.security import require_auth
 from app.database.config import get_primary_db_session
 from app.models.simple_user import SimpleUser
-from app.services.ai_router import EnhancedAIRouter
+from app.services.ai_router import (
+    ai_router,  # Use global router instance with registered providers
+)
 from app.services.speech_processor import speech_processor
 
 router = APIRouter(prefix="/api/v1/conversations", tags=["conversations"])
-
-# Initialize AI router
-ai_router = EnhancedAIRouter()
 
 
 class ChatRequest(BaseModel):

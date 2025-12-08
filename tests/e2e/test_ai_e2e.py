@@ -91,28 +91,27 @@ class TestMistralE2E:
         print(f"   Cost: ${response.cost:.4f}")
 
 
-class TestQwenE2E:
-    """E2E tests for Qwen AI service with real API"""
+class TestDeepSeekE2E:
+    """E2E tests for DeepSeek AI service with real API"""
 
     @pytest.fixture(autouse=True)
     def check_api_key(self):
         """Skip tests if API key not available"""
-        # Qwen might use different env variable or config
-        if not os.getenv("DASHSCOPE_API_KEY"):
-            pytest.skip("DASHSCOPE_API_KEY not found in .env - Skipping E2E test")
+        if not os.getenv("DEEPSEEK_API_KEY"):
+            pytest.skip("DEEPSEEK_API_KEY not found in .env - Skipping E2E test")
 
     @pytest.mark.asyncio
-    async def test_qwen_real_api_conversation(self):
-        """Test real Qwen API call for conversation"""
-        from app.services.qwen_service import QwenService
+    async def test_deepseek_real_api_conversation(self):
+        """Test real DeepSeek API call for conversation"""
+        from app.services.deepseek_service import DeepSeekService
 
-        service = QwenService()
+        service = DeepSeekService()
 
         response = await service.generate_response(
-            messages=[{"role": "user", "content": "用一个词说'你好'"}],
-            message="用一个词说'你好'",
-            language="zh",
-            context={"language": "zh", "user_id": "e2e_test"},
+            messages=[{"role": "user", "content": "Say 'Hello' in one word"}],
+            message="Say 'Hello' in one word",
+            language="en",
+            context={"language": "en", "user_id": "e2e_test"},
         )
 
         # Verify real response
@@ -120,9 +119,10 @@ class TestQwenE2E:
         assert response.content is not None
         assert len(response.content) > 0
 
-        print(f"\n✅ Qwen E2E Test Passed")
+        print(f"\n✅ DeepSeek E2E Test Passed")
         print(f"   Response: {response.content[:50]}...")
         print(f"   Cost: ${getattr(response, 'cost', 0):.4f}")
+        print(f"   Model: {getattr(response, 'model', 'unknown')}")
 
 
 class TestAIRouterE2E:
@@ -134,7 +134,7 @@ class TestAIRouterE2E:
         if not (
             os.getenv("ANTHROPIC_API_KEY")
             or os.getenv("MISTRAL_API_KEY")
-            or os.getenv("DASHSCOPE_API_KEY")
+            or os.getenv("DEEPSEEK_API_KEY")
         ):
             pytest.skip("No AI API keys found - Skipping E2E test")
 
@@ -247,7 +247,7 @@ class TestAIRouterE2E:
                     print(f"French test skipped: {e}")
 
             # Test Chinese
-            if os.getenv("DASHSCOPE_API_KEY"):
+            if os.getenv("DEEPSEEK_API_KEY"):
                 try:
                     selection_zh = await router.select_provider(
                         language="zh", use_case="conversation"
