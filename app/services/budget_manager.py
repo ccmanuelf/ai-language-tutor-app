@@ -10,16 +10,16 @@ This module manages the $30/month budget constraint by:
 """
 
 import logging
-from typing import Dict, List, Any, Optional
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
 from sqlalchemy import func
 
+from app.core.config import get_settings
 from app.database.config import get_primary_db_session
 from app.models.database import APIUsage, User
-from app.core.config import get_settings
-
 
 logger = logging.getLogger(__name__)
 
@@ -603,7 +603,7 @@ class BudgetManager:
             return CostOptimizationStrategy.QUALITY_FIRST
 
     async def check_budget_alerts(self) -> List[Dict[str, Any]]:
-        """Check for budget alerts and return notifications"""
+        """Check for budget alerts and return notifications (legacy format)"""
         budget_status = self.get_current_budget_status()
         alerts = []
 
@@ -638,6 +638,103 @@ class BudgetManager:
             )
 
         return alerts
+
+    def check_budget_threshold_alerts(
+        self, user_id: Optional[str] = None
+    ) -> List["BudgetThresholdAlert"]:
+        """
+        Check if budget thresholds have been crossed and return structured alerts
+
+        Args:
+            user_id: Optional user ID for user-specific budget tracking
+
+        Returns:
+            List of BudgetThresholdAlert objects
+        """
+        from app.models.schemas import BudgetAlertSeverity, BudgetThresholdAlert
+
+        budget_status = self.get_current_budget_status()
+        alerts = []
+
+        percentage = budget_status.percentage_used
+
+        # 80% threshold - Warning
+        if 80.0 <= percentage < 90.0:
+            alerts.append(
+                BudgetThresholdAlert.create(
+                    budget_status=budget_status,
+                    threshold=80.0,
+                    severity=BudgetAlertSeverity.WARNING,
+                )
+            )
+
+        # 90% threshold - Critical
+        elif 90.0 <= percentage < 100.0:
+            alerts.append(
+                BudgetThresholdAlert.create(
+                    budget_status=budget_status,
+                    threshold=90.0,
+                    severity=BudgetAlertSeverity.CRITICAL,
+                )
+            )
+
+        # 100%+ threshold - Critical with overage
+        elif percentage >= 100.0:
+            alerts.append(
+                BudgetThresholdAlert.create(
+                    budget_status=budget_status,
+                    threshold=100.0,
+                    severity=BudgetAlertSeverity.CRITICAL,
+                )
+            )
+
+        # Also check if approaching threshold (75-79%)
+        elif 75.0 <= percentage < 80.0:
+            alerts.append(
+                BudgetThresholdAlert.create(
+                    budget_status=budget_status,
+                    threshold=75.0,
+                    severity=BudgetAlertSeverity.INFO,
+                )
+            )
+
+        return alerts
+
+    def should_enforce_budget(
+        self, user_preferences: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """
+        Determine if budget should be enforced based on user settings
+
+        Args:
+            user_preferences: User's preference settings
+
+        Returns:
+            True if budget should be enforced
+        """
+        if not user_preferences:
+            return True  # Default: enforce budget
+
+        ai_settings = user_preferences.get("ai_provider_settings", {})
+        return ai_settings.get("enforce_budget_limits", True)
+
+    def can_override_budget(
+        self, user_preferences: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """
+        Check if user is allowed to override budget limits
+
+        Args:
+            user_preferences: User's preference settings
+
+        Returns:
+            True if user can override budget
+        """
+        if not user_preferences:
+            return True  # Default: allow override
+
+        ai_settings = user_preferences.get("ai_provider_settings", {})
+        return ai_settings.get("budget_override_allowed", True)
 
     def track_usage(
         self,
