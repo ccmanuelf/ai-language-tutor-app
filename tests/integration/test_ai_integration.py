@@ -407,5 +407,294 @@ class TestMultiLanguageIntegration:
         app.dependency_overrides.clear()
 
 
+class TestPreferredProviderIntegration:
+    """Integration tests for preferred provider selection (Session 96)"""
+
+    @pytest.mark.asyncio
+    async def test_preferred_provider_used_when_specified(self):
+        """Test that router uses user's preferred provider when specified"""
+        from app.services.ai_router import ai_router
+        from app.services.budget_manager import (
+            BudgetAlert,
+            BudgetStatus,
+            budget_manager,
+        )
+
+        # Mock budget to allow any provider
+        mock_budget_status = BudgetStatus(
+            total_budget=30.0,
+            used_budget=10.0,
+            remaining_budget=20.0,
+            percentage_used=33.33,
+            alert_level=BudgetAlert.GREEN,
+            days_remaining=20,
+            projected_monthly_cost=15.0,
+            is_over_budget=False,
+        )
+
+        with patch.object(
+            budget_manager, "get_current_budget_status", return_value=mock_budget_status
+        ):
+            # User explicitly chooses Claude
+            selection = await ai_router.select_provider(
+                language="en",
+                use_case="conversation",
+                preferred_provider="claude",
+            )
+
+            assert selection.provider_name == "claude"
+            assert selection.reason == "User preference"
+            assert selection.is_fallback is False
+
+    @pytest.mark.asyncio
+    async def test_preferred_provider_budget_exceeded_with_override(self):
+        """Test budget exceeded warning when user wants premium provider"""
+        from app.services.ai_router import ai_router
+        from app.services.budget_manager import (
+            BudgetAlert,
+            BudgetStatus,
+            budget_manager,
+        )
+
+        # Mock budget exceeded
+        mock_budget_status = BudgetStatus(
+            total_budget=30.0,
+            used_budget=30.5,
+            remaining_budget=-0.5,
+            percentage_used=101.67,
+            alert_level=BudgetAlert.CRITICAL,
+            days_remaining=10,
+            projected_monthly_cost=45.75,
+            is_over_budget=True,
+        )
+
+        with patch.object(
+            budget_manager, "get_current_budget_status", return_value=mock_budget_status
+        ):
+            # User wants Claude but budget exceeded
+            user_prefs = {
+                "ai_provider_settings": {
+                    "budget_override_allowed": True,
+                    "enforce_budget_limits": True,
+                }
+            }
+
+            selection = await ai_router.select_provider(
+                language="en",
+                use_case="conversation",
+                preferred_provider="claude",
+                user_preferences=user_prefs,
+                enforce_budget=True,
+            )
+
+            # Should return Claude with budget warning
+            assert selection.provider_name == "claude"
+            assert selection.requires_budget_override is True
+            assert selection.budget_warning is not None
+            assert "Budget exceeded" in selection.budget_warning.message
+
+    @pytest.mark.asyncio
+    async def test_preferred_provider_budget_enforcement_disabled(self):
+        """Test preferred provider used when budget enforcement disabled"""
+        from app.services.ai_router import ai_router
+        from app.services.budget_manager import (
+            BudgetAlert,
+            BudgetStatus,
+            budget_manager,
+        )
+
+        # Mock budget exceeded
+        mock_budget_status = BudgetStatus(
+            total_budget=30.0,
+            used_budget=32.0,
+            remaining_budget=-2.0,
+            percentage_used=106.67,
+            alert_level=BudgetAlert.CRITICAL,
+            days_remaining=8,
+            projected_monthly_cost=60.0,
+            is_over_budget=True,
+        )
+
+        with patch.object(
+            budget_manager, "get_current_budget_status", return_value=mock_budget_status
+        ):
+            # User disables budget enforcement
+            selection = await ai_router.select_provider(
+                language="en",
+                use_case="conversation",
+                preferred_provider="claude",
+                enforce_budget=False,
+            )
+
+            # Should use Claude despite budget
+            assert selection.provider_name == "claude"
+            assert selection.reason == "User preference (budget enforcement disabled)"
+            assert selection.requires_budget_override is False
+
+    @pytest.mark.asyncio
+    async def test_preferred_provider_auto_fallback_to_ollama(self):
+        """Test auto-fallback to Ollama when budget exceeded and configured"""
+        from app.services.ai_router import ai_router
+        from app.services.budget_manager import (
+            BudgetAlert,
+            BudgetStatus,
+            budget_manager,
+        )
+        from app.services.ollama_service import ollama_service
+
+        # Mock budget exceeded
+        mock_budget_status = BudgetStatus(
+            total_budget=30.0,
+            used_budget=31.0,
+            remaining_budget=-1.0,
+            percentage_used=103.33,
+            alert_level=BudgetAlert.CRITICAL,
+            days_remaining=5,
+            projected_monthly_cost=62.0,
+            is_over_budget=True,
+        )
+
+        with (
+            patch.object(
+                budget_manager,
+                "get_current_budget_status",
+                return_value=mock_budget_status,
+            ),
+            patch.object(budget_manager, "can_override_budget", return_value=False),
+            patch.object(ollama_service, "check_availability", return_value=True),
+            patch.object(
+                ollama_service, "get_recommended_model", return_value="llama2:7b"
+            ),
+        ):
+            # User has auto-fallback enabled
+            user_prefs = {
+                "ai_provider_settings": {
+                    "auto_fallback_to_ollama": True,
+                    "budget_override_allowed": False,
+                }
+            }
+
+            selection = await ai_router.select_provider(
+                language="en",
+                use_case="conversation",
+                preferred_provider="claude",
+                user_preferences=user_prefs,
+                enforce_budget=True,
+            )
+
+            # Should fallback to Ollama
+            assert selection.provider_name == "ollama"
+            assert selection.is_fallback is True
+            assert "budget_exceeded_auto_fallback" in selection.reason
+
+    @pytest.mark.asyncio
+    async def test_preferred_provider_within_budget(self):
+        """Test preferred provider used when within budget"""
+        from app.services.ai_router import ai_router
+        from app.services.budget_manager import (
+            BudgetAlert,
+            BudgetStatus,
+            budget_manager,
+        )
+
+        # Mock budget OK
+        mock_budget_status = BudgetStatus(
+            total_budget=30.0,
+            used_budget=15.0,
+            remaining_budget=15.0,
+            percentage_used=50.0,
+            alert_level=BudgetAlert.YELLOW,
+            days_remaining=15,
+            projected_monthly_cost=30.0,
+            is_over_budget=False,
+        )
+
+        with patch.object(
+            budget_manager, "get_current_budget_status", return_value=mock_budget_status
+        ):
+            # User chooses Mistral
+            selection = await ai_router.select_provider(
+                language="fr",
+                use_case="conversation",
+                preferred_provider="mistral",
+            )
+
+            assert selection.provider_name == "mistral"
+            assert selection.reason == "User preference"
+            assert selection.is_fallback is False
+            assert selection.requires_budget_override is False
+
+    @pytest.mark.asyncio
+    async def test_cost_optimization_when_no_preferred_provider(self):
+        """Test cost optimization still works when no provider specified"""
+        from app.services.ai_router import ai_router
+        from app.services.budget_manager import (
+            BudgetAlert,
+            BudgetStatus,
+            budget_manager,
+        )
+
+        with patch.object(
+            budget_manager, "get_current_budget_status", return_value=mock_budget_status
+        ):
+            # User chooses Mistral
+            selection = await ai_router.select_provider(
+                language="fr",
+                use_case="conversation",
+                preferred_provider="mistral",
+            )
+
+            assert selection.provider_name == "mistral"
+            assert selection.reason == "User preference"
+            assert selection.is_fallback is False
+            assert selection.requires_budget_override is False
+
+    @pytest.mark.asyncio
+    async def test_cost_optimization_when_no_preferred_provider(self):
+        """Test cost optimization still works when no provider specified"""
+        from app.services.ai_router import ai_router
+        from app.services.budget_manager import (
+            BudgetAlert,
+            BudgetStatus,
+            budget_manager,
+        )
+        from app.services.ollama_service import ollama_service
+
+        # Mock budget low
+        mock_budget_status = BudgetStatus(
+            total_budget=30.0,
+            used_budget=28.0,
+            remaining_budget=2.0,
+            percentage_used=93.33,
+            alert_level=BudgetAlert.RED,
+            days_remaining=5,
+            projected_monthly_cost=56.0,
+            is_over_budget=False,
+        )
+
+        with (
+            patch.object(
+                budget_manager,
+                "get_current_budget_status",
+                return_value=mock_budget_status,
+            ),
+            patch.object(ollama_service, "check_availability", return_value=True),
+            patch.object(
+                ollama_service, "get_recommended_model", return_value="llama2:7b"
+            ),
+        ):
+            # No preferred provider - should use cost optimization
+            selection = await ai_router.select_provider(
+                language="en",
+                use_case="conversation",
+                # No preferred_provider specified
+            )
+
+            # Should select provider based on cost/availability
+            assert selection is not None
+            assert selection.provider_name is not None
+            # Cost optimization may choose cheaper provider or fallback to Ollama
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-m", "integration"])

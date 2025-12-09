@@ -53,6 +53,7 @@ class FallbackReason(Enum):
     """Reasons for falling back to local models"""
 
     BUDGET_EXCEEDED = "budget_exceeded"
+    BUDGET_EXCEEDED_AUTO_FALLBACK = "budget_exceeded_auto_fallback"
     API_UNAVAILABLE = "api_unavailable"
     RATE_LIMITED = "rate_limited"
     USER_PREFERENCE = "user_preference"
