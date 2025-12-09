@@ -183,6 +183,53 @@ class User(Base):
         }
         return data
 
+    def get_ai_provider_settings(self) -> dict:
+        """
+        Get user's AI provider settings with defaults
+
+        Returns:
+            Dictionary with AI provider settings
+        """
+        # Default AI provider settings
+        default_settings = {
+            "provider_selection_mode": "balanced",
+            "default_provider": "claude",
+            "enforce_budget_limits": True,
+            "budget_override_allowed": True,
+            "alert_on_budget_threshold": 0.80,
+            "notify_on_provider_change": True,
+            "notify_on_budget_alert": True,
+            "auto_fallback_to_ollama": False,
+            "prefer_local_when_available": False,
+        }
+
+        # Get current preferences
+        preferences = self.preferences or {}
+
+        # Merge with defaults (user settings override defaults)
+        ai_settings = preferences.get("ai_provider_settings", {})
+        return {**default_settings, **ai_settings}
+
+    def set_ai_provider_settings(self, settings: dict) -> None:
+        """
+        Update user's AI provider settings
+
+        Args:
+            settings: Dictionary with AI provider settings to update
+        """
+        # Ensure preferences is a dictionary
+        if self.preferences is None:
+            self.preferences = {}
+
+        # Get current AI settings or create new
+        current_ai_settings = self.preferences.get("ai_provider_settings", {})
+
+        # Merge new settings with existing
+        current_ai_settings.update(settings)
+
+        # Update preferences
+        self.preferences["ai_provider_settings"] = current_ai_settings
+
 
 class Language(Base):
     """Language model for supported languages"""

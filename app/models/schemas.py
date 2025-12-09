@@ -5,16 +5,17 @@ This module defines Pydantic models for API request/response validation,
 data serialization, and type checking.
 """
 
-from pydantic import (
-    BaseModel,
-    field_validator,
-    Field,
-    EmailStr,
-    ConfigDict,
-)
-from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+)
 
 
 # Enums for validation
@@ -64,11 +65,190 @@ class LearningStatusEnum(str, Enum):
     MASTERED = "mastered"
 
 
+class ProviderSelectionMode(str, Enum):
+    """How the system selects AI providers for user requests"""
+
+    USER_CHOICE = "user_choice"  # Always respect user's explicit choice
+    COST_OPTIMIZED = "cost_optimized"  # Always choose cheapest available
+    QUALITY_FIRST = "quality_first"  # Prefer best quality within budget
+    BALANCED = "balanced"  # Balance cost and quality (default)
+
+
+class BudgetAlertSeverity(str, Enum):
+    """Severity levels for budget alerts"""
+
+    INFO = "info"  # Budget usage notification (< 80%)
+    WARNING = "warning"  # Budget threshold reached (80-90%)
+    CRITICAL = "critical"  # Budget near/over limit (>90%)
+
+
 # Base schemas
 class BaseSchema(BaseModel):
     """Base schema with common configuration"""
 
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+
+
+# AI Provider and Budget Schemas
+class AIProviderSettings(BaseSchema):
+    """User settings for AI provider selection and budget control"""
+
+    # Provider Selection
+    provider_selection_mode: ProviderSelectionMode = ProviderSelectionMode.BALANCED
+    default_provider: str = Field(
+        "claude", description="Default provider when none specified"
+    )
+
+    # Budget Control
+    enforce_budget_limits: bool = Field(
+        True, description="Enforce monthly budget limits"
+    )
+    budget_override_allowed: bool = Field(
+        True, description="Allow user to override budget and use premium providers"
+    )
+    alert_on_budget_threshold: float = Field(
+        0.80,
+        ge=0.0,
+        le=1.0,
+        description="Alert when budget usage reaches this threshold (0.80 = 80%)",
+    )
+
+    # Notifications
+    notify_on_provider_change: bool = Field(
+        True, description="Notify user when provider is switched automatically"
+    )
+    notify_on_budget_alert: bool = Field(
+        True, description="Notify user when budget thresholds are reached"
+    )
+
+    # Fallback Behavior
+    auto_fallback_to_ollama: bool = Field(
+        False,
+        description="Automatically use Ollama when budget exceeded (no user confirmation)",
+    )
+    prefer_local_when_available: bool = Field(
+        False, description="Prefer local Ollama over cloud providers when available"
+    )
+
+    @field_validator("alert_on_budget_threshold")
+    @classmethod
+    def validate_threshold(cls, v):
+        """Ensure threshold is reasonable"""
+        if v < 0.5:
+            raise ValueError("Budget alert threshold should be at least 50%")
+        return v
+
+
+class BudgetExceededWarning(BaseSchema):
+    """Warning when budget is exceeded but user wants to use a premium provider"""
+
+    # Budget Status
+    current_usage: float = Field(..., description="Current budget usage in USD")
+    budget_limit: float = Field(..., description="Total monthly budget limit in USD")
+    percentage_used: float = Field(..., description="Percentage of budget used")
+
+    # Provider Request
+    requested_provider: str = Field(..., description="Provider user wants to use")
+    estimated_cost: float = Field(
+        ..., description="Estimated cost of using requested provider"
+    )
+
+    # Alternative
+    alternative_provider: str = Field(
+        "ollama", description="Free alternative provider (usually Ollama)"
+    )
+    alternative_cost: float = Field(0.0, description="Cost of alternative (usually $0)")
+
+    # User Options
+    allow_override: bool = Field(
+        True, description="Whether user can override budget limit"
+    )
+    message: str = Field(..., description="User-friendly warning message")
+
+    @classmethod
+    def create(
+        cls,
+        budget_status: Any,  # BudgetStatus from budget_manager
+        requested_provider: str,
+        estimated_cost: float,
+    ):
+        """Factory method to create warning from budget status"""
+        return cls(
+            current_usage=budget_status.used_budget,
+            budget_limit=budget_status.total_budget,
+            percentage_used=budget_status.percentage_used,
+            requested_provider=requested_provider,
+            estimated_cost=estimated_cost,
+            alternative_provider="ollama",
+            alternative_cost=0.0,
+            allow_override=True,
+            message=(
+                f"Budget exceeded ({budget_status.percentage_used:.1f}% used). "
+                f"Continue with {requested_provider} (${estimated_cost:.4f}) "
+                f"or use free Ollama?"
+            ),
+        )
+
+
+class BudgetThresholdAlert(BaseSchema):
+    """Alert when budget reaches a threshold (e.g., 80%, 90%, 100%)"""
+
+    # Threshold Information
+    threshold_percentage: float = Field(
+        ..., description="The threshold that was crossed (e.g., 80.0 for 80%)"
+    )
+
+    # Budget Status
+    current_usage: float = Field(..., description="Current budget usage in USD")
+    budget_limit: float = Field(..., description="Total monthly budget limit in USD")
+    remaining_budget: float = Field(..., description="Remaining budget in USD")
+
+    # Projections
+    days_remaining: int = Field(
+        ..., description="Days remaining in current billing period"
+    )
+    projected_monthly_cost: float = Field(
+        ..., description="Projected total cost for the month based on current usage"
+    )
+
+    # Alert Details
+    message: str = Field(..., description="User-friendly alert message")
+    severity: BudgetAlertSeverity = Field(
+        ..., description="Alert severity level (info, warning, critical)"
+    )
+
+    @classmethod
+    def create(
+        cls, budget_status: Any, threshold: float, severity: BudgetAlertSeverity
+    ):
+        """Factory method to create alert from budget status"""
+        if severity == BudgetAlertSeverity.INFO:
+            message = (
+                f"Budget update: You've used {threshold:.0f}% of your monthly budget. "
+                f"${budget_status.remaining_budget:.2f} remaining."
+            )
+        elif severity == BudgetAlertSeverity.WARNING:
+            message = (
+                f"Budget warning: You've used {threshold:.0f}% of your monthly budget. "
+                f"Only ${budget_status.remaining_budget:.2f} remaining."
+            )
+        else:  # CRITICAL
+            message = (
+                f"Budget critical: You've used {threshold:.0f}% of your monthly budget. "
+                f"Only ${budget_status.remaining_budget:.2f} remaining. "
+                f"Consider using free Ollama to avoid overages."
+            )
+
+        return cls(
+            threshold_percentage=threshold,
+            current_usage=budget_status.used_budget,
+            budget_limit=budget_status.total_budget,
+            remaining_budget=budget_status.remaining_budget,
+            days_remaining=budget_status.days_remaining,
+            projected_monthly_cost=budget_status.projected_monthly_cost,
+            message=message,
+            severity=severity,
+        )
 
 
 # User Schemas
@@ -514,6 +694,10 @@ class SuccessResponse(BaseSchema):
 
 # Export commonly used schemas
 __all__ = [
+    # AI Provider and Budget schemas
+    "AIProviderSettings",
+    "BudgetExceededWarning",
+    "BudgetThresholdAlert",
     # User schemas
     "UserCreate",
     "UserUpdate",
@@ -560,4 +744,6 @@ __all__ = [
     "ConversationRoleEnum",
     "DocumentTypeEnum",
     "LearningStatusEnum",
+    "ProviderSelectionMode",
+    "BudgetAlertSeverity",
 ]

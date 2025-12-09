@@ -72,6 +72,8 @@ class ProviderSelection:
     cost_estimate: float
     is_fallback: bool
     fallback_reason: Optional[FallbackReason] = None
+    requires_budget_override: bool = False
+    budget_warning: Optional[Any] = None  # BudgetExceededWarning from schemas
 
 
 class EnhancedAIRouter:
@@ -230,8 +232,10 @@ class EnhancedAIRouter:
         self,
         language: str = "en",
         use_case: str = "conversation",
+        preferred_provider: Optional[str] = None,
         user_preferences: Optional[Dict[str, Any]] = None,
         force_local: bool = False,
+        enforce_budget: bool = True,
     ) -> ProviderSelection:
         """
         Select the best provider for the request
@@ -239,16 +243,29 @@ class EnhancedAIRouter:
         Args:
             language: Target language for the conversation
             use_case: Type of interaction (conversation, grammar, pronunciation)
+            preferred_provider: User's explicitly chosen provider (e.g., "claude")
             user_preferences: User-specific preferences
             force_local: Force use of local models only
+            enforce_budget: Whether to enforce budget limits
 
         Returns:
             Provider selection with reasoning
         """
-        # Check if user wants local-only mode
+        # Priority 1: User explicitly chose a provider
+        if preferred_provider:
+            return await self._select_preferred_provider(
+                preferred_provider=preferred_provider,
+                language=language,
+                use_case=use_case,
+                enforce_budget=enforce_budget,
+                user_preferences=user_preferences,
+            )
+
+        # Priority 2: Check if user wants local-only mode
         if self._should_use_local_only(force_local, user_preferences):
             return await self._select_local_provider(language, "user_preference")
 
+        # Priority 3: Continue with cost optimization logic
         # Check budget status
         budget_status = await self.check_budget_status()
 
@@ -277,6 +294,153 @@ class EnhancedAIRouter:
             "All cloud providers unavailable or too expensive, using local fallback"
         )
         return await self._select_local_provider(language, "api_unavailable")
+
+    async def _select_preferred_provider(
+        self,
+        preferred_provider: str,
+        language: str,
+        use_case: str,
+        enforce_budget: bool,
+        user_preferences: Optional[Dict[str, Any]],
+    ) -> ProviderSelection:
+        """
+        Select user's preferred provider, respecting budget settings
+
+        Args:
+            preferred_provider: Provider user explicitly chose
+            language: Target language
+            use_case: Type of interaction
+            enforce_budget: Whether to enforce budget limits
+            user_preferences: User preferences
+
+        Returns:
+            Provider selection
+        """
+        # Check if provider exists
+        if preferred_provider not in self.providers:
+            logger.warning(
+                f"Preferred provider '{preferred_provider}' not available, using fallback"
+            )
+            # Fall back to cost-optimized selection
+            return await self.select_provider(
+                language=language,
+                use_case=use_case,
+                user_preferences=user_preferences,
+                enforce_budget=enforce_budget,
+            )
+
+        # If budget enforcement disabled, use preferred provider regardless of cost
+        if not enforce_budget:
+            logger.info(
+                f"Budget enforcement disabled, using preferred provider: {preferred_provider}"
+            )
+            return await self._create_provider_selection(
+                provider_name=preferred_provider,
+                language=language,
+                use_case=use_case,
+                reason="User preference (budget enforcement disabled)",
+            )
+
+        # Check budget status
+        budget_status = await self.check_budget_status()
+
+        # Estimate cost for preferred provider
+        cost_estimate = await self._estimate_request_cost(
+            preferred_provider, language, use_case
+        )
+
+        # Check if we can afford it
+        if budget_status.remaining_budget >= cost_estimate:
+            # Can afford, use preferred provider
+            logger.info(
+                f"Using user's preferred provider: {preferred_provider} (affordable)"
+            )
+            return await self._create_provider_selection(
+                provider_name=preferred_provider,
+                language=language,
+                use_case=use_case,
+                reason="User preference",
+            )
+
+        # Budget exceeded - check user's override settings
+        from app.services.budget_manager import budget_manager
+
+        can_override = budget_manager.can_override_budget(user_preferences)
+
+        if can_override:
+            # User allowed to override - create selection with warning flag
+            logger.info(
+                f"Budget exceeded but override allowed for preferred provider: {preferred_provider}"
+            )
+            selection = await self._create_provider_selection(
+                provider_name=preferred_provider,
+                language=language,
+                use_case=use_case,
+                reason="User preference (budget exceeded, override allowed)",
+            )
+
+            # Add budget warning metadata
+            from app.models.schemas import BudgetExceededWarning
+
+            selection.requires_budget_override = True
+            selection.budget_warning = BudgetExceededWarning.create(
+                budget_status=budget_status,
+                requested_provider=preferred_provider,
+                estimated_cost=cost_estimate,
+            )
+            return selection
+
+        # Override not allowed - check for auto-fallback
+        ai_settings = (
+            user_preferences.get("ai_provider_settings", {}) if user_preferences else {}
+        )
+
+        if ai_settings.get("auto_fallback_to_ollama", False):
+            logger.info(
+                f"Budget exceeded, auto-falling back to Ollama per user settings"
+            )
+            return await self._select_local_provider(
+                language, "budget_exceeded_auto_fallback"
+            )
+
+        # No override, no auto-fallback - raise budget exceeded error
+        from app.models.schemas import BudgetExceededWarning
+
+        warning = BudgetExceededWarning.create(
+            budget_status=budget_status,
+            requested_provider=preferred_provider,
+            estimated_cost=cost_estimate,
+        )
+
+        # Create a special exception that includes the warning
+        error_msg = (
+            f"Budget exceeded: {warning.message}. "
+            f"Enable budget override or use free Ollama instead."
+        )
+        raise Exception(error_msg)
+
+    async def _create_provider_selection(
+        self,
+        provider_name: str,
+        language: str,
+        use_case: str,
+        reason: str,
+        confidence: float = 0.9,
+    ) -> ProviderSelection:
+        """Helper to create a provider selection"""
+        cost_estimate = await self._estimate_request_cost(
+            provider_name, language, use_case
+        )
+
+        return ProviderSelection(
+            provider_name=provider_name,
+            service=self.providers[provider_name],
+            model=self._get_model_for_provider(provider_name, language),
+            reason=reason,
+            confidence=confidence,
+            cost_estimate=cost_estimate,
+            is_fallback=False,
+        )
 
     async def _select_local_provider(
         self, language: str, reason: str

@@ -61,12 +61,45 @@ def _generate_conversation_ids(user_id: str) -> tuple[str, str]:
 
 
 async def _get_ai_response(
-    request: ChatRequest, language_code: str, user_id: str
+    request: ChatRequest,
+    language_code: str,
+    preferred_provider: str,
+    user_id: str,
+    db: Session,
 ) -> tuple[str, float]:
     """Get AI response from selected provider"""
+    from app.models.database import User
+
+    # Get user settings from database
+    user = db.query(User).filter(User.user_id == user_id).first()
+    user_preferences = user.preferences if user else {}
+
+    # Get AI provider settings
+    ai_settings = user.get_ai_provider_settings() if user else {}
+
+    # Determine budget enforcement mode
+    enforce_budget = ai_settings.get("enforce_budget_limits", True)
+
+    # Select provider with user's preferences
     provider_selection = await ai_router.select_provider(
-        language=language_code, use_case="conversation"
+        language=language_code,
+        use_case="conversation",
+        preferred_provider=preferred_provider,  # ✅ NOW PASSED!
+        user_preferences=user_preferences,
+        enforce_budget=enforce_budget,
     )
+
+    # Check if budget override is required
+    if (
+        hasattr(provider_selection, "requires_budget_override")
+        and provider_selection.requires_budget_override
+    ):
+        # Budget exceeded but user wants premium provider
+        # Return warning message to user
+        warning = provider_selection.budget_warning
+        raise Exception(
+            f"Budget exceeded. {warning.message if warning else 'Please use free Ollama or enable budget override.'}"
+        )
 
     if provider_selection.service and hasattr(
         provider_selection.service, "generate_response"
@@ -135,13 +168,15 @@ async def chat_with_ai(
     db: Session = Depends(get_primary_db_session),
 ):
     """Send message to AI and get response"""
-    language_code, ai_provider = _parse_language_and_provider(request.language)
+    # Parse user's preferred provider from language string (e.g., "en-claude" -> "en", "claude")
+    language_code, preferred_provider = _parse_language_and_provider(request.language)
     conversation_id, message_id = _generate_conversation_ids(current_user.user_id)
 
     try:
         try:
+            # Pass preferred provider to router ✅
             response_text, cost_estimate = await _get_ai_response(
-                request, language_code, current_user.user_id
+                request, language_code, preferred_provider, current_user.user_id, db
             )
         except Exception as ai_error:
             print(f"AI Service Error: {ai_error}")
@@ -161,7 +196,7 @@ async def chat_with_ai(
             conversation_id=conversation_id,
             audio_url=audio_url,
             language=language_code,
-            ai_provider=ai_provider,
+            ai_provider=preferred_provider,
             estimated_cost=cost_estimate,
         )
 
@@ -178,7 +213,7 @@ async def chat_with_ai(
             conversation_id=conversation_id,
             audio_url=None,
             language=language_code,
-            ai_provider=ai_provider,
+            ai_provider=preferred_provider,
             estimated_cost=0.01,
         )
 
