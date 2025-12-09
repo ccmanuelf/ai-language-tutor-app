@@ -362,6 +362,297 @@ class TestConversationEndpointE2E:
                 app.dependency_overrides.clear()
 
 
+class TestOllamaE2E:
+    """E2E tests for Ollama local service with real instance
+
+    These tests validate Ollama works as a fallback when:
+    - Budget limits are exceeded
+    - Cloud providers unavailable
+    - User in offline/privacy mode
+
+    Prerequisites:
+    - Ollama installed and running (ollama serve)
+    - llama2:7b model installed (ollama pull llama2:7b)
+    """
+
+    @pytest.mark.asyncio
+    async def test_ollama_service_availability(self):
+        """Test Ollama service is available and has models"""
+        from app.services.ollama_service import OllamaService
+
+        # Create fresh service instance for this test
+        service = OllamaService()
+
+        # Check availability
+        is_available = await service.check_availability()
+        if not is_available:
+            await service.close()
+            pytest.skip("Ollama service not running - Install and run 'ollama serve'")
+
+        # Check models
+        models = await service.list_models()
+        if not models:
+            await service.close()
+            pytest.skip("No Ollama models installed - Run 'ollama pull llama2:7b'")
+
+        model_names = [m.get("name") for m in models]
+        if "llama2:7b" not in model_names:
+            await service.close()
+            pytest.skip("llama2:7b model not installed - Run 'ollama pull llama2:7b'")
+
+        # Check health
+        health = await service.get_health_status()
+        assert health["status"] == "healthy"
+        assert health["service_name"] == "ollama"
+
+        print(f"\n✅ Ollama E2E Availability Test Passed")
+        print(f"   Models installed: {len(models)}")
+        print(f"   Server URL: {health['server_url']}")
+
+        await service.close()
+
+    @pytest.mark.asyncio
+    async def test_ollama_real_conversation_english(self):
+        """Test real Ollama conversation in English"""
+        from app.services.ollama_service import OllamaService
+
+        service = OllamaService()
+
+        # Skip if not available
+        if not await service.check_availability():
+            await service.close()
+            pytest.skip("Ollama service not running")
+
+        response = await service.generate_response(
+            messages=[{"role": "user", "content": "Say 'Hello' in one word"}],
+            language="en",
+        )
+
+        # Verify response structure
+        assert response is not None
+        assert response.content is not None
+        assert len(response.content) > 0
+        assert response.provider == "ollama"
+        assert response.cost == 0.0  # Local is free
+        assert response.metadata.get("local_processing") is True
+
+        print(f"\n✅ Ollama English Conversation Test Passed")
+        print(f"   Response: {response.content[:100]}...")
+        print(f"   Model: {response.model}")
+        print(f"   Processing time: {response.processing_time:.2f}s")
+
+        await service.close()
+
+    @pytest.mark.asyncio
+    async def test_ollama_multi_language_support(self):
+        """Test Ollama handles multiple languages"""
+        from app.services.ollama_service import OllamaService
+
+        service = OllamaService()
+
+        if not await service.check_availability():
+            await service.close()
+            pytest.skip("Ollama service not running")
+
+        test_cases = [
+            ("en", "Say 'Hello' in one word"),
+            ("fr", "Dis 'Bonjour' en un mot"),
+            ("es", "Di 'Hola' en una palabra"),
+        ]
+
+        results = []
+
+        for language, message in test_cases:
+            response = await service.generate_response(
+                messages=[{"role": "user", "content": message}], language=language
+            )
+
+            assert response is not None
+            assert len(response.content) > 0
+            assert response.language == language
+
+            results.append(
+                {
+                    "language": language,
+                    "model": response.model,
+                    "response_length": len(response.content),
+                }
+            )
+
+        print(f"\n✅ Ollama Multi-Language Test Passed")
+        for result in results:
+            print(
+                f"   {result['language']}: {result['model']} - {result['response_length']} chars"
+            )
+
+        await service.close()
+
+    @pytest.mark.asyncio
+    async def test_ollama_model_selection(self):
+        """Test Ollama selects appropriate models for languages"""
+        from app.services.ollama_service import OllamaService
+
+        service = OllamaService()
+
+        if not await service.check_availability():
+            await service.close()
+            pytest.skip("Ollama service not running")
+
+        # Test language-based selection
+        en_model = service.get_recommended_model("en", "conversation")
+        assert en_model in ["neural-chat:7b", "llama2:7b"]
+
+        fr_model = service.get_recommended_model("fr", "conversation")
+        assert fr_model in ["mistral:7b", "llama2:7b"]
+
+        # Test use-case selection
+        tech_model = service.get_recommended_model("en", "technical")
+        assert tech_model == "codellama:7b"
+
+        print(f"\n✅ Ollama Model Selection Test Passed")
+        print(f"   English → {en_model}")
+        print(f"   French → {fr_model}")
+        print(f"   Technical → {tech_model}")
+
+        await service.close()
+
+    @pytest.mark.asyncio
+    async def test_ollama_budget_exceeded_fallback(self):
+        """Test Ollama is used as fallback when budget exceeded"""
+        from unittest.mock import Mock, patch
+
+        from app.services.ai_router import EnhancedAIRouter
+        from app.services.budget_manager import BudgetAlert
+
+        # Mock budget as exceeded
+        class MockBudgetStatus:
+            total_budget = 30.0
+            used_budget = 35.0
+            remaining_budget = -5.0
+            percentage_used = 116.67
+            alert_level = BudgetAlert.RED
+            is_over_budget = True
+            days_remaining = 10
+            projected_monthly_cost = 50.0
+
+        mock_budget = Mock()
+        mock_budget.get_current_budget_status.return_value = MockBudgetStatus()
+
+        # User preferences with auto-fallback enabled
+        user_preferences = {
+            "ai_provider_settings": {
+                "enforce_budget_limits": True,
+                "auto_fallback_to_ollama": True,
+            }
+        }
+
+        with patch("app.services.ai_router.budget_manager", mock_budget):
+            router = EnhancedAIRouter()
+
+            selection = await router.select_provider(
+                language="en",
+                use_case="conversation",
+                preferred_provider="claude",
+                user_preferences=user_preferences,
+                enforce_budget=True,
+            )
+
+            # Should fallback to Ollama
+            assert selection.provider_name == "ollama"
+            assert selection.is_fallback is True
+            # Router uses budget_exceeded or budget_exceeded_auto_fallback
+            assert selection.fallback_reason.value in [
+                "budget_exceeded",
+                "budget_exceeded_auto_fallback",
+            ]
+
+            # Verify can generate response
+            response = await selection.service.generate_response(
+                messages=[{"role": "user", "content": "Hello"}], language="en"
+            )
+
+            assert response.content is not None
+            assert response.cost == 0.0
+
+            print(f"\n✅ Ollama Budget Fallback Test Passed")
+            print(f"   Fallback reason: {selection.fallback_reason.value}")
+            print(f"   Response generated: {len(response.content)} chars")
+
+    @pytest.mark.asyncio
+    async def test_ollama_response_quality(self):
+        """Test Ollama responses meet quality standards"""
+        import time
+
+        from app.services.ollama_service import OllamaService
+
+        service = OllamaService()
+
+        if not await service.check_availability():
+            await service.close()
+            pytest.skip("Ollama service not running")
+
+        test_prompts = [
+            "What is the capital of France?",
+            "Translate 'hello' to Spanish",
+            "Correct this: 'I goed to store'",
+        ]
+
+        for prompt in test_prompts:
+            start = time.time()
+
+            response = await service.generate_response(
+                messages=[{"role": "user", "content": prompt}], language="en"
+            )
+
+            elapsed = time.time() - start
+
+            # Quality checks
+            assert len(response.content) > 10, "Response too short"
+            assert "error" not in response.content.lower()[:50], (
+                "Response contains error"
+            )
+            assert elapsed < 30, f"Response too slow: {elapsed}s"
+
+            # Basic coherence check (contains alphabetic characters)
+            assert any(c.isalpha() for c in response.content), "Response not coherent"
+
+        print(f"\n✅ Ollama Quality Validation Test Passed")
+        print(f"   All {len(test_prompts)} prompts generated quality responses")
+
+        await service.close()
+
+    @pytest.mark.asyncio
+    async def test_ollama_privacy_mode(self):
+        """Test Ollama operates in privacy mode (local processing)"""
+        from app.services.ollama_service import OllamaService
+
+        service = OllamaService()
+
+        if not await service.check_availability():
+            await service.close()
+            pytest.skip("Ollama service not running")
+
+        response = await service.generate_response(
+            messages=[{"role": "user", "content": "This is sensitive data: test123"}],
+            language="en",
+        )
+
+        # Verify privacy metadata
+        assert response.metadata.get("local_processing") is True
+        assert response.metadata.get("privacy_mode") is True
+        assert response.cost == 0.0  # No external API calls
+
+        # Verify response was generated (privacy didn't block it)
+        assert len(response.content) > 0
+
+        print(f"\n✅ Ollama Privacy Mode Test Passed")
+        print(f"   Local processing: {response.metadata['local_processing']}")
+        print(f"   Privacy mode: {response.metadata['privacy_mode']}")
+        print(f"   No external API calls made")
+
+        await service.close()
+
+
 if __name__ == "__main__":
     print("\n" + "=" * 80)
     print("⚠️  E2E TESTS - USING REAL API KEYS AND MAKING REAL API CALLS!")
