@@ -130,6 +130,20 @@ class AIProviderSettings(BaseSchema):
         False, description="Prefer local Ollama over cloud providers when available"
     )
 
+    # Ollama Model Preferences (Session 98)
+    preferred_ollama_model: Optional[str] = Field(
+        None,
+        description="Preferred Ollama model for all conversations (e.g., 'llama2:13b', 'mistral:7b')",
+    )
+    ollama_model_by_language: Optional[Dict[str, str]] = Field(
+        default_factory=dict,
+        description="Language-specific Ollama models (e.g., {'en': 'neural-chat:7b', 'fr': 'mistral:7b'})",
+    )
+    ollama_model_by_use_case: Optional[Dict[str, str]] = Field(
+        default_factory=dict,
+        description="Use-case specific Ollama models (e.g., {'technical': 'codellama:7b', 'grammar': 'llama2:13b'})",
+    )
+
     @field_validator("alert_on_budget_threshold")
     @classmethod
     def validate_threshold(cls, v):

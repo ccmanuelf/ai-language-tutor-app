@@ -264,7 +264,9 @@ class EnhancedAIRouter:
 
         # Priority 2: Check if user wants local-only mode
         if self._should_use_local_only(force_local, user_preferences):
-            return await self._select_local_provider(language, "user_preference")
+            return await self._select_local_provider(
+                language, "user_preference", use_case, user_preferences
+            )
 
         # Priority 3: Continue with cost optimization logic
         # Check budget status
@@ -275,7 +277,9 @@ class EnhancedAIRouter:
             logger.info(
                 f"Budget {budget_status.alert_level.value}, falling back to local models"
             )
-            return await self._select_local_provider(language, "budget_exceeded")
+            return await self._select_local_provider(
+                language, "budget_exceeded", use_case, user_preferences
+            )
 
         # Get cloud providers and sort by cost efficiency
         cloud_providers = self._get_cloud_providers(language)
@@ -294,7 +298,9 @@ class EnhancedAIRouter:
         logger.info(
             "All cloud providers unavailable or too expensive, using local fallback"
         )
-        return await self._select_local_provider(language, "api_unavailable")
+        return await self._select_local_provider(
+            language, "api_unavailable", use_case, user_preferences
+        )
 
     async def _select_preferred_provider(
         self,
@@ -401,7 +407,7 @@ class EnhancedAIRouter:
                 f"Budget exceeded, auto-falling back to Ollama per user settings"
             )
             return await self._select_local_provider(
-                language, "budget_exceeded_auto_fallback"
+                language, "budget_exceeded_auto_fallback", use_case, user_preferences
             )
 
         # No override, no auto-fallback - raise budget exceeded error
@@ -444,9 +450,30 @@ class EnhancedAIRouter:
         )
 
     async def _select_local_provider(
-        self, language: str, reason: str
+        self,
+        language: str,
+        reason: str,
+        use_case: str = "conversation",
+        user_preferences: Optional[Dict[str, Any]] = None,
     ) -> ProviderSelection:
-        """Select local Ollama provider as fallback"""
+        """
+        Select local Ollama provider as fallback with user's preferred model
+
+        Priority order for model selection:
+        1. Use-case specific model (e.g., technical → codellama)
+        2. Language-specific model (e.g., en → neural-chat:7b)
+        3. General preferred model
+        4. Automatic selection (fallback)
+
+        Args:
+            language: Target language code
+            reason: Reason for fallback
+            use_case: Use case type (conversation, technical, grammar, etc.)
+            user_preferences: User preferences dictionary containing ai_provider_settings
+
+        Returns:
+            ProviderSelection with user's preferred Ollama model
+        """
 
         # Check if Ollama is available
         if "ollama" not in self.providers:
@@ -460,13 +487,45 @@ class EnhancedAIRouter:
                 "Please start Ollama or check your internet connection."
             )
 
-        # Get recommended model for language
-        model = ollama_service.get_recommended_model(language)
+        # Extract user's preferred Ollama model (Session 98)
+        preferred_model = None
+        if user_preferences:
+            ai_settings = user_preferences.get("ai_provider_settings", {})
+
+            # Priority 1: Use-case specific model (e.g., technical → codellama:7b)
+            model_by_use_case = ai_settings.get("ollama_model_by_use_case", {})
+            if use_case in model_by_use_case:
+                preferred_model = model_by_use_case[use_case]
+                logger.info(
+                    f"Using use-case specific Ollama model: {preferred_model} for {use_case}"
+                )
+
+            # Priority 2: Language-specific model (e.g., en → neural-chat:7b)
+            if not preferred_model:
+                model_by_lang = ai_settings.get("ollama_model_by_language", {})
+                if language in model_by_lang:
+                    preferred_model = model_by_lang[language]
+                    logger.info(
+                        f"Using language-specific Ollama model: {preferred_model} for {language}"
+                    )
+
+            # Priority 3: General preferred model
+            if not preferred_model:
+                preferred_model = ai_settings.get("preferred_ollama_model")
+                if preferred_model:
+                    logger.info(
+                        f"Using general preferred Ollama model: {preferred_model}"
+                    )
+
+        # Priority 4: Fallback to automatic selection (existing logic)
+        if not preferred_model:
+            preferred_model = ollama_service.get_recommended_model(language, use_case)
+            logger.info(f"Using auto-selected Ollama model: {preferred_model}")
 
         return ProviderSelection(
             provider_name="ollama",
             service=ollama_service,
-            model=model,
+            model=preferred_model,  # ✅ Now uses user preference!
             reason=f"Local fallback - {reason}",
             confidence=0.7,  # Lower confidence for fallback
             cost_estimate=0.0,  # Local models are free

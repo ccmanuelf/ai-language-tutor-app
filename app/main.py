@@ -3,24 +3,27 @@ FastAPI Backend Server Entry Point
 AI Language Tutor App - Personal Family Educational Tool
 """
 
+from pathlib import Path
+
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import uvicorn
-from pathlib import Path
+
+from app.api.ai_models import router as ai_models_router
+from app.api.auth import router as auth_router
+from app.api.content import router as content_router
+from app.api.conversations import router as conversations_router
+from app.api.feature_toggles import router as feature_toggles_router
+from app.api.ollama import router as ollama_router
+from app.api.realtime_analysis import router as realtime_router
+from app.api.scenario_management import router as scenario_management_router
+from app.api.scenarios import router as scenarios_router
+from app.api.tutor_modes import router as tutor_modes_router
+from app.api.visual_learning import router as visual_learning_router
 
 # Import core configuration
 from app.core.config import get_settings
-from app.api.auth import router as auth_router
-from app.api.conversations import router as conversations_router
-from app.api.content import router as content_router
-from app.api.scenarios import router as scenarios_router
-from app.api.realtime_analysis import router as realtime_router
-from app.api.tutor_modes import router as tutor_modes_router
-from app.api.feature_toggles import router as feature_toggles_router
-from app.api.ai_models import router as ai_models_router
-from app.api.scenario_management import router as scenario_management_router
-from app.api.visual_learning import router as visual_learning_router
 
 
 def create_app() -> FastAPI:
@@ -59,6 +62,7 @@ def create_app() -> FastAPI:
     app.include_router(ai_models_router, tags=["ai-models"])
     app.include_router(scenario_management_router, tags=["scenario-management"])
     app.include_router(visual_learning_router, tags=["visual-learning"])
+    app.include_router(ollama_router, prefix="/api/v1/ollama", tags=["ollama"])
 
     # Health check endpoint
     @app.get("/health")
