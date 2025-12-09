@@ -39,33 +39,419 @@
 
 ## SESSION 98 OBJECTIVES
 
-### PRIORITY 3: Qwen/DeepSeek Code Cleanup (MEDIUM) 🟡
+### 🚨 CRITICAL: Ollama Model Selection Feature (HIGH) 🔴
 
-**Problem:** Incomplete Qwen → DeepSeek migration left dead code, confusing aliases, inconsistent naming.
+**Problem:** Users have NO control over which Ollama model to use when falling back to local processing. System uses hardcoded model selection, ignoring user preferences entirely. **This makes Ollama potentially useless.**
 
-**Goal:** Clean up all Qwen references, remove dead code, ensure consistency.
+**Discovery:** Session 97 - User identified this critical gap during validation
 
-**Files to Modify:**
-- `app/services/ai_router.py` - Remove "qwen" alias
-- `app/services/qwen_service.py` - DELETE or move to `archive/`
-- `tests/` - Replace any remaining "qwen" references with "deepseek"
-- `README.md` - Update to clarify DeepSeek is Chinese provider
+**Goal:** Implement complete user control over Ollama model selection in 3 phases.
 
-**Implementation Tasks:**
-1. Search for "qwen" in codebase (case-insensitive)
-2. Remove line: `ai_router.register_provider("qwen", deepseek_service)`
-3. Delete `app/services/qwen_service.py` or move to `archive/legacy/`
-4. Update all test references from "qwen" to "deepseek"
-5. Update documentation and comments
-6. Update API documentation (if any)
-7. Run full test suite to ensure no breakage
+**GitHub Issue:** #1 - https://github.com/ccmanuelf/ai-language-tutor-app/issues/1
+
+**Documentation:** `SESSION_97_CRITICAL_GAP_DISCOVERED.md` (complete analysis)
+
+---
+
+### 📋 IMPLEMENTATION PHASES
+
+#### **PHASE 1: Data Models** (~30 minutes)
+
+**File:** `app/models/schemas.py`
+
+**Task:** Add Ollama model preference fields to `AIProviderSettings`
+
+**Changes Required:**
+```python
+class AIProviderSettings(BaseSchema):
+    """User settings for AI provider selection and budget control"""
+    
+    # Existing fields (keep these)
+    provider_selection_mode: ProviderSelectionMode = ProviderSelectionMode.BALANCED
+    default_provider: str = Field("claude", description="Default provider")
+    enforce_budget_limits: bool = Field(True)
+    budget_override_allowed: bool = Field(True)
+    # ... other existing fields ...
+    
+    # NEW: Ollama Model Preferences
+    preferred_ollama_model: Optional[str] = Field(
+        None, 
+        description="Preferred Ollama model for all conversations (e.g., 'llama2:13b', 'mistral:7b')"
+    )
+    ollama_model_by_language: Optional[Dict[str, str]] = Field(
+        default_factory=dict,
+        description="Language-specific Ollama models (e.g., {'en': 'neural-chat:7b', 'fr': 'mistral:7b'})"
+    )
+    ollama_model_by_use_case: Optional[Dict[str, str]] = Field(
+        default_factory=dict,
+        description="Use-case specific Ollama models (e.g., {'technical': 'codellama:7b', 'grammar': 'llama2:13b'})"
+    )
+```
+
+**Validation:**
+- Pydantic v2 model should validate correctly
+- Fields are optional (defaults to automatic selection)
+- Dictionaries default to empty dict
+
+**Tests to Create:**
+1. `test_ai_provider_settings_with_ollama_preferences()` - Valid model preferences
+2. `test_ai_provider_settings_optional_ollama_fields()` - Fields are optional
+3. `test_ai_provider_settings_language_specific_models()` - Language dict validation
 
 **Success Criteria:**
-- ✅ No "qwen" references in active code (except comments explaining migration)
-- ✅ qwen_service.py deleted or clearly archived
-- ✅ All tests pass after cleanup
-- ✅ Documentation accurately reflects DeepSeek as Chinese provider
-- ✅ No confusion for future developers
+- ✅ Schema validates with new fields
+- ✅ Backward compatible (existing settings still work)
+- ✅ Unit tests pass
+
+---
+
+#### **PHASE 2: Router Logic** (~1 hour)
+
+**Files:** 
+- `app/services/ai_router.py` - Update `_select_local_provider()`
+- `app/services/ollama_service.py` - Verify model parameter usage
+
+**Task 1: Update Router Signature**
+
+**Current:**
+```python
+async def _select_local_provider(
+    self, 
+    language: str, 
+    reason: str
+) -> ProviderSelection:
+```
+
+**Updated:**
+```python
+async def _select_local_provider(
+    self, 
+    language: str, 
+    reason: str,
+    use_case: str = "conversation",
+    user_preferences: Optional[Dict[str, Any]] = None
+) -> ProviderSelection:
+```
+
+**Task 2: Add Model Selection Logic**
+
+**Location:** `app/services/ai_router.py` in `_select_local_provider()`
+
+**Logic to Implement:**
+```python
+async def _select_local_provider(
+    self, 
+    language: str, 
+    reason: str,
+    use_case: str = "conversation",
+    user_preferences: Optional[Dict[str, Any]] = None
+) -> ProviderSelection:
+    """Select local Ollama provider with user's preferred model"""
+    
+    if "ollama" not in self.providers:
+        self.register_provider("ollama", ollama_service)
+    
+    ollama_available = await ollama_service.check_availability()
+    if not ollama_available:
+        raise Exception("Ollama not available")
+    
+    # NEW: Extract user's preferred model
+    preferred_model = None
+    if user_preferences:
+        ai_settings = user_preferences.get("ai_provider_settings", {})
+        
+        # Priority 1: Use-case specific model (e.g., technical → codellama)
+        model_by_use_case = ai_settings.get("ollama_model_by_use_case", {})
+        if use_case in model_by_use_case:
+            preferred_model = model_by_use_case[use_case]
+            logger.info(f"Using use-case specific model: {preferred_model} for {use_case}")
+        
+        # Priority 2: Language-specific model (e.g., en → neural-chat:7b)
+        if not preferred_model:
+            model_by_lang = ai_settings.get("ollama_model_by_language", {})
+            if language in model_by_lang:
+                preferred_model = model_by_lang[language]
+                logger.info(f"Using language-specific model: {preferred_model} for {language}")
+        
+        # Priority 3: General preferred model
+        if not preferred_model:
+            preferred_model = ai_settings.get("preferred_ollama_model")
+            if preferred_model:
+                logger.info(f"Using general preferred model: {preferred_model}")
+    
+    # Priority 4: Fallback to automatic selection (existing logic)
+    if not preferred_model:
+        preferred_model = ollama_service.get_recommended_model(language, use_case)
+        logger.info(f"Using auto-selected model: {preferred_model}")
+    
+    return ProviderSelection(
+        provider_name="ollama",
+        service=ollama_service,
+        model=preferred_model,  # ✅ Now uses user preference!
+        reason=f"Local fallback - {reason}",
+        confidence=0.7,
+        cost_estimate=0.0,
+        is_fallback=True,
+        fallback_reason=FallbackReason(reason),
+    )
+```
+
+**Task 3: Update All Calls to `_select_local_provider()`**
+
+**Locations to update:**
+1. `_select_preferred_provider()` - Pass user_preferences
+2. Budget exceeded fallback - Pass user_preferences and use_case
+3. Privacy mode fallback - Pass user_preferences
+4. Any other fallback scenarios
+
+**Task 4: Pass Model to generate_response()**
+
+**Verify:** `ollama_service.generate_response()` already accepts `model` parameter
+**Ensure:** Router passes selected model to service
+
+**Tests to Create:**
+1. `test_router_uses_general_preferred_ollama_model()` - General preference
+2. `test_router_uses_language_specific_ollama_model()` - Language preference
+3. `test_router_uses_use_case_specific_ollama_model()` - Use case preference
+4. `test_router_preference_priority_order()` - use_case > language > general > auto
+5. `test_router_fallback_to_auto_selection()` - No preferences set
+6. `test_budget_fallback_respects_ollama_preference()` - Budget scenario
+
+**Success Criteria:**
+- ✅ Router extracts user preferences correctly
+- ✅ Priority order respected (use_case > language > general > auto)
+- ✅ Falls back gracefully if no preference
+- ✅ All router tests pass
+- ✅ Integration tests validate preference flow
+
+---
+
+#### **PHASE 3: API & Tests** (~1.5 hours)
+
+**Task 1: Create Ollama Models API Endpoint**
+
+**File:** `app/api/ollama.py` (NEW FILE)
+
+**Endpoint to Create:**
+```python
+from fastapi import APIRouter, Depends
+from app.core.security import require_auth
+from app.services.ollama_service import ollama_service
+from typing import List, Dict, Any
+
+router = APIRouter()
+
+@router.get("/models", response_model=List[Dict[str, Any]])
+async def list_ollama_models(current_user = Depends(require_auth)):
+    """
+    List all available Ollama models installed on the system.
+    
+    Returns:
+        List of models with name, size, and capabilities
+    """
+    is_available = await ollama_service.check_availability()
+    
+    if not is_available:
+        return {
+            "available": False,
+            "models": [],
+            "message": "Ollama service not running. Please start Ollama."
+        }
+    
+    models = await ollama_service.list_models()
+    
+    # Enhance with recommendations
+    recommended_models = ollama_service._get_available_models()
+    
+    return {
+        "available": True,
+        "models": models,
+        "recommended": recommended_models,
+        "message": f"{len(models)} Ollama models available"
+    }
+
+@router.get("/models/recommended")
+async def get_recommended_models(
+    language: str = "en",
+    use_case: str = "conversation",
+    current_user = Depends(require_auth)
+):
+    """
+    Get recommended Ollama model for specific language and use case.
+    
+    Args:
+        language: Language code (en, fr, es, etc.)
+        use_case: Use case (conversation, technical, grammar, etc.)
+    
+    Returns:
+        Recommended model name
+    """
+    recommended = ollama_service.get_recommended_model(language, use_case)
+    
+    return {
+        "language": language,
+        "use_case": use_case,
+        "recommended_model": recommended
+    }
+```
+
+**Task 2: Register Router in Main App**
+
+**File:** `app/main.py`
+
+**Add:**
+```python
+from app.api import ollama
+
+app.include_router(
+    ollama.router,
+    prefix="/api/v1/ollama",
+    tags=["ollama"]
+)
+```
+
+**Task 3: Create Comprehensive Tests**
+
+**File:** `tests/test_ollama_model_selection.py` (NEW FILE)
+
+**Test Categories:**
+
+**A. Unit Tests (Data Models)**
+1. `test_ai_provider_settings_with_preferred_model()`
+2. `test_ai_provider_settings_with_language_models()`
+3. `test_ai_provider_settings_with_use_case_models()`
+4. `test_ai_provider_settings_all_ollama_fields_optional()`
+
+**B. Unit Tests (Router Logic)**
+5. `test_extract_general_preferred_model()`
+6. `test_extract_language_specific_model()`
+7. `test_extract_use_case_specific_model()`
+8. `test_preference_priority_use_case_over_language()`
+9. `test_preference_priority_language_over_general()`
+10. `test_fallback_to_auto_when_no_preference()`
+
+**C. Integration Tests**
+11. `test_budget_fallback_uses_preferred_model()`
+12. `test_privacy_mode_uses_language_model()`
+13. `test_technical_use_case_uses_codellama()`
+14. `test_router_passes_model_to_service()`
+
+**D. API Tests**
+15. `test_list_ollama_models_endpoint()`
+16. `test_list_models_when_ollama_unavailable()`
+17. `test_get_recommended_model_endpoint()`
+
+**E. E2E Tests** (Add to existing TestOllamaE2E)
+18. `test_user_selects_specific_model_e2e()`
+19. `test_language_specific_model_selection_e2e()`
+20. `test_use_case_model_selection_e2e()`
+
+**Task 4: Update Existing E2E Tests**
+
+**File:** `tests/e2e/test_ai_e2e.py`
+
+**Add to `TestOllamaE2E` class:**
+- Test with user-specified model
+- Test preference priority order
+- Test fallback when preferred model unavailable
+
+**Task 5: Update Documentation**
+
+**Files to Update:**
+1. `tests/e2e/README.md` - Add model selection section
+2. API documentation - Document new endpoints
+3. User guide - Explain how to select models
+
+**Success Criteria:**
+- ✅ API endpoint lists available models
+- ✅ API endpoint recommends models
+- ✅ 20+ tests created and passing
+- ✅ E2E tests validate user control
+- ✅ Documentation updated
+- ✅ Zero regressions
+
+---
+
+## 🎯 SESSION 98 SUCCESS CRITERIA
+
+**Phase 1 Complete When:**
+- ✅ `AIProviderSettings` has 3 new optional fields
+- ✅ Schema validates correctly
+- ✅ Unit tests pass
+
+**Phase 2 Complete When:**
+- ✅ Router accepts user_preferences parameter
+- ✅ Model selection logic implements 4-level priority
+- ✅ All calls to `_select_local_provider()` updated
+- ✅ Integration tests pass
+
+**Phase 3 Complete When:**
+- ✅ `/api/v1/ollama/models` endpoint works
+- ✅ `/api/v1/ollama/models/recommended` endpoint works
+- ✅ 20+ tests created and passing
+- ✅ E2E tests validate end-to-end user control
+- ✅ Documentation updated
+
+**Overall Success:**
+- ✅ User can specify preferred Ollama model
+- ✅ User can set language-specific models
+- ✅ User can set use-case specific models
+- ✅ Router respects all preferences with correct priority
+- ✅ API provides model discovery
+- ✅ Comprehensive test coverage
+- ✅ Zero regressions in existing functionality
+
+---
+
+## 🔄 FUTURE SESSIONS PLAN
+
+### Session 99: Qwen/DeepSeek Code Cleanup (Priority 3)
+- Remove "qwen" alias from router
+- Delete or archive `qwen_service.py`
+- Update all test references
+- Update documentation
+
+### Session 100+: TRUE 100% Coverage & Functionality
+**Goal:** Ensure TRUE 100% coverage AND TRUE 100% functionality validation
+
+**Approach:**
+1. Module-by-module validation
+2. Real functionality tests (not just mocks)
+3. E2E tests for all critical paths
+4. Performance testing
+5. Security validation
+
+**Modules to Cover:**
+- User authentication & authorization
+- Conversation management
+- Message handling
+- Budget tracking
+- All AI providers
+- TTS/STT services
+- Database operations
+- API endpoints
+
+**Philosophy (from Session 95-96 lessons):**
+> "100% coverage ≠ 100% functionality. Must validate real behavior, not just executed lines."
+
+---
+
+## 📊 PROJECT PROGRESS
+
+### Completed Priorities
+- ✅ **Priority 1** (Session 96): Budget Manager User Control
+- ✅ **Priority 2** (Session 97): Ollama E2E Validation
+- ⚠️ **Priority 2.5** (Session 98): Ollama Model Selection - **CRITICAL FIX**
+
+### Remaining Work
+- ⏳ **Priority 3** (Session 99): Qwen/DeepSeek Cleanup
+- ⏳ **Future**: TRUE 100% coverage + functionality validation
+
+### Overall Status
+- **Critical Issues:** 0 (after Session 98)
+- **Test Coverage:** ~4,269 tests, 100% passing
+- **E2E Coverage:** Claude, Mistral, DeepSeek, Ollama (+ model selection after Session 98)
+- **Production Ready:** After Session 98 ✅
 
 ---
 
