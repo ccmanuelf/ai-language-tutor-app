@@ -634,13 +634,23 @@ class TestChatHelperFunctionsAdvanced:
         # Mock provider selection with no service
         mock_selection = Mock()
         mock_selection.service = None
+        mock_selection.requires_budget_override = False
         mock_router.select_provider = AsyncMock(return_value=mock_selection)
+
+        # Mock database session and user
+        mock_db = Mock()
+        mock_user = Mock()
+        mock_user.preferences = {}
+        mock_user.get_ai_provider_settings = Mock(
+            return_value={"enforce_budget_limits": True}
+        )
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_user
 
         request = ChatRequest(message="Hello", language="en-claude")
 
         # Should raise exception when no service available
         with pytest.raises(Exception) as exc_info:
-            await _get_ai_response(request, "en", "testuser123")
+            await _get_ai_response(request, "en", "claude", "testuser123", mock_db)
 
         assert "No AI service available" in str(exc_info.value)
 

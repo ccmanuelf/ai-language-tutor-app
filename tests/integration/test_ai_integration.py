@@ -69,10 +69,34 @@ class TestAIRouterIntegration:
     @pytest.mark.asyncio
     async def test_router_failover_when_primary_fails(self):
         """Test that router falls back to secondary provider on failure"""
+        from app.services.budget_manager import (
+            BudgetAlert,
+            BudgetStatus,
+            budget_manager,
+        )
+        from app.services.ollama_service import ollama_service
+
         router = EnhancedAIRouter()
+
+        # Mock budget to allow cloud providers
+        mock_budget_status = BudgetStatus(
+            total_budget=30.0,
+            used_budget=10.0,
+            remaining_budget=20.0,
+            percentage_used=33.33,
+            alert_level=BudgetAlert.GREEN,
+            days_remaining=20,
+            projected_monthly_cost=15.0,
+            is_over_budget=False,
+        )
 
         # Simulate first provider failing, second succeeding
         with (
+            patch.object(
+                budget_manager,
+                "get_current_budget_status",
+                return_value=mock_budget_status,
+            ),
             patch(
                 "app.services.claude_service.ClaudeService.generate_response",
                 new_callable=AsyncMock,
@@ -81,6 +105,10 @@ class TestAIRouterIntegration:
                 "app.services.mistral_service.MistralService.generate_response",
                 new_callable=AsyncMock,
             ) as mock_mistral,
+            patch.object(ollama_service, "check_availability", return_value=True),
+            patch.object(
+                ollama_service, "get_recommended_model", return_value="llama2:7b"
+            ),
         ):
             # First provider fails
             mock_claude.side_effect = Exception("Claude API unavailable")
