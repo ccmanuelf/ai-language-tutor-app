@@ -80,7 +80,6 @@ class TestSpeechProcessorInitialization:
     def test_init_basic_attributes(self, processor):
         """Test basic initialization of processor attributes"""
         assert hasattr(processor, "audio_libs_available")
-        assert hasattr(processor, "watson_sdk_available")
         assert hasattr(processor, "mistral_stt_available")
         assert hasattr(processor, "piper_tts_available")
         assert processor.default_sample_rate == 16000
@@ -89,13 +88,14 @@ class TestSpeechProcessorInitialization:
         assert processor.vad_threshold == 0.01
         assert processor.vad_frame_size == 480
 
-    def test_init_watson_deprecated(self, processor):
-        """Test that Watson services are marked as deprecated"""
-        assert processor.watson_sdk_available is False
-        assert processor.watson_stt_available is False
-        assert processor.watson_tts_available is False
-        assert processor.watson_stt_client is None
-        assert processor.watson_tts_client is None
+    def test_init_mistral_and_piper_services(self, processor):
+        """Test that Mistral STT and Piper TTS services are initialized"""
+        # Watson was removed in Session 100 - verify new providers
+        assert hasattr(processor, "mistral_stt_available")
+        assert hasattr(processor, "piper_tts_available")
+        # Services should be available (may be True or False depending on environment)
+        assert isinstance(processor.mistral_stt_available, bool)
+        assert isinstance(processor.piper_tts_available, bool)
 
     def test_init_pronunciation_models_loaded(self, processor):
         """Test pronunciation models are loaded"""
@@ -1493,8 +1493,9 @@ class TestPipelineStatus:
 
         assert isinstance(status, dict)
         assert "status" in status
-        assert "watson_stt_available" in status
-        assert "watson_tts_available" in status
+        # Session 100: Migrated from Watson to Mistral STT + Piper TTS
+        assert "mistral_stt_available" in status
+        assert "piper_tts_available" in status
         assert "supported_formats" in status
         assert "supported_languages" in status
         assert "features" in status
@@ -1555,26 +1556,25 @@ class TestHelperMethods:
         status = processor._get_overall_status(False, False)
         assert status == "limited"
 
-    def test_build_watson_stt_status(self, processor):
-        """Test building Watson STT status"""
+    def test_build_mistral_stt_status(self, processor):
+        """Test building Mistral STT status"""
         mock_settings = Mock()
-        mock_settings.IBM_WATSON_STT_API_KEY = "key"
-        mock_settings.IBM_WATSON_STT_URL = "url"
+        mock_settings.MISTRAL_API_KEY = "key"
 
-        status = processor._build_watson_stt_status(True, mock_settings)
+        status = processor._build_mistral_stt_status(True, mock_settings)
 
         assert status["status"] == "operational"
         assert status["api_key_configured"] is True
+        assert status["model"] == "whisper-large-v3-turbo"
 
-    def test_build_watson_tts_status(self, processor):
-        """Test building Watson TTS status"""
+    def test_build_piper_tts_status(self, processor):
+        """Test building Piper TTS status"""
         mock_settings = Mock()
-        mock_settings.IBM_WATSON_TTS_API_KEY = "key"
-        mock_settings.IBM_WATSON_TTS_URL = "url"
 
-        status = processor._build_watson_tts_status(True, mock_settings)
+        status = processor._build_piper_tts_status(True, mock_settings)
 
         assert status["status"] == "operational"
+        assert status["model"] == "local_piper"
 
     def test_build_features_status(self, processor):
         """Test building features status"""
@@ -1596,9 +1596,11 @@ class TestHelperMethods:
         """Test building API models dictionary"""
         models = processor._build_api_models_dict()
 
-        assert "watson_stt_models" in models
-        assert "watson_tts_voices" in models
-        assert isinstance(models["watson_stt_models"], list)
+        # Session 100: Migrated from Watson to Mistral STT + Piper TTS
+        assert "mistral_stt_model" in models
+        assert models["mistral_stt_model"] == "whisper-large-v3-turbo"
+        assert "piper_tts_voices" in models
+        assert "supported_languages" in models
 
     def test_build_chinese_support_dict(self, processor):
         """Test building Chinese support dictionary"""
@@ -1611,8 +1613,11 @@ class TestHelperMethods:
         """Test building Spanish support dictionary"""
         support = processor._build_spanish_support_dict()
 
-        assert "stt_model" in support
-        assert "tts_voice" in support
+        # Session 100: Migrated from Watson to Mistral STT + Piper TTS
+        assert support["stt_available"] is True
+        assert support["stt_provider"] == "mistral"
+        assert support["tts_available"] is True
+        assert support["tts_provider"] == "piper"
 
     def test_validate_provider_not_watson_valid(self, processor):
         """Test provider validation with valid providers"""
@@ -2521,65 +2526,70 @@ class TestRemainingBranchGaps:
         # Create audio where all non-zero values might cause issues with noise_floor calc
         # The noise_floor is calculated as: np.mean(np.abs(audio_array[audio_array != 0])) * 0.1
         # If all values are zero, audio_array[audio_array != 0] is empty, causing mean to return nan or 0
-        
+
         # Patch numpy operations to simulate edge case
-        with patch('app.services.speech_processor.np.frombuffer') as mock_frombuffer:
-            with patch('app.services.speech_processor.np.all') as mock_all:
-                with patch('app.services.speech_processor.np.mean') as mock_mean:
+        with patch("app.services.speech_processor.np.frombuffer") as mock_frombuffer:
+            with patch("app.services.speech_processor.np.all") as mock_all:
+                with patch("app.services.speech_processor.np.mean") as mock_mean:
                     # Return non-empty array
                     mock_array = MagicMock()
                     mock_array.__len__ = lambda self: 100
                     mock_array.astype = lambda dtype: mock_array
                     mock_array.__pow__ = lambda self, x: mock_array
                     mock_frombuffer.return_value = mock_array
-                    
+
                     # Not all zeros (to pass silence check)
                     mock_all.return_value = False
-                    
+
                     # First call: signal_power calculation returns positive
                     # Second call: noise_floor calculation returns 0 or negative
-                    mock_mean.side_effect = [100.0, 0.0]  # signal_power > 0, noise_floor = 0
-                    
+                    mock_mean.side_effect = [
+                        100.0,
+                        0.0,
+                    ]  # signal_power > 0, noise_floor = 0
+
                     audio_data = b"\x00\x01" * 1000
-                    result = await processor._analyze_audio_quality(audio_data, AudioFormat.WAV)
-                    
+                    result = await processor._analyze_audio_quality(
+                        audio_data, AudioFormat.WAV
+                    )
+
                     # Should skip SNR calculation when noise_floor is 0
                     assert result is not None
 
     def test_speech_enhancement_with_modified_array(self, processor):
         """Branch 947→961: Test edge case where array might become empty after operations"""
         # This branch might be unreachable, but let's try mocking to force it
-        with patch('app.services.speech_processor.np.frombuffer') as mock_frombuffer:
-            with patch('app.services.speech_processor.np.copy') as mock_copy:
+        with patch("app.services.speech_processor.np.frombuffer") as mock_frombuffer:
+            with patch("app.services.speech_processor.np.copy") as mock_copy:
                 # First call to frombuffer returns non-empty array
                 mock_array_initial = np.array([100, 200], dtype=np.int16)
                 mock_frombuffer.return_value = mock_array_initial
-                
+
                 # After np.copy, simulate array becoming empty (hypothetical edge case)
                 # First copy (line 935): returns normal array
                 # This will test if the len > 0 check at line 947 handles edge cases
                 mock_array_copy = np.array([100, 200], dtype=np.int16)
                 mock_copy.return_value = mock_array_copy
-                
+
                 audio_data = b"\x00\x01\x00\x02"
                 result = processor._apply_speech_enhancement(audio_data)
-                
+
                 # Should complete without error
                 assert result is not None
 
     def test_normalize_audio_with_edge_case_array(self, processor):
         """Branch 1232→1239: Test normalization with edge case array"""
         # Test with array that passes initial checks but might have edge cases
-        with patch('app.services.speech_processor.np.frombuffer') as mock_frombuffer:
-            with patch('app.services.speech_processor.np.copy') as mock_copy:
+        with patch("app.services.speech_processor.np.frombuffer") as mock_frombuffer:
+            with patch("app.services.speech_processor.np.copy") as mock_copy:
                 # Return non-empty array from frombuffer
                 mock_array = np.array([100, 200, 300], dtype=np.int16)
                 mock_frombuffer.return_value = mock_array
                 mock_copy.return_value = mock_array
-                
+
                 audio_data = b"\x00\x01" * 10
                 result = processor._normalize_audio(audio_data)
-                
+
                 # Should complete normalization
                 assert result is not None
                 assert len(result) > 0
@@ -2591,32 +2601,32 @@ class TestUnreachableBranches:
     def test_speech_enhancement_force_empty_after_copy(self, processor):
         """Branch 947->961: Force empty array scenario using mock"""
         # Mock np.copy to return empty array (simulating hypothetical numpy bug/edge case)
-        with patch('app.services.speech_processor.np.copy') as mock_copy:
+        with patch("app.services.speech_processor.np.copy") as mock_copy:
             # First check passes (non-empty from frombuffer)
             # But after copy, array becomes empty (defensive check at line 947)
             empty_array = np.array([], dtype=np.int16)
             mock_copy.return_value = empty_array
-            
+
             # Provide non-empty audio so it passes line 932 check
             audio_data = b"\x00\x01\x00\x02"
-            
+
             result = processor._apply_speech_enhancement(audio_data)
-            
+
             # Should handle the edge case gracefully
             assert result is not None
 
     def test_normalize_audio_force_empty_after_copy(self, processor):
         """Branch 1232->1239: Force empty array scenario using mock"""
         # Mock np.copy to return empty array (simulating hypothetical edge case)
-        with patch('app.services.speech_processor.np.copy') as mock_copy:
+        with patch("app.services.speech_processor.np.copy") as mock_copy:
             # After copy at line 1227, array becomes empty (defensive check at line 1232)
             empty_array = np.array([], dtype=np.int16)
             mock_copy.return_value = empty_array
-            
+
             # Provide non-empty audio so it passes line 1223 check
             audio_data = b"\x00\x01\x00\x02"
-            
+
             result = processor._normalize_audio(audio_data)
-            
+
             # Should handle the edge case gracefully
             assert result is not None

@@ -1391,32 +1391,28 @@ class SpeechProcessor:
 
     async def get_speech_pipeline_status(self) -> Dict[str, Any]:
         """Get status of speech processing pipeline"""
-        watson_stt_functional = bool(
-            self.watson_stt_client and self.watson_stt_available
+        # Session 100: Migrated from Watson to Mistral STT + Piper TTS
+        mistral_stt_functional = bool(
+            self.mistral_stt_available and self.mistral_stt_service
         )
-        watson_tts_functional = bool(
-            self.watson_tts_client and self.watson_tts_available
-        )
+        piper_tts_functional = bool(self.piper_tts_available and self.piper_tts_service)
         settings = self._get_settings_safely()
 
         return {
             "status": self._get_overall_status(
-                watson_stt_functional, watson_tts_functional
+                mistral_stt_functional, piper_tts_functional
             ),
-            "watson_sdk_available": self.watson_sdk_available,
-            "watson_stt": self._build_watson_stt_status(
-                watson_stt_functional, settings
+            "mistral_stt": self._build_mistral_stt_status(
+                mistral_stt_functional, settings
             ),
-            "watson_tts": self._build_watson_tts_status(
-                watson_tts_functional, settings
-            ),
-            "watson_stt_available": watson_stt_functional,
-            "watson_tts_available": watson_tts_functional,
+            "piper_tts": self._build_piper_tts_status(piper_tts_functional, settings),
+            "mistral_stt_available": mistral_stt_functional,
+            "piper_tts_available": piper_tts_functional,
             "audio_libs_available": self.audio_libs_available,
             "supported_formats": [fmt.value for fmt in AudioFormat],
             "supported_languages": list(self.pronunciation_models.keys()),
             "features": self._build_features_status(
-                watson_stt_functional, watson_tts_functional
+                mistral_stt_functional, piper_tts_functional
             ),
             "configuration": self._build_configuration_dict(),
             "api_models": self._build_api_models_dict(),
@@ -1435,36 +1431,30 @@ class SpeechProcessor:
         """Determine overall pipeline status"""
         return "operational" if (stt_functional or tts_functional) else "limited"
 
-    def _build_watson_stt_status(self, functional: bool, settings) -> Dict[str, Any]:
-        """Build Watson STT status dictionary"""
+    def _build_mistral_stt_status(self, functional: bool, settings) -> Dict[str, Any]:
+        """Build Mistral STT status dictionary"""
         return {
             "status": "operational" if functional else "unavailable",
-            "configured": self.watson_stt_available,
-            "client_initialized": bool(self.watson_stt_client),
-            "api_key_configured": bool(
-                getattr(settings, "IBM_WATSON_STT_API_KEY", None)
-            )
+            "configured": self.mistral_stt_available,
+            "service_initialized": bool(self.mistral_stt_service),
+            "api_key_configured": bool(getattr(settings, "MISTRAL_API_KEY", None))
             if settings
             else False,
-            "service_url": getattr(settings, "IBM_WATSON_STT_URL", "not_configured")
-            if settings
-            else "not_configured",
+            "model": "whisper-large-v3-turbo",
         }
 
-    def _build_watson_tts_status(self, functional: bool, settings) -> Dict[str, Any]:
-        """Build Watson TTS status dictionary"""
+    def _build_piper_tts_status(self, functional: bool, settings) -> Dict[str, Any]:
+        """Build Piper TTS status dictionary"""
+        available_voices = []
+        if self.piper_tts_service and hasattr(self.piper_tts_service, "voices"):
+            available_voices = self.piper_tts_service.voices
+
         return {
             "status": "operational" if functional else "unavailable",
-            "configured": self.watson_tts_available,
-            "client_initialized": bool(self.watson_tts_client),
-            "api_key_configured": bool(
-                getattr(settings, "IBM_WATSON_TTS_API_KEY", None)
-            )
-            if settings
-            else False,
-            "service_url": getattr(settings, "IBM_WATSON_TTS_URL", "not_configured")
-            if settings
-            else "not_configured",
+            "configured": self.piper_tts_available,
+            "service_initialized": bool(self.piper_tts_service),
+            "available_voices": available_voices,
+            "model": "local_piper",
         }
 
     def _build_features_status(
@@ -1477,7 +1467,7 @@ class SpeechProcessor:
             "pronunciation_analysis": True,
             "audio_enhancement": self.audio_libs_available,
             "real_time_processing": self.audio_libs_available
-            and self.watson_sdk_available,
+            and (stt_functional or tts_functional),
         }
 
     def _build_configuration_dict(self) -> Dict[str, Any]:
@@ -1490,41 +1480,35 @@ class SpeechProcessor:
 
     def _build_api_models_dict(self) -> Dict[str, list]:
         """Build API models and voices dictionary"""
+        piper_voices = []
+        if self.piper_tts_service and hasattr(self.piper_tts_service, "voices"):
+            piper_voices = self.piper_tts_service.voices
+
         return {
-            "watson_stt_models": [
-                "en-US_BroadbandModel",
-                "fr-FR_BroadbandModel",
-                "es-ES_BroadbandModel",
-                "de-DE_BroadbandModel",
-                "zh-CN_BroadbandModel",
-                "ja-JP_BroadbandModel",
-            ],
-            "watson_tts_voices": [
-                "en-US_AllisonV3Voice",
-                "fr-FR_ReneeV3Voice",
-                "es-ES_LauraV3Voice",
-                "de-DE_BirgitV3Voice",
-                "ja-JP_EmiV3Voice",
-                "ko-KR_YoungmiVoice",
-            ],
+            "mistral_stt_model": "whisper-large-v3-turbo",
+            "piper_tts_voices": piper_voices,
+            "supported_languages": ["en", "fr", "es", "de", "zh", "ja"],
         }
 
     def _build_chinese_support_dict(self) -> Dict[str, Any]:
         """Build Chinese language support dictionary"""
         return {
             "stt_available": True,
-            "tts_native_voice": False,
-            "tts_fallback": "en-US_AllisonV3Voice",
+            "stt_provider": "mistral",
+            "tts_available": True,
+            "tts_provider": "piper",
             "pronunciation_learning": True,
-            "note": "Chinese STT fully supported. TTS uses English voice with Chinese-optimized SSML.",
+            "note": "Chinese STT via Mistral Whisper. TTS via Piper with Chinese voices.",
         }
 
     def _build_spanish_support_dict(self) -> Dict[str, Any]:
         """Build Spanish language support dictionary"""
         return {
-            "stt_model": "es-MX_BroadbandModel",
-            "tts_voice": "es-LA_SofiaV3Voice",
-            "note": "Using Mexican Spanish STT and Latin American Spanish TTS (closest to es-MX preference)",
+            "stt_available": True,
+            "stt_provider": "mistral",
+            "tts_available": True,
+            "tts_provider": "piper",
+            "note": "Spanish STT via Mistral Whisper. TTS via Piper with Spanish voices.",
         }
 
 

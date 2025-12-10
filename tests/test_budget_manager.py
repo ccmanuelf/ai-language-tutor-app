@@ -192,15 +192,15 @@ class TestBudgetManagerInit:
         assert "mistral-tiny" in manager.provider_costs["mistral"]
 
     @patch("app.services.budget_manager.get_settings")
-    def test_init_provider_costs_watson(self, mock_settings):
-        """Test provider costs for IBM Watson services"""
+    def test_init_provider_costs_no_watson(self, mock_settings):
+        """Test that Watson is NOT in provider costs (removed in Session 100)"""
         mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
 
         manager = BudgetManager()
 
-        assert "ibm_watson" in manager.provider_costs
-        assert "stt" in manager.provider_costs["ibm_watson"]
-        assert "tts" in manager.provider_costs["ibm_watson"]
+        # Watson was completely removed in Session 100 cleanup
+        assert "ibm_watson" not in manager.provider_costs
+        assert "watson" not in manager.provider_costs
 
 
 # ============================================================================
@@ -679,42 +679,6 @@ class TestEstimateCost:
         # Cost = 0.00028 + 0.00042 = 0.0007
         assert estimate.estimated_cost == pytest.approx(0.0007, rel=1e-6)
         assert estimate.confidence == 0.9
-
-    @patch("app.services.budget_manager.get_settings")
-    def test_estimate_cost_stt_watson(self, mock_settings):
-        """Test cost estimation for IBM Watson STT"""
-        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
-
-        manager = BudgetManager()
-        estimate = manager.estimate_cost(
-            provider="ibm_watson",
-            model="stt",
-            service_type="stt",
-            audio_minutes=5.5,
-        )
-
-        # Watson STT: $0.02 per minute
-        # Cost = 5.5 * 0.02 = 0.11
-        assert estimate.estimated_cost == pytest.approx(0.11, rel=1e-6)
-        assert estimate.confidence == 0.85
-
-    @patch("app.services.budget_manager.get_settings")
-    def test_estimate_cost_tts_watson(self, mock_settings):
-        """Test cost estimation for IBM Watson TTS"""
-        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
-
-        manager = BudgetManager()
-        estimate = manager.estimate_cost(
-            provider="ibm_watson",
-            model="tts",
-            service_type="tts",
-            characters=5000,
-        )
-
-        # Watson TTS: $0.02 per 1K characters
-        # Cost = 5000 * (0.02/1000) = 0.1
-        assert estimate.estimated_cost == pytest.approx(0.1, rel=1e-6)
-        assert estimate.confidence == 0.85
 
     @patch("app.services.budget_manager.get_settings")
     def test_estimate_cost_unknown_provider_fallback(self, mock_settings):
@@ -1882,10 +1846,12 @@ class TestOptimizationRecommendationsEdgeCases:
     @patch.object(BudgetManager, "get_cost_breakdown")
     @patch.object(BudgetManager, "get_current_budget_status")
     @patch("app.services.budget_manager.get_settings")
-    def test_recommendations_no_provider_data(self, mock_settings, mock_status, mock_breakdown):
+    def test_recommendations_no_provider_data(
+        self, mock_settings, mock_status, mock_breakdown
+    ):
         """Test recommendations when no provider data exists (empty provider_breakdown)"""
         mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
-        
+
         # Mock GREEN status
         mock_status.return_value = BudgetStatus(
             total_budget=30.0,
@@ -1897,15 +1863,17 @@ class TestOptimizationRecommendationsEdgeCases:
             projected_monthly_cost=25.0,
             is_over_budget=False,
         )
-        
+
         # Mock cost breakdown with EMPTY provider_breakdown
         mock_breakdown.return_value = {
             "provider_breakdown": []  # Empty list - no providers
         }
-        
+
         manager = BudgetManager()
         recommendations = manager.get_optimization_recommendations()
-        
+
         # Should not have provider optimization recommendation (no providers)
-        provider_rec = next((r for r in recommendations if r["type"] == "optimization"), None)
+        provider_rec = next(
+            (r for r in recommendations if r["type"] == "optimization"), None
+        )
         assert provider_rec is None  # No provider recommendation when no data
