@@ -2,22 +2,22 @@
 Authentication API endpoints for user management
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Form
-from sqlalchemy.orm import Session
-from pydantic import BaseModel
-from typing import Optional, List
 from datetime import datetime, timedelta, timezone
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, Form, HTTPException, status
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from app.core.security import (
     authenticate_user,
     create_access_token,
     get_current_user,
-    require_auth,
     get_password_hash,
+    require_auth,
 )
 from app.database.config import get_primary_db_session
 from app.models.simple_user import SimpleUser, UserRole
-
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 
@@ -213,7 +213,7 @@ async def list_users(
             status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
         )
 
-    users = db.query(SimpleUser).filter(SimpleUser.is_active is True).all()
+    users = db.query(SimpleUser).filter(SimpleUser.is_active == True).all()
     return [
         UserProfile(
             id=user.id,
