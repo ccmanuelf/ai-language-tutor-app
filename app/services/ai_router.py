@@ -517,15 +517,30 @@ class EnhancedAIRouter:
                         f"Using general preferred Ollama model: {preferred_model}"
                     )
 
-        # Priority 4: Fallback to automatic selection (existing logic)
+        # Phase 4: Validate preferred model is actually installed
+        installed_models = await ollama_service.list_models()
+        installed_model_names = [m.get("name", "") for m in installed_models]
+
+        if preferred_model and preferred_model not in installed_model_names:
+            logger.warning(
+                f"User's preferred Ollama model '{preferred_model}' is not installed. "
+                f"Available models: {installed_model_names}. Falling back to auto-selection."
+            )
+            preferred_model = None  # Force fallback to auto-selection
+
+        # Priority 4: Fallback to automatic selection from INSTALLED models
         if not preferred_model:
-            preferred_model = ollama_service.get_recommended_model(language, use_case)
-            logger.info(f"Using auto-selected Ollama model: {preferred_model}")
+            preferred_model = ollama_service.get_recommended_model(
+                language, use_case, installed_models=installed_models
+            )
+            logger.info(
+                f"Using auto-selected Ollama model: {preferred_model} from installed: {installed_model_names}"
+            )
 
         return ProviderSelection(
             provider_name="ollama",
             service=ollama_service,
-            model=preferred_model,  # ✅ Now uses user preference!
+            model=preferred_model,  # ✅ Validated to exist!
             reason=f"Local fallback - {reason}",
             confidence=0.7,  # Lower confidence for fallback
             cost_estimate=0.0,  # Local models are free

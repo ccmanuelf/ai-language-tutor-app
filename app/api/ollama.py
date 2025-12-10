@@ -6,6 +6,7 @@ Session 98 - Phase 3
 """
 
 from typing import Any, Dict, List
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.security import require_auth
@@ -57,21 +58,30 @@ async def list_ollama_models(current_user=Depends(require_auth)):
         # Get installed models
         models = await ollama_service.list_models()
 
-        # Get recommended models
-        recommended = {
-            "en": ["neural-chat:7b", "llama2:7b", "codellama:7b"],
-            "fr": ["mistral:7b", "llama2:7b"],
-            "es": ["llama2:7b", "llama2:13b"],
-            "de": ["llama2:7b", "llama2:13b"],
-            "it": ["llama2:7b", "llama2:13b"],
-            "pt": ["llama2:13b", "llama2:7b"],
-            "zh": ["qwen:7b", "llama2:7b"],
-        }
+        # Phase 5: Build recommendations dynamically from installed models
+        # Analyze capabilities of each installed model
+        model_capabilities = []
+        for model in models:
+            model_name = model.get("name", "")
+            if model_name:
+                caps = ollama_service._analyze_model_capabilities(model_name)
+                model_capabilities.append(
+                    {
+                        "name": model_name,
+                        "capabilities": {
+                            "is_code_model": caps["is_code_model"],
+                            "is_multilingual": caps["is_multilingual"],
+                            "is_chat_optimized": caps["is_chat_optimized"],
+                            "language_support": caps["language_support"],
+                            "size": caps["size_category"],
+                        },
+                    }
+                )
 
         return {
             "available": True,
             "models": models,
-            "recommended": recommended,
+            "model_capabilities": model_capabilities,
             "message": f"{len(models)} Ollama model(s) available",
         }
 
@@ -83,10 +93,14 @@ async def list_ollama_models(current_user=Depends(require_auth)):
 
 @router.get("/models/recommended")
 async def get_recommended_models(
-    language: str = "en", use_case: str = "conversation", current_user=Depends(require_auth)
+    language: str = "en",
+    use_case: str = "conversation",
+    current_user=Depends(require_auth),
 ):
     """
     Get recommended Ollama model for specific language and use case.
+
+    Phase 4: Now validates against installed models only.
 
     Args:
         language: Language code (en, fr, es, de, etc.)
@@ -96,40 +110,49 @@ async def get_recommended_models(
         Dict containing:
         - language: Requested language
         - use_case: Requested use case
-        - recommended_model: The recommended model name
-        - alternatives: List of alternative models
+        - recommended_model: The recommended model name (from installed models)
+        - alternatives: List of alternative models (only installed)
+        - message: Status message
 
     Example response:
     {
         "language": "en",
         "use_case": "technical",
         "recommended_model": "codellama:7b",
-        "alternatives": ["llama2:7b", "neural-chat:7b"]
+        "alternatives": ["llama2:7b", "neural-chat:7b"],
+        "message": "Recommended from 3 installed models"
     }
     """
     try:
-        recommended = ollama_service.get_recommended_model(language, use_case)
+        # Phase 4: Get installed models first
+        installed_models = await ollama_service.list_models()
 
-        # Get alternative models
-        language_models = {
-            "en": ["neural-chat:7b", "llama2:7b", "codellama:7b"],
-            "fr": ["mistral:7b", "llama2:7b"],
-            "es": ["llama2:7b", "llama2:13b"],
-            "de": ["llama2:7b", "llama2:13b"],
-            "it": ["llama2:7b", "llama2:13b"],
-            "pt": ["llama2:13b", "llama2:7b"],
-            "zh": ["qwen:7b", "llama2:7b"],
-        }
+        if not installed_models:
+            return {
+                "language": language,
+                "use_case": use_case,
+                "recommended_model": None,
+                "alternatives": [],
+                "message": "No Ollama models installed. Please install models with 'ollama pull <model>'",
+            }
 
-        alternatives = language_models.get(language, ["llama2:7b"])
+        # Get recommendation from installed models only
+        recommended = ollama_service.get_recommended_model(
+            language, use_case, installed_models=installed_models
+        )
+
+        # Get installed model names for alternatives
+        installed_names = [m.get("name", "") for m in installed_models]
+
         # Remove recommended from alternatives
-        alternatives = [m for m in alternatives if m != recommended]
+        alternatives = [m for m in installed_names if m != recommended]
 
         return {
             "language": language,
             "use_case": use_case,
             "recommended_model": recommended,
             "alternatives": alternatives,
+            "message": f"Recommended from {len(installed_models)} installed model(s)",
         }
 
     except Exception as e:

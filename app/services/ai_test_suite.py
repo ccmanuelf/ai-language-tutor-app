@@ -189,10 +189,10 @@ class AIServicesTestSuite:
         assert 0.0 <= status.percentage_used <= 1.0
 
         # Test cost tracking
-        initial_usage = status.total_usage
+        initial_usage = status.used_budget
         budget_manager.track_usage("test_provider", "test_model", 0.05, 100)
         updated_status = budget_manager.get_current_budget_status()
-        assert updated_status.total_usage > initial_usage
+        assert updated_status.used_budget > initial_usage
 
     async def test_ollama_service(self):
         """Test Ollama service functionality"""
@@ -352,8 +352,7 @@ class AIServicesTestSuite:
         assert selection.provider_name == "ollama"
         assert selection.is_fallback is True
 
-        # Reset budget
-        budget_manager.current_usage = initial_status.total_usage
+        # Note: Budget is tracked in database, no manual reset needed in tests
 
     async def test_cost_estimation(self):
         """Test cost estimation accuracy"""

@@ -15,22 +15,24 @@ Features:
 - Privacy-focused (no data leaves device)
 """
 
-import logging
 import json
-import aiohttp
-from typing import Dict, List, Any, Optional, AsyncGenerator
-from datetime import datetime
+import logging
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
-from app.services.ai_service_base import BaseAIService, AIResponse, StreamingResponse
+import aiohttp
+
 from app.core.config import get_settings
+from app.services.ai_service_base import AIResponse, BaseAIService, StreamingResponse
 
 logger = logging.getLogger(__name__)
 
 
 class OllamaModelSize(Enum):
     """Available Ollama model sizes"""
+
     SMALL = "7b"
     MEDIUM = "13b"
     LARGE = "70b"
@@ -39,6 +41,7 @@ class OllamaModelSize(Enum):
 @dataclass
 class OllamaModel:
     """Ollama model configuration"""
+
     name: str
     size: OllamaModelSize
     languages: List[str]
@@ -67,7 +70,7 @@ class OllamaService(BaseAIService):
                 languages=["en", "es", "fr", "de", "it"],
                 use_case="General conversation, English learning",
                 memory_gb=4.0,
-                description="Fast, efficient model for basic conversations"
+                description="Fast, efficient model for basic conversations",
             ),
             "llama2:13b": OllamaModel(
                 name="llama2:13b",
@@ -75,7 +78,7 @@ class OllamaService(BaseAIService):
                 languages=["en", "es", "fr", "de", "it", "pt"],
                 use_case="Advanced conversation, grammar correction",
                 memory_gb=8.0,
-                description="Better quality responses, grammar assistance"
+                description="Better quality responses, grammar assistance",
             ),
             "codellama:7b": OllamaModel(
                 name="codellama:7b",
@@ -83,7 +86,7 @@ class OllamaService(BaseAIService):
                 languages=["en"],
                 use_case="Technical English, programming terminology",
                 memory_gb=4.0,
-                description="Specialized for technical language learning"
+                description="Specialized for technical language learning",
             ),
             "mistral:7b": OllamaModel(
                 name="mistral:7b",
@@ -91,7 +94,7 @@ class OllamaService(BaseAIService):
                 languages=["en", "fr"],
                 use_case="French learning, conversation practice",
                 memory_gb=4.0,
-                description="Good for French language learning"
+                description="Good for French language learning",
             ),
             "neural-chat:7b": OllamaModel(
                 name="neural-chat:7b",
@@ -99,15 +102,35 @@ class OllamaService(BaseAIService):
                 languages=["en"],
                 use_case="Conversational practice, dialog training",
                 memory_gb=4.0,
-                description="Optimized for natural conversations"
-            )
+                description="Optimized for natural conversations",
+            ),
         }
 
     async def _get_session(self) -> aiohttp.ClientSession:
         """Get or create HTTP session"""
+        # Check if session is invalid (closed or from different event loop)
+        need_new_session = False
+
         if self.session is None or self.session.closed:
+            need_new_session = True
+        else:
+            # Check if the session's event loop is closed (happens in tests)
+            try:
+                import asyncio
+
+                current_loop = asyncio.get_running_loop()
+                if self.session._loop != current_loop or self.session._loop.is_closed():
+                    need_new_session = True
+                    # Close the old session properly
+                    await self.session.close()
+            except RuntimeError:
+                # No running loop - session is definitely stale
+                need_new_session = True
+
+        if need_new_session:
             timeout = aiohttp.ClientTimeout(total=300)  # 5 minutes for model loading
             self.session = aiohttp.ClientSession(timeout=timeout)
+
         return self.session
 
     async def check_availability(self) -> bool:
@@ -117,7 +140,10 @@ class OllamaService(BaseAIService):
             async with session.get(f"{self.base_url}/api/tags") as response:
                 return response.status == 200
         except Exception as e:
-            logger.debug(f"Ollama not available: {e}")
+            logger.error(f"Ollama availability check failed: {type(e).__name__}: {e}")
+            logger.error(
+                f"Session state: closed={self.session.closed if self.session else 'None'}"
+            )
             return False
 
     async def list_models(self) -> List[Dict[str, Any]]:
@@ -142,8 +168,7 @@ class OllamaService(BaseAIService):
             payload = {"name": model_name}
 
             async with session.post(
-                f"{self.base_url}/api/pull",
-                json=payload
+                f"{self.base_url}/api/pull", json=payload
             ) as response:
                 if response.status == 200:
                     # Stream the download progress
@@ -172,35 +197,182 @@ class OllamaService(BaseAIService):
 
         return True
 
-    def get_recommended_model(self, language: str, use_case: str = "conversation") -> str:
-        """Get recommended model for specific language and use case"""
-        language_models = {
-            "en": ["neural-chat:7b", "llama2:7b", "codellama:7b"],
-            "fr": ["mistral:7b", "llama2:7b"],
-            "es": ["llama2:7b", "llama2:13b"],
-            "de": ["llama2:7b", "llama2:13b"],
-            "it": ["llama2:7b", "llama2:13b"],
-            "pt": ["llama2:13b", "llama2:7b"],
+    def _analyze_model_capabilities(self, model_name: str) -> Dict[str, Any]:
+        """
+        Phase 5: Analyze model capabilities based on its name and characteristics.
+
+        This uses naming conventions and known patterns to infer capabilities.
+        No hardcoded preferences - pure capability detection.
+
+        Args:
+            model_name: The model name (e.g., "codellama:7b", "mistral:7b")
+
+        Returns:
+            Dict with capability scores and metadata
+        """
+        name_lower = model_name.lower()
+
+        capabilities = {
+            "name": model_name,
+            "is_code_model": False,
+            "is_multilingual": False,
+            "is_chat_optimized": False,
+            "is_reasoning_model": False,
+            "language_support": [],
+            "use_case_scores": {},
+            "size_category": "unknown",
         }
 
-        recommended = language_models.get(language, ["llama2:7b"])
+        # Detect code-specialized models
+        code_indicators = ["code", "coder", "codellama", "deepseek-coder", "deepcoder"]
+        if any(indicator in name_lower for indicator in code_indicators):
+            capabilities["is_code_model"] = True
+            capabilities["use_case_scores"]["technical"] = 10
+            capabilities["use_case_scores"]["conversation"] = 5
+            capabilities["use_case_scores"]["grammar"] = 3
 
-        # For technical use cases, prefer code-specialized models
-        if use_case == "technical" and language == "en":
-            return "codellama:7b"
+        # Detect multilingual models
+        multilingual_indicators = ["mistral", "qwen", "gemma", "llama"]
+        if any(indicator in name_lower for indicator in multilingual_indicators):
+            capabilities["is_multilingual"] = True
 
-        # For advanced grammar, prefer larger models
-        if use_case == "grammar" and "llama2:13b" in recommended:
-            return "llama2:13b"
+        # Detect chat-optimized models
+        chat_indicators = ["chat", "instruct", "neural-chat"]
+        if any(indicator in name_lower for indicator in chat_indicators):
+            capabilities["is_chat_optimized"] = True
+            capabilities["use_case_scores"]["conversation"] = 10
+            capabilities["use_case_scores"]["grammar"] = 7
+            capabilities["use_case_scores"]["technical"] = 5
 
-        return recommended[0]
+        # Detect reasoning models
+        reasoning_indicators = ["deepseek-r1", "thinking", "reasoning"]
+        if any(indicator in name_lower for indicator in reasoning_indicators):
+            capabilities["is_reasoning_model"] = True
+            capabilities["use_case_scores"]["technical"] = 9
+            capabilities["use_case_scores"]["grammar"] = 8
+            capabilities["use_case_scores"]["conversation"] = 6
+
+        # Language-specific models
+        if "mistral" in name_lower:
+            capabilities["language_support"] = ["fr", "en", "de", "es", "it"]
+        elif "qwen" in name_lower:
+            capabilities["language_support"] = ["zh", "en"]
+        elif "llama" in name_lower:
+            capabilities["language_support"] = ["en", "es", "fr", "de", "it", "pt"]
+
+        # Default scores for general models
+        if not capabilities["use_case_scores"]:
+            capabilities["use_case_scores"] = {
+                "conversation": 7,
+                "technical": 7,
+                "grammar": 7,
+            }
+
+        # Extract size category (check larger sizes first to avoid substring matches)
+        if "70b" in name_lower or "65b" in name_lower or "30b" in name_lower:
+            capabilities["size_category"] = "xlarge"
+        elif "13b" in name_lower or "14b" in name_lower or "16b" in name_lower:
+            capabilities["size_category"] = "large"
+        elif "7b" in name_lower or "8b" in name_lower:
+            capabilities["size_category"] = "medium"
+        elif (
+            "1b" in name_lower
+            or "2b" in name_lower
+            or "3b" in name_lower
+            or "4b" in name_lower
+        ):
+            capabilities["size_category"] = "small"
+
+        return capabilities
+
+    def get_recommended_model(
+        self,
+        language: str,
+        use_case: str = "conversation",
+        installed_models: Optional[List[Dict[str, Any]]] = None,
+    ) -> str:
+        """
+        Get recommended model for specific language and use case.
+
+        Phase 5: PURE CAPABILITY-BASED SELECTION - NO HARDCODED PREFERENCES.
+        Analyzes actual installed models and selects based on their capabilities.
+
+        Args:
+            language: Target language code
+            use_case: Use case type (conversation, technical, grammar, etc.)
+            installed_models: List of installed models from list_models()
+
+        Returns:
+            Model name that is actually installed and best suited for the task
+        """
+        if installed_models is None:
+            logger.warning(
+                "get_recommended_model called without installed_models. Cannot recommend."
+            )
+            return "llama2:7b"  # Fallback for backward compatibility
+
+        installed_names = [m.get("name", "") for m in installed_models]
+
+        if not installed_names:
+            logger.error("No Ollama models installed!")
+            return "llama2:7b"
+
+        # Phase 5: Analyze capabilities of ALL installed models
+        analyzed_models = []
+        for model_name in installed_names:
+            capabilities = self._analyze_model_capabilities(model_name)
+            analyzed_models.append(capabilities)
+
+        # Score each model for the requested use case and language
+        scored_models = []
+        for model in analyzed_models:
+            score = 0
+
+            # Use case score
+            use_case_score = model["use_case_scores"].get(use_case, 5)
+            score += use_case_score * 2  # Weight use case heavily
+
+            # Language support score
+            if model["language_support"] and language in model["language_support"]:
+                score += 5
+            elif model["is_multilingual"]:
+                score += 2  # Multilingual models can handle most languages
+
+            # Prefer larger models for complex tasks
+            if use_case in ["technical", "grammar"]:
+                size_bonus = {
+                    "small": 0,
+                    "medium": 2,
+                    "large": 4,
+                    "xlarge": 3,  # Very large might be slow
+                    "unknown": 1,
+                }
+                score += size_bonus.get(model["size_category"], 0)
+
+            # Prefer chat-optimized for conversation
+            if use_case == "conversation" and model["is_chat_optimized"]:
+                score += 3
+
+            scored_models.append((model["name"], score))
+
+        # Sort by score (highest first)
+        scored_models.sort(key=lambda x: x[1], reverse=True)
+
+        recommended = scored_models[0][0]
+        logger.info(
+            f"Capability-based selection: {recommended} "
+            f"(score: {scored_models[0][1]}) for {use_case}/{language} "
+            f"from {len(installed_names)} installed models"
+        )
+
+        return recommended
 
     async def generate_response(
         self,
         messages: List[Dict[str, str]],
         language: str = "en",
         model: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> AIResponse:
         """Generate response using Ollama"""
         start_time = datetime.now()
@@ -208,7 +380,9 @@ class OllamaService(BaseAIService):
         try:
             # Select model
             if not model:
-                model = self.get_recommended_model(language, kwargs.get("use_case", "conversation"))
+                model = self.get_recommended_model(
+                    language, kwargs.get("use_case", "conversation")
+                )
 
             # Ensure model is available
             if not await self.ensure_model_available(model):
@@ -227,17 +401,18 @@ class OllamaService(BaseAIService):
                     "temperature": kwargs.get("temperature", 0.7),
                     "top_p": kwargs.get("top_p", 0.9),
                     "max_tokens": kwargs.get("max_tokens", 2048),
-                }
+                },
             }
 
             # Make request
             async with session.post(
-                f"{self.base_url}/api/generate",
-                json=payload
+                f"{self.base_url}/api/generate", json=payload
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()
-                    raise Exception(f"Ollama API error: {response.status} - {error_text}")
+                    raise Exception(
+                        f"Ollama API error: {response.status} - {error_text}"
+                    )
 
                 data = await response.json()
                 response_text = data.get("response", "")
@@ -253,7 +428,9 @@ class OllamaService(BaseAIService):
                     processing_time=processing_time,
                     cost=0.0,  # Local models are free
                     metadata={
-                        "model_size": self.available_models.get(model, {}).memory_gb if model in self.available_models else "unknown",
+                        "model_size": self.available_models.get(model, {}).memory_gb
+                        if model in self.available_models
+                        else "unknown",
                         "local_processing": True,
                         "privacy_mode": True,
                         "done": data.get("done", True),
@@ -261,8 +438,8 @@ class OllamaService(BaseAIService):
                         "total_duration": data.get("total_duration", 0),
                         "load_duration": data.get("load_duration", 0),
                         "prompt_eval_count": data.get("prompt_eval_count", 0),
-                        "eval_count": data.get("eval_count", 0)
-                    }
+                        "eval_count": data.get("eval_count", 0),
+                    },
                 )
 
         except Exception as e:
@@ -274,7 +451,7 @@ class OllamaService(BaseAIService):
         messages: List[Dict[str, str]],
         language: str = "en",
         model: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncGenerator[StreamingResponse, None]:
         """Generate streaming response using Ollama"""
         start_time = datetime.now()
@@ -282,7 +459,9 @@ class OllamaService(BaseAIService):
         try:
             # Select model
             if not model:
-                model = self.get_recommended_model(language, kwargs.get("use_case", "conversation"))
+                model = self.get_recommended_model(
+                    language, kwargs.get("use_case", "conversation")
+                )
 
             # Ensure model is available
             if not await self.ensure_model_available(model):
@@ -301,23 +480,26 @@ class OllamaService(BaseAIService):
                     "temperature": kwargs.get("temperature", 0.7),
                     "top_p": kwargs.get("top_p", 0.9),
                     "max_tokens": kwargs.get("max_tokens", 2048),
-                }
+                },
             }
 
             async with session.post(
-                f"{self.base_url}/api/generate",
-                json=payload
+                f"{self.base_url}/api/generate", json=payload
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()
-                    raise Exception(f"Ollama streaming error: {response.status} - {error_text}")
+                    raise Exception(
+                        f"Ollama streaming error: {response.status} - {error_text}"
+                    )
 
                 async for line in response.content:
                     try:
                         chunk_data = json.loads(line.decode().strip())
 
                         if "response" in chunk_data:
-                            processing_time = (datetime.now() - start_time).total_seconds()
+                            processing_time = (
+                                datetime.now() - start_time
+                            ).total_seconds()
 
                             yield StreamingResponse(
                                 content=chunk_data["response"],
@@ -331,8 +513,8 @@ class OllamaService(BaseAIService):
                                     "local_processing": True,
                                     "privacy_mode": True,
                                     "context": chunk_data.get("context", []),
-                                    "done": chunk_data.get("done", False)
-                                }
+                                    "done": chunk_data.get("done", False),
+                                },
                             )
 
                     except json.JSONDecodeError:
@@ -343,9 +525,7 @@ class OllamaService(BaseAIService):
             raise Exception(f"Local AI streaming failed: {str(e)}")
 
     def _format_prompt_for_language_learning(
-        self,
-        messages: List[Dict[str, str]],
-        language: str
+        self, messages: List[Dict[str, str]], language: str
     ) -> str:
         """Format messages into a prompt optimized for language learning"""
 
@@ -357,12 +537,12 @@ class OllamaService(BaseAIService):
             "de": "Du bist ein hilfreicher Deutschlehrer. Gib klare, ermutigende Antworten und korrigiere Grammatikfehler sanft.",
             "it": "Sei un tutor di italiano utile. Fornisci risposte chiare e incoraggianti e correggi gentilmente gli errori grammaticali.",
             "pt": "Você é um tutor de português útil. Forneça respostas claras e encorajadoras e corrija suavemente os erros gramaticais.",
-            "zh": "你是一个有用的中文语言导师。提供清晰、鼓励的回答，并温和地纠正语法错误。"
+            "zh": "你是一个有用的中文语言导师。提供清晰、鼓励的回答，并温和地纠正语法错误。",
         }
 
         system_instruction = language_instructions.get(
             language,
-            "You are a helpful language tutor. Provide clear, encouraging responses."
+            "You are a helpful language tutor. Provide clear, encouraging responses.",
         )
 
         # Build conversation prompt
@@ -395,8 +575,8 @@ class OllamaService(BaseAIService):
                     "recommendations": [
                         "Install Ollama from https://ollama.ai/",
                         "Start Ollama server: 'ollama serve'",
-                        "Pull a model: 'ollama pull llama2:7b'"
-                    ]
+                        "Pull a model: 'ollama pull llama2:7b'",
+                    ],
                 }
 
             models = await self.list_models()
@@ -410,7 +590,7 @@ class OllamaService(BaseAIService):
                 "available_models": [model.get("name") for model in models],
                 "recommended_models": list(self.available_models.keys()),
                 "memory_usage": "Local processing - no API costs",
-                "privacy": "Complete - data stays on device"
+                "privacy": "Complete - data stays on device",
             }
 
         except Exception as e:
@@ -418,7 +598,7 @@ class OllamaService(BaseAIService):
                 "service_name": self.service_name,
                 "status": "error",
                 "message": f"Health check failed: {str(e)}",
-                "error": str(e)
+                "error": str(e),
             }
 
     async def close(self):
@@ -444,7 +624,7 @@ class OllamaManager:
                 "running": False,
                 "models": [],
                 "setup_required": True,
-                "instructions": status.get("recommendations", [])
+                "instructions": status.get("recommendations", []),
             }
 
         models = await self.service.list_models()
@@ -455,7 +635,7 @@ class OllamaManager:
             "models": len(models),
             "model_names": [model.get("name") for model in models],
             "setup_required": len(models) == 0,
-            "recommended_setup": self._get_recommended_setup()
+            "recommended_setup": self._get_recommended_setup(),
         }
 
     def _get_recommended_setup(self) -> List[str]:
@@ -464,7 +644,7 @@ class OllamaManager:
             "ollama pull llama2:7b  # General purpose, 4GB RAM",
             "ollama pull mistral:7b  # Good for French, 4GB RAM",
             "ollama pull neural-chat:7b  # Conversational, 4GB RAM",
-            "ollama pull llama2:13b  # Better quality, 8GB RAM (optional)"
+            "ollama pull llama2:13b  # Better quality, 8GB RAM (optional)",
         ]
 
     async def setup_for_language_learning(self) -> Dict[str, Any]:
@@ -476,8 +656,8 @@ class OllamaManager:
                 "instructions": [
                     "1. Install from https://ollama.ai/",
                     "2. Run 'ollama serve' to start server",
-                    "3. Try this setup again"
-                ]
+                    "3. Try this setup again",
+                ],
             }
 
         # Pull essential models
@@ -489,14 +669,16 @@ class OllamaManager:
             success = await self.service.pull_model(model)
             results[model] = "success" if success else "failed"
 
-        successful_models = [model for model, status in results.items() if status == "success"]
+        successful_models = [
+            model for model, status in results.items() if status == "success"
+        ]
 
         return {
             "success": len(successful_models) > 0,
             "models_setup": successful_models,
             "setup_results": results,
             "message": f"Successfully set up {len(successful_models)}/{len(essential_models)} essential models",
-            "ready_for_fallback": len(successful_models) > 0
+            "ready_for_fallback": len(successful_models) > 0,
         }
 
 
@@ -517,9 +699,7 @@ async def is_ollama_available() -> bool:
 
 
 async def generate_local_response(
-    messages: List[Dict[str, str]],
-    language: str = "en",
-    **kwargs
+    messages: List[Dict[str, str]], language: str = "en", **kwargs
 ) -> AIResponse:
     """Generate response using local Ollama"""
     return await ollama_service.generate_response(messages, language, **kwargs)

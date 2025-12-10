@@ -42,11 +42,21 @@ class TestRouterOllamaModelSelection:
             }
         }
 
-        # Mock check_availability as async
-        with patch.object(
-            OllamaService, "check_availability", new_callable=AsyncMock
-        ) as mock_avail:
+        # Mock check_availability and list_models (Phase 4 validation)
+        with (
+            patch.object(
+                OllamaService, "check_availability", new_callable=AsyncMock
+            ) as mock_avail,
+            patch.object(
+                OllamaService, "list_models", new_callable=AsyncMock
+            ) as mock_list,
+        ):
             mock_avail.return_value = True
+            # Mock that llama2:13b IS installed
+            mock_list.return_value = [
+                {"name": "llama2:13b"},
+                {"name": "llama2:7b"},
+            ]
 
             selection = await router._select_local_provider(
                 language="en",
@@ -75,10 +85,21 @@ class TestRouterOllamaModelSelection:
             }
         }
 
-        with patch.object(
-            OllamaService, "check_availability", new_callable=AsyncMock
-        ) as mock_avail:
+        with (
+            patch.object(
+                OllamaService, "check_availability", new_callable=AsyncMock
+            ) as mock_avail,
+            patch.object(
+                OllamaService, "list_models", new_callable=AsyncMock
+            ) as mock_list,
+        ):
             mock_avail.return_value = True
+            # Mock that all requested models are installed
+            mock_list.return_value = [
+                {"name": "neural-chat:7b"},
+                {"name": "mistral:7b"},
+                {"name": "llama2:13b"},
+            ]
 
             # Test English - should use language-specific
             selection_en = await router._select_local_provider(
@@ -114,10 +135,21 @@ class TestRouterOllamaModelSelection:
             }
         }
 
-        with patch.object(
-            OllamaService, "check_availability", new_callable=AsyncMock
-        ) as mock_avail:
+        with (
+            patch.object(
+                OllamaService, "check_availability", new_callable=AsyncMock
+            ) as mock_avail,
+            patch.object(
+                OllamaService, "list_models", new_callable=AsyncMock
+            ) as mock_list,
+        ):
             mock_avail.return_value = True
+            # Mock that all models are installed
+            mock_list.return_value = [
+                {"name": "codellama:7b"},
+                {"name": "neural-chat:7b"},
+                {"name": "llama2:13b"},
+            ]
 
             # Test technical use case - should use use-case specific
             selection = await router._select_local_provider(
@@ -146,10 +178,22 @@ class TestRouterOllamaModelSelection:
             }
         }
 
-        with patch.object(
-            OllamaService, "check_availability", new_callable=AsyncMock
-        ) as mock_avail:
+        with (
+            patch.object(
+                OllamaService, "check_availability", new_callable=AsyncMock
+            ) as mock_avail,
+            patch.object(
+                OllamaService, "list_models", new_callable=AsyncMock
+            ) as mock_list,
+        ):
             mock_avail.return_value = True
+            # Mock that all models are installed
+            mock_list.return_value = [
+                {"name": "codellama:7b"},
+                {"name": "neural-chat:7b"},
+                {"name": "llama2:13b"},
+                {"name": "llama2:7b"},
+            ]
 
             # Scenario 1: use_case match (highest priority)
             sel1 = await router._select_local_provider(
@@ -178,15 +222,21 @@ class TestRouterOllamaModelSelection:
             "ai_provider_settings": {}  # No Ollama preferences
         }
 
+        mock_installed = [{"name": "llama2:7b"}]
+
         with (
             patch.object(
                 OllamaService, "check_availability", new_callable=AsyncMock
             ) as mock_avail,
             patch.object(
+                OllamaService, "list_models", new_callable=AsyncMock
+            ) as mock_list,
+            patch.object(
                 OllamaService, "get_recommended_model", return_value="llama2:7b"
             ) as mock_recommend,
         ):
             mock_avail.return_value = True
+            mock_list.return_value = mock_installed
 
             selection = await router._select_local_provider(
                 language="en",
@@ -195,8 +245,10 @@ class TestRouterOllamaModelSelection:
                 user_preferences=user_preferences,
             )
 
-            # Should call get_recommended_model for auto-selection
-            mock_recommend.assert_called_once_with("en", "conversation")
+            # Should call get_recommended_model for auto-selection with installed_models
+            mock_recommend.assert_called_once_with(
+                "en", "conversation", installed_models=mock_installed
+            )
             assert selection.model == "llama2:7b"
 
     @pytest.mark.asyncio
@@ -240,10 +292,15 @@ class TestRouterOllamaModelSelection:
                 OllamaService, "check_availability", new_callable=AsyncMock
             ) as mock_avail,
             patch.object(
+                OllamaService, "list_models", new_callable=AsyncMock
+            ) as mock_list,
+            patch.object(
                 router, "check_budget_status", new_callable=AsyncMock
             ) as mock_budget,
         ):
             mock_avail.return_value = True
+            # Mock that mistral:7b is installed
+            mock_list.return_value = [{"name": "mistral:7b"}]
 
             # Mock budget status as exceeded
             mock_budget_status = MagicMock()
@@ -278,10 +335,17 @@ class TestRouterOllamaModelSelection:
             }
         }
 
-        with patch.object(
-            OllamaService, "check_availability", new_callable=AsyncMock
-        ) as mock_avail:
+        with (
+            patch.object(
+                OllamaService, "check_availability", new_callable=AsyncMock
+            ) as mock_avail,
+            patch.object(
+                OllamaService, "list_models", new_callable=AsyncMock
+            ) as mock_list,
+        ):
             mock_avail.return_value = True
+            # Mock that mistral:7b is installed
+            mock_list.return_value = [{"name": "mistral:7b"}]
 
             selection = await router._select_local_provider(
                 language="fr",
@@ -307,10 +371,20 @@ class TestRouterOllamaModelSelection:
             }
         }
 
-        with patch.object(
-            OllamaService, "check_availability", new_callable=AsyncMock
-        ) as mock_avail:
+        with (
+            patch.object(
+                OllamaService, "check_availability", new_callable=AsyncMock
+            ) as mock_avail,
+            patch.object(
+                OllamaService, "list_models", new_callable=AsyncMock
+            ) as mock_list,
+        ):
             mock_avail.return_value = True
+            # Mock that codellama:7b is installed
+            mock_list.return_value = [
+                {"name": "codellama:7b"},
+                {"name": "llama2:13b"},
+            ]
 
             selection = await router._select_local_provider(
                 language="en",
@@ -330,10 +404,17 @@ class TestRouterOllamaModelSelection:
             }
         }
 
-        with patch.object(
-            OllamaService, "check_availability", new_callable=AsyncMock
-        ) as mock_avail:
+        with (
+            patch.object(
+                OllamaService, "check_availability", new_callable=AsyncMock
+            ) as mock_avail,
+            patch.object(
+                OllamaService, "list_models", new_callable=AsyncMock
+            ) as mock_list,
+        ):
             mock_avail.return_value = True
+            # Mock that custom-model:latest is installed
+            mock_list.return_value = [{"name": "custom-model:latest"}]
 
             selection = await router._select_local_provider(
                 language="en",
