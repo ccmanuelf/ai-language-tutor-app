@@ -88,7 +88,7 @@ app/
     ├── budget_manager.py    # Cost tracking and limits
     ├── claude_service.py    # Claude API integration
     ├── mistral_service.py   # Mistral API integration
-    └── deepseek_service.py    # DeepSeek API integration
+    └── qwen_service.py      # Qwen API integration
 ```
 
 **Key Features Implemented**:
@@ -138,12 +138,12 @@ class AIRouter:
     services = {
         'claude': ClaudeService(),      # Primary general conversations
         'mistral': MistralService(),    # French language optimization
-        'deepseek': DeepSeekService()        # Chinese language specialization
+        'qwen': QwenService()          # Chinese language specialization
     }
     
     routing_strategy = {
         'french': 'mistral',           # Route French to Mistral
-        'chinese': 'deepseek',           # Route Chinese to DeepSeek  
+        'chinese': 'qwen',             # Route Chinese to Qwen  
         'default': 'claude'            # Everything else to Claude
     }
     
@@ -424,7 +424,7 @@ mistral_api = {
     'budget_limit': '$5/month'
 }
 
-deepseek_api = {
+qwen_api = {
     'service': 'Chinese language specialization', 
     'fallback': 'Claude for Chinese',
     'budget_limit': '$3/month'
@@ -486,7 +486,7 @@ class BudgetMonitoring:
     tracking = {
         'claude_api': 'Token usage and cost calculation',
         'mistral_api': 'Request count and billing',
-        'deepseek_api': 'Character count and pricing',
+        'qwen_api': 'Character count and pricing',
         'watson_stt': 'Audio minutes processed',
         'watson_tts': 'Characters synthesized'
     }

@@ -189,7 +189,7 @@ class TestCacheEntryDataclass:
 
     def test_cache_entry_different_providers(self):
         """Test CacheEntry with different providers"""
-        providers = ["claude", "mistral", "qwen", "deepseek", "ollama"]
+        providers = ["claude", "mistral", "deepseek", "ollama"]
         for provider in providers:
             entry = CacheEntry(
                 content="Test",

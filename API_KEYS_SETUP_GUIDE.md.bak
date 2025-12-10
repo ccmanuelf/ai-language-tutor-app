@@ -254,7 +254,7 @@ Our system automatically tracks costs and prevents budget overruns:
 ```
 ANTHROPIC_API_KEY=sk-ant-[your-key-here]
 MISTRAL_API_KEY=[your-mistral-key-here]
-
+QWEN_API_KEY=[your-qwen-key-here]
 WATSON_STT_API_KEY=[your-watson-stt-key-here]
 WATSON_STT_URL=[your-watson-stt-url-here]
 WATSON_STT_INSTANCE_ID=[your-watson-stt-instance-here]

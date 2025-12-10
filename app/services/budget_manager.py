@@ -93,11 +93,6 @@ class BudgetManager:
                 "mistral-small": {"input": 0.0006, "output": 0.0018},
                 "mistral-medium": {"input": 0.0027, "output": 0.0081},
             },
-            "qwen": {
-                "qwen-turbo": {"input": 0.0001, "output": 0.0002},
-                "qwen-plus": {"input": 0.0004, "output": 0.0008},
-                "qwen-max": {"input": 0.002, "output": 0.006},
-            },
             "ibm_watson": {
                 "stt": {"per_minute": 0.02},
                 "tts": {"per_character": 0.02 / 1000},  # $0.02 per 1K characters

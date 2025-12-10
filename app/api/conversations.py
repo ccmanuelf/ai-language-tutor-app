@@ -361,8 +361,8 @@ async def get_supported_languages():
             {
                 "code": "zh",
                 "name": "Chinese",
-                "providers": ["qwen"],
-                "display": "Chinese (Qwen)",
+                "providers": ["deepseek"],
+                "display": "Chinese (DeepSeek)",
             },
             {
                 "code": "ja",
