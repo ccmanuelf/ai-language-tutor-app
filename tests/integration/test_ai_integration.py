@@ -6,7 +6,7 @@ These tests verify the interaction between AI router, service selection,
 and conversation handling WITHOUT calling external AI APIs.
 
 Test Tier: INTEGRATION
-- External APIs (Claude, Mistral, Qwen) are mocked
+- External APIs (Claude, Mistral, DeepSeek) are mocked
 - Real AI router + service selection logic tested
 - Verifies failover behavior
 - Tests component interaction

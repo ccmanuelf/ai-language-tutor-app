@@ -655,7 +655,9 @@ class APIUsage(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     # API details
-    api_provider = Column(String(50), nullable=False)  # claude, openai, watson, etc.
+    api_provider = Column(
+        String(50), nullable=False
+    )  # claude, mistral, deepseek, ollama, etc.
     api_endpoint = Column(String(100), nullable=False)
     request_type = Column(String(50), nullable=False)  # chat, speech, embedding, etc.
 

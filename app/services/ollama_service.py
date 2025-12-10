@@ -231,9 +231,26 @@ class OllamaService(BaseAIService):
             capabilities["use_case_scores"]["conversation"] = 5
             capabilities["use_case_scores"]["grammar"] = 3
 
-        # Detect multilingual models
-        multilingual_indicators = ["mistral", "qwen", "gemma", "llama"]
-        if any(indicator in name_lower for indicator in multilingual_indicators):
+        # Detect multilingual models by common indicators
+        # Note: Most modern LLMs have some multilingual capability
+        multilingual_keywords = ["multilingual", "multi", "llama", "mistral", "gemma"]
+        if any(keyword in name_lower for keyword in multilingual_keywords):
+            capabilities["is_multilingual"] = True
+        # Also check for specific language codes in model name (e.g., "zh", "fr")
+        if any(
+            lang in name_lower
+            for lang in [
+                "zh",
+                "cn",
+                "chinese",
+                "fr",
+                "french",
+                "de",
+                "german",
+                "es",
+                "spanish",
+            ]
+        ):
             capabilities["is_multilingual"] = True
 
         # Detect chat-optimized models
@@ -252,13 +269,33 @@ class OllamaService(BaseAIService):
             capabilities["use_case_scores"]["grammar"] = 8
             capabilities["use_case_scores"]["conversation"] = 6
 
-        # Language-specific models
-        if "mistral" in name_lower:
-            capabilities["language_support"] = ["fr", "en", "de", "es", "it"]
-        elif "qwen" in name_lower:
-            capabilities["language_support"] = ["zh", "en"]
-        elif "llama" in name_lower:
-            capabilities["language_support"] = ["en", "es", "fr", "de", "it", "pt"]
+        # Language-specific models - detected dynamically from model name
+        # Default to English support for all models
+        capabilities["language_support"] = ["en"]
+
+        # Detect additional language support from model name
+        lang_indicators = {
+            "zh": ["zh", "cn", "chinese", "qwen"],
+            "fr": ["fr", "french", "mistral"],
+            "de": ["de", "german"],
+            "es": ["es", "spanish"],
+            "it": ["it", "italian"],
+            "pt": ["pt", "portuguese"],
+            "ja": ["ja", "japanese"],
+            "ko": ["ko", "korean"],
+        }
+
+        for lang_code, keywords in lang_indicators.items():
+            if any(keyword in name_lower for keyword in keywords):
+                if lang_code not in capabilities["language_support"]:
+                    capabilities["language_support"].append(lang_code)
+
+        # Well-known multilingual models get broad support
+        if "llama" in name_lower or "mistral" in name_lower:
+            # These families are known to handle multiple European languages
+            for lang in ["es", "fr", "de", "it", "pt"]:
+                if lang not in capabilities["language_support"]:
+                    capabilities["language_support"].append(lang)
 
         # Default scores for general models
         if not capabilities["use_case_scores"]:

@@ -7,7 +7,7 @@ REFACTORED: Now uses modular component architecture
 Modern FastHTML frontend with:
 - User authentication and profiles
 - AI conversation interface
-- Speech input/output using IBM Watson
+- Speech input/output using Mistral STT + Piper TTS
 - Multi-language support
 - Family-safe design
 

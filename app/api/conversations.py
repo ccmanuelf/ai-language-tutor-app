@@ -265,7 +265,7 @@ async def speech_to_text(
 
         audio_data = base64.b64decode(audio_data_base64)
 
-        # Process speech-to-text using IBM Watson
+        # Process speech-to-text using Mistral STT
         from app.services.speech_processor import AudioFormat, speech_processor
 
         recognition_result, _ = await speech_processor.process_speech_to_text(
