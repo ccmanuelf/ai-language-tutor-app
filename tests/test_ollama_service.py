@@ -420,27 +420,43 @@ class TestGetRecommendedModel:
         assert model in ["neural-chat:7b", "llama2:7b", "codellama:7b"]
 
     def test_get_recommended_model_french(self):
-        """Test recommended model for French"""
+        """Test recommended model for French (Phase 5: capability-based)"""
         service = OllamaService()
 
-        model = service.get_recommended_model("fr")
+        # Phase 5: Must provide installed models
+        installed = [{"name": "mistral:7b"}, {"name": "llama2:7b"}]
 
+        model = service.get_recommended_model("fr", installed_models=installed)
+
+        # Mistral should score highest for French due to language support
         assert model == "mistral:7b"
 
     def test_get_recommended_model_technical_english(self):
-        """Test recommended model for technical English"""
+        """Test recommended model for technical English (Phase 5: capability-based)"""
         service = OllamaService()
 
-        model = service.get_recommended_model("en", "technical")
+        # Phase 5: Must provide installed models
+        installed = [{"name": "codellama:7b"}, {"name": "llama2:7b"}]
 
+        model = service.get_recommended_model(
+            "en", "technical", installed_models=installed
+        )
+
+        # Codellama should score highest for technical use case
         assert model == "codellama:7b"
 
     def test_get_recommended_model_grammar_spanish(self):
-        """Test recommended model for Spanish grammar"""
+        """Test recommended model for Spanish grammar (Phase 5: capability-based)"""
         service = OllamaService()
 
-        model = service.get_recommended_model("es", "grammar")
+        # Phase 5: Must provide installed models
+        installed = [{"name": "llama2:13b"}, {"name": "llama2:7b"}]
 
+        model = service.get_recommended_model(
+            "es", "grammar", installed_models=installed
+        )
+
+        # Larger llama2 should score higher for grammar
         assert model == "llama2:13b"
 
     def test_get_recommended_model_unknown_language(self):

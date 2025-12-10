@@ -189,26 +189,19 @@ class TestRunAllTests:
         async def mock_test():
             pass
 
-        for i, (test_name, _) in enumerate(
-            [
-                ("AI Service Base", None),
-                ("Budget Manager", None),
-                ("Ollama Service", None),
-                ("Conversation Manager", None),
-                ("Speech Processor", None),
-                ("AI Router Integration", None),
-                ("Conversation Flow", None),
-                ("Multi-Language Support", None),
-                ("Performance Test", None),
-                ("End-to-End Learning", None),
-                ("Budget Fallback", None),
-                ("Cost Estimation", None),
-            ]
-        ):
-            method_name = (
-                f"test_{test_name.lower().replace(' ', '_').replace('-', '_')}"
-            )
-            setattr(suite, method_name, mock_test)
+        # Directly set all 12 test methods to match actual method names
+        suite.test_ai_service_base = mock_test
+        suite.test_budget_manager = mock_test
+        suite.test_ollama_service = mock_test
+        suite.test_conversation_manager = mock_test
+        suite.test_speech_processor = mock_test
+        suite.test_ai_router_integration = mock_test
+        suite.test_conversation_flow = mock_test
+        suite.test_multi_language_support = mock_test
+        suite.test_performance = mock_test
+        suite.test_e2e_learning = mock_test
+        suite.test_budget_fallback = mock_test
+        suite.test_cost_estimation = mock_test
 
         result = await suite.run_all_tests()
 
@@ -916,10 +909,10 @@ class TestIntegrationTestMethodCoverage:
         mock_status_initial = MagicMock()
         mock_status_initial.remaining_budget = 10.0
         mock_status_initial.percentage_used = 0.5
-        mock_status_initial.total_usage = 5.0
+        mock_status_initial.used_budget = 5.0
 
         mock_status_updated = MagicMock()
-        mock_status_updated.total_usage = 5.05  # Increased after track_usage
+        mock_status_updated.used_budget = 5.05  # Increased after track_usage
 
         mock_budget_manager.get_current_budget_status.side_effect = [
             mock_status_initial,
@@ -1063,9 +1056,8 @@ class TestIntegrationTestMethodCoverage:
         # Mock budget_manager
         mock_budget = MagicMock()
         mock_status_initial = MagicMock()
-        mock_status_initial.total_usage = 5.0
+        mock_status_initial.used_budget = 5.0
         mock_budget.get_current_budget_status.return_value = mock_status_initial
-        mock_budget.current_usage = 5.0
 
         # Mock ai_router
         mock_router = MagicMock()

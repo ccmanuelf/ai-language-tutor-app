@@ -68,13 +68,20 @@ class TestOllamaAPIEndpoints:
             assert result["available"] is True
             assert len(result["models"]) == 2
             assert result["models"][0]["name"] == "llama2:7b"
-            assert "recommended" in result
-            assert "en" in result["recommended"]
+            # Phase 5: Check for model_capabilities instead of hardcoded recommended
+            assert "model_capabilities" in result
+            assert len(result["model_capabilities"]) == 2
             assert "2 Ollama" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_list_ollama_models_recommended_structure(self, mock_user):
-        """Test that recommended models are properly structured"""
+    async def test_list_ollama_models_capabilities_structure(self, mock_user):
+        """Test that model capabilities are properly structured (Phase 5)"""
+        mock_models = [
+            {"name": "codellama:7b"},
+            {"name": "mistral:7b"},
+            {"name": "neural-chat:7b"},
+        ]
+
         with (
             patch.object(
                 OllamaService, "check_availability", new_callable=AsyncMock
@@ -84,54 +91,109 @@ class TestOllamaAPIEndpoints:
             ) as mock_list,
         ):
             mock_avail.return_value = True
-            mock_list.return_value = []
+            mock_list.return_value = mock_models
 
             result = await list_ollama_models(current_user=mock_user)
 
-            recommended = result["recommended"]
+            # Phase 5: Should return model_capabilities instead of hardcoded recommended
+            assert "model_capabilities" in result
+            capabilities = result["model_capabilities"]
 
-            # Check key languages have recommendations
-            assert "en" in recommended
-            assert "fr" in recommended
-            assert "es" in recommended
+            # Should have capabilities for all installed models
+            assert len(capabilities) == 3
 
-            # Check English has expected models
-            assert "neural-chat:7b" in recommended["en"]
-            assert "llama2:7b" in recommended["en"]
+            # Check structure of capabilities
+            for cap in capabilities:
+                assert "name" in cap
+                assert "capabilities" in cap
+                assert "is_code_model" in cap["capabilities"]
+                assert "is_multilingual" in cap["capabilities"]
+                assert "language_support" in cap["capabilities"]
+
+            # Verify codellama is detected as code model
+            codellama_cap = next(c for c in capabilities if c["name"] == "codellama:7b")
+            assert codellama_cap["capabilities"]["is_code_model"] is True
+
+            # Verify mistral has French support
+            mistral_cap = next(c for c in capabilities if c["name"] == "mistral:7b")
+            assert "fr" in mistral_cap["capabilities"]["language_support"]
 
     @pytest.mark.asyncio
     async def test_get_recommended_model_default_params(self, mock_user):
         """Test get_recommended_models with default params"""
-        with patch.object(
-            OllamaService, "get_recommended_model", return_value="neural-chat:7b"
-        ) as mock_recommend:
+        mock_installed = [
+            {"name": "neural-chat:7b"},
+            {"name": "llama2:7b"},
+            {"name": "codellama:7b"},
+        ]
+
+        with (
+            patch.object(
+                OllamaService, "list_models", new_callable=AsyncMock
+            ) as mock_list,
+            patch.object(
+                OllamaService, "get_recommended_model", return_value="neural-chat:7b"
+            ) as mock_recommend,
+        ):
+            mock_list.return_value = mock_installed
+
             result = await get_recommended_models(current_user=mock_user)
 
             assert result["language"] == "en"  # Default
             assert result["use_case"] == "conversation"  # Default
             assert result["recommended_model"] == "neural-chat:7b"
             assert "alternatives" in result
-            mock_recommend.assert_called_once_with("en", "conversation")
+            # Phase 4: Now passes installed_models parameter
+            mock_recommend.assert_called_once_with(
+                "en", "conversation", installed_models=mock_installed
+            )
 
     @pytest.mark.asyncio
     async def test_get_recommended_model_with_language(self, mock_user):
         """Test get_recommended_models with language parameter"""
-        with patch.object(
-            OllamaService, "get_recommended_model", return_value="mistral:7b"
-        ) as mock_recommend:
+        mock_installed = [
+            {"name": "mistral:7b"},
+            {"name": "llama2:7b"},
+        ]
+
+        with (
+            patch.object(
+                OllamaService, "list_models", new_callable=AsyncMock
+            ) as mock_list,
+            patch.object(
+                OllamaService, "get_recommended_model", return_value="mistral:7b"
+            ) as mock_recommend,
+        ):
+            mock_list.return_value = mock_installed
+
             result = await get_recommended_models(language="fr", current_user=mock_user)
 
             assert result["language"] == "fr"
             assert result["recommended_model"] == "mistral:7b"
             assert "llama2:7b" in result["alternatives"]  # Alternative for French
-            mock_recommend.assert_called_once_with("fr", "conversation")
+            # Phase 4: Now passes installed_models parameter
+            mock_recommend.assert_called_once_with(
+                "fr", "conversation", installed_models=mock_installed
+            )
 
     @pytest.mark.asyncio
     async def test_get_recommended_model_with_use_case(self, mock_user):
         """Test get_recommended_models with use_case parameter"""
-        with patch.object(
-            OllamaService, "get_recommended_model", return_value="codellama:7b"
-        ) as mock_recommend:
+        mock_installed = [
+            {"name": "codellama:7b"},
+            {"name": "llama2:7b"},
+        ]
+
+        with (
+            patch.object(
+                OllamaService, "list_models", new_callable=AsyncMock
+            ) as mock_list,
+            patch.object(
+                OllamaService, "get_recommended_model", return_value="codellama:7b"
+            ) as mock_recommend,
+        ):
+            mock_list.return_value = mock_installed
+
             result = await get_recommended_models(
                 language="en", use_case="technical", current_user=mock_user
             )
@@ -139,16 +201,32 @@ class TestOllamaAPIEndpoints:
             assert result["language"] == "en"
             assert result["use_case"] == "technical"
             assert result["recommended_model"] == "codellama:7b"
-            mock_recommend.assert_called_once_with("en", "technical")
+            # Phase 4: Now passes installed_models parameter
+            mock_recommend.assert_called_once_with(
+                "en", "technical", installed_models=mock_installed
+            )
 
     @pytest.mark.asyncio
     async def test_get_recommended_model_alternatives_exclude_recommended(
         self, mock_user
     ):
         """Test that alternatives don't include the recommended model"""
-        with patch.object(
-            OllamaService, "get_recommended_model", return_value="neural-chat:7b"
+        mock_installed = [
+            {"name": "neural-chat:7b"},
+            {"name": "llama2:7b"},
+            {"name": "codellama:7b"},
+        ]
+
+        with (
+            patch.object(
+                OllamaService, "list_models", new_callable=AsyncMock
+            ) as mock_list,
+            patch.object(
+                OllamaService, "get_recommended_model", return_value="neural-chat:7b"
+            ),
         ):
+            mock_list.return_value = mock_installed
+
             result = await get_recommended_models(language="en", current_user=mock_user)
 
             assert result["recommended_model"] == "neural-chat:7b"
@@ -203,6 +281,8 @@ class TestOllamaAPIEndpoints:
     @pytest.mark.asyncio
     async def test_all_endpoints_validate_logic(self, mock_user):
         """Test that all endpoint functions execute without errors"""
+        mock_installed = [{"name": "llama2:7b"}]
+
         with (
             patch.object(
                 OllamaService, "check_availability", new_callable=AsyncMock
@@ -215,7 +295,7 @@ class TestOllamaAPIEndpoints:
             ),
         ):
             mock_avail.return_value = True
-            mock_list.return_value = []
+            mock_list.return_value = mock_installed
 
             # All these should execute without errors
             result1 = await list_ollama_models(current_user=mock_user)

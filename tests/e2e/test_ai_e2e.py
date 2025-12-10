@@ -489,7 +489,7 @@ class TestOllamaE2E:
 
     @pytest.mark.asyncio
     async def test_ollama_model_selection(self):
-        """Test Ollama selects appropriate models for languages"""
+        """Test Ollama selects appropriate models for languages (Phase 5: capability-based)"""
         from app.services.ollama_service import OllamaService
 
         service = OllamaService()
@@ -498,18 +498,53 @@ class TestOllamaE2E:
             await service.close()
             pytest.skip("Ollama service not running")
 
-        # Test language-based selection
-        en_model = service.get_recommended_model("en", "conversation")
-        assert en_model in ["neural-chat:7b", "llama2:7b"]
+        # Phase 5: Must get installed models first
+        installed_models = await service.list_models()
+        assert len(installed_models) > 0, "No Ollama models installed"
 
-        fr_model = service.get_recommended_model("fr", "conversation")
-        assert fr_model in ["mistral:7b", "llama2:7b"]
+        installed_names = [m["name"] for m in installed_models]
 
-        # Test use-case selection
-        tech_model = service.get_recommended_model("en", "technical")
-        assert tech_model == "codellama:7b"
+        # Test language-based selection - should select from installed models
+        en_model = service.get_recommended_model(
+            "en", "conversation", installed_models=installed_models
+        )
+        assert en_model in installed_names, (
+            f"Selected model {en_model} not in installed models"
+        )
 
-        print(f"\n✅ Ollama Model Selection Test Passed")
+        fr_model = service.get_recommended_model(
+            "fr", "conversation", installed_models=installed_models
+        )
+        assert fr_model in installed_names, (
+            f"Selected model {fr_model} not in installed models"
+        )
+        # Phase 5: Capability-based selection may prefer chat-optimized models over language-specific
+        # Both mistral (French support) and neural-chat (chat-optimized) are valid choices
+        if "mistral:7b" in installed_names and "neural-chat:7b" in installed_names:
+            assert fr_model in ["mistral:7b", "neural-chat:7b"], (
+                "Should select either mistral (language) or neural-chat (chat-optimized) for French"
+            )
+
+        # Test use-case selection - should prefer code models for technical if available
+        tech_model = service.get_recommended_model(
+            "en", "technical", installed_models=installed_models
+        )
+        assert tech_model in installed_names, (
+            f"Selected model {tech_model} not in installed models"
+        )
+
+        # Phase 5: If deepseek-coder is installed, it should be preferred for technical
+        has_code_model = any(
+            "coder" in name.lower() or "deepseek" in name.lower()
+            for name in installed_names
+        )
+        if has_code_model:
+            assert "coder" in tech_model.lower() or "deepseek" in tech_model.lower(), (
+                "Should prefer code-specialized model for technical use case"
+            )
+
+        print(f"\n✅ Ollama Model Selection Test Passed (Phase 5: Capability-based)")
+        print(f"   Installed models: {len(installed_models)}")
         print(f"   English → {en_model}")
         print(f"   French → {fr_model}")
         print(f"   Technical → {tech_model}")
