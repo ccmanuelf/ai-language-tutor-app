@@ -137,13 +137,6 @@ class SpeechProcessor:
         # Phase 2A: Migration to Mistral STT + Piper TTS (Watson deprecated)
         self.audio_libs_available = AUDIO_LIBS_AVAILABLE
 
-        # Watson services deprecated - set to unavailable
-        self.watson_sdk_available = False
-        self.watson_stt_available = False
-        self.watson_tts_available = False
-        self.watson_stt_client = None
-        self.watson_tts_client = None
-
         # Initialize Mistral STT service (primary STT provider)
         self.mistral_stt_available = MISTRAL_STT_AVAILABLE
         self.mistral_stt_service = None

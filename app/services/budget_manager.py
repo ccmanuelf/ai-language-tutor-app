@@ -93,10 +93,6 @@ class BudgetManager:
                 "mistral-small": {"input": 0.0006, "output": 0.0018},
                 "mistral-medium": {"input": 0.0027, "output": 0.0081},
             },
-            "ibm_watson": {
-                "stt": {"per_minute": 0.02},
-                "tts": {"per_character": 0.02 / 1000},  # $0.02 per 1K characters
-            },
         }
 
     def get_current_budget_status(self) -> BudgetStatus:

@@ -8,8 +8,8 @@ Architecture:
 - Frontend: FastHTML + MonsterUI
 - Backend: FastAPI
 - Database: SQLite + ChromaDB + DuckDB (local storage)
-- AI: Claude, Mistral, Qwen APIs + Ollama (offline)
-- Speech: IBM Watson STT/TTS APIs
+- AI: Claude, Mistral, DeepSeek APIs + Ollama (offline)
+- Speech: Mistral STT + Piper TTS (local)
 
 Version: 0.1.0
 Author: Development Team

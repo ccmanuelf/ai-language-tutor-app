@@ -5,7 +5,7 @@ Session 82 - Removed deprecated Watson references
 This utility helps validate API keys for all integrated services:
 - Anthropic Claude
 - Mistral AI
-- Qwen
+- DeepSeek
 
 Current TTS/STT: Piper TTS (local, offline, no API key required)
 
