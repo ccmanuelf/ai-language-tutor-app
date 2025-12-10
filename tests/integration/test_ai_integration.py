@@ -43,14 +43,14 @@ class TestAIRouterIntegration:
                 new_callable=AsyncMock,
             ) as mock_mistral,
             patch(
-                "app.services.qwen_service.QwenService.generate_response",
+                "app.services.deepseek_service.DeepSeekService.generate_response",
                 new_callable=AsyncMock,
-            ) as mock_qwen,
+            ) as mock_deepseek,
         ):
             # Configure mocks
             mock_claude.return_value = Mock(content="Claude response", cost=0.01)
             mock_mistral.return_value = Mock(content="Mistral response", cost=0.01)
-            mock_qwen.return_value = Mock(content="Qwen response", cost=0.01)
+            mock_deepseek.return_value = Mock(content="DeepSeek response", cost=0.01)
 
             # Test English - should select Claude or available provider
             selection = await router.select_provider(
@@ -59,7 +59,7 @@ class TestAIRouterIntegration:
             assert selection is not None
             assert selection.service is not None
 
-            # Test Chinese - should prefer Qwen if available
+            # Test Chinese - should prefer DeepSeek if available
             selection_zh = await router.select_provider(
                 language="zh", use_case="conversation"
             )
@@ -242,14 +242,14 @@ class TestConversationAIIntegration:
                 new_callable=AsyncMock,
             ) as mock_mistral,
             patch(
-                "app.services.qwen_service.QwenService.generate_response",
+                "app.services.deepseek_service.DeepSeekService.generate_response",
                 new_callable=AsyncMock,
-            ) as mock_qwen,
+            ) as mock_deepseek,
         ):
             # All services fail
             mock_claude.side_effect = Exception("Claude unavailable")
             mock_mistral.side_effect = Exception("Mistral unavailable")
-            mock_qwen.side_effect = Exception("Qwen unavailable")
+            mock_deepseek.side_effect = Exception("DeepSeek unavailable")
 
             client = TestClient(app)
             response = client.post(
@@ -398,13 +398,13 @@ class TestMultiLanguageIntegration:
                 new_callable=AsyncMock,
             ) as mock_mistral,
             patch(
-                "app.services.qwen_service.QwenService.generate_response",
+                "app.services.deepseek_service.DeepSeekService.generate_response",
                 new_callable=AsyncMock,
-            ) as mock_qwen,
+            ) as mock_deepseek,
         ):
             mock_claude.return_value = Mock(content="English response", cost=0.01)
             mock_mistral.return_value = Mock(content="French response", cost=0.01)
-            mock_qwen.return_value = Mock(content="Chinese response", cost=0.01)
+            mock_deepseek.return_value = Mock(content="Chinese response", cost=0.01)
 
             client = TestClient(app)
 
@@ -424,10 +424,10 @@ class TestMultiLanguageIntegration:
             assert response_fr.status_code == 200
             assert response_fr.json()["language"] == "fr"
 
-            # Test Chinese with Qwen
+            # Test Chinese with DeepSeek
             response_zh = client.post(
                 "/api/v1/conversations/chat",
-                json={"message": "你好", "language": "zh-qwen"},
+                json={"message": "你好", "language": "zh-deepseek"},
             )
             assert response_zh.status_code == 200
             assert response_zh.json()["language"] == "zh"

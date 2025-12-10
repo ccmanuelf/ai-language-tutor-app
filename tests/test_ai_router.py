@@ -219,11 +219,11 @@ class TestProviderSelection:
         model = router._get_model_for_provider("mistral", "fr")
         assert "mistral" in model.lower()
 
-    def test_get_model_for_provider_qwen(self):
-        """Test getting model for Qwen provider"""
+    def test_get_model_for_provider_deepseek(self):
+        """Test getting model for DeepSeek provider"""
         router = EnhancedAIRouter()
-        model = router._get_model_for_provider("qwen", "zh")
-        assert model == "qwen-plus"
+        model = router._get_model_for_provider("deepseek", "zh")
+        assert model == "deepseek-chat"
 
     def test_get_model_for_provider_ollama(self):
         """Test getting model for Ollama provider"""

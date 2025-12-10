@@ -275,7 +275,7 @@ class Conversation(Base):
     # Conversation metadata
     title = Column(String(255), nullable=True)
     language = Column(String(10), nullable=False)
-    ai_model = Column(String(50), nullable=True)  # claude, qwen, mistral, etc.
+    ai_model = Column(String(50), nullable=True)  # claude, deepseek, mistral, etc.
 
     # Conversation content and context
     context_data = Column(JSON, default=dict)  # Context, documents, etc.

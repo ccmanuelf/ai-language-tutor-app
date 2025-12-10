@@ -99,7 +99,7 @@ def create_mock_ai_response(
         content: Response text content
         cost: Estimated cost of the request
         model: Model name used
-        provider: Provider name (claude, mistral, qwen)
+        provider: Provider name (claude, mistral, deepseek)
 
     Returns:
         MockAIResponse object
@@ -203,7 +203,7 @@ def mock_ai_router(
 
     Args:
         response_content: AI response text
-        provider: Provider to simulate (claude, mistral, qwen)
+        provider: Provider to simulate (claude, mistral, deepseek)
         should_fail: Whether AI service should fail
         failure_error: Exception to raise on failure
 
@@ -309,8 +309,8 @@ def get_successful_mistral_mock() -> Mock:
     )
 
 
-def get_successful_qwen_mock() -> Mock:
-    """Get mock for successful Qwen AI service"""
+def get_successful_deepseek_mock() -> Mock:
+    """Get mock for successful DeepSeek AI service"""
     return mock_ai_router(
-        response_content="你好！我是Qwen，你的AI语言导师。", provider="qwen"
+        response_content="你好！我是DeepSeek，你的AI语言导师。", provider="deepseek"
     )

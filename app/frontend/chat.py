@@ -31,7 +31,7 @@ def create_chat_route(app):
                             Option("English (Claude)", value="en-claude"),
                             Option("Spanish (Claude)", value="es-claude"),
                             Option("French (Mistral)", value="fr-mistral"),
-                            Option("Chinese (Qwen)", value="zh-qwen"),
+                            Option("Chinese (DeepSeek)", value="zh-deepseek"),
                             Option("Japanese (Claude)", value="ja-claude"),
                             id="language-select",
                             cls="form-input",

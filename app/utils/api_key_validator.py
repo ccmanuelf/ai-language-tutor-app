@@ -123,43 +123,6 @@ class APIKeyValidator:
                 "service": "Mistral AI",
             }
 
-    async def validate_qwen_api(self) -> Dict[str, Any]:
-        """Validate Qwen API key"""
-        try:
-            api_key = os.getenv("QWEN_API_KEY")
-            if not api_key or api_key == "your_qwen_api_key_here":
-                return {
-                    "status": "not_configured",
-                    "message": "API key not provided",
-                    "service": "Qwen (Alibaba Cloud)",
-                }
-
-            # For Qwen, we'll implement a basic HTTP test
-            import httpx
-
-            _headers = {  # noqa: F841 - Intentional placeholder
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            }
-
-            # Test endpoint (this is a simplified test)
-            async with httpx.AsyncClient() as _client:  # noqa: F841 - Intentional placeholder
-                # Note: This is a placeholder - actual Qwen API validation
-                # would require specific endpoint and format
-                return {
-                    "status": "configured",
-                    "message": "API key configured (validation requires specific endpoint setup)",
-                    "service": "Qwen (Alibaba Cloud)",
-                    "note": "Full validation will be implemented with service integration",
-                }
-
-        except Exception as e:
-            return {
-                "status": "invalid",
-                "message": f"Validation failed: {str(e)}",
-                "service": "Qwen (Alibaba Cloud)",
-            }
-
     async def validate_all_apis(self) -> Dict[str, Dict[str, Any]]:
         """Validate all API keys"""
         print("🔍 Validating API Keys for AI Language Tutor App...")
@@ -168,7 +131,6 @@ class APIKeyValidator:
         validators = [
             ("anthropic", self.validate_anthropic_api),
             ("mistral", self.validate_mistral_api),
-            ("qwen", self.validate_qwen_api),
         ]
 
         results = {}

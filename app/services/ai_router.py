@@ -553,7 +553,7 @@ class EnhancedAIRouter:
         model_mappings = {
             "claude": "claude-3-haiku-20240307",
             "mistral": "mistral-small-latest",
-            "qwen": "qwen-plus",
+            "deepseek": "deepseek-chat",
             "ollama": ollama_service.get_recommended_model(language)
             if hasattr(ollama_service, "get_recommended_model")
             else "llama2:7b",
@@ -570,7 +570,7 @@ class EnhancedAIRouter:
         base_costs = {
             "claude": 0.008,  # Claude Haiku input cost
             "mistral": 0.0007,  # Mistral small cost
-            "qwen": 0.002,  # Qwen cost (estimated)
+            "deepseek": 0.001,  # DeepSeek cost
             "ollama": 0.0,  # Local models are free
         }
 
@@ -936,8 +936,6 @@ ai_router = EnhancedAIRouter()
 ai_router.register_provider("claude", claude_service)
 ai_router.register_provider("mistral", mistral_service)
 ai_router.register_provider("deepseek", deepseek_service)
-# Legacy alias for backward compatibility during migration
-ai_router.register_provider("qwen", deepseek_service)
 ai_router.register_provider("ollama", ollama_service)  # Fallback provider
 
 

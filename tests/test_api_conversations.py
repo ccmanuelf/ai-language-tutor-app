@@ -18,8 +18,8 @@ from app.main import app
 from app.models.simple_user import SimpleUser
 from tests.test_helpers.ai_mocks import (
     get_successful_claude_mock,
+    get_successful_deepseek_mock,
     get_successful_mistral_mock,
-    get_successful_qwen_mock,
     mock_ai_router,
     mock_failing_ai_service,
     mock_no_ai_service_available,
@@ -769,7 +769,7 @@ class TestChatEndpoint:
             ("en-claude", get_successful_claude_mock()),
             ("es-claude", get_successful_claude_mock()),
             ("fr-mistral", get_successful_mistral_mock()),
-            ("zh-qwen", get_successful_qwen_mock()),
+            ("zh-deepseek", get_successful_deepseek_mock()),
             ("ja-claude", get_successful_claude_mock()),
         ]
 

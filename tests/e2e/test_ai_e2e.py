@@ -174,7 +174,12 @@ class TestAIRouterE2E:
             assert selection is not None
             assert selection.service is not None
             # Accept both cloud and local providers (Ollama is valid fallback)
-            assert selection.provider_name in ["claude", "mistral", "qwen", "ollama"]
+            assert selection.provider_name in [
+                "claude",
+                "mistral",
+                "deepseek",
+                "ollama",
+            ]
 
             print(f"\n✅ AI Router E2E Test Passed")
             print(f"   Selected Provider: {selection.provider_name}")
@@ -345,10 +350,10 @@ class TestConversationEndpointE2E:
                 assert "response" in data
                 assert data["response"] != ""
 
-                # Verify using real AI provider (Claude, Mistral, or Qwen - not Ollama fallback)
+                # Verify using real AI provider (Claude, Mistral, or DeepSeek - not Ollama fallback)
                 # This is the primary check - if ai_provider is one of these, it's using real AI
                 assert "ai_provider" in data
-                assert data["ai_provider"] in ["claude", "mistral", "qwen"], (
+                assert data["ai_provider"] in ["claude", "mistral", "deepseek"], (
                     f"Expected real AI provider, got {data.get('ai_provider')}"
                 )
 
@@ -694,7 +699,7 @@ if __name__ == "__main__":
     print("=" * 80)
     print("\nThese tests will:")
     print("  - Use real API keys from .env file")
-    print("  - Make real API calls to Claude, Mistral, Qwen")
+    print("  - Make real API calls to Claude, Mistral, DeepSeek")
     print("  - Consume API credits (COST MONEY)")
     print("  - Take longer to run (5-30 seconds per test)")
     print("\nIf you want to proceed, run:")
