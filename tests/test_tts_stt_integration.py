@@ -17,10 +17,77 @@ This ensures:
 - Complete pipeline works for all supported languages
 """
 
+import asyncio
+
 import pytest
 
 from app.services.mistral_stt_service import MistralSTTService
 from app.services.piper_tts_service import PiperTTSService
+
+# =============================================================================
+# Retry Logic for API Rate Limiting
+# =============================================================================
+
+
+async def transcribe_with_retry(
+    stt_service, audio_data, language, max_retries=3, base_delay=1.0
+):
+    """
+    Transcribe audio with retry logic and exponential backoff.
+
+    This prevents transient failures due to API rate limiting when running
+    the full test suite (4,385 tests).
+
+    Args:
+        stt_service: STT service instance
+        audio_data: Audio bytes to transcribe
+        language: Language code (en, es, de, etc.)
+        max_retries: Maximum number of retry attempts (default: 3)
+        base_delay: Base delay in seconds for exponential backoff (default: 1.0)
+
+    Returns:
+        STT result object
+
+    Raises:
+        Last exception if all retries fail
+    """
+    last_exception = None
+
+    for attempt in range(max_retries):
+        try:
+            result = await stt_service.transcribe_audio(audio_data, language=language)
+
+            # Add small delay after successful call to prevent rate limiting
+            if attempt > 0:
+                # If we had to retry, add extra delay
+                await asyncio.sleep(0.5)
+
+            return result
+
+        except Exception as e:
+            last_exception = e
+            error_msg = str(e).lower()
+
+            # Check if it's a retryable error (503, 429, rate limit, etc.)
+            is_retryable = (
+                "503" in error_msg
+                or "429" in error_msg
+                or "rate limit" in error_msg
+                or "service unavailable" in error_msg
+                or "too many requests" in error_msg
+            )
+
+            # If not retryable or last attempt, raise immediately
+            if not is_retryable or attempt == max_retries - 1:
+                raise
+
+            # Exponential backoff: 1s, 2s, 4s
+            delay = base_delay * (2**attempt)
+            await asyncio.sleep(delay)
+
+    # Should never reach here, but just in case
+    raise last_exception
+
 
 # Test phrases optimized for TTS→STT round-trip
 # Using simple, clear phrases that should transcribe accurately
@@ -66,8 +133,8 @@ class TestTTStoSTTRoundTrip:
 
         assert len(audio_data) > 1000, "TTS audio too small"
 
-        # Transcribe audio with STT
-        stt_result = await stt_service.transcribe_audio(audio_data, language="en")
+        # Transcribe audio with STT (with retry logic)
+        stt_result = await transcribe_with_retry(stt_service, audio_data, language="en")
 
         # Verify transcription is close to original
         # Note: May not be exact due to TTS/STT characteristics
@@ -90,7 +157,8 @@ class TestTTStoSTTRoundTrip:
 
         assert len(audio_data) > 1000
 
-        stt_result = await stt_service.transcribe_audio(audio_data, language="de")
+        # Use retry logic to handle API rate limiting
+        stt_result = await transcribe_with_retry(stt_service, audio_data, language="de")
 
         transcription_lower = stt_result.transcript.lower().strip()
 
@@ -108,7 +176,7 @@ class TestTTStoSTTRoundTrip:
 
         assert len(audio_data) > 1000
 
-        stt_result = await stt_service.transcribe_audio(audio_data, language="es")
+        stt_result = await transcribe_with_retry(stt_service, audio_data, language="es")
 
         transcription_lower = stt_result.transcript.lower().strip()
 
@@ -126,7 +194,7 @@ class TestTTStoSTTRoundTrip:
 
         assert len(audio_data) > 1000
 
-        stt_result = await stt_service.transcribe_audio(audio_data, language="fr")
+        stt_result = await transcribe_with_retry(stt_service, audio_data, language="fr")
 
         transcription_lower = stt_result.transcript.lower().strip()
 
@@ -144,7 +212,7 @@ class TestTTStoSTTRoundTrip:
 
         assert len(audio_data) > 1000
 
-        stt_result = await stt_service.transcribe_audio(audio_data, language="it")
+        stt_result = await transcribe_with_retry(stt_service, audio_data, language="it")
 
         transcription_lower = stt_result.transcript.lower().strip()
 
@@ -162,7 +230,7 @@ class TestTTStoSTTRoundTrip:
 
         assert len(audio_data) > 1000
 
-        stt_result = await stt_service.transcribe_audio(audio_data, language="pt")
+        stt_result = await transcribe_with_retry(stt_service, audio_data, language="pt")
 
         transcription_lower = stt_result.transcript.lower().strip()
 
@@ -180,7 +248,7 @@ class TestTTStoSTTRoundTrip:
 
         assert len(audio_data) > 1000
 
-        stt_result = await stt_service.transcribe_audio(audio_data, language="zh")
+        stt_result = await transcribe_with_retry(stt_service, audio_data, language="zh")
 
         # Check for key Chinese characters
         # Note: Chinese transcription may have variations
@@ -227,13 +295,18 @@ class TestFullValidationLoop:
             # Verify audio was generated
             assert len(audio_data) > 1000, f"{lang}: TTS audio too small"
 
-            # Step 2: Transcribe with STT
-            stt_result = await stt_service.transcribe_audio(audio_data, language=lang)
+            # Step 2: Transcribe with STT (with retry logic)
+            stt_result = await transcribe_with_retry(
+                stt_service, audio_data, language=lang
+            )
 
             # Verify transcription was generated
             assert len(stt_result.transcript) > 0, (
                 f"{lang}: STT produced empty transcription"
             )
+
+            # Add small delay between language tests to prevent API rate limiting
+            await asyncio.sleep(0.2)
 
             # Store result
             results.append(
@@ -258,8 +331,8 @@ class TestFullValidationLoop:
         final_audio, final_tts_meta = await tts_service.synthesize_speech(
             TTS_STT_TEST_PHRASES["en"], language="en"
         )
-        final_stt_result = await stt_service.transcribe_audio(
-            final_audio, language="en"
+        final_stt_result = await transcribe_with_retry(
+            stt_service, final_audio, language="en"
         )
 
         assert len(final_stt_result.transcript) > 0, "Final EN step: STT failed"
@@ -289,14 +362,20 @@ class TestCrossLanguageValidation:
             ("en", "Hello once more, final test."),
         ]
 
-        for lang, phrase in test_sequence:
+        for i, (lang, phrase) in enumerate(test_sequence):
             # Generate and transcribe
             audio_data, _ = await tts_service.synthesize_speech(phrase, language=lang)
-            stt_result = await stt_service.transcribe_audio(audio_data, language=lang)
+            stt_result = await transcribe_with_retry(
+                stt_service, audio_data, language=lang
+            )
 
             # Verify we got valid output
             assert len(audio_data) > 1000, f"{lang}: Audio generation failed"
             assert len(stt_result.transcript) > 0, f"{lang}: Transcription failed"
+
+            # Add small delay between switches to prevent API rate limiting
+            if i < len(test_sequence) - 1:
+                await asyncio.sleep(0.2)
 
     @pytest.mark.asyncio
     async def test_voice_quality_consistency(self, tts_service, stt_service):
@@ -309,8 +388,14 @@ class TestCrossLanguageValidation:
             audio_data, _ = await tts_service.synthesize_speech(
                 test_phrase, language="en"
             )
-            stt_result = await stt_service.transcribe_audio(audio_data, language="en")
+            stt_result = await transcribe_with_retry(
+                stt_service, audio_data, language="en"
+            )
             transcriptions.append(stt_result.transcript.lower().strip())
+
+            # Add small delay between iterations to prevent API rate limiting
+            if i < 2:
+                await asyncio.sleep(0.2)
 
         # All transcriptions should be similar (contain key words)
         for trans in transcriptions:
@@ -340,14 +425,19 @@ class TestAudioQualityInRoundTrip:
         simple_audio, _ = await tts_service.synthesize_speech(
             simple_phrase, language="en"
         )
-        simple_result = await stt_service.transcribe_audio(simple_audio, language="en")
+        simple_result = await transcribe_with_retry(
+            stt_service, simple_audio, language="en"
+        )
+
+        # Add delay between API calls
+        await asyncio.sleep(0.2)
 
         # Test complex phrase
         complex_audio, _ = await tts_service.synthesize_speech(
             complex_phrase, language="en"
         )
-        complex_result = await stt_service.transcribe_audio(
-            complex_audio, language="en"
+        complex_result = await transcribe_with_retry(
+            stt_service, complex_audio, language="en"
         )
 
         # Both should produce valid output
@@ -372,17 +462,21 @@ class TestAudioQualityInRoundTrip:
 
         spanish_phrase = "Esta es una prueba de múltiples voces."
 
-        for voice_name in spanish_voices:
+        for i, voice_name in enumerate(spanish_voices):
             if voice_name in tts_service.voices:
                 # Generate with specific voice
                 audio_data, _ = await tts_service.synthesize_speech(
                     spanish_phrase, voice=voice_name
                 )
 
-                # Transcribe
-                stt_result = await stt_service.transcribe_audio(
-                    audio_data, language="es"
+                # Use retry logic and add delay between voices to prevent rate limiting
+                stt_result = await transcribe_with_retry(
+                    stt_service, audio_data, language="es"
                 )
+
+                # Add small delay between voice tests to prevent API rate limiting
+                if i < len(spanish_voices) - 1:
+                    await asyncio.sleep(0.3)
 
                 # Should transcribe successfully
                 assert len(stt_result.transcript) > 0, (
