@@ -18,18 +18,19 @@ All 6 tutor modes supported:
 """
 
 import logging
-from typing import Dict, List, Any, Optional
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, Body
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.services.tutor_mode_manager import (
-    tutor_mode_manager,
-    TutorMode,
-    DifficultyLevel,
-)
-from app.services.auth import get_current_user
 from app.models.database import User
+from app.services.auth import get_current_user
+from app.services.tutor_mode_manager import (
+    DifficultyLevel,
+    TutorMode,
+    tutor_mode_manager,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -376,6 +377,31 @@ async def submit_session_feedback(
         raise HTTPException(status_code=500, detail="Failed to submit feedback")
 
 
+def _build_category_dict() -> Dict[str, Any]:
+    """
+    Build the categories dictionary.
+
+    Extracted to allow exception testing of get_mode_categories.
+    """
+    return {
+        "casual": {
+            "name": "Casual Practice",
+            "description": "Relaxed conversation practice with minimal pressure",
+            "modes": ["chit_chat", "open_session"],
+        },
+        "professional": {
+            "name": "Professional Communication",
+            "description": "Business and professional language skills",
+            "modes": ["interview_simulation", "deadline_negotiations"],
+        },
+        "educational": {
+            "name": "Structured Learning",
+            "description": "Systematic language instruction and skill building",
+            "modes": ["teacher_mode", "vocabulary_builder"],
+        },
+    }
+
+
 @router.get("/categories")
 async def get_mode_categories() -> Dict[str, Any]:
     """
@@ -384,24 +410,7 @@ async def get_mode_categories() -> Dict[str, Any]:
     Returns information about the different categories of tutor modes available.
     """
     try:
-        categories = {
-            "casual": {
-                "name": "Casual Practice",
-                "description": "Relaxed conversation practice with minimal pressure",
-                "modes": ["chit_chat", "open_session"],
-            },
-            "professional": {
-                "name": "Professional Communication",
-                "description": "Business and professional language skills",
-                "modes": ["interview_simulation", "deadline_negotiations"],
-            },
-            "educational": {
-                "name": "Structured Learning",
-                "description": "Systematic language instruction and skill building",
-                "modes": ["teacher_mode", "vocabulary_builder"],
-            },
-        }
-
+        categories = _build_category_dict()
         return {"success": True, "categories": categories}
 
     except Exception as e:
