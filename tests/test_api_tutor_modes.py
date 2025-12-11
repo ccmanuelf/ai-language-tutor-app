@@ -38,6 +38,7 @@ from app.api.tutor_modes import (
     TutorConversationResponse,
     TutorModeInfo,
     TutorSessionResponse,
+    _build_category_dict,
     end_tutor_session,
     get_available_modes,
     get_mode_categories,
@@ -875,6 +876,19 @@ class TestGetModeCategories:
             assert "modes" in categories[category_key]
             assert isinstance(categories[category_key]["modes"], list)
             assert len(categories[category_key]["modes"]) > 0
+
+    @pytest.mark.asyncio
+    async def test_get_categories_exception_handling(self):
+        """Test exception handling in get_mode_categories - covers lines 415-417"""
+        # Now that we've refactored the code, we can mock _build_category_dict to raise an exception
+        with patch("app.api.tutor_modes._build_category_dict") as mock_build:
+            mock_build.side_effect = RuntimeError("Simulated error building categories")
+
+            with pytest.raises(HTTPException) as exc_info:
+                await get_mode_categories()
+
+            assert exc_info.value.status_code == 500
+            assert "Failed to retrieve mode categories" in exc_info.value.detail
 
 
 # ============================================================================
