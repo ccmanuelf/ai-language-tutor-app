@@ -29,9 +29,10 @@
 
 ### Total Project Impact
 - **New Tests Created:** 50
-- **Total Project Tests:** 4,384 (up from 4,335)
-- **All Tests Passing:** 4,384 ✅
+- **Total Project Tests:** 4,385 (up from 4,335)
+- **All Tests Passing:** 4,385 ✅
 - **No Regressions:** ✅
+- **Environment:** Python 3.12.2 (anaconda3) ✅
 
 ---
 
@@ -279,37 +280,51 @@ pytest tests/ --tb=no -q
 ```
 
 **Results:**
-- **Total Tests:** 4,384
-- **Passing:** 4,384 ✅
-- **Failing:** 0 (1 pre-existing failure in unrelated TTS/STT test)
+- **Total Tests:** 4,385
+- **Passing:** 4,385 ✅
+- **Failing:** 0 ✅
 - **New Tests Added:** 50
-- **Execution Time:** 2 minutes 57 seconds
+- **Execution Time:** 3 minutes 5 seconds
+
+**Note:** One TTS/STT integration test initially showed as failing but was transient - verified passing on re-run.
 
 ---
 
 ## 💡 LESSONS LEARNED
 
-### 1. Coverage Tool Module Path Matters
+### 1. Environment Verification is Critical
+**Issue:** Must always verify correct Python environment before starting work  
+**Solution:** Check `which python` and `python --version` at session start  
+**Requirement:** Python 3.12.2 (anaconda3) for this project  
+**Lesson:** Document environment in session notes, add to DAILY_PROMPT_TEMPLATE
+
+### 2. Zero Failures Means Zero Failures
+**Issue:** Initially one test showed as failing in full suite  
+**Action:** Investigated immediately, re-ran to verify (was transient)  
+**Standard:** ALL tests must pass before session completion - no exceptions  
+**Lesson:** Never ignore "unrelated" failures - verify they're truly transient or fix them
+
+### 3. Coverage Tool Module Path Matters
 **Issue:** Using `--cov=app/api/visual_learning` (file path) showed 0% coverage  
 **Solution:** Use `--cov=app.api.visual_learning` (Python module path) for accurate tracking  
 **Lesson:** Always use Python import paths, not file system paths
 
-### 2. Direct Function Testing Works for Coverage
+### 4. Direct Function Testing Works for Coverage
 **Pattern:** Call endpoint functions directly with `await` and mocked dependencies  
 **Benefit:** Simpler than HTTP testing, still achieves 100% coverage  
 **Requirement:** Import functions from the actual module (not re-exports)
 
-### 3. FastAPI Query Parameters Need Explicit None
+### 5. FastAPI Query Parameters Need Explicit None
 **Issue:** `Query(None)` defaults don't work when calling functions directly  
 **Solution:** Pass explicit `None` values for all optional Query parameters  
 **Example:** `await list_flowcharts(language=None, concept=None, service=mock)`
 
-### 4. Dataclass Field Order Matters
+### 6. Dataclass Field Order Matters
 **Issue:** Fixtures failed when required fields weren't first  
 **Solution:** Always pass required positional arguments first in dataclass constructors  
 **Example:** `VocabularyVisual(visual_id="...", word="...", ...)` not `VocabularyVisual(word="...", visual_id="...")`
 
-### 5. Mock Service Returns Must Match Real Types
+### 7. Mock Service Returns Must Match Real Types
 **Pattern:** Mock service methods return actual dataclass instances  
 **Benefit:** Tests verify serialization logic works with real objects  
 **Advantage:** Catches type mismatch bugs early
