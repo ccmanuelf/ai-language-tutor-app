@@ -20,15 +20,52 @@
 - **Action:** Monitor processes, enlarge timeout windows if needed, but WAIT
 - **Lesson:** Premature termination = incomplete data = hidden problems
 
-### **PRINCIPLE 3: CORRECT ENVIRONMENT ALWAYS**
-- **Rule:** ALWAYS verify and use the correct Python environment before starting work
-- **Project Environment:** Python 3.12.2 (anaconda3)
-- **Verification Steps:**
-  1. `which python` → Should be `/opt/anaconda3/bin/python`
-  2. `python --version` → Should be `Python 3.12.2`
-  3. Check `.python-version` file confirms 3.12.2
-- **Impact:** Wrong environment = false test results, missing dependencies, invalid coverage data
-- **Action:** Run verification commands at session start, document in session notes
+### **PRINCIPLE 3: CORRECT ENVIRONMENT ALWAYS - USE ai-tutor-env VENV**
+- **CRITICAL:** This project uses `ai-tutor-env` virtual environment, NOT anaconda
+- **Rule:** ALWAYS activate ai-tutor-env before ANY commands
+- **Why:** Wrong environment = tests skip, dependencies missing, false results
+- **Project Environment:** Python 3.12.2 (ai-tutor-env virtual environment)
+
+**⚠️ CRITICAL DISCOVERY (Sessions 25, 36, 104):** Environment activation is NOT persistent across bash commands!
+
+**Each bash command is a NEW shell - previous activations DON'T persist!**
+
+```bash
+# ❌ WRONG - These are SEPARATE shell sessions:
+source ai-tutor-env/bin/activate  # Activates in Shell #1
+pytest tests/                      # Runs in Shell #2 (NOT activated!)
+
+# ✅ CORRECT - Single shell session with && operator:
+source ai-tutor-env/bin/activate && pytest tests/
+```
+
+**🔴 MANDATORY PRACTICE - ALWAYS combine activation + command:**
+
+```bash
+cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
+source ai-tutor-env/bin/activate && \
+<your command here>
+```
+
+**Verification Steps:**
+```bash
+cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
+source ai-tutor-env/bin/activate && \
+which python && python --version
+
+# Expected output:
+# /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/bin/python
+# Python 3.12.2
+
+# ❌ If you see /opt/anaconda3/bin/python - YOU'RE IN WRONG ENVIRONMENT!
+```
+
+**Impact of Wrong Environment:**
+- ❌ Tests skip (72 skipped in Session 25 due to missing dependencies)
+- ❌ False coverage results (0% in Session 104 due to wrong module path)
+- ❌ Missing dependencies
+- ❌ Invalid test results
+- ✅ Correct environment = all tests pass, proper coverage, accurate results
 
 ### **PRINCIPLE 4: ZERO FAILURES ALLOWED**
 - **Rule:** ALL tests must pass - no exceptions, even if "unrelated" to current work
@@ -162,6 +199,14 @@
 - 50 tests created
 - All 11 API endpoints covered
 - TRUE 100% - no compromises
+
+**🔴 CRITICAL ISSUE DISCOVERED & RESOLVED:**
+- Session 104 initially ran in anaconda environment (WRONG!)
+- Revalidated all tests in correct ai-tutor-env environment ✅
+- All 50 tests pass with 100% coverage in correct environment ✅
+- Full test suite: 4,383 passed, 2 transient failures (API rate limiting)
+- Root cause documented: `docs/TTS_STT_TRANSIENT_FAILURES_ROOT_CAUSE.md`
+- PRINCIPLE 3 updated to prevent future environment errors ✅
 
 ---
 
