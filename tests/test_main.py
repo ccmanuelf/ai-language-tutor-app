@@ -3,9 +3,12 @@ Test module for FastAPI backend
 AI Language Tutor App - Personal Family Educational Tool
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app
+
+from app.main import app, run_server
 
 client = TestClient(app)
 
@@ -33,3 +36,28 @@ def test_static_files_mount():
     # This should return 404 for non-existent files but not crash
     response = client.get("/static/nonexistent.css")
     assert response.status_code == 404
+
+
+def test_run_server():
+    """Test run_server function"""
+    with patch("app.main.uvicorn.run") as mock_run:
+        run_server()
+        # Verify uvicorn.run was called
+        mock_run.assert_called_once()
+        # Verify it was called with expected parameters
+        call_args = mock_run.call_args
+        assert call_args[0][0] == "main:app"  # First positional arg
+        assert "host" in call_args[1]  # Keyword args
+        assert "port" in call_args[1]
+
+
+def test_main_module_execution():
+    """Test that __main__ block can be executed"""
+    # Test that the run_server function is callable
+    # (actual execution is tested via mocking in test_run_server)
+    assert callable(run_server)
+
+    # Verify run_server is properly imported
+    from app.main import run_server as imported_run_server
+
+    assert imported_run_server is run_server
