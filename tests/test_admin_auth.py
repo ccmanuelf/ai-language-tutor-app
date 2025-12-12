@@ -207,6 +207,55 @@ class TestAdminAuthServicePermissionChecking:
         permissions = self.service.get_user_permissions("invalid_role")
         assert permissions == []
 
+    def test_enable_test_mode(self):
+        """Test enabling test mode"""
+        self.service.enable_test_mode()
+        assert self.service._test_mode is True
+
+    def test_disable_test_mode(self):
+        """Test disabling test mode"""
+        self.service.enable_test_mode()
+        self.service.disable_test_mode()
+        assert self.service._test_mode is False
+
+    def test_has_permission_test_mode_admin_bypass(self):
+        """Test admin users bypass permission checks in test mode"""
+        self.service.enable_test_mode()
+
+        # Admin should have access to ANY permission in test mode, even invalid ones
+        assert (
+            self.service.has_permission(UserRoleEnum.ADMIN, "non_existent_permission")
+            is True
+        )
+        assert (
+            self.service.has_permission(
+                UserRoleEnum.ADMIN, AdminPermission.MANAGE_USERS
+            )
+            is True
+        )
+
+        self.service.disable_test_mode()
+
+    def test_has_permission_test_mode_non_admin_normal(self):
+        """Test non-admin users still follow normal permission checks in test mode"""
+        self.service.enable_test_mode()
+
+        # Child and Parent still follow normal permission checks in test mode
+        assert (
+            self.service.has_permission(
+                UserRoleEnum.CHILD, AdminPermission.MANAGE_USERS
+            )
+            is False
+        )
+        assert (
+            self.service.has_permission(
+                UserRoleEnum.PARENT, AdminPermission.MANAGE_USERS
+            )
+            is False
+        )
+
+        self.service.disable_test_mode()
+
 
 class TestAdminAuthServiceRequirePermissionDecorator:
     """Test require_permission decorator factory"""
