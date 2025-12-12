@@ -525,6 +525,144 @@ class TestSelectProvider:
         assert result.provider_name == "ollama"
         assert result.fallback_reason == FallbackReason("api_unavailable")
 
+    @pytest.mark.asyncio
+    async def test_select_preferred_provider_budget_exceeded_no_override(self):
+        """Test _select_preferred_provider raises exception when budget exceeded and override not allowed (lines 414-427)"""
+        router = EnhancedAIRouter()
+        mock_service = Mock()
+        router.register_provider("claude", mock_service)
+
+        with patch(
+            "app.services.ai_router.budget_manager.get_current_budget_status"
+        ) as mock_budget:
+            with patch.object(router, "_estimate_request_cost", return_value=10.0):
+                with patch(
+                    "app.services.ai_router.budget_manager.can_override_budget",
+                    return_value=False,
+                ):
+                    mock_budget.return_value = BudgetStatus(
+                        total_budget=30.0,
+                        used_budget=29.0,
+                        remaining_budget=1.0,
+                        percentage_used=96.67,
+                        alert_level=BudgetAlert.RED,
+                        days_remaining=5,
+                        projected_monthly_cost=35.0,
+                        is_over_budget=False,
+                    )
+
+                    # Should raise exception (lines 414-427)
+                    with pytest.raises(Exception) as exc_info:
+                        await router._select_preferred_provider(
+                            preferred_provider="claude",
+                            language="en",
+                            use_case="conversation",
+                            enforce_budget=True,
+                            user_preferences={
+                                "ai_provider_settings": {
+                                    "auto_fallback_to_ollama": False
+                                }
+                            },
+                        )
+
+                    assert "Budget exceeded" in str(exc_info.value)
+                    assert "Enable budget override" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_select_preferred_provider_budget_exceeded_with_override(self):
+        """Test _select_preferred_provider allows override when budget exceeded and override allowed"""
+        router = EnhancedAIRouter()
+        mock_service = Mock()
+        router.register_provider("claude", mock_service)
+
+        with patch(
+            "app.services.ai_router.budget_manager.get_current_budget_status"
+        ) as mock_budget:
+            with patch.object(router, "_estimate_request_cost", return_value=10.0):
+                with patch(
+                    "app.services.ai_router.budget_manager.can_override_budget",
+                    return_value=True,
+                ):
+                    mock_budget.return_value = BudgetStatus(
+                        total_budget=30.0,
+                        used_budget=29.0,
+                        remaining_budget=1.0,
+                        percentage_used=96.67,
+                        alert_level=BudgetAlert.RED,
+                        days_remaining=5,
+                        projected_monthly_cost=35.0,
+                        is_over_budget=False,
+                    )
+
+                    result = await router._select_preferred_provider(
+                        preferred_provider="claude",
+                        language="en",
+                        use_case="conversation",
+                        enforce_budget=True,
+                        user_preferences={},
+                    )
+
+                    assert result.provider_name == "claude"
+                    assert result.requires_budget_override is True
+                    assert result.budget_warning is not None
+
+    @pytest.mark.asyncio
+    async def test_select_preferred_provider_budget_exceeded_auto_fallback(self):
+        """Test _select_preferred_provider auto-falls back to Ollama when enabled"""
+        router = EnhancedAIRouter()
+        mock_service = Mock()
+        router.register_provider("claude", mock_service)
+
+        with patch(
+            "app.services.ai_router.budget_manager.get_current_budget_status"
+        ) as mock_budget:
+            with patch.object(router, "_estimate_request_cost", return_value=10.0):
+                with patch(
+                    "app.services.ai_router.budget_manager.can_override_budget",
+                    return_value=False,
+                ):
+                    with patch(
+                        "app.services.ai_router.ollama_service.check_availability",
+                        return_value=True,
+                    ):
+                        with patch(
+                            "app.services.ai_router.ollama_service.get_recommended_model",
+                            return_value="llama2:7b",
+                        ):
+                            with patch(
+                                "app.services.ai_router.ollama_service.list_models",
+                                return_value=[{"name": "llama2:7b"}],
+                            ):
+                                mock_budget.return_value = BudgetStatus(
+                                    total_budget=30.0,
+                                    used_budget=29.0,
+                                    remaining_budget=1.0,
+                                    percentage_used=96.67,
+                                    alert_level=BudgetAlert.RED,
+                                    days_remaining=5,
+                                    projected_monthly_cost=35.0,
+                                    is_over_budget=False,
+                                )
+
+                                result = await router._select_preferred_provider(
+                                    preferred_provider="claude",
+                                    language="en",
+                                    use_case="conversation",
+                                    enforce_budget=True,
+                                    user_preferences={
+                                        "ai_provider_settings": {
+                                            "auto_fallback_to_ollama": True
+                                        }
+                                    },
+                                )
+
+                                assert result.provider_name == "ollama"
+                                assert result.is_fallback is True
+                                assert (
+                                    result.fallback_reason
+                                    == FallbackReason.BUDGET_EXCEEDED_AUTO_FALLBACK
+                                )
+
 
 class TestCostEstimation:
     @pytest.mark.asyncio

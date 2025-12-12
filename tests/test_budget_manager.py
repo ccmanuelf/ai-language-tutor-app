@@ -850,6 +850,91 @@ class TestEstimateCost:
         assert confidence == 0.5
 
     @patch("app.services.budget_manager.get_settings")
+    def test_calculate_service_cost_llm(self, mock_settings):
+        """Test _calculate_service_cost for LLM service type"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        manager = BudgetManager()
+        pricing = {"input": 0.001, "output": 0.003}
+
+        cost, confidence = manager._calculate_service_cost(
+            service_type="llm",
+            pricing=pricing,
+            input_tokens=1000,
+            output_tokens=500,
+            audio_minutes=0,
+            characters=0,
+        )
+
+        # Should call _calculate_llm_cost
+        expected_cost = (1000 / 1000) * 0.001 + (500 / 1000) * 0.003
+        assert cost == pytest.approx(expected_cost, rel=1e-6)
+        assert confidence == 0.9
+
+    @patch("app.services.budget_manager.get_settings")
+    def test_calculate_service_cost_stt(self, mock_settings):
+        """Test _calculate_service_cost for STT service type (line 267)"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        manager = BudgetManager()
+        pricing = {"per_minute": 0.025}
+
+        cost, confidence = manager._calculate_service_cost(
+            service_type="stt",
+            pricing=pricing,
+            input_tokens=0,
+            output_tokens=0,
+            audio_minutes=10.5,
+            characters=0,
+        )
+
+        # Should call _calculate_stt_cost (line 267)
+        assert cost == pytest.approx(0.2625, rel=1e-6)
+        assert confidence == 0.85
+
+    @patch("app.services.budget_manager.get_settings")
+    def test_calculate_service_cost_tts(self, mock_settings):
+        """Test _calculate_service_cost for TTS service type (line 269)"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        manager = BudgetManager()
+        pricing = {"per_character": 0.00001}
+
+        cost, confidence = manager._calculate_service_cost(
+            service_type="tts",
+            pricing=pricing,
+            input_tokens=0,
+            output_tokens=0,
+            audio_minutes=0,
+            characters=5000,
+        )
+
+        # Should call _calculate_tts_cost (line 269)
+        assert cost == pytest.approx(0.05, rel=1e-6)
+        assert confidence == 0.85
+
+    @patch("app.services.budget_manager.get_settings")
+    def test_calculate_service_cost_unknown_type(self, mock_settings):
+        """Test _calculate_service_cost for unknown service type"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        manager = BudgetManager()
+        pricing = {}
+
+        cost, confidence = manager._calculate_service_cost(
+            service_type="unknown",
+            pricing=pricing,
+            input_tokens=0,
+            output_tokens=0,
+            audio_minutes=0,
+            characters=0,
+        )
+
+        # Should return default values for unknown type
+        assert cost == 0.0
+        assert confidence == 0.5
+
+    @patch("app.services.budget_manager.get_settings")
     def test_fallback_cost_estimate_llm(self, mock_settings):
         """Test fallback cost estimation for LLM"""
         mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
