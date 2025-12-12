@@ -977,17 +977,20 @@ class TestFeatureEvaluation:
         sample_feature_request.rollout_percentage = 50.0
         feature = await service.create_feature(sample_feature_request)
 
-        # Test multiple user IDs - some should be in rollout, some not
+        # Test multiple user IDs - use larger sample for statistical reliability
+        # With 1000 samples, hash distribution should be within 45-55% range
         results = []
-        for i in range(100):
+        for i in range(1000):
             user_id = f"user{i}"
             result = await service.is_feature_enabled(feature.id, user_id=user_id)
             results.append(result)
 
-        # Should be approximately 50% (allow 40-60% range for hash variance)
+        # Should be approximately 50% (allow 45-55% range with 1000 samples)
+        # This gives us >99.9% confidence the test won't flake
         enabled_count = sum(results)
-        assert 40 <= enabled_count <= 60, (
-            f"Rollout should be ~50%, got {enabled_count}%"
+        enabled_percentage = (enabled_count / 1000) * 100
+        assert 45.0 <= enabled_percentage <= 55.0, (
+            f"Rollout should be ~50%, got {enabled_percentage:.1f}%"
         )
 
     @pytest.mark.asyncio
