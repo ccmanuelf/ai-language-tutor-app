@@ -222,6 +222,16 @@
 **Action:** Waited for full test suite completion (~3 minutes)
 **Result:** No processes killed prematurely, complete data obtained
 
+### 5. Intermittent Test Failures Must Be Investigated
+**Critical Discovery:** Found intermittent failure in `test_is_feature_enabled_experimental_rollout`
+**Initial Response:** Test passed when re-run individually (appeared transient)
+**User Intervention:** User correctly insisted on investigation, not dismissal
+**Root Cause:** Flaky test due to insufficient sample size (100 samples, 40-60% range = ~5% flake rate)
+**Proper Fix:** Increased sample size to 1000, tightened range to 45-55% (>99.9% confidence)
+**Verification:** Ran 10 consecutive times - all passed
+**Principle Applied:** PRINCIPLE 4 (Zero failures) + PRINCIPLE 5 (Fix bugs immediately)
+**Lesson:** Intermittent failures indicate real problems (race conditions, flaky logic, improper isolation). Never ignore or skip them - investigate and fix properly.
+
 ---
 
 ## 🔄 Files Modified
