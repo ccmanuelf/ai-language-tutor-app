@@ -61,3 +61,39 @@ def test_main_module_execution():
     from app.main import run_server as imported_run_server
 
     assert imported_run_server is run_server
+
+
+def test_main_name_guard():
+    """Test the if __name__ == '__main__' guard executes run_server"""
+    import subprocess
+    import sys
+
+    # Use python -m to run the module, with mocked uvicorn
+    code = """
+import sys
+from unittest.mock import MagicMock
+
+# Mock uvicorn before importing app.main
+sys.modules['uvicorn'] = MagicMock()
+
+# Now run the module
+import runpy
+runpy.run_module('app.main', run_name='__main__')
+
+# Verify uvicorn.run was called
+assert sys.modules['uvicorn'].run.called, "uvicorn.run should have been called"
+print("SUCCESS: __main__ block executed")
+"""
+
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        cwd="/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app",
+    )
+
+    # Verify execution worked
+    assert result.returncode == 0, (
+        f"Execution failed:\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}"
+    )
+    assert "SUCCESS" in result.stdout, "Expected success message not found"
