@@ -1576,6 +1576,32 @@ class TestHelperMethods:
         assert status["status"] == "operational"
         assert status["model"] == "local_piper"
 
+    def test_build_piper_tts_status_no_service(self, processor):
+        """Test building Piper TTS status when service is None (branch 1449->1452)"""
+        mock_settings = Mock()
+
+        # Set piper_tts_service to None
+        processor.piper_tts_service = None
+
+        status = processor._build_piper_tts_status(False, mock_settings)
+
+        assert status["status"] == "unavailable"
+        assert "available_voices" in status
+        assert status["available_voices"] == []  # Empty when service is None
+
+    def test_build_piper_tts_status_no_voices_attr(self, processor):
+        """Test building Piper TTS status when service has no voices attribute"""
+        mock_settings = Mock()
+
+        # Create a service without voices attribute
+        processor.piper_tts_service = Mock(spec=[])  # Empty spec = no attributes
+
+        status = processor._build_piper_tts_status(False, mock_settings)
+
+        assert status["status"] == "unavailable"
+        assert "available_voices" in status
+        assert status["available_voices"] == []  # Empty when no voices attr
+
     def test_build_features_status(self, processor):
         """Test building features status"""
         features = processor._build_features_status(True, True)
@@ -1601,6 +1627,28 @@ class TestHelperMethods:
         assert models["mistral_stt_model"] == "whisper-large-v3-turbo"
         assert "piper_tts_voices" in models
         assert "supported_languages" in models
+
+    def test_build_api_models_dict_no_service(self, processor):
+        """Test building API models dict when piper_tts_service is None (branch 1484->1487)"""
+        # Set piper_tts_service to None
+        processor.piper_tts_service = None
+
+        models = processor._build_api_models_dict()
+
+        assert "mistral_stt_model" in models
+        assert "piper_tts_voices" in models
+        assert models["piper_tts_voices"] == []  # Empty when service is None
+
+    def test_build_api_models_dict_no_voices_attr(self, processor):
+        """Test building API models dict when service has no voices attribute"""
+        # Create a service without voices attribute
+        processor.piper_tts_service = Mock(spec=[])
+
+        models = processor._build_api_models_dict()
+
+        assert "mistral_stt_model" in models
+        assert "piper_tts_voices" in models
+        assert models["piper_tts_voices"] == []  # Empty when no voices attr
 
     def test_build_chinese_support_dict(self, processor):
         """Test building Chinese support dictionary"""

@@ -287,8 +287,7 @@ class OllamaService(BaseAIService):
 
         for lang_code, keywords in lang_indicators.items():
             if any(keyword in name_lower for keyword in keywords):
-                if lang_code not in capabilities["language_support"]:
-                    capabilities["language_support"].append(lang_code)
+                capabilities["language_support"].append(lang_code)
 
         # Well-known multilingual models get broad support
         if "llama" in name_lower or "mistral" in name_lower:
