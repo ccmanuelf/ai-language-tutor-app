@@ -467,6 +467,58 @@ class TestGetRecommendedModel:
 
         assert model == "llama2:7b"
 
+    def test_get_recommended_model_no_installed_models(self):
+        """Test recommended model when no models are installed (lines 353-354)"""
+        service = OllamaService()
+
+        # Provide empty installed models list
+        installed = []
+
+        model = service.get_recommended_model("en", installed_models=installed)
+
+        # Should return default llama2:7b when no models installed
+        assert model == "llama2:7b"
+
+    def test_get_recommended_model_multilingual_fallback(self):
+        """Test multilingual fallback scoring (lines 374-375)"""
+        service = OllamaService()
+
+        # Model that is multilingual but doesn't explicitly list the target language
+        # Use a language not in the model's language_support list
+        installed = [{"name": "gemma:7b"}]  # gemma is multilingual
+
+        model = service.get_recommended_model("ja", installed_models=installed)
+
+        # Should return gemma as it's multilingual (fallback scoring)
+        assert model == "gemma:7b"
+
+    def test_get_recommended_model_conversation_chat_optimized(self):
+        """Test conversation use case with chat-optimized model (line 390)"""
+        service = OllamaService()
+
+        # Chat-optimized models should score higher for conversation
+        installed = [{"name": "neural-chat:7b"}, {"name": "llama2:7b"}]
+
+        model = service.get_recommended_model(
+            "en", "conversation", installed_models=installed
+        )
+
+        # neural-chat should score highest due to chat optimization bonus
+        assert model == "neural-chat:7b"
+
+    def test_get_recommended_model_non_multilingual_unsupported_lang(self):
+        """Test branch 374->378: non-multilingual model with unsupported language"""
+        service = OllamaService()
+
+        # neural-chat is NOT multilingual and only supports "en"
+        # Testing with "fr" will skip both language_support check AND multilingual check
+        installed = [{"name": "neural-chat:7b"}]
+
+        model = service.get_recommended_model("fr", installed_models=installed)
+
+        # Should still return the only available model
+        assert model == "neural-chat:7b"
+
 
 class TestGenerateResponse:
     """Test response generation"""
@@ -1269,6 +1321,113 @@ class TestSessionEdgeCases:
 
         await new_session.close()
 
+    @pytest.mark.asyncio
+    async def test_get_session_different_event_loop(self):
+        """Test get_session handles session from different event loop (lines 123-125)"""
+        service = OllamaService()
+
+        # Create a real session in current loop
+        service.session = await service._get_session()
+        old_session = service.session
+
+        # Create a mock loop that is different from current
+        mock_old_loop = Mock()
+        mock_old_loop.is_closed = Mock(return_value=False)
+
+        # Make session._loop return a different loop
+        service.session._loop = mock_old_loop
+
+        # Mock the close method to track if it was called
+        close_called = False
+
+        async def mock_close():
+            nonlocal close_called
+            close_called = True
+
+        service.session.close = mock_close
+
+        # Should detect different loop and create new session
+        new_session = await service._get_session()
+
+        assert close_called is True  # Old session should be closed
+        assert new_session != old_session
+        assert isinstance(new_session, aiohttp.ClientSession)
+
+        await new_session.close()
+
+    @pytest.mark.asyncio
+    async def test_get_session_closed_event_loop(self):
+        """Test get_session handles session with closed event loop (lines 123-125)"""
+        service = OllamaService()
+
+        # Create a real session
+        service.session = await service._get_session()
+        old_session = service.session
+
+        # Make the session's loop appear closed
+        import asyncio
+
+        current_loop = asyncio.get_running_loop()
+        service.session._loop = current_loop
+
+        # Mock is_closed to return True
+        original_is_closed = current_loop.is_closed
+        current_loop.is_closed = Mock(return_value=True)
+
+        # Mock the close method
+        close_called = False
+
+        async def mock_close():
+            nonlocal close_called
+            close_called = True
+
+        service.session.close = mock_close
+
+        try:
+            # Should detect closed loop and create new session
+            new_session = await service._get_session()
+
+            assert close_called is True
+            assert new_session != old_session
+            assert isinstance(new_session, aiohttp.ClientSession)
+
+            await new_session.close()
+        finally:
+            # Restore original is_closed
+            current_loop.is_closed = original_is_closed
+
+
+class TestReasoningModelDetection:
+    """Test reasoning model capability detection"""
+
+    def test_analyze_reasoning_model_deepseek_r1(self):
+        """Test reasoning model detection for deepseek-r1"""
+        service = OllamaService()
+
+        capabilities = service._analyze_model_capabilities("deepseek-r1")
+
+        assert capabilities["is_reasoning_model"] is True
+        assert capabilities["use_case_scores"]["technical"] == 9
+        assert capabilities["use_case_scores"]["grammar"] == 8
+        assert capabilities["use_case_scores"]["conversation"] == 6
+
+    def test_analyze_reasoning_model_thinking(self):
+        """Test reasoning model detection for 'thinking' keyword"""
+        service = OllamaService()
+
+        capabilities = service._analyze_model_capabilities("llama-thinking")
+
+        assert capabilities["is_reasoning_model"] is True
+        assert capabilities["use_case_scores"]["technical"] == 9
+
+    def test_analyze_reasoning_model_reasoning_keyword(self):
+        """Test reasoning model detection for 'reasoning' keyword"""
+        service = OllamaService()
+
+        capabilities = service._analyze_model_capabilities("custom-reasoning-model")
+
+        assert capabilities["is_reasoning_model"] is True
+
 
 class TestModelCapabilitiesEdgeCases:
     """Test edge cases in model capability detection for 100% coverage"""
@@ -1297,6 +1456,22 @@ class TestModelCapabilitiesEdgeCases:
 
         assert capabilities["size_category"] == "xlarge"
 
+    def test_analyze_small_model_4b(self):
+        """Test small size detection for 4b models (line 320)"""
+        service = OllamaService()
+
+        capabilities = service._analyze_model_capabilities("phi-4b")
+
+        assert capabilities["size_category"] == "small"
+
+    def test_analyze_small_model_1b(self):
+        """Test small size detection for 1b models"""
+        service = OllamaService()
+
+        capabilities = service._analyze_model_capabilities("tinyllama-1b")
+
+        assert capabilities["size_category"] == "small"
+
     def test_language_support_not_duplicate(self):
         """Test that language codes are not duplicated in language_support"""
         service = OllamaService()
@@ -1321,3 +1496,28 @@ class TestModelCapabilitiesEdgeCases:
         assert "fr" in capabilities["language_support"]
         fr_count = capabilities["language_support"].count("fr")
         assert fr_count == 1
+
+    def test_language_support_duplicate_from_same_indicator(self):
+        """Test branch 290->288 where lang_code already exists (FALSE branch)"""
+        service = OllamaService()
+
+        # Model name "spanish-es" has both "spanish" and "es" which map to same lang_code
+        # First iteration over lang_indicators for lang_code="es":
+        #   - any(keyword in name_lower for keyword in ["es", "spanish"]) returns True
+        #   - "es" not in ["en"] -> adds "es" (TRUE branch)
+        # We need to trigger the FALSE branch by having the language already present
+        # This happens when processing the multilingual section AFTER lang_indicators
+
+        # Use "mistral" which:
+        # 1. Triggers "fr" addition in lang_indicators (because "mistral" is in fr keywords)
+        # 2. Then triggers multilingual support which tries to add "fr" again
+        capabilities = service._analyze_model_capabilities("mistral")
+
+        # Should have 'fr' exactly once
+        assert "fr" in capabilities["language_support"]
+        fr_count = capabilities["language_support"].count("fr")
+        assert fr_count == 1
+
+        # Also verify other multilingual languages were added
+        assert "es" in capabilities["language_support"]
+        assert "de" in capabilities["language_support"]
