@@ -101,3 +101,38 @@ class TestModuleExecution:
 
         # Verify uvicorn.run was called
         mock_uvicorn_run.assert_called()
+
+    def test_main_name_guard_execution(self):
+        """Test the if __name__ == '__main__' guard actually executes"""
+        import subprocess
+        import sys
+
+        # Use python -m to run the module, with mocked uvicorn
+        code = """
+import sys
+from unittest.mock import MagicMock
+
+# Mock uvicorn before importing
+sys.modules['uvicorn'] = MagicMock()
+
+# Now run the module
+import runpy
+runpy.run_module('app.frontend.server', run_name='__main__')
+
+# Verify uvicorn.run was called
+assert sys.modules['uvicorn'].run.called, "uvicorn.run should have been called"
+print("SUCCESS: __main__ block executed")
+"""
+
+        result = subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            text=True,
+            cwd="/Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app",
+        )
+
+        # Verify execution worked
+        assert result.returncode == 0, (
+            f"Execution failed:\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}"
+        )
+        assert "SUCCESS" in result.stdout, "Expected success message not found"

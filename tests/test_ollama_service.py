@@ -1239,3 +1239,85 @@ class TestExceptionHandling:
 
         # Should complete successfully despite malformed lines
         assert result is True
+
+
+class TestSessionEdgeCases:
+    """Test edge cases in session management for 100% coverage"""
+
+    @pytest.mark.asyncio
+    async def test_get_session_runtime_error(self):
+        """Test get_session handles RuntimeError when no event loop exists"""
+        service = OllamaService()
+
+        # Create a mock session that raises RuntimeError when checking loop
+        mock_session = Mock()
+        mock_session.closed = False
+
+        # Configure _loop property to raise RuntimeError
+        type(mock_session)._loop = property(
+            lambda self: (_ for _ in ()).throw(RuntimeError("no running event loop"))
+        )
+
+        service.session = mock_session
+
+        # Should handle RuntimeError and create new session
+        new_session = await service._get_session()
+
+        assert new_session is not None
+        assert new_session != mock_session
+        assert isinstance(new_session, aiohttp.ClientSession)
+
+        await new_session.close()
+
+
+class TestModelCapabilitiesEdgeCases:
+    """Test edge cases in model capability detection for 100% coverage"""
+
+    def test_analyze_xlarge_model_70b(self):
+        """Test xlarge size detection for 70b models"""
+        service = OllamaService()
+
+        capabilities = service._analyze_model_capabilities("llama3:70b")
+
+        assert capabilities["size_category"] == "xlarge"
+
+    def test_analyze_xlarge_model_65b(self):
+        """Test xlarge size detection for 65b models"""
+        service = OllamaService()
+
+        capabilities = service._analyze_model_capabilities("custom-model-65b")
+
+        assert capabilities["size_category"] == "xlarge"
+
+    def test_analyze_xlarge_model_30b(self):
+        """Test xlarge size detection for 30b models"""
+        service = OllamaService()
+
+        capabilities = service._analyze_model_capabilities("mistral-30b-instruct")
+
+        assert capabilities["size_category"] == "xlarge"
+
+    def test_language_support_not_duplicate(self):
+        """Test that language codes are not duplicated in language_support"""
+        service = OllamaService()
+
+        # Test with a model that has 'fr' in name but is also detected as mistral
+        capabilities = service._analyze_model_capabilities("mistral-fr")
+
+        # Should have 'fr' but not duplicated
+        fr_count = capabilities["language_support"].count("fr")
+        assert fr_count == 1
+
+    def test_language_support_already_present(self):
+        """Test branch where lang_code is already in capabilities"""
+        service = OllamaService()
+
+        # This tests the negative branch: if lang_code not in capabilities["language_support"]
+        # We need a model that triggers lang detection but already has that lang
+        capabilities = service._analyze_model_capabilities("llama-french")
+
+        # 'fr' should be added from both 'french' keyword and llama multilingual support
+        # but should only appear once due to the "not in" check
+        assert "fr" in capabilities["language_support"]
+        fr_count = capabilities["language_support"].count("fr")
+        assert fr_count == 1
