@@ -15,11 +15,10 @@ Modern, responsive admin interface for managing AI models and providers:
 Follows content-based learning design patterns with modern responsive layout.
 """
 
+from typing import Any, Dict, List
+
 from fasthtml import *
 from fasthtml.common import *
-from typing import Dict, List, Any
-
-from app.frontend.layout import create_admin_sidebar, create_admin_header
 
 
 def create_ai_models_page():
@@ -456,9 +455,7 @@ def create_ai_models_page():
 
     return Div(
         styles,
-        create_admin_sidebar(active="ai_models"),
         Div(
-            create_admin_header("AI Model Management"),
             # System Overview Section
             Div(
                 H1("AI Model Management", cls="models-title"),
