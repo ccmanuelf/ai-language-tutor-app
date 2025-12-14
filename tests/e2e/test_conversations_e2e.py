@@ -93,7 +93,7 @@ class TestConversationStartE2E:
         # Prepare chat request
         chat_request = {
             "message": "Hello! Say 'Hi' in one word.",
-            "language": "en-claude",  # English with Claude
+            "language": "en-mistral",  # English with Mistral (cost-effective default)
             "use_speech": False,
             "conversation_history": None,  # New conversation
         }
@@ -124,7 +124,9 @@ class TestConversationStartE2E:
 
         # Verify correct language and provider
         assert chat_data["language"] == "en", "Wrong language returned"
-        assert "claude" in chat_data["ai_provider"].lower(), "Wrong AI provider"
+        assert "mistral" in chat_data["ai_provider"].lower(), (
+            "Using cost-effective Mistral provider"
+        )
 
         # Store conversation ID for next test
         self.conversation_id = chat_data["conversation_id"]
@@ -210,7 +212,7 @@ class TestMultiTurnConversationE2E:
             # Prepare chat request with history
             chat_request = {
                 "message": user_message,
-                "language": "en-claude",
+                "language": "en-mistral",  # Use Mistral (cost-effective)
                 "use_speech": False,
                 "conversation_history": conversation_history
                 if conversation_history
@@ -335,7 +337,7 @@ class TestConversationPersistenceE2E:
         # Step 1: Start conversation
         chat_request = {
             "message": "Hello! This is a test conversation.",
-            "language": "en-claude",
+            "language": "en-mistral",  # Use Mistral (cost-effective)
             "use_speech": False,
         }
 
@@ -465,7 +467,7 @@ class TestConversationDeletionE2E:
         # Step 1: Create conversation to delete
         chat_request = {
             "message": "This conversation will be deleted.",
-            "language": "en-claude",
+            "language": "en-mistral",  # Use Mistral (cost-effective)
             "use_speech": False,
         }
 
@@ -578,9 +580,9 @@ class TestConversationMultiLanguageE2E:
 
         # Test data: (language, message, expected_lang_code)
         language_tests = [
-            ("en-claude", "Say 'Hello' in one word", "en"),
-            ("es-claude", "Di 'Hola' en una palabra", "es"),
-            ("fr-mistral", "Dis 'Bonjour' en un mot", "fr"),
+            ("en-mistral", "Say 'Hello' in one word", "en"),  # Mistral primary
+            ("es-mistral", "Di 'Hola' en una palabra", "es"),  # Mistral primary
+            ("fr-mistral", "Dis 'Bonjour' en un mot", "fr"),  # Mistral primary (native)
         ]
 
         results = []
@@ -684,7 +686,7 @@ class TestConversationErrorHandlingE2E:
         # Test 1: Empty message
         chat_request = {
             "message": "",
-            "language": "en-claude",
+            "language": "en-mistral",  # Use Mistral (cost-effective)
         }
 
         response = self.client.post(
@@ -717,7 +719,7 @@ class TestConversationErrorHandlingE2E:
 
         # Test 3: Missing required field
         chat_request = {
-            "language": "en-claude",
+            "language": "en-mistral",  # Use Mistral (cost-effective)
             # Missing 'message' field
         }
 

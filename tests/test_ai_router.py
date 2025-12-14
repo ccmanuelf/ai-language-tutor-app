@@ -527,7 +527,7 @@ class TestSelectProvider:
 
     @pytest.mark.asyncio
     async def test_select_preferred_provider_budget_exceeded_no_override(self):
-        """Test _select_preferred_provider raises exception when budget exceeded and override not allowed (lines 414-427)"""
+        """Test _select_preferred_provider returns warning when budget exceeded (alerts but doesn't block)"""
         router = EnhancedAIRouter()
         mock_service = Mock()
         router.register_provider("claude", mock_service)
@@ -551,22 +551,22 @@ class TestSelectProvider:
                         is_over_budget=False,
                     )
 
-                    # Should raise exception (lines 414-427)
-                    with pytest.raises(Exception) as exc_info:
-                        await router._select_preferred_provider(
-                            preferred_provider="claude",
-                            language="en",
-                            use_case="conversation",
-                            enforce_budget=True,
-                            user_preferences={
-                                "ai_provider_settings": {
-                                    "auto_fallback_to_ollama": False
-                                }
-                            },
-                        )
+                    # Should return selection with budget warning (alerts but doesn't block)
+                    selection = await router._select_preferred_provider(
+                        preferred_provider="claude",
+                        language="en",
+                        use_case="conversation",
+                        enforce_budget=True,
+                        user_preferences={
+                            "ai_provider_settings": {"auto_fallback_to_ollama": False}
+                        },
+                    )
 
-                    assert "Budget exceeded" in str(exc_info.value)
-                    assert "Enable budget override" in str(exc_info.value)
+                    # Should still return claude but with budget warning
+                    assert selection.provider_name == "claude"
+                    assert selection.requires_budget_override is True
+                    assert selection.budget_warning is not None
+                    assert "Budget exceeded" in selection.budget_warning.message
 
     @pytest.mark.asyncio
     async def test_select_preferred_provider_budget_exceeded_with_override(self):

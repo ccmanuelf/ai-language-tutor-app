@@ -893,24 +893,24 @@ class TestChatEndpoint:
 
     @patch("app.api.conversations.ai_router")
     def test_chat_empty_message(self, mock_router, client, sample_user, mock_db):
-        """Test chat with empty message - AI service properly mocked"""
+        """Test chat with empty message - should reject with 400"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
 
-        # Mock AI service
+        # Mock AI service (not called for empty message)
         mock_router.select_provider = get_successful_claude_mock().select_provider
 
         response = client.post(
             "/api/v1/conversations/chat", json={"message": "", "language": "en-claude"}
         )
 
-        # Should still return 200 with some response
-        assert response.status_code == 200
+        # Empty messages should be rejected with 400
+        assert response.status_code == 400
         data = response.json()
-        assert "response" in data
+        assert "detail" in data
 
-        # Verify AI service was called
-        mock_router.select_provider.assert_called()
+        # AI service should NOT be called for empty messages
+        mock_router.select_provider.assert_not_called()
 
         app.dependency_overrides.clear()
 
@@ -1065,7 +1065,7 @@ class TestChatEndpoint:
     def test_chat_uses_fallback_on_ai_failure(
         self, mock_router, client, sample_user, mock_db
     ):
-        """Test chat uses fallback when AI service fails - PROPER FALLBACK TEST"""
+        """Test chat uses fallback when AI service fails - returns natural response"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
 
@@ -1080,10 +1080,13 @@ class TestChatEndpoint:
             },
         )
 
-        # Should still return 200 with fallback
+        # Should still return 200 with fallback response
         assert response.status_code == 200
         data = response.json()
         assert "response" in data
+        # Fallback should return a natural-sounding response (not empty)
+        assert len(data["response"]) > 0
+        assert data["response"] != "Hello"  # Not just echoing
 
         # Verify AI service was attempted
         mock_router.select_provider.assert_called()
@@ -1099,7 +1102,7 @@ class TestChatEndpoint:
     def test_chat_outer_exception_handler(
         self, mock_ai_response, mock_speech, client, sample_user, mock_db
     ):
-        """Test chat outer exception handler triggers demo mode"""
+        """Test chat outer exception handler triggers natural fallback"""
         app.dependency_overrides[require_auth] = lambda: sample_user
         app.dependency_overrides[get_primary_db_session] = lambda: mock_db
 
@@ -1112,11 +1115,13 @@ class TestChatEndpoint:
             json={"message": "Hello", "language": "en-claude"},
         )
 
-        # Should return 200 with demo mode response
+        # Should return 200 with natural fallback response
         assert response.status_code == 200
         data = response.json()
         assert "response" in data
-        assert "[Demo Mode]" in data["response"]
+        # Fallback returns natural-sounding response (no demo mode marker)
+        assert len(data["response"]) > 0
+        assert data["response"] != "Hello"  # Not just echoing
         assert data["audio_url"] is None
 
         app.dependency_overrides.clear()

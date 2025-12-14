@@ -270,34 +270,39 @@ class TestHelperMethods:
         assert result == "mistral-small-latest"
 
     def test_build_mistral_request(self):
-        """Test building Mistral API request"""
-        with patch("app.services.mistral_service.UserMessage") as mock_user_msg:
-            mock_user_msg.return_value = "mock_message"
+        """Test building Mistral API request with conversation history"""
+        messages = [
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "Hi there!"},
+            {"role": "user", "content": "How are you?"},
+        ]
 
-            request = self.service._build_mistral_request(
-                model_name="mistral-small-latest",
-                conversation_prompt="Test prompt",
-                kwargs={"max_tokens": 500, "temperature": 0.9},
-            )
+        request = self.service._build_mistral_request(
+            model_name="mistral-small-latest",
+            conversation_prompt="Test prompt",
+            messages=messages,
+            kwargs={"max_tokens": 500, "temperature": 0.9},
+        )
 
-            assert request["model"] == "mistral-small-latest"
-            assert request["max_tokens"] == 500
-            assert request["temperature"] == 0.9
-            assert len(request["messages"]) == 1
+        assert request["model"] == "mistral-small-latest"
+        assert request["max_tokens"] == 500
+        assert request["temperature"] == 0.9
+        # Should have system message + 3 conversation messages
+        assert len(request["messages"]) == 4
 
     def test_build_mistral_request_default_params(self):
         """Test building request with default parameters"""
-        with patch("app.services.mistral_service.UserMessage") as mock_user_msg:
-            mock_user_msg.return_value = "mock_message"
+        request = self.service._build_mistral_request(
+            model_name="mistral-small-latest",
+            conversation_prompt="Test prompt",
+            messages=None,  # No conversation history
+            kwargs={},
+        )
 
-            request = self.service._build_mistral_request(
-                model_name="mistral-small-latest",
-                conversation_prompt="Test prompt",
-                kwargs={},
-            )
-
-            assert request["max_tokens"] == 300  # default
-            assert request["temperature"] == 0.8  # default
+        assert request["max_tokens"] == 300  # default
+        assert request["temperature"] == 0.8  # default
+        # Should have only system message when no conversation history
+        assert len(request["messages"]) == 1
 
     def test_estimate_mistral_cost(self):
         """Test cost estimation from response"""

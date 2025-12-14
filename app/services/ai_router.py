@@ -90,23 +90,28 @@ class EnhancedAIRouter:
         self._initialize_language_preferences()
 
     def _initialize_language_preferences(self):
-        """Initialize language-specific provider preferences"""
+        """Initialize language-specific provider preferences - Mistral as cost-effective default"""
         self.language_preferences = {
             "en": [
+                "mistral",
                 "claude",
                 "ollama",
+            ],  # English - Mistral primary (cost-effective), Claude premium, Ollama local
+            "fr": ["mistral", "claude", "ollama"],  # French - Mistral primary (native)
+            "zh": [
+                "deepseek",
                 "mistral",
-            ],  # English - Claude primary, Ollama fallback
-            "fr": ["mistral", "claude", "ollama"],  # French - Mistral primary
-            "zh": ["deepseek", "claude", "ollama"],  # Chinese - DeepSeek primary
-            "zh-cn": ["deepseek", "claude", "ollama"],  # Simplified Chinese
-            "zh-tw": ["deepseek", "claude", "ollama"],  # Traditional Chinese
-            "es": ["claude", "ollama"],  # Spanish - Claude, Ollama
-            "de": ["claude", "ollama"],  # German - Claude, Ollama
-            "it": ["claude", "ollama"],  # Italian - Claude, Ollama
-            "pt": ["claude", "ollama"],  # Portuguese - Claude, Ollama
-            "ja": ["claude", "ollama"],  # Japanese - Claude, Ollama
-            "ko": ["claude", "ollama"],  # Korean - Claude, Ollama
+                "claude",
+                "ollama",
+            ],  # Chinese - DeepSeek primary
+            "zh-cn": ["deepseek", "mistral", "claude", "ollama"],  # Simplified Chinese
+            "zh-tw": ["deepseek", "mistral", "claude", "ollama"],  # Traditional Chinese
+            "es": ["mistral", "claude", "ollama"],  # Spanish - Mistral primary
+            "de": ["mistral", "claude", "ollama"],  # German - Mistral primary
+            "it": ["mistral", "claude", "ollama"],  # Italian - Mistral primary
+            "pt": ["mistral", "claude", "ollama"],  # Portuguese - Mistral primary
+            "ja": ["mistral", "claude", "ollama"],  # Japanese - Mistral primary
+            "ko": ["mistral", "claude", "ollama"],  # Korean - Mistral primary
         }
 
     def register_provider(self, name: str, service: BaseAIService):
@@ -410,7 +415,8 @@ class EnhancedAIRouter:
                 language, "budget_exceeded_auto_fallback", use_case, user_preferences
             )
 
-        # No override, no auto-fallback - raise budget exceeded error
+        # No override, no auto-fallback - ALERT USER but ALLOW operation
+        # Budget should ALERT, not BLOCK functionality
         from app.models.schemas import BudgetExceededWarning
 
         warning = BudgetExceededWarning.create(
@@ -419,12 +425,22 @@ class EnhancedAIRouter:
             estimated_cost=cost_estimate,
         )
 
-        # Create a special exception that includes the warning
-        error_msg = (
-            f"Budget exceeded: {warning.message}. "
-            f"Enable budget override or use free Ollama instead."
+        # Log the budget warning but STILL allow the operation
+        logger.warning(
+            f"Budget exceeded ({budget_status.percentage_used:.1f}% used). "
+            f"Allowing {preferred_provider} with warning: {warning.message}"
         )
-        raise Exception(error_msg)
+
+        # Return the preferred provider WITH budget warning (user will see alert)
+        selection = await self._create_provider_selection(
+            provider_name=preferred_provider,
+            language=language,
+            use_case=use_case,
+            reason=f"User preference (budget exceeded - {budget_status.percentage_used:.1f}%)",
+        )
+        selection.requires_budget_override = True
+        selection.budget_warning = warning
+        return selection
 
     async def _create_provider_selection(
         self,

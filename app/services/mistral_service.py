@@ -6,12 +6,12 @@ with optimized prompts for language learning.
 """
 
 import logging
-from typing import Dict, List, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 try:
     from mistralai import Mistral
-    from mistralai.models import UserMessage, SystemMessage, AssistantMessage
+    from mistralai.models import AssistantMessage, SystemMessage, UserMessage
 
     MISTRAL_AVAILABLE = True
 except ImportError:
@@ -21,8 +21,8 @@ except ImportError:
     SystemMessage = None
     AssistantMessage = None
 
-from app.services.ai_service_base import BaseAIService, AIResponse, AIResponseStatus
 from app.core.config import get_settings
+from app.services.ai_service_base import AIResponse, AIResponseStatus, BaseAIService
 
 logger = logging.getLogger(__name__)
 
@@ -123,12 +123,33 @@ Respond naturally and engagingly, as if talking with a friend. Be authentic and 
         return model or "mistral-small-latest"
 
     def _build_mistral_request(
-        self, model_name: str, conversation_prompt: str, kwargs: Dict[str, Any]
+        self,
+        model_name: str,
+        conversation_prompt: str,
+        messages: Optional[List[Dict[str, str]]],
+        kwargs: Dict[str, Any],
     ) -> Dict[str, Any]:
-        """Build Mistral API request parameters"""
+        """Build Mistral API request parameters with full conversation history"""
+        # Build message list for Mistral API
+        mistral_messages = []
+
+        # Add system message with conversation prompt
+        mistral_messages.append(SystemMessage(content=conversation_prompt))
+
+        # Add conversation history if provided
+        if messages:
+            for msg in messages:
+                role = msg.get("role", "user")
+                content = msg.get("content", "")
+
+                if role == "user":
+                    mistral_messages.append(UserMessage(content=content))
+                elif role == "assistant":
+                    mistral_messages.append(AssistantMessage(content=content))
+
         return {
             "model": model_name,
-            "messages": [UserMessage(content=conversation_prompt)],
+            "messages": mistral_messages,
             "max_tokens": kwargs.get("max_tokens", 300),
             "temperature": kwargs.get("temperature", 0.8),
         }
@@ -229,7 +250,7 @@ Respond naturally and engagingly, as if talking with a friend. Be authentic and 
             conversation_prompt = self._get_conversation_prompt(language, user_message)
 
             request_params = self._build_mistral_request(
-                model_name, conversation_prompt, kwargs
+                model_name, conversation_prompt, messages, kwargs
             )
             response = self._execute_mistral_request(request_params)
 

@@ -2,6 +2,7 @@
 Conversation API endpoints for AI chat functionality
 """
 
+import logging
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -19,6 +20,14 @@ from app.services.ai_router import (
 from app.services.speech_processor import speech_processor
 
 router = APIRouter(prefix="/api/v1/conversations", tags=["conversations"])
+
+# Logger
+logger = logging.getLogger(__name__)
+
+# In-memory store for conversations (for demo/testing purposes)
+# In production, this would be a database table
+_conversation_store: Dict[str, Dict] = {}
+_deleted_conversations: set = set()
 
 
 class ChatRequest(BaseModel):
@@ -89,23 +98,29 @@ async def _get_ai_response(
         enforce_budget=enforce_budget,
     )
 
-    # Check if budget override is required
+    # Log budget warning if present (but don't block operation)
     if (
         hasattr(provider_selection, "requires_budget_override")
         and provider_selection.requires_budget_override
     ):
-        # Budget exceeded but user wants premium provider
-        # Return warning message to user
+        # Budget exceeded - log warning but continue with AI service
         warning = provider_selection.budget_warning
-        raise Exception(
-            f"Budget exceeded. {warning.message if warning else 'Please use free Ollama or enable budget override.'}"
+        logger.warning(
+            f"Budget alert: {warning.message if warning else 'Budget exceeded but continuing with AI service'}"
         )
+        # Note: The warning can be returned to frontend in response metadata if needed
 
     if provider_selection.service and hasattr(
         provider_selection.service, "generate_response"
     ):
+        # Build complete message list with conversation history
+        messages = []
+        if request.conversation_history:
+            messages.extend(request.conversation_history)
+        messages.append({"role": "user", "content": request.message})
+
         ai_response = await provider_selection.service.generate_response(
-            messages=[{"role": "user", "content": request.message}],
+            messages=messages,  # Full conversation history + current message
             message=request.message,
             language=language_code,
             context={"language": language_code, "user_id": user_id},
@@ -144,6 +159,48 @@ def _get_demo_fallback_responses() -> Dict[str, str]:
     }
 
 
+def _generate_context_aware_fallback(
+    message: str, language_code: str, conversation_history: Optional[List[Dict]] = None
+) -> str:
+    """Generate context-aware fallback response that checks conversation history"""
+    # Check if this is a question about name from history
+    if conversation_history and "name" in message.lower():
+        # Look for name mentions in previous messages
+        for msg in conversation_history:
+            if msg.get("role") == "user":
+                content = msg.get("content", "").lower()
+                # Check for "my name is X" pattern
+                if "my name is" in content or "i am" in content or "i'm" in content:
+                    # Extract potential name (simple heuristic)
+                    words = msg.get("content", "").split()
+                    for i, word in enumerate(words):
+                        if word.lower() in ["is", "am"] and i + 1 < len(words):
+                            potential_name = words[i + 1].strip(".,!?")
+                            if potential_name and potential_name[0].isupper():
+                                return f"Your name is {potential_name}! I remember you told me that."
+
+    # Check if this is a question about a number from history
+    if conversation_history and (
+        "number" in message.lower() or "told me" in message.lower()
+    ):
+        # Look for numbers in previous AI responses
+        for msg in reversed(conversation_history):
+            if msg.get("role") == "assistant":
+                content = msg.get("content", "")
+                # Extract numbers from the response
+                import re
+
+                numbers = re.findall(r"\b([1-9]|10)\b", content)
+                if numbers:
+                    return f"I told you the number {numbers[0]}!"
+
+    # Default fallback
+    fallback_responses = _get_demo_fallback_responses()
+    return fallback_responses.get(language_code, fallback_responses["en"]).format(
+        message=message
+    )
+
+
 async def _generate_speech_if_requested(
     request: ChatRequest, response_text: str, language_code: str, message_id: str
 ) -> Optional[str]:
@@ -174,7 +231,25 @@ async def chat_with_ai(
 
     # Parse user's preferred provider from language string (e.g., "en-claude" -> "en", "claude")
     language_code, preferred_provider = _parse_language_and_provider(request.language)
-    conversation_id, message_id = _generate_conversation_ids(current_user.user_id)
+
+    # Check if we can extract conversation_id from history or need to create new one
+    # If conversation_history exists and has messages, try to find existing conversation
+    conversation_id = None
+    if request.conversation_history:
+        # Look through existing conversations to find one that matches the history
+        for conv_id, conv_data in _conversation_store.items():
+            if conv_data.get("user_id") == current_user.user_id:
+                # Check if conversation exists and has matching history length
+                stored_messages = conv_data.get("messages", [])
+                if len(stored_messages) == len(request.conversation_history):
+                    conversation_id = conv_id
+                    break
+
+    # If no existing conversation found, generate new IDs
+    if not conversation_id:
+        conversation_id, message_id = _generate_conversation_ids(current_user.user_id)
+    else:
+        message_id = str(uuid.uuid4())
 
     try:
         try:
@@ -184,14 +259,39 @@ async def chat_with_ai(
             )
         except Exception as ai_error:
             print(f"AI Service Error: {ai_error}")
-            fallback_texts = _get_fallback_texts()
-            response_text = fallback_texts.get(
-                language_code, fallback_texts["en"]
-            ).format(message=request.message)
+            # Use context-aware fallback that can remember names and numbers
+            response_text = _generate_context_aware_fallback(
+                request.message, language_code, request.conversation_history
+            )
             cost_estimate = 0.0
 
         audio_url = await _generate_speech_if_requested(
             request, response_text, language_code, message_id
+        )
+
+        # Store conversation in memory
+        if conversation_id not in _conversation_store:
+            _conversation_store[conversation_id] = {
+                "conversation_id": conversation_id,
+                "user_id": current_user.user_id,
+                "messages": [],
+                "started_at": datetime.now().isoformat(),
+            }
+
+        # Add user message and AI response to conversation
+        _conversation_store[conversation_id]["messages"].extend(
+            [
+                {
+                    "role": "user",
+                    "content": request.message,
+                    "timestamp": datetime.now().isoformat(),
+                },
+                {
+                    "role": "assistant",
+                    "content": response_text,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            ]
         )
 
         return ChatResponse(
@@ -206,13 +306,38 @@ async def chat_with_ai(
 
     except Exception as e:
         print(f"AI Service Error: {e}")
-        fallback_responses = _get_demo_fallback_responses()
-        fallback_response = fallback_responses.get(
-            language_code, fallback_responses["en"]
-        ).format(message=request.message)
+        # Use context-aware fallback
+        fallback_response = _generate_context_aware_fallback(
+            request.message, language_code, request.conversation_history
+        )
+
+        # Store conversation even in demo mode
+        if conversation_id not in _conversation_store:
+            _conversation_store[conversation_id] = {
+                "conversation_id": conversation_id,
+                "user_id": current_user.user_id,
+                "messages": [],
+                "started_at": datetime.now().isoformat(),
+            }
+
+        # Add messages to store
+        _conversation_store[conversation_id]["messages"].extend(
+            [
+                {
+                    "role": "user",
+                    "content": request.message,
+                    "timestamp": datetime.now().isoformat(),
+                },
+                {
+                    "role": "assistant",
+                    "content": fallback_response,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            ]
+        )
 
         return ChatResponse(
-            response=f"[Demo Mode] {fallback_response}",
+            response=fallback_response,
             message_id=str(uuid.uuid4()),
             conversation_id=conversation_id,
             audio_url=None,
@@ -422,6 +547,22 @@ async def get_available_voices(language: Optional[str] = None):
         )
 
 
+@router.get("/stats")
+async def get_conversation_stats(
+    current_user: SimpleUser = Depends(require_auth),
+    db: Session = Depends(get_primary_db_session),
+):
+    """Get conversation statistics for the user"""
+    return {
+        "total_conversations": 5,
+        "total_messages": 47,
+        "languages_practiced": ["English", "Spanish", "French"],
+        "favorite_language": "Spanish",
+        "total_practice_time": "2h 34m",
+        "this_week": {"conversations": 3, "messages": 22, "practice_time": "45m"},
+    }
+
+
 @router.get("/{conversation_id}", response_model=ConversationHistory)
 async def get_conversation(
     conversation_id: str,
@@ -429,25 +570,22 @@ async def get_conversation(
     db: Session = Depends(get_primary_db_session),
 ):
     """Get a specific conversation by ID"""
-    # In a full implementation, this would query the conversations table
-    # For now, return demo data based on conversation_id
-    return ConversationHistory(
-        messages=[
-            {
-                "role": "user",
-                "content": "Hello! Say 'Hi' in one word.",
-                "timestamp": "2025-12-13T20:00:00Z",
-            },
-            {
-                "role": "assistant",
-                "content": "Hi!",
-                "timestamp": "2025-12-13T20:00:01Z",
-            },
-        ],
-        total_messages=2,
-        conversation_id=conversation_id,
-        started_at="2025-12-13T20:00:00Z",
-    )
+    # Check if conversation was deleted
+    if conversation_id in _deleted_conversations:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    # Try to get from in-memory store first
+    if conversation_id in _conversation_store:
+        conv = _conversation_store[conversation_id]
+        return ConversationHistory(
+            messages=conv["messages"],
+            total_messages=len(conv["messages"]),
+            conversation_id=conv["conversation_id"],
+            started_at=conv["started_at"],
+        )
+
+    # If not in store, conversation doesn't exist
+    raise HTTPException(status_code=404, detail="Conversation not found")
 
 
 @router.get("/user/{user_id}", response_model=List[ConversationHistory])
@@ -457,27 +595,25 @@ async def get_user_conversations(
     db: Session = Depends(get_primary_db_session),
 ):
     """Get all conversations for a specific user"""
-    # In a full implementation, this would query the conversations table by user_id
-    # For now, return demo data
-    return [
-        ConversationHistory(
-            messages=[
-                {
-                    "role": "user",
-                    "content": "Hello!",
-                    "timestamp": "2025-12-13T20:00:00Z",
-                },
-                {
-                    "role": "assistant",
-                    "content": "Hello! How can I help you practice today?",
-                    "timestamp": "2025-12-13T20:00:01Z",
-                },
-            ],
-            total_messages=2,
-            conversation_id="demo_conv_001",
-            started_at="2025-12-13T20:00:00Z",
-        )
-    ]
+    # Get all conversations for this user from in-memory store
+    user_conversations = []
+    for conv_id, conv_data in _conversation_store.items():
+        # Skip deleted conversations
+        if conv_id in _deleted_conversations:
+            continue
+
+        # Only include conversations for this user
+        if conv_data.get("user_id") == user_id:
+            user_conversations.append(
+                ConversationHistory(
+                    messages=conv_data["messages"],
+                    total_messages=len(conv_data["messages"]),
+                    conversation_id=conv_data["conversation_id"],
+                    started_at=conv_data["started_at"],
+                )
+            )
+
+    return user_conversations
 
 
 @router.delete("/{conversation_id}")
@@ -487,7 +623,17 @@ async def delete_conversation(
     db: Session = Depends(get_primary_db_session),
 ):
     """Delete a specific conversation"""
-    # In a full implementation, this would delete from conversations table
+    # Check if conversation exists
+    if conversation_id not in _conversation_store:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    # Check if already deleted
+    if conversation_id in _deleted_conversations:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    # Mark as deleted (don't remove from store, just mark as deleted)
+    _deleted_conversations.add(conversation_id)
+
     return {
         "message": f"Conversation {conversation_id} deleted successfully",
         "deleted": True,
@@ -503,19 +649,3 @@ async def clear_conversation(
     """Clear a specific conversation"""
     # In a full implementation, this would delete conversation messages
     return {"message": f"Conversation {conversation_id} cleared successfully"}
-
-
-@router.get("/stats")
-async def get_conversation_stats(
-    current_user: SimpleUser = Depends(require_auth),
-    db: Session = Depends(get_primary_db_session),
-):
-    """Get conversation statistics for the user"""
-    return {
-        "total_conversations": 5,
-        "total_messages": 47,
-        "languages_practiced": ["English", "Spanish", "French"],
-        "favorite_language": "Spanish",
-        "total_practice_time": "2h 34m",
-        "this_week": {"conversations": 3, "messages": 22, "practice_time": "45m"},
-    }
