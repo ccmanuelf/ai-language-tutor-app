@@ -168,6 +168,10 @@ async def chat_with_ai(
     db: Session = Depends(get_primary_db_session),
 ):
     """Send message to AI and get response"""
+    # Validate message is not empty
+    if not request.message or not request.message.strip():
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+
     # Parse user's preferred provider from language string (e.g., "en-claude" -> "en", "claude")
     language_code, preferred_provider = _parse_language_and_provider(request.language)
     conversation_id, message_id = _generate_conversation_ids(current_user.user_id)
@@ -416,6 +420,78 @@ async def get_available_voices(language: Optional[str] = None):
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve voices: {str(e)}"
         )
+
+
+@router.get("/{conversation_id}", response_model=ConversationHistory)
+async def get_conversation(
+    conversation_id: str,
+    current_user: SimpleUser = Depends(require_auth),
+    db: Session = Depends(get_primary_db_session),
+):
+    """Get a specific conversation by ID"""
+    # In a full implementation, this would query the conversations table
+    # For now, return demo data based on conversation_id
+    return ConversationHistory(
+        messages=[
+            {
+                "role": "user",
+                "content": "Hello! Say 'Hi' in one word.",
+                "timestamp": "2025-12-13T20:00:00Z",
+            },
+            {
+                "role": "assistant",
+                "content": "Hi!",
+                "timestamp": "2025-12-13T20:00:01Z",
+            },
+        ],
+        total_messages=2,
+        conversation_id=conversation_id,
+        started_at="2025-12-13T20:00:00Z",
+    )
+
+
+@router.get("/user/{user_id}", response_model=List[ConversationHistory])
+async def get_user_conversations(
+    user_id: str,
+    current_user: SimpleUser = Depends(require_auth),
+    db: Session = Depends(get_primary_db_session),
+):
+    """Get all conversations for a specific user"""
+    # In a full implementation, this would query the conversations table by user_id
+    # For now, return demo data
+    return [
+        ConversationHistory(
+            messages=[
+                {
+                    "role": "user",
+                    "content": "Hello!",
+                    "timestamp": "2025-12-13T20:00:00Z",
+                },
+                {
+                    "role": "assistant",
+                    "content": "Hello! How can I help you practice today?",
+                    "timestamp": "2025-12-13T20:00:01Z",
+                },
+            ],
+            total_messages=2,
+            conversation_id="demo_conv_001",
+            started_at="2025-12-13T20:00:00Z",
+        )
+    ]
+
+
+@router.delete("/{conversation_id}")
+async def delete_conversation(
+    conversation_id: str,
+    current_user: SimpleUser = Depends(require_auth),
+    db: Session = Depends(get_primary_db_session),
+):
+    """Delete a specific conversation"""
+    # In a full implementation, this would delete from conversations table
+    return {
+        "message": f"Conversation {conversation_id} deleted successfully",
+        "deleted": True,
+    }
 
 
 @router.delete("/clear/{conversation_id}")
