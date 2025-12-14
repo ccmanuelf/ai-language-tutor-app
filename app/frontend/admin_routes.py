@@ -6,30 +6,31 @@ This module provides FastHTML route handlers for the admin dashboard,
 integrating with the admin authentication system and dashboard frontend.
 """
 
-from fasthtml.common import *
-from fastapi import HTTPException, Depends, status
-from typing import Dict, Any
 import logging
+from typing import Any, Dict
 
-from app.services.admin_auth import (
-    admin_auth_service,
-    AdminPermission,
-)
-from app.services.auth import get_current_user
-from app.models.database import User
+from fastapi import Depends, HTTPException, status
+from fasthtml.common import *
+
 from app.database.config import get_db_session_context
-from app.frontend.admin_dashboard import create_user_management_page
-from app.frontend.admin_language_config import (
-    language_config_page,
-    language_config_javascript,
-)
 from app.frontend.admin_ai_models import create_ai_models_page
-from app.frontend.admin_scenario_management import create_scenario_management_page
+from app.frontend.admin_dashboard import create_user_management_page
 from app.frontend.admin_feature_toggles import create_feature_toggle_page
+from app.frontend.admin_language_config import (
+    language_config_javascript,
+    language_config_page,
+)
+from app.frontend.admin_scenario_management import create_scenario_management_page
 from app.frontend.progress_analytics_dashboard import (
     progress_analytics_dashboard_page,
     progress_analytics_styles,
 )
+from app.models.database import User
+from app.services.admin_auth import (
+    AdminPermission,
+    admin_auth_service,
+)
+from app.services.auth import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -150,8 +151,8 @@ def create_admin_routes(app):
                 )
 
             # Create the full language configuration page with admin layout
-            from app.frontend.styles import get_admin_styles
             from app.frontend.layout import create_admin_header, create_admin_sidebar
+            from app.frontend.styles import load_styles
 
             return Html(
                 Head(
@@ -160,7 +161,7 @@ def create_admin_routes(app):
                     Meta(
                         name="viewport", content="width=device-width, initial-scale=1.0"
                     ),
-                    get_admin_styles(),
+                    load_styles(),
                 ),
                 Body(
                     # Admin Layout Container
@@ -211,8 +212,8 @@ def create_admin_routes(app):
                 )
 
             # Create the full feature toggles page with admin layout
-            from app.frontend.styles import get_admin_styles
             from app.frontend.layout import create_admin_header, create_admin_sidebar
+            from app.frontend.styles import load_styles
 
             return Html(
                 Head(
@@ -221,7 +222,7 @@ def create_admin_routes(app):
                     Meta(
                         name="viewport", content="width=device-width, initial-scale=1.0"
                     ),
-                    get_admin_styles(),
+                    load_styles(),
                     # Add HTMX for dynamic updates
                     Script(src="https://unpkg.com/htmx.org@1.9.6"),
                 ),
@@ -276,7 +277,7 @@ def create_admin_routes(app):
                 )
 
             # Create the full AI models page with admin layout
-            from app.frontend.styles import get_admin_styles
+            from app.frontend.styles import load_styles
 
             return Html(
                 Head(
@@ -285,7 +286,7 @@ def create_admin_routes(app):
                     Meta(
                         name="viewport", content="width=device-width, initial-scale=1.0"
                     ),
-                    get_admin_styles(),
+                    load_styles(),
                     # Add HTMX for dynamic updates
                     Script(src="https://unpkg.com/htmx.org@1.9.6"),
                 ),
@@ -369,8 +370,8 @@ def create_admin_routes(app):
                 )
 
             # Create the full scenario management page with admin layout
-            from app.frontend.styles import get_admin_styles
             from app.frontend.layout import create_admin_header, create_admin_sidebar
+            from app.frontend.styles import load_styles
 
             return Html(
                 Head(
@@ -379,7 +380,7 @@ def create_admin_routes(app):
                     Meta(
                         name="viewport", content="width=device-width, initial-scale=1.0"
                     ),
-                    get_admin_styles(),
+                    load_styles(),
                     # Add HTMX for dynamic updates
                     Script(src="https://unpkg.com/htmx.org@1.9.6"),
                 ),
@@ -435,8 +436,8 @@ def create_admin_routes(app):
                 )
 
             # Create the full progress analytics page with admin layout
-            from app.frontend.styles import get_admin_styles
             from app.frontend.layout import create_admin_header, create_admin_sidebar
+            from app.frontend.styles import load_styles
 
             # Sample analytics data for demonstration
             analytics_data = {
@@ -525,7 +526,7 @@ def create_admin_routes(app):
                     Meta(
                         name="viewport", content="width=device-width, initial-scale=1.0"
                     ),
-                    get_admin_styles(),
+                    load_styles(),
                     progress_analytics_styles(),
                 ),
                 Body(
