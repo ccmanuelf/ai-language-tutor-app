@@ -236,15 +236,15 @@ class TestScenarioDetailsE2E:
         data = response.json()
         assert data["success"] is True
 
-        scenario_details = data["data"]["scenario"]
+        scenario_details = data["data"]  # API returns details directly in data
         assert scenario_details["scenario_id"] == scenario_id
         assert "description" in scenario_details
-        assert (
-            "objectives" in scenario_details
-            or "learning_objectives" in scenario_details
-        )
+        assert "learning_goals" in scenario_details  # API returns learning_goals
+        assert "phases" in scenario_details  # Each phase has objectives
 
-        print(f"\n✅ E2E: Retrieved details for scenario '{scenario_details['title']}'")
+        print(
+            f"\n✅ E2E: Retrieved details for scenario '{scenario_details.get('name', scenario_id)}'"
+        )
 
 
 class TestScenarioConversationE2E:
@@ -390,9 +390,9 @@ class TestScenarioConversationE2E:
 
             data = response.json()
             assert data["success"] is True
-            assert "response" in data["data"]
+            assert "ai_response" in data["data"]  # API returns ai_response not response
 
-            ai_response = data["data"]["response"]
+            ai_response = data["data"]["ai_response"]
             assert len(ai_response) > 0, "AI response is empty"
 
             # Small delay between messages
@@ -448,7 +448,7 @@ class TestScenarioConversationE2E:
 
         # Verify progress data structure
         progress = data["data"]
-        assert "scenario_id" in progress or "progress" in progress
+        assert "scenario_progress" in progress or "is_scenario_based" in progress
 
         print(f"\n✅ E2E: Retrieved scenario progress for conversation")
 
@@ -549,7 +549,10 @@ class TestScenarioCompletionE2E:
 
         # Verify completion data
         completion_data = data["data"]
-        assert "status" in completion_data or "completed" in completion_data
+        assert (
+            "completion_time" in completion_data
+            or "scenario_summary" in completion_data
+        )
 
         print(f"\n✅ E2E: Completed scenario conversation successfully")
 
@@ -664,18 +667,24 @@ class TestScenarioCategoriesE2E:
         data = response.json()
         assert data["success"] is True
 
-        scenarios = data["data"]["scenarios"]
-        assert len(scenarios) > 0, f"No scenarios for category {category_name}"
+        # API returns predefined_scenarios and universal_templates
+        category_data = data["data"]
+        assert "predefined_scenarios" in category_data
+        assert "universal_templates" in category_data
+        assert "category" in category_data
 
-        # Verify scenarios match category
-        for scenario in scenarios:
-            assert (
-                scenario["category"].lower() == category_name.lower()
-                or category_name.lower() in scenario["category"].lower()
-            )
+        total_count = len(category_data["predefined_scenarios"]) + len(
+            category_data["universal_templates"]
+        )
+        assert total_count > 0, (
+            f"No scenarios or templates for category {category_name}"
+        )
+
+        # Verify category matches
+        assert category_data["category"] == category_name.lower()
 
         print(
-            f"\n✅ E2E: Retrieved {len(scenarios)} scenarios for '{category_name}' category"
+            f"\n✅ E2E: Retrieved {total_count} items ({len(category_data['predefined_scenarios'])} scenarios, {len(category_data['universal_templates'])} templates) for '{category_name}' category"
         )
 
 

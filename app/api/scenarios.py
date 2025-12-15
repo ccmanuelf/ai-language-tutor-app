@@ -157,6 +157,73 @@ def _build_scenarios_response(scenarios: List[Dict]) -> ScenarioResponse:
     )
 
 
+@router.get("/category/{category_name}", response_model=ScenarioResponse)
+async def get_scenarios_by_category(
+    category_name: str, current_user: SimpleUser = Depends(require_auth)
+):
+    """Get all scenarios and templates for a specific category"""
+    try:
+        # Validate category
+        try:
+            category = ScenarioCategory(category_name.lower())
+        except ValueError:
+            available_categories = [cat.value for cat in ScenarioCategory]
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid category: {category_name}. Available: {', '.join(available_categories)}",
+            )
+
+        category_data = scenario_manager.get_scenarios_by_category(category)
+
+        return ScenarioResponse(
+            success=True,
+            message=f"Retrieved scenarios for category: {category.value}",
+            data=category_data,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get scenarios by category: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve category scenarios: {str(e)}"
+        )
+
+
+
+@router.get("/categories", response_model=ScenarioResponse)
+async def get_scenario_categories():
+    """
+    Get list of available scenario categories
+
+    Returns:
+        List of scenario categories with descriptions
+    """
+    try:
+        categories = [
+            {
+                "id": cat.value,
+                "name": cat.value.replace("_", " ").title(),
+                "description": _get_category_description(cat),
+            }
+            for cat in ScenarioCategory
+        ]
+
+        return ScenarioResponse(
+            success=True,
+            data={"categories": categories},
+            message="Categories retrieved successfully",
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to get scenario categories: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve categories: {str(e)}"
+        )
+
+
+# Universal Template Endpoints
+
 @router.get("/{scenario_id}", response_model=ScenarioResponse)
 async def get_scenario_details(
     scenario_id: str, current_user: SimpleUser = Depends(require_auth)
@@ -437,38 +504,6 @@ async def complete_scenario_conversation(
         )
 
 
-@router.get("/categories", response_model=ScenarioResponse)
-async def get_scenario_categories():
-    """
-    Get list of available scenario categories
-
-    Returns:
-        List of scenario categories with descriptions
-    """
-    try:
-        categories = [
-            {
-                "id": cat.value,
-                "name": cat.value.replace("_", " ").title(),
-                "description": _get_category_description(cat),
-            }
-            for cat in ScenarioCategory
-        ]
-
-        return ScenarioResponse(
-            success=True,
-            data={"categories": categories},
-            message="Categories retrieved successfully",
-        )
-
-    except Exception as e:
-        logger.error(f"Failed to get scenario categories: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve categories: {str(e)}"
-        )
-
-
-# Universal Template Endpoints
 @router.get("/templates", response_model=ScenarioResponse)
 async def get_universal_templates(
     tier: Optional[int] = None, current_user: SimpleUser = Depends(require_auth)
@@ -595,39 +630,6 @@ async def create_scenario_from_template(
         logger.error(f"Failed to create scenario from template: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to create scenario: {str(e)}"
-        )
-
-
-@router.get("/category/{category_name}", response_model=ScenarioResponse)
-async def get_scenarios_by_category(
-    category_name: str, current_user: SimpleUser = Depends(require_auth)
-):
-    """Get all scenarios and templates for a specific category"""
-    try:
-        # Validate category
-        try:
-            category = ScenarioCategory(category_name.lower())
-        except ValueError:
-            available_categories = [cat.value for cat in ScenarioCategory]
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid category: {category_name}. Available: {', '.join(available_categories)}",
-            )
-
-        category_data = scenario_manager.get_scenarios_by_category(category)
-
-        return ScenarioResponse(
-            success=True,
-            message=f"Retrieved scenarios for category: {category.value}",
-            data=category_data,
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to get scenarios by category: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve category scenarios: {str(e)}"
         )
 
 
