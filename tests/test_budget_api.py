@@ -16,6 +16,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.database.config import get_primary_db_session
 from app.main import app
@@ -23,8 +24,11 @@ from app.models.budget import BudgetPeriod, BudgetResetLog, UserBudgetSettings
 from app.models.database import APIUsage, Base, User, UserRole
 
 # Test database setup
+# Use StaticPool to ensure all connections share the same in-memory database
 TEST_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(
+    TEST_DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -68,6 +72,7 @@ def auth_regular_user(regular_user):
 
     def override_auth():
         return SimpleUser(
+            id=regular_user.id,  # Include numeric ID for APIUsage queries
             user_id=regular_user.user_id,
             username=regular_user.username,
             email=regular_user.email,
@@ -83,9 +88,11 @@ def auth_regular_user(regular_user):
 def auth_admin_user(admin_user):
     """Override auth to return admin user"""
     from app.api.auth import SimpleUser, require_auth
+    from app.services.admin_auth import require_admin_access
 
     def override_auth():
         return SimpleUser(
+            id=admin_user.id,  # Include numeric ID for APIUsage queries
             user_id=admin_user.user_id,
             username=admin_user.username,
             email=admin_user.email,
@@ -93,8 +100,10 @@ def auth_admin_user(admin_user):
         )
 
     app.dependency_overrides[require_auth] = override_auth
+    app.dependency_overrides[require_admin_access] = override_auth
     yield
     app.dependency_overrides.pop(require_auth, None)
+    app.dependency_overrides.pop(require_admin_access, None)
 
 
 @pytest.fixture
@@ -134,9 +143,15 @@ def admin_user(db_session):
 @pytest.fixture
 def user_budget_settings(db_session, regular_user):
     """Create budget settings for regular user"""
+    # Set period start to 10 days ago to include test API usage records (which are 5 days old)
+    period_start = datetime.utcnow() - timedelta(days=10)
+    period_end = datetime.utcnow() + timedelta(days=20)
+
     settings = UserBudgetSettings(
         user_id=regular_user.user_id,
         monthly_limit_usd=30.0,
+        current_period_start=period_start,
+        current_period_end=period_end,
         enforce_budget=True,
         budget_visible_to_user=True,
         user_can_modify_limit=False,
@@ -181,7 +196,8 @@ class TestBudgetStatusEndpoint:
         self,
         client,
         override_get_db,
-        auth_regular_user, regular_user,
+        auth_regular_user,
+        regular_user,
         user_budget_settings,
         api_usage_records,
     ):
@@ -194,17 +210,21 @@ class TestBudgetStatusEndpoint:
         assert response.status_code == 200
         data = response.json()
 
-        assert "monthly_limit" in data
-        assert "current_spent" in data
-        assert "remaining" in data
+        assert "total_budget" in data
+        assert "used_budget" in data
+        assert "remaining_budget" in data
         assert "percentage_used" in data
         assert "alert_level" in data
         assert "period_start" in data
         assert "period_end" in data
+        assert "budget_period" in data
+        assert "can_view_budget" in data
+        assert "can_modify_limit" in data
+        assert "can_reset_budget" in data
 
-        assert data["monthly_limit"] == 30.0
-        assert data["current_spent"] == 1.5  # 10 records * 0.15
-        assert data["remaining"] == 28.5
+        assert data["total_budget"] == 30.0
+        assert data["used_budget"] == 1.5  # 10 records * 0.15
+        assert data["remaining_budget"] == 28.5
 
     def test_get_budget_status_unauthorized(self, client, override_get_db):
         """Test budget status without authentication"""
@@ -243,14 +263,19 @@ class TestBudgetStatusEndpoint:
         data = response.json()
 
         # Should have default values
-        assert data["monthly_limit"] == 30.0  # Default limit
+        assert data["total_budget"] == 30.0  # Default limit
 
 
 class TestBudgetSettingsEndpoint:
     """Tests for GET /api/v1/budget/settings endpoint"""
 
     def test_get_budget_settings_success(
-        self, client, override_get_db, auth_regular_user, regular_user, user_budget_settings
+        self,
+        client,
+        override_get_db,
+        auth_regular_user,
+        regular_user,
+        user_budget_settings,
     ):
         """Test successfully retrieving budget settings"""
         with client as c:
@@ -309,7 +334,12 @@ class TestUpdateBudgetSettingsEndpoint:
         assert data["alert_threshold_yellow"] == 80.0
 
     def test_update_settings_without_permission(
-        self, client, override_get_db, auth_regular_user, regular_user, user_budget_settings
+        self,
+        client,
+        override_get_db,
+        auth_regular_user,
+        regular_user,
+        user_budget_settings,
     ):
         """Test updating settings without permission"""
         update_data = {
@@ -353,7 +383,13 @@ class TestResetBudgetEndpoint:
     """Tests for POST /api/v1/budget/reset endpoint"""
 
     def test_reset_budget_with_permission(
-        self, client, override_get_db, db_session, auth_regular_user, regular_user, api_usage_records
+        self,
+        client,
+        override_get_db,
+        db_session,
+        auth_regular_user,
+        regular_user,
+        api_usage_records,
     ):
         """Test resetting budget when user has permission"""
         # Create settings with reset permission
@@ -367,7 +403,7 @@ class TestResetBudgetEndpoint:
 
         with client as c:
             c.headers = {"Authorization": f"Bearer {regular_user.user_id}"}
-            response = c.post("/api/v1/budget/reset")
+            response = c.post("/api/v1/budget/reset", json={})
 
         assert response.status_code == 200
         data = response.json()
@@ -377,12 +413,17 @@ class TestResetBudgetEndpoint:
         assert "new_period_end" in data
 
     def test_reset_budget_without_permission(
-        self, client, override_get_db, auth_regular_user, regular_user, user_budget_settings
+        self,
+        client,
+        override_get_db,
+        auth_regular_user,
+        regular_user,
+        user_budget_settings,
     ):
         """Test resetting budget without permission"""
         with client as c:
             c.headers = {"Authorization": f"Bearer {regular_user.user_id}"}
-            response = c.post("/api/v1/budget/reset")
+            response = c.post("/api/v1/budget/reset", json={})
 
         assert response.status_code == 403
         assert "permission" in response.json()["detail"].lower()
@@ -401,7 +442,7 @@ class TestResetBudgetEndpoint:
 
         with client as c:
             c.headers = {"Authorization": f"Bearer {regular_user.user_id}"}
-            response = c.post("/api/v1/budget/reset")
+            response = c.post("/api/v1/budget/reset", json={})
 
         assert response.status_code == 200
 
@@ -424,7 +465,8 @@ class TestUsageBreakdownEndpoint:
         self,
         client,
         override_get_db,
-        auth_regular_user, regular_user,
+        auth_regular_user,
+        regular_user,
         user_budget_settings,
         api_usage_records,
     ):
@@ -452,7 +494,8 @@ class TestUsageHistoryEndpoint:
         self,
         client,
         override_get_db,
-        auth_regular_user, regular_user,
+        auth_regular_user,
+        regular_user,
         user_budget_settings,
         api_usage_records,
     ):
@@ -479,7 +522,8 @@ class TestUsageHistoryEndpoint:
         self,
         client,
         override_get_db,
-        auth_regular_user, regular_user,
+        auth_regular_user,
+        regular_user,
         user_budget_settings,
         api_usage_records,
     ):
@@ -498,7 +542,14 @@ class TestAdminConfigureEndpoint:
     """Tests for PUT /api/v1/budget/admin/configure endpoint"""
 
     def test_admin_configure_user_budget(
-        self, client, override_get_db, auth_admin_user, admin_user, auth_regular_user, regular_user, user_budget_settings
+        self,
+        client,
+        override_get_db,
+        auth_admin_user,
+        admin_user,
+        auth_regular_user,
+        regular_user,
+        user_budget_settings,
     ):
         """Test admin configuring user budget settings"""
         config_data = {
@@ -542,7 +593,14 @@ class TestAdminListAllEndpoint:
     """Tests for GET /api/v1/budget/admin/list endpoint"""
 
     def test_admin_list_all_budgets(
-        self, client, override_get_db, db_session, auth_admin_user, admin_user, auth_regular_user, regular_user
+        self,
+        client,
+        override_get_db,
+        db_session,
+        auth_admin_user,
+        admin_user,
+        auth_regular_user,
+        regular_user,
     ):
         """Test admin listing all user budgets"""
         # Create multiple user budget settings
@@ -567,7 +625,9 @@ class TestAdminListAllEndpoint:
         assert "budgets" in data
         assert len(data["budgets"]) == 2
 
-    def test_admin_list_requires_admin(self, client, override_get_db, auth_regular_user, regular_user):
+    def test_admin_list_requires_admin(
+        self, client, override_get_db, auth_regular_user, regular_user
+    ):
         """Test that non-admin cannot list all budgets"""
         with client as c:
             c.headers = {"Authorization": f"Bearer {regular_user.user_id}"}
@@ -580,17 +640,22 @@ class TestAdminResetEndpoint:
     """Tests for POST /api/v1/budget/admin/reset endpoint"""
 
     def test_admin_reset_user_budget(
-        self, client, override_get_db, auth_admin_user, admin_user, auth_regular_user, regular_user, user_budget_settings
+        self,
+        client,
+        override_get_db,
+        auth_admin_user,
+        admin_user,
+        auth_regular_user,
+        regular_user,
+        user_budget_settings,
     ):
         """Test admin resetting a user's budget"""
-        reset_data = {
-            "target_user_id": regular_user.user_id,
-            "reason": "Monthly reset requested by user",
-        }
-
         with client as c:
             c.headers = {"Authorization": f"Bearer {admin_user.user_id}"}
-            response = c.post("/api/v1/budget/admin/reset", json=reset_data)
+            response = c.post(
+                f"/api/v1/budget/admin/reset/{regular_user.user_id}",
+                json={"reason": "Monthly reset requested by user"},
+            )
 
         assert response.status_code == 200
         data = response.json()
@@ -599,15 +664,13 @@ class TestAdminResetEndpoint:
         assert "new_period_start" in data
         assert "new_period_end" in data
 
-    def test_admin_reset_requires_admin(self, client, override_get_db, auth_regular_user, regular_user):
+    def test_admin_reset_requires_admin(
+        self, client, override_get_db, auth_regular_user, regular_user
+    ):
         """Test that non-admin cannot reset user budgets"""
-        reset_data = {
-            "target_user_id": "other_user",
-        }
-
         with client as c:
             c.headers = {"Authorization": f"Bearer {regular_user.user_id}"}
-            response = c.post("/api/v1/budget/admin/reset", json=reset_data)
+            response = c.post("/api/v1/budget/admin/reset/other_user", json={})
 
         assert response.status_code == 403
 
@@ -616,19 +679,19 @@ class TestAdminResetEndpoint:
         client,
         override_get_db,
         db_session,
-        auth_admin_user, admin_user,
-        auth_regular_user, regular_user,
+        auth_admin_user,
+        admin_user,
+        auth_regular_user,
+        regular_user,
         user_budget_settings,
     ):
         """Test that admin reset creates audit log"""
-        reset_data = {
-            "target_user_id": regular_user.user_id,
-            "reason": "Admin reset test",
-        }
-
         with client as c:
             c.headers = {"Authorization": f"Bearer {admin_user.user_id}"}
-            response = c.post("/api/v1/budget/admin/reset", json=reset_data)
+            response = c.post(
+                f"/api/v1/budget/admin/reset/{regular_user.user_id}",
+                json={"reason": "Admin reset test"},
+            )
 
         assert response.status_code == 200
 
@@ -681,11 +744,16 @@ class TestBudgetEnforcement:
         assert response.status_code == 200
         data = response.json()
 
-        assert data["current_spent"] > data["monthly_limit"]
-        assert data["alert_level"] == "red"
+        assert data["used_budget"] > data["total_budget"]
+        assert data["is_over_budget"] is True
 
     def test_budget_allows_when_not_exceeded(
-        self, client, override_get_db, auth_regular_user, regular_user, user_budget_settings
+        self,
+        client,
+        override_get_db,
+        auth_regular_user,
+        regular_user,
+        user_budget_settings,
     ):
         """Test that budget allows requests when not exceeded"""
         with client as c:
@@ -695,13 +763,16 @@ class TestBudgetEnforcement:
         assert response.status_code == 200
         data = response.json()
 
-        assert data["current_spent"] <= data["monthly_limit"]
+        assert data["used_budget"] <= data["total_budget"]
+        assert data["is_over_budget"] is False
 
 
 class TestBudgetAlertLevels:
     """Tests for budget alert threshold logic"""
 
-    def test_green_alert_level(self, client, override_get_db, db_session, auth_regular_user, regular_user):
+    def test_green_alert_level(
+        self, client, override_get_db, db_session, auth_regular_user, regular_user
+    ):
         """Test green alert when usage is low"""
         settings = UserBudgetSettings(
             user_id=regular_user.user_id,
@@ -798,7 +869,9 @@ class TestBudgetAlertLevels:
 
         assert data["alert_level"] == "orange"
 
-    def test_red_alert_level(self, client, override_get_db, db_session, auth_regular_user, regular_user):
+    def test_red_alert_level(
+        self, client, override_get_db, db_session, auth_regular_user, regular_user
+    ):
         """Test red alert when over budget"""
         settings = UserBudgetSettings(
             user_id=regular_user.user_id,

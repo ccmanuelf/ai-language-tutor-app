@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.models.budget import (
     BudgetAlert,
@@ -26,8 +27,11 @@ from app.models.budget import (
 from app.models.database import Base, User, UserRole
 
 # Test database setup
+# Use StaticPool to ensure all connections share the same in-memory database
 TEST_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(
+    TEST_DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -411,10 +415,10 @@ class TestBudgetResetLogModel:
                 previous_limit=30.0 + i * 10,
                 new_limit=40.0 + i * 10,
                 previous_spent=10.0,
-            previous_period_start=datetime.now() - timedelta(days=30),
-            previous_period_end=datetime.now(),
-            new_period_start=datetime.now(),
-            new_period_end=datetime.now() + timedelta(days=30),
+                previous_period_start=datetime.now() - timedelta(days=30),
+                previous_period_end=datetime.now(),
+                new_period_start=datetime.now(),
+                new_period_end=datetime.now() + timedelta(days=30),
             )
             logs.append(log)
             db_session.add(log)
@@ -463,10 +467,10 @@ class TestBudgetResetLogModel:
                 previous_limit=30.0,
                 new_limit=30.0,
                 previous_spent=0.0,
-            previous_period_start=datetime.now() - timedelta(days=30),
-            previous_period_end=datetime.now(),
-            new_period_start=datetime.now(),
-            new_period_end=datetime.now() + timedelta(days=30),
+                previous_period_start=datetime.now() - timedelta(days=30),
+                previous_period_end=datetime.now(),
+                new_period_start=datetime.now(),
+                new_period_end=datetime.now() + timedelta(days=30),
             )
             db_session.add(log)
             db_session.commit()
@@ -481,7 +485,11 @@ class TestBudgetResetLogModel:
         )
 
         assert len(logs) == 3
-        assert logs[0].reset_timestamp <= logs[1].reset_timestamp <= logs[2].reset_timestamp
+        assert (
+            logs[0].reset_timestamp
+            <= logs[1].reset_timestamp
+            <= logs[2].reset_timestamp
+        )
 
     def test_reset_log_limit_change_tracking(self, db_session, test_user):
         """Test tracking limit changes in reset log"""

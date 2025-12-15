@@ -19,6 +19,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.database.config import get_primary_db_session
 from app.main import app
@@ -26,8 +27,11 @@ from app.models.budget import BudgetResetLog, UserBudgetSettings
 from app.models.database import APIUsage, Base, User, UserRole
 
 # Test database setup
+# Use StaticPool to ensure all connections share the same in-memory database
 TEST_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(
+    TEST_DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -157,7 +161,7 @@ class TestAdminBudgetConfigurationFlow:
 
         assert status_response.status_code == 200
         status_data = status_response.json()
-        assert status_data["monthly_limit"] == 50.0
+        assert status_data["total_budget"] == 50.0
 
     def test_admin_grants_user_permissions(
         self, client, override_get_db, db_session, admin_user, power_user
@@ -280,7 +284,7 @@ class TestUserBudgetManagementFlow:
         for i in range(5):
             usage = APIUsage(
                 user_id=regular_user.user_id,
-                provider="mistral",
+                api_provider="mistral",
                 model_name="mistral-small",
                 estimated_cost=2.0,
                 total_tokens=1000,
@@ -296,9 +300,9 @@ class TestUserBudgetManagementFlow:
 
         assert status_response.status_code == 200
         status_data = status_response.json()
-        assert status_data["current_spent"] == 10.0  # 5 * 2.0
-        assert status_data["monthly_limit"] == 30.0
-        assert status_data["remaining"] == 20.0
+        assert status_data["used_budget"] == 10.0  # 5 * 2.0
+        assert status_data["total_budget"] == 30.0
+        assert status_data["remaining_budget"] == 20.0
 
         # Step 4: View usage breakdown
         with client as c:
@@ -344,7 +348,7 @@ class TestUserBudgetManagementFlow:
         # Step 1: Green status (10% usage)
         usage1 = APIUsage(
             user_id=regular_user.user_id,
-            provider="mistral",
+            api_provider="mistral",
             estimated_cost=10.0,
             created_at=datetime.utcnow(),
         )
@@ -360,7 +364,7 @@ class TestUserBudgetManagementFlow:
         # Step 2: Yellow alert (80% usage)
         usage2 = APIUsage(
             user_id=regular_user.user_id,
-            provider="mistral",
+            api_provider="mistral",
             estimated_cost=70.0,
             created_at=datetime.utcnow(),
         )
@@ -376,7 +380,7 @@ class TestUserBudgetManagementFlow:
         # Step 3: Orange alert (95% usage)
         usage3 = APIUsage(
             user_id=regular_user.user_id,
-            provider="mistral",
+            api_provider="mistral",
             estimated_cost=15.0,
             created_at=datetime.utcnow(),
         )
@@ -392,7 +396,7 @@ class TestUserBudgetManagementFlow:
         # Step 4: Red alert (105% usage - over budget)
         usage4 = APIUsage(
             user_id=regular_user.user_id,
-            provider="mistral",
+            api_provider="mistral",
             estimated_cost=10.0,
             created_at=datetime.utcnow(),
         )
@@ -405,7 +409,7 @@ class TestUserBudgetManagementFlow:
 
         status_data = response.json()
         assert status_data["alert_level"] == "red"
-        assert status_data["current_spent"] > status_data["monthly_limit"]
+        assert status_data["used_budget"] > status_data["total_budget"]
 
 
 class TestBudgetResetFlow:
@@ -437,7 +441,7 @@ class TestBudgetResetFlow:
         # Step 2: Accumulate usage
         usage = APIUsage(
             user_id=regular_user.user_id,
-            provider="mistral",
+            api_provider="mistral",
             estimated_cost=15.0,
             created_at=datetime.utcnow(),
         )
@@ -449,7 +453,7 @@ class TestBudgetResetFlow:
             c.headers = {"Authorization": f"Bearer {regular_user.user_id}"}
             status_before = c.get("/api/v1/budget/status").json()
 
-        assert status_before["current_spent"] == 15.0
+        assert status_before["used_budget"] == 15.0
 
         # Step 3: User resets budget
         with client as c:
@@ -475,7 +479,7 @@ class TestBudgetResetFlow:
             status_after = c.get("/api/v1/budget/status").json()
 
         # Old usage should be excluded from new period
-        assert status_after["current_spent"] == 0.0
+        assert status_after["used_budget"] == 0.0
 
     def test_admin_resets_user_budget(
         self, client, override_get_db, db_session, admin_user, regular_user
@@ -502,7 +506,7 @@ class TestBudgetResetFlow:
         # Step 2: Add usage
         usage = APIUsage(
             user_id=regular_user.user_id,
-            provider="mistral",
+            api_provider="mistral",
             estimated_cost=20.0,
             created_at=datetime.utcnow(),
         )
@@ -561,7 +565,7 @@ class TestBudgetEnforcementFlow:
         # Step 2: Exceed budget
         usage = APIUsage(
             user_id=regular_user.user_id,
-            provider="mistral",
+            api_provider="mistral",
             estimated_cost=12.0,
             created_at=datetime.utcnow(),
         )
@@ -574,9 +578,9 @@ class TestBudgetEnforcementFlow:
             status_response = c.get("/api/v1/budget/status")
 
         status_data = status_response.json()
-        assert status_data["current_spent"] > status_data["monthly_limit"]
+        assert status_data["used_budget"] > status_data["total_budget"]
         assert status_data["alert_level"] == "red"
-        assert status_data["remaining"] < 0
+        assert status_data["remaining_budget"] < 0
 
     def test_budget_enforcement_disabled_allows_overbudget(
         self, client, override_get_db, db_session, regular_user
@@ -602,7 +606,7 @@ class TestBudgetEnforcementFlow:
         # Step 2: Exceed budget
         usage = APIUsage(
             user_id=regular_user.user_id,
-            provider="mistral",
+            api_provider="mistral",
             estimated_cost=15.0,
             created_at=datetime.utcnow(),
         )
@@ -615,7 +619,7 @@ class TestBudgetEnforcementFlow:
             status_response = c.get("/api/v1/budget/status")
 
         status_data = status_response.json()
-        assert status_data["current_spent"] > status_data["monthly_limit"]
+        assert status_data["used_budget"] > status_data["total_budget"]
         # But no blocking occurs (would be checked in API call middleware)
 
 
@@ -637,19 +641,19 @@ class TestMultiUserBudgetFlow:
         user_configs = [
             {
                 "user_id": "user_basic",
-                "monthly_limit": 30.0,
+                "total_budget": 30.0,
                 "can_modify": False,
                 "can_reset": False,
             },
             {
                 "user_id": "user_power",
-                "monthly_limit": 100.0,
+                "total_budget": 100.0,
                 "can_modify": True,
                 "can_reset": True,
             },
             {
                 "user_id": "user_restricted",
-                "monthly_limit": 10.0,
+                "total_budget": 10.0,
                 "can_modify": False,
                 "can_reset": False,
             },
@@ -671,7 +675,7 @@ class TestMultiUserBudgetFlow:
             # Configure budget via admin
             budget_config = {
                 "target_user_id": config["user_id"],
-                "monthly_limit_usd": config["monthly_limit"],
+                "monthly_limit_usd": config["total_budget"],
                 "user_can_modify_limit": config["can_modify"],
                 "user_can_reset_budget": config["can_reset"],
                 "budget_visible_to_user": True,
@@ -689,7 +693,7 @@ class TestMultiUserBudgetFlow:
 
             assert status_response.status_code == 200
             status_data = status_response.json()
-            assert status_data["monthly_limit"] == config["monthly_limit"]
+            assert status_data["total_budget"] == config["total_budget"]
 
         # Verify budgets are independent (admin can list all)
         with client as c:
@@ -846,14 +850,14 @@ class TestCompleteBudgetLifecycle:
             c.headers = {"Authorization": f"Bearer {regular_user.user_id}"}
             initial_status = c.get("/api/v1/budget/status").json()
 
-        assert initial_status["current_spent"] == 0.0
+        assert initial_status["used_budget"] == 0.0
         assert initial_status["alert_level"] == "green"
 
         # Step 3: User accumulates usage
         for i in range(5):
             usage = APIUsage(
                 user_id=regular_user.user_id,
-                provider="mistral",
+                api_provider="mistral",
                 estimated_cost=5.0,
                 created_at=datetime.utcnow() - timedelta(hours=5 - i),
             )
@@ -865,14 +869,14 @@ class TestCompleteBudgetLifecycle:
             c.headers = {"Authorization": f"Bearer {regular_user.user_id}"}
             mid_status = c.get("/api/v1/budget/status").json()
 
-        assert mid_status["current_spent"] == 25.0
+        assert mid_status["used_budget"] == 25.0
         assert mid_status["percentage_used"] == 50.0
 
         # Step 5: Reach near-limit
         for i in range(4):
             usage = APIUsage(
                 user_id=regular_user.user_id,
-                provider="mistral",
+                api_provider="mistral",
                 estimated_cost=5.0,
                 created_at=datetime.utcnow(),
             )
@@ -900,7 +904,7 @@ class TestCompleteBudgetLifecycle:
             c.headers = {"Authorization": f"Bearer {regular_user.user_id}"}
             new_limit_status = c.get("/api/v1/budget/status").json()
 
-        assert new_limit_status["monthly_limit"] == 100.0
+        assert new_limit_status["total_budget"] == 100.0
         assert new_limit_status["alert_level"] in [
             "green",
             "yellow",
@@ -921,5 +925,5 @@ class TestCompleteBudgetLifecycle:
             c.headers = {"Authorization": f"Bearer {regular_user.user_id}"}
             reset_status = c.get("/api/v1/budget/status").json()
 
-        assert reset_status["current_spent"] == 0.0  # New period
+        assert reset_status["used_budget"] == 0.0  # New period
         assert reset_status["alert_level"] == "green"

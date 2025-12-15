@@ -236,10 +236,12 @@ async def get_budget_status(
         )
 
     # Get usage for current period
+    # Note: APIUsage.user_id is Integer FK to users.id, but current_user.user_id is String
+    # We need to use current_user.id (the numeric ID) for the query
     total_cost = (
         db.query(func.sum(APIUsage.estimated_cost))
         .filter(
-            APIUsage.user_id == current_user.user_id,
+            APIUsage.user_id == current_user.id,
             APIUsage.created_at >= settings.current_period_start,
         )
         .scalar()
@@ -410,7 +412,7 @@ async def reset_budget(
     current_spent = (
         db.query(func.sum(APIUsage.estimated_cost))
         .filter(
-            APIUsage.user_id == current_user.user_id,
+            APIUsage.user_id == current_user.id,
             APIUsage.created_at >= settings.current_period_start,
         )
         .scalar()
@@ -477,7 +479,7 @@ async def get_usage_breakdown(
     usage_records = (
         db.query(APIUsage)
         .filter(
-            APIUsage.user_id == current_user.user_id,
+            APIUsage.user_id == current_user.id,
             APIUsage.created_at >= settings.current_period_start,
         )
         .all()
@@ -635,11 +637,16 @@ async def admin_reset_user_budget(
     """Admin endpoint to reset budget for any user"""
     settings = _get_or_create_budget_settings(user_id, db)
 
+    # Get the user's numeric ID for querying APIUsage
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     # Get current spent amount
     current_spent = (
         db.query(func.sum(APIUsage.estimated_cost))
         .filter(
-            APIUsage.user_id == user_id,
+            APIUsage.user_id == user.id,
             APIUsage.created_at >= settings.current_period_start,
         )
         .scalar()
