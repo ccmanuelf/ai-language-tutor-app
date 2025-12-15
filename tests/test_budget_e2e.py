@@ -119,11 +119,87 @@ def power_user(db_session):
     return user
 
 
+@pytest.fixture
+def auth_regular_user(regular_user):
+    """Override auth to return regular user"""
+    from app.api.auth import SimpleUser, require_auth
+    from app.services.auth import get_current_user
+
+    class MockUser:
+        def __init__(self):
+            self.id = regular_user.id
+            self.user_id = regular_user.user_id
+            self.username = regular_user.username
+            self.email = regular_user.email
+            self.role = regular_user.role.value
+
+    def override_auth():
+        return MockUser()
+
+    def override_get_current_user():
+        return {
+            "id": regular_user.id,
+            "user_id": regular_user.user_id,
+            "username": regular_user.username,
+            "email": regular_user.email,
+            "role": regular_user.role.value,
+        }
+
+    app.dependency_overrides[require_auth] = override_auth
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    yield
+    app.dependency_overrides.pop(require_auth, None)
+    app.dependency_overrides.pop(get_current_user, None)
+
+
+@pytest.fixture
+def auth_admin_user(admin_user):
+    """Override auth to return admin user"""
+    from app.api.auth import SimpleUser, require_auth
+    from app.services.admin_auth import require_admin_access
+    from app.services.auth import get_current_user
+
+    class MockUser:
+        def __init__(self):
+            self.id = admin_user.id
+            self.user_id = admin_user.user_id
+            self.username = admin_user.username
+            self.email = admin_user.email
+            self.role = admin_user.role.value
+
+    def override_auth():
+        return MockUser()
+
+    def override_get_current_user():
+        return {
+            "id": admin_user.id,
+            "user_id": admin_user.user_id,
+            "username": admin_user.username,
+            "email": admin_user.email,
+            "role": admin_user.role.value,
+        }
+
+    app.dependency_overrides[require_auth] = override_auth
+    app.dependency_overrides[require_admin_access] = override_auth
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    yield
+    app.dependency_overrides.pop(require_auth, None)
+    app.dependency_overrides.pop(require_admin_access, None)
+    app.dependency_overrides.pop(get_current_user, None)
+
+
 class TestAdminBudgetConfigurationFlow:
     """E2E tests for admin budget configuration workflows"""
 
     def test_admin_creates_new_user_budget_configuration(
-        self, client, override_get_db, db_session, admin_user, regular_user
+        self,
+        client,
+        override_get_db,
+        db_session,
+        auth_admin_user,
+        admin_user,
+        auth_regular_user,
+        regular_user,
     ):
         """
         E2E Flow: Admin creates budget configuration for a new user
@@ -164,7 +240,13 @@ class TestAdminBudgetConfigurationFlow:
         assert status_data["total_budget"] == 50.0
 
     def test_admin_grants_user_permissions(
-        self, client, override_get_db, db_session, admin_user, power_user
+        self,
+        client,
+        override_get_db,
+        db_session,
+        auth_admin_user,
+        admin_user,
+        power_user,
     ):
         """
         E2E Flow: Admin grants power user permissions to manage their own budget
@@ -211,7 +293,14 @@ class TestAdminBudgetConfigurationFlow:
         assert "successfully" in reset_response.json()["message"].lower()
 
     def test_admin_restricts_budget_visibility(
-        self, client, override_get_db, db_session, admin_user, regular_user
+        self,
+        client,
+        override_get_db,
+        db_session,
+        auth_admin_user,
+        admin_user,
+        auth_regular_user,
+        regular_user,
     ):
         """
         E2E Flow: Admin hides budget from specific user
@@ -259,7 +348,7 @@ class TestUserBudgetManagementFlow:
     """E2E tests for user budget management workflows"""
 
     def test_user_views_budget_and_usage_history(
-        self, client, override_get_db, db_session, regular_user
+        self, client, override_get_db, db_session, auth_regular_user, regular_user
     ):
         """
         E2E Flow: User views their budget status and usage history
@@ -273,7 +362,7 @@ class TestUserBudgetManagementFlow:
         """
         # Step 1: Create budget settings
         settings = UserBudgetSettings(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             monthly_limit_usd=30.0,
             budget_visible_to_user=True,
         )
@@ -283,11 +372,11 @@ class TestUserBudgetManagementFlow:
         # Step 2: Add API usage
         for i in range(5):
             usage = APIUsage(
-                user_id=regular_user.user_id,
+                user_id=regular_user.id,
                 api_provider="mistral",
-                model_name="mistral-small",
+                api_endpoint="/v1/chat/completions",
                 estimated_cost=2.0,
-                total_tokens=1000,
+                tokens_used=1000,
                 created_at=datetime.utcnow() - timedelta(hours=i),
             )
             db_session.add(usage)
@@ -323,7 +412,7 @@ class TestUserBudgetManagementFlow:
         assert len(history_data["usage_records"]) == 5
 
     def test_user_monitors_budget_approaching_limit(
-        self, client, override_get_db, db_session, regular_user
+        self, client, override_get_db, db_session, auth_regular_user, regular_user
     ):
         """
         E2E Flow: User monitors budget as it approaches limit with alerts
@@ -335,7 +424,7 @@ class TestUserBudgetManagementFlow:
         4. Usage reaches red alert (near/over limit)
         """
         settings = UserBudgetSettings(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             monthly_limit_usd=100.0,
             budget_visible_to_user=True,
             alert_threshold_yellow=75.0,
@@ -347,8 +436,10 @@ class TestUserBudgetManagementFlow:
 
         # Step 1: Green status (10% usage)
         usage1 = APIUsage(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             api_provider="mistral",
+            api_endpoint="/v1/chat/completions",
+            request_type="chat",
             estimated_cost=10.0,
             created_at=datetime.utcnow(),
         )
@@ -363,8 +454,10 @@ class TestUserBudgetManagementFlow:
 
         # Step 2: Yellow alert (80% usage)
         usage2 = APIUsage(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             api_provider="mistral",
+            api_endpoint="/v1/chat/completions",
+            request_type="chat",
             estimated_cost=70.0,
             created_at=datetime.utcnow(),
         )
@@ -379,8 +472,10 @@ class TestUserBudgetManagementFlow:
 
         # Step 3: Orange alert (95% usage)
         usage3 = APIUsage(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             api_provider="mistral",
+            api_endpoint="/v1/chat/completions",
+            request_type="chat",
             estimated_cost=15.0,
             created_at=datetime.utcnow(),
         )
@@ -395,8 +490,10 @@ class TestUserBudgetManagementFlow:
 
         # Step 4: Red alert (105% usage - over budget)
         usage4 = APIUsage(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             api_provider="mistral",
+            api_endpoint="/v1/chat/completions",
+            request_type="chat",
             estimated_cost=10.0,
             created_at=datetime.utcnow(),
         )
@@ -416,7 +513,7 @@ class TestBudgetResetFlow:
     """E2E tests for budget reset workflows"""
 
     def test_user_manual_reset_with_permission(
-        self, client, override_get_db, db_session, regular_user
+        self, client, override_get_db, db_session, auth_regular_user, regular_user
     ):
         """
         E2E Flow: User with permission manually resets their budget
@@ -430,7 +527,7 @@ class TestBudgetResetFlow:
         """
         # Step 1: Create budget with reset permission
         settings = UserBudgetSettings(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             monthly_limit_usd=30.0,
             budget_visible_to_user=True,
             user_can_reset_budget=True,
@@ -440,8 +537,10 @@ class TestBudgetResetFlow:
 
         # Step 2: Accumulate usage
         usage = APIUsage(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             api_provider="mistral",
+            api_endpoint="/v1/chat/completions",
+            request_type="chat",
             estimated_cost=15.0,
             created_at=datetime.utcnow(),
         )
@@ -482,7 +581,14 @@ class TestBudgetResetFlow:
         assert status_after["used_budget"] == 0.0
 
     def test_admin_resets_user_budget(
-        self, client, override_get_db, db_session, admin_user, regular_user
+        self,
+        client,
+        override_get_db,
+        db_session,
+        auth_admin_user,
+        admin_user,
+        auth_regular_user,
+        regular_user,
     ):
         """
         E2E Flow: Admin manually resets a user's budget
@@ -495,7 +601,7 @@ class TestBudgetResetFlow:
         """
         # Step 1: Create budget without reset permission
         settings = UserBudgetSettings(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             monthly_limit_usd=30.0,
             budget_visible_to_user=True,
             user_can_reset_budget=False,
@@ -505,8 +611,10 @@ class TestBudgetResetFlow:
 
         # Step 2: Add usage
         usage = APIUsage(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             api_provider="mistral",
+            api_endpoint="/v1/chat/completions",
+            request_type="chat",
             estimated_cost=20.0,
             created_at=datetime.utcnow(),
         )
@@ -541,7 +649,7 @@ class TestBudgetEnforcementFlow:
     """E2E tests for budget enforcement during API usage"""
 
     def test_budget_enforcement_blocks_overbudget_requests(
-        self, client, override_get_db, db_session, regular_user
+        self, client, override_get_db, db_session, auth_regular_user, regular_user
     ):
         """
         E2E Flow: Budget enforcement prevents API calls when budget exceeded
@@ -554,7 +662,7 @@ class TestBudgetEnforcementFlow:
         """
         # Step 1: Create budget with low limit and enforcement
         settings = UserBudgetSettings(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             monthly_limit_usd=10.0,
             enforce_budget=True,
             budget_visible_to_user=True,
@@ -564,8 +672,10 @@ class TestBudgetEnforcementFlow:
 
         # Step 2: Exceed budget
         usage = APIUsage(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             api_provider="mistral",
+            api_endpoint="/v1/chat/completions",
+            request_type="chat",
             estimated_cost=12.0,
             created_at=datetime.utcnow(),
         )
@@ -583,7 +693,7 @@ class TestBudgetEnforcementFlow:
         assert status_data["remaining_budget"] < 0
 
     def test_budget_enforcement_disabled_allows_overbudget(
-        self, client, override_get_db, db_session, regular_user
+        self, client, override_get_db, db_session, auth_regular_user, regular_user
     ):
         """
         E2E Flow: User with enforcement disabled can exceed budget
@@ -595,7 +705,7 @@ class TestBudgetEnforcementFlow:
         """
         # Step 1: Create budget with enforcement disabled
         settings = UserBudgetSettings(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             monthly_limit_usd=10.0,
             enforce_budget=False,  # Disabled
             budget_visible_to_user=True,
@@ -605,8 +715,10 @@ class TestBudgetEnforcementFlow:
 
         # Step 2: Exceed budget
         usage = APIUsage(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             api_provider="mistral",
+            api_endpoint="/v1/chat/completions",
+            request_type="chat",
             estimated_cost=15.0,
             created_at=datetime.utcnow(),
         )
@@ -751,7 +863,7 @@ class TestBudgetPermissionFlow:
         assert reset_response.status_code == 403
 
     def test_user_cannot_modify_without_permission(
-        self, client, override_get_db, db_session, regular_user
+        self, client, override_get_db, db_session, auth_regular_user, regular_user
     ):
         """
         E2E Flow: User without modify permission cannot change settings
@@ -763,7 +875,7 @@ class TestBudgetPermissionFlow:
         """
         # Create budget without modify permission
         settings = UserBudgetSettings(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             monthly_limit_usd=30.0,
             user_can_modify_limit=False,  # No permission
             budget_visible_to_user=True,
@@ -783,7 +895,7 @@ class TestBudgetPermissionFlow:
         assert update_response.status_code == 403
 
     def test_user_cannot_reset_without_permission(
-        self, client, override_get_db, db_session, regular_user
+        self, client, override_get_db, db_session, auth_regular_user, regular_user
     ):
         """
         E2E Flow: User without reset permission cannot reset budget
@@ -795,7 +907,7 @@ class TestBudgetPermissionFlow:
         """
         # Create budget without reset permission
         settings = UserBudgetSettings(
-            user_id=regular_user.user_id,
+            user_id=regular_user.id,
             monthly_limit_usd=30.0,
             user_can_reset_budget=False,  # No permission
             budget_visible_to_user=True,
@@ -815,7 +927,14 @@ class TestCompleteBudgetLifecycle:
     """E2E test for complete budget lifecycle from creation to reset"""
 
     def test_complete_budget_lifecycle(
-        self, client, override_get_db, db_session, admin_user, regular_user
+        self,
+        client,
+        override_get_db,
+        db_session,
+        auth_admin_user,
+        admin_user,
+        auth_regular_user,
+        regular_user,
     ):
         """
         E2E Flow: Complete budget lifecycle
@@ -856,8 +975,10 @@ class TestCompleteBudgetLifecycle:
         # Step 3: User accumulates usage
         for i in range(5):
             usage = APIUsage(
-                user_id=regular_user.user_id,
+                user_id=regular_user.id,
                 api_provider="mistral",
+                api_endpoint="/v1/chat/completions",
+                request_type="chat",
                 estimated_cost=5.0,
                 created_at=datetime.utcnow() - timedelta(hours=5 - i),
             )
@@ -875,8 +996,10 @@ class TestCompleteBudgetLifecycle:
         # Step 5: Reach near-limit
         for i in range(4):
             usage = APIUsage(
-                user_id=regular_user.user_id,
+                user_id=regular_user.id,
                 api_provider="mistral",
+                api_endpoint="/v1/chat/completions",
+                request_type="chat",
                 estimated_cost=5.0,
                 created_at=datetime.utcnow(),
             )

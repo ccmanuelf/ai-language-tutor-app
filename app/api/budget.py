@@ -382,6 +382,17 @@ async def update_budget_settings(
     if request.alert_threshold_red is not None:
         settings.alert_threshold_red = request.alert_threshold_red
 
+    # Validate threshold ordering: yellow < orange < red
+    if not (
+        settings.alert_threshold_yellow
+        < settings.alert_threshold_orange
+        < settings.alert_threshold_red
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid threshold values. Must satisfy: yellow < orange < red",
+        )
+
     db.commit()
     db.refresh(settings)
 
@@ -492,13 +503,13 @@ async def get_usage_breakdown(
 
     for record in usage_records:
         # By provider
-        provider = record.provider or "unknown"
+        provider = record.api_provider or "unknown"
         by_provider[provider] = by_provider.get(provider, 0.0) + (
             record.estimated_cost or 0.0
         )
 
         # By service type
-        service = record.service_type or "unknown"
+        service = record.request_type or "unknown"
         by_service_type[service] = by_service_type.get(service, 0.0) + (
             record.estimated_cost or 0.0
         )
@@ -517,8 +528,8 @@ async def get_usage_breakdown(
         [
             {
                 "timestamp": r.created_at.isoformat() if r.created_at else None,
-                "provider": r.provider,
-                "service_type": r.service_type,
+                "provider": r.api_provider,
+                "service_type": r.request_type,
                 "cost": r.estimated_cost,
                 "tokens_used": r.tokens_used,
             }
