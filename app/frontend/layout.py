@@ -9,6 +9,7 @@ Provides consistent layout components:
 """
 
 from fasthtml.common import *
+
 from .styles import load_styles
 
 
@@ -38,6 +39,13 @@ def create_header(current_page: str = "home"):
                         "Progress",
                         href="/progress",
                         cls="active" if current_page == "progress" else "",
+                    )
+                ),
+                Li(
+                    A(
+                        "Budget",
+                        href="/dashboard/budget",
+                        cls="active" if current_page == "budget" else "",
                     )
                 ),
                 cls="nav-links",
@@ -194,6 +202,13 @@ def create_admin_sidebar(current_page: str = "users"):
             "icon": "🎭",
             "href": "/dashboard/admin/scenarios",
             "description": "Manage learning scenarios and content processing",
+        },
+        {
+            "key": "budget",
+            "label": "Budget Management",
+            "icon": "💰",
+            "href": "/dashboard/admin/budget",
+            "description": "Configure user budgets and spending limits",
         },
         {
             "key": "system",

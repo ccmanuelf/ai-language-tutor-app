@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.ai_models import router as ai_models_router
 from app.api.auth import router as auth_router
+from app.api.budget import router as budget_router
 from app.api.content import router as content_router
 from app.api.conversations import router as conversations_router
 from app.api.feature_toggles import router as feature_toggles_router
@@ -53,6 +54,7 @@ def create_app() -> FastAPI:
 
     # Include API routers
     app.include_router(auth_router)
+    app.include_router(budget_router, tags=["budget"])
     app.include_router(conversations_router)
     app.include_router(content_router, prefix="/api/content", tags=["content"])
     app.include_router(scenarios_router, prefix="/api/scenarios", tags=["scenarios"])

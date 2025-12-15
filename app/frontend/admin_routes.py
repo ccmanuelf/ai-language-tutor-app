@@ -14,6 +14,7 @@ from fasthtml.common import *
 
 from app.database.config import get_db_session_context
 from app.frontend.admin_ai_models import create_ai_models_page
+from app.frontend.admin_budget import create_admin_budget_page
 from app.frontend.admin_dashboard import create_user_management_page
 from app.frontend.admin_feature_toggles import create_feature_toggle_page
 from app.frontend.admin_language_config import (
@@ -559,6 +560,70 @@ def create_admin_routes(app):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to load progress analytics page",
+            )
+
+    @app.get("/dashboard/admin/budget")
+    async def admin_budget_page(
+        current_user: Dict[str, Any] = Depends(get_current_user),
+    ):
+        """Admin budget management page"""
+        try:
+            # Check admin access
+            if not admin_auth_service.is_admin_user(current_user):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Admin access required",
+                )
+
+            # Check budget management permission (using MANAGE_FEATURES as proxy)
+            if not admin_auth_service.has_permission(
+                current_user, AdminPermission.MANAGE_FEATURES
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Budget management permission required",
+                )
+
+            # Create the full budget management page with admin layout
+            from app.frontend.layout import create_admin_header, create_admin_sidebar
+            from app.frontend.styles import load_styles
+
+            return Html(
+                Head(
+                    Title("Admin Dashboard - Budget Management"),
+                    Meta(charset="utf-8"),
+                    Meta(
+                        name="viewport", content="width=device-width, initial-scale=1.0"
+                    ),
+                    load_styles(),
+                    # Add HTMX for dynamic updates
+                    Script(src="https://unpkg.com/htmx.org@1.9.6"),
+                ),
+                Body(
+                    # Admin Layout Container
+                    Div(
+                        create_admin_sidebar("budget"),
+                        Div(
+                            create_admin_header(current_user, "Budget Management"),
+                            Div(
+                                create_admin_budget_page(),
+                                cls="p-6",
+                            ),
+                            cls="flex-1 ml-64 overflow-auto",
+                        ),
+                        cls="flex min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900",
+                    ),
+                    cls="font-sans antialiased",
+                ),
+            )
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error in admin budget page: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to load budget management page",
             )
 
 

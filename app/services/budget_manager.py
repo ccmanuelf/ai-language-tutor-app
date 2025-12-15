@@ -95,21 +95,114 @@ class BudgetManager:
             },
         }
 
-    def get_current_budget_status(self) -> BudgetStatus:
-        """Get current budget status for the month"""
+    def get_current_budget_status(self, user_id: str = None) -> BudgetStatus:
+        """
+        Get current budget status for the user
+
+        Args:
+            user_id: Optional user ID. If None, uses global budget.
+
+        Returns:
+            BudgetStatus with current usage and limits
+        """
         session = get_primary_db_session()
         try:
-            # Get start of current month
+            # Import here to avoid circular dependency
+            from app.models.budget import UserBudgetSettings
+
+            # Get user-specific budget settings if user_id provided
+            if user_id:
+                user_settings = (
+                    session.query(UserBudgetSettings)
+                    .filter(UserBudgetSettings.user_id == user_id)
+                    .first()
+                )
+
+                if user_settings:
+                    # Use per-user budget settings
+                    budget_limit = user_settings.get_effective_limit()
+                    period_start = user_settings.current_period_start
+                    period_end = user_settings.current_period_end
+
+                    # Calculate total costs for current period
+                    total_cost = (
+                        session.query(func.sum(APIUsage.estimated_cost))
+                        .filter(
+                            APIUsage.user_id == user_id,
+                            APIUsage.created_at >= period_start,
+                        )
+                        .scalar()
+                        or 0.0
+                    )
+
+                    # Calculate remaining budget
+                    remaining = max(0, budget_limit - total_cost)
+                    percentage_used = (
+                        (total_cost / budget_limit * 100) if budget_limit > 0 else 0
+                    )
+
+                    # Determine alert level using user's custom thresholds
+                    if percentage_used >= 100:
+                        alert_level = BudgetAlert.CRITICAL
+                    elif percentage_used >= user_settings.alert_threshold_red:
+                        alert_level = BudgetAlert.RED
+                    elif percentage_used >= user_settings.alert_threshold_orange:
+                        alert_level = BudgetAlert.ORANGE
+                    elif percentage_used >= user_settings.alert_threshold_yellow:
+                        alert_level = BudgetAlert.YELLOW
+                    else:
+                        alert_level = BudgetAlert.GREEN
+
+                    # Calculate days remaining in period
+                    now = datetime.now()
+                    days_remaining = 0
+                    if period_end:
+                        days_remaining = max(0, (period_end - now).days)
+
+                    # Project period cost
+                    days_elapsed = (now - period_start).days + 1
+                    daily_average = total_cost / days_elapsed if days_elapsed > 0 else 0
+
+                    # Calculate projection based on period type
+                    if user_settings.budget_period.value == "monthly":
+                        projected_cost = daily_average * 30
+                    elif user_settings.budget_period.value == "weekly":
+                        projected_cost = daily_average * 7
+                    elif user_settings.budget_period.value == "daily":
+                        projected_cost = total_cost
+                    elif (
+                        user_settings.budget_period.value == "custom"
+                        and user_settings.custom_period_days
+                    ):
+                        projected_cost = (
+                            daily_average * user_settings.custom_period_days
+                        )
+                    else:
+                        projected_cost = daily_average * 30
+
+                    return BudgetStatus(
+                        total_budget=budget_limit,
+                        used_budget=total_cost,
+                        remaining_budget=remaining,
+                        percentage_used=percentage_used,
+                        alert_level=alert_level,
+                        days_remaining=days_remaining,
+                        projected_monthly_cost=projected_cost,
+                        is_over_budget=total_cost > budget_limit,
+                    )
+
+            # Fallback to global budget (legacy behavior)
             now = datetime.now()
             month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-            # Calculate total costs for current month
-            total_cost = (
-                session.query(func.sum(APIUsage.estimated_cost))
-                .filter(APIUsage.created_at >= month_start)
-                .scalar()
-                or 0.0
+            # Calculate total costs for current month (all users if no user_id)
+            query = session.query(func.sum(APIUsage.estimated_cost)).filter(
+                APIUsage.created_at >= month_start
             )
+            if user_id:
+                query = query.filter(APIUsage.user_id == user_id)
+
+            total_cost = query.scalar() or 0.0
 
             # Calculate remaining budget
             remaining = max(0, self.monthly_budget - total_cost)
@@ -128,7 +221,7 @@ class BudgetManager:
             # Project monthly cost
             days_elapsed = (now - month_start).days + 1
             daily_average = total_cost / days_elapsed if days_elapsed > 0 else 0
-            projected_monthly = daily_average * 30  # Approximate month length
+            projected_monthly = daily_average * 30
 
             return BudgetStatus(
                 total_budget=self.monthly_budget,
@@ -692,17 +785,37 @@ class BudgetManager:
         return alerts
 
     def should_enforce_budget(
-        self, user_preferences: Optional[Dict[str, Any]] = None
+        self, user_id: str = None, user_preferences: Optional[Dict[str, Any]] = None
     ) -> bool:
         """
         Determine if budget should be enforced based on user settings
 
         Args:
+            user_id: Optional user ID to check per-user budget settings
             user_preferences: User's preference settings
 
         Returns:
             True if budget should be enforced
         """
+        # Check per-user budget settings first
+        if user_id:
+            try:
+                from app.models.budget import UserBudgetSettings
+
+                session = get_primary_db_session()
+                user_settings = (
+                    session.query(UserBudgetSettings)
+                    .filter(UserBudgetSettings.user_id == user_id)
+                    .first()
+                )
+                session.close()
+
+                if user_settings:
+                    return user_settings.enforce_budget
+            except Exception as e:
+                logger.error(f"Error checking user budget settings: {e}")
+
+        # Fallback to user preferences
         if not user_preferences:
             return True  # Default: enforce budget
 

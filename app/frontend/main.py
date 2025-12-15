@@ -9,24 +9,27 @@ Main FastHTML application that orchestrates all frontend components:
 - Provides application factory
 """
 
-from fasthtml.common import *
 from pathlib import Path
+
+from fasthtml.common import *
+
+# Import admin API router
+from app.api.admin import admin_router
 
 # Import core configuration and services
 from app.core.config import get_settings
+
+from .admin_routes import register_admin_routes
+from .chat import create_chat_route
+from .content_view import create_content_view_route
 
 # Import modular frontend components
 from .diagnostic import create_diagnostic_route
 from .home import create_home_routes
 from .profile import create_profile_route
-from .chat import create_chat_route
 from .progress import create_progress_route
-from .content_view import create_content_view_route
-from .admin_routes import register_admin_routes
+from .user_budget_routes import register_user_budget_routes
 from .visual_learning import create_visual_learning_routes
-
-# Import admin API router
-from app.api.admin import admin_router
 
 
 def create_frontend_app():
@@ -48,6 +51,9 @@ def create_frontend_app():
     create_progress_route(app)
     create_content_view_route(app)
     create_visual_learning_routes(app)
+
+    # Register user budget dashboard routes
+    register_user_budget_routes(app)
 
     # Register admin dashboard routes and API
     register_admin_routes(app, admin_router)
