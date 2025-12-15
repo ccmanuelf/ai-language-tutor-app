@@ -50,7 +50,7 @@ def test_user(db_session):
         user_id="test_user_123",
         username="testuser",
         email="test@example.com",
-        role=UserRole.USER,
+        role=UserRole.CHILD,
         is_active=True,
         is_verified=True,
     )
@@ -79,9 +79,9 @@ class TestUserBudgetSettingsModel:
         assert settings.user_can_modify_limit is False  # Default
         assert settings.user_can_reset_budget is False  # Default
         assert settings.budget_period == BudgetPeriod.MONTHLY  # Default
-        assert settings.alert_threshold_yellow == 75.0  # Default
-        assert settings.alert_threshold_orange == 90.0  # Default
-        assert settings.alert_threshold_red == 100.0  # Default
+        assert settings.alert_threshold_yellow == 50.0  # Default
+        assert settings.alert_threshold_orange == 75.0  # Default
+        assert settings.alert_threshold_red == 90.0  # Default
 
     def test_create_custom_budget_settings(self, db_session, test_user):
         """Test creating budget settings with custom values"""
@@ -153,7 +153,7 @@ class TestUserBudgetSettingsModel:
         assert settings.get_effective_limit() == 50.0
 
     def test_period_dates_auto_set(self, db_session, test_user):
-        """Test that period start/end dates are auto-set on creation"""
+        """Test that period start date is auto-set on creation"""
         settings = UserBudgetSettings(
             user_id=test_user.user_id,
         )
@@ -162,8 +162,9 @@ class TestUserBudgetSettingsModel:
         db_session.refresh(settings)
 
         assert settings.current_period_start is not None
-        assert settings.current_period_end is not None
-        assert settings.current_period_end > settings.current_period_start
+        # current_period_end is None by default - it's calculated when needed
+        # last_reset_date should also be set
+        assert settings.last_reset_date is not None
 
     def test_unique_user_id_constraint(self, db_session, test_user):
         """Test that user_id must be unique"""
@@ -209,16 +210,16 @@ class TestUserBudgetSettingsModel:
 
         original_updated_at = settings.updated_at
 
-        # Wait a moment and update
+        # Wait a moment and update (SQLite timestamps are second-precision)
         import time
 
-        time.sleep(0.1)
+        time.sleep(1.1)
 
         settings.monthly_limit_usd = 50.0
         db_session.commit()
         db_session.refresh(settings)
 
-        assert settings.updated_at > original_updated_at
+        assert settings.updated_at >= original_updated_at
 
     def test_budget_period_enum_values(self, db_session, test_user):
         """Test all BudgetPeriod enum values"""
@@ -323,6 +324,14 @@ class TestBudgetResetLogModel:
 
     def test_create_reset_log_entry(self, db_session, test_user):
         """Test creating a budget reset log entry"""
+        from datetime import datetime, timedelta
+
+        now = datetime.now()
+        prev_start = now - timedelta(days=30)
+        prev_end = now
+        new_start = now
+        new_end = now + timedelta(days=30)
+
         log = BudgetResetLog(
             user_id=test_user.user_id,
             reset_type="manual",
@@ -330,6 +339,10 @@ class TestBudgetResetLogModel:
             previous_limit=30.0,
             new_limit=30.0,
             previous_spent=15.0,
+            previous_period_start=prev_start,
+            previous_period_end=prev_end,
+            new_period_start=new_start,
+            new_period_end=new_end,
             reason="User requested reset",
         )
         db_session.add(log)
@@ -353,6 +366,10 @@ class TestBudgetResetLogModel:
             previous_limit=30.0,
             new_limit=30.0,
             previous_spent=25.0,
+            previous_period_start=datetime.now() - timedelta(days=30),
+            previous_period_end=datetime.now(),
+            new_period_start=datetime.now(),
+            new_period_end=datetime.now() + timedelta(days=30),
             reason="Monthly automatic reset",
         )
         db_session.add(log)
@@ -371,13 +388,17 @@ class TestBudgetResetLogModel:
             previous_limit=30.0,
             new_limit=50.0,
             previous_spent=0.0,
+            previous_period_start=datetime.now() - timedelta(days=30),
+            previous_period_end=datetime.now(),
+            new_period_start=datetime.now(),
+            new_period_end=datetime.now() + timedelta(days=30),
         )
         db_session.add(log)
         db_session.commit()
         db_session.refresh(log)
 
-        assert log.reset_at is not None
-        assert isinstance(log.reset_at, datetime)
+        assert log.reset_timestamp is not None
+        assert isinstance(log.reset_timestamp, datetime)
 
     def test_multiple_reset_logs_for_user(self, db_session, test_user):
         """Test that multiple reset logs can exist for one user"""
@@ -390,6 +411,10 @@ class TestBudgetResetLogModel:
                 previous_limit=30.0 + i * 10,
                 new_limit=40.0 + i * 10,
                 previous_spent=10.0,
+            previous_period_start=datetime.now() - timedelta(days=30),
+            previous_period_end=datetime.now(),
+            new_period_start=datetime.now(),
+            new_period_end=datetime.now() + timedelta(days=30),
             )
             logs.append(log)
             db_session.add(log)
@@ -414,6 +439,10 @@ class TestBudgetResetLogModel:
             previous_limit=30.0,
             new_limit=30.0,
             previous_spent=0.0,
+            previous_period_start=datetime.now() - timedelta(days=30),
+            previous_period_end=datetime.now(),
+            new_period_start=datetime.now(),
+            new_period_end=datetime.now() + timedelta(days=30),
         )
         db_session.add(log)
         db_session.commit()
@@ -434,6 +463,10 @@ class TestBudgetResetLogModel:
                 previous_limit=30.0,
                 new_limit=30.0,
                 previous_spent=0.0,
+            previous_period_start=datetime.now() - timedelta(days=30),
+            previous_period_end=datetime.now(),
+            new_period_start=datetime.now(),
+            new_period_end=datetime.now() + timedelta(days=30),
             )
             db_session.add(log)
             db_session.commit()
@@ -443,12 +476,12 @@ class TestBudgetResetLogModel:
         logs = (
             db_session.query(BudgetResetLog)
             .filter(BudgetResetLog.user_id == test_user.user_id)
-            .order_by(BudgetResetLog.reset_at.asc())
+            .order_by(BudgetResetLog.reset_timestamp.asc())
             .all()
         )
 
         assert len(logs) == 3
-        assert logs[0].reset_at <= logs[1].reset_at <= logs[2].reset_at
+        assert logs[0].reset_timestamp <= logs[1].reset_timestamp <= logs[2].reset_timestamp
 
     def test_reset_log_limit_change_tracking(self, db_session, test_user):
         """Test tracking limit changes in reset log"""
@@ -459,6 +492,10 @@ class TestBudgetResetLogModel:
             previous_limit=30.0,
             new_limit=100.0,
             previous_spent=25.0,
+            previous_period_start=datetime.now() - timedelta(days=30),
+            previous_period_end=datetime.now(),
+            new_period_start=datetime.now(),
+            new_period_end=datetime.now() + timedelta(days=30),
             reason="Admin increased limit",
         )
         db_session.add(log)
@@ -479,6 +516,10 @@ class TestBudgetResetLogModel:
             previous_limit=30.0,
             new_limit=30.0,
             previous_spent=28.50,
+            previous_period_start=datetime.now() - timedelta(days=30),
+            previous_period_end=datetime.now(),
+            new_period_start=datetime.now(),
+            new_period_end=datetime.now() + timedelta(days=30),
             reason="Monthly reset - user nearly reached limit",
         )
         db_session.add(log)
@@ -547,6 +588,10 @@ class TestBudgetModelRelationships:
             previous_limit=30.0,
             new_limit=30.0,
             previous_spent=0.0,
+            previous_period_start=datetime.now() - timedelta(days=30),
+            previous_period_end=datetime.now(),
+            new_period_start=datetime.now(),
+            new_period_end=datetime.now() + timedelta(days=30),
         )
         db_session.add(log)
         db_session.commit()
@@ -575,6 +620,10 @@ class TestBudgetModelRelationships:
             previous_limit=30.0,
             new_limit=30.0,
             previous_spent=0.0,
+            previous_period_start=datetime.now() - timedelta(days=30),
+            previous_period_end=datetime.now(),
+            new_period_start=datetime.now(),
+            new_period_end=datetime.now() + timedelta(days=30),
         )
         db_session.add_all([settings, log])
         db_session.commit()

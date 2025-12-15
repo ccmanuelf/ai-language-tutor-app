@@ -88,7 +88,7 @@ def regular_user(db_session):
         user_id="user_001",
         username="user",
         email="user@example.com",
-        role=UserRole.USER,
+        role=UserRole.CHILD,
         is_active=True,
         is_verified=True,
     )
@@ -105,7 +105,7 @@ def power_user(db_session):
         user_id="power_user_001",
         username="poweruser",
         email="poweruser@example.com",
-        role=UserRole.USER,
+        role=UserRole.CHILD,
         is_active=True,
         is_verified=True,
     )
@@ -661,7 +661,7 @@ class TestMultiUserBudgetFlow:
                 user_id=config["user_id"],
                 username=config["user_id"],
                 email=f"{config['user_id']}@example.com",
-                role=UserRole.USER,
+                role=UserRole.CHILD,
                 is_active=True,
                 is_verified=True,
             )
