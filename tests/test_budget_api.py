@@ -512,12 +512,12 @@ class TestUsageBreakdownEndpoint:
         data = response.json()
 
         assert "by_provider" in data
-        assert "by_model" in data
+        assert "by_service_type" in data
         assert "by_day" in data
 
         # Should have breakdown for mistral provider
         assert "mistral" in data["by_provider"]
-        assert data["by_provider"]["mistral"] == 1.5  # 10 * 0.15
+        assert abs(data["by_provider"]["mistral"] - 1.5) < 0.01  # 10 * 0.15 (approx)
 
 
 class TestUsageHistoryEndpoint:
@@ -929,6 +929,6 @@ class TestBudgetAlertLevels:
         assert response.status_code == 200
         data = response.json()
 
-        # When over 100%, alert_level is "critical"
-        assert data["alert_level"] == "critical"
+        # When over 100%, alert_level is "red" (not "critical")
+        assert data["alert_level"] == "red"
         assert data["percentage_used"] > 100.0

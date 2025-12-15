@@ -254,9 +254,7 @@ async def get_budget_status(
     percentage_used = (total_cost / effective_limit * 100) if effective_limit > 0 else 0
 
     # Determine alert level
-    if percentage_used >= 100:
-        alert_level = "critical"
-    elif percentage_used >= settings.alert_threshold_red:
+    if percentage_used >= settings.alert_threshold_red:
         alert_level = "red"
     elif percentage_used >= settings.alert_threshold_orange:
         alert_level = "orange"

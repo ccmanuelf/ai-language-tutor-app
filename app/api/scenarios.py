@@ -19,9 +19,11 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
-from app.models.database import User
-from app.services.auth import get_current_user
+from app.core.security import require_auth
+from app.database.config import get_primary_db_session
+from app.models.simple_user import SimpleUser
 from app.services.conversation_manager import conversation_manager
 from app.services.conversation_models import LearningFocus
 from app.services.scenario_manager import (
@@ -85,7 +87,7 @@ async def list_scenarios(
     category: Optional[str] = None,
     difficulty: Optional[str] = None,
     user_level: str = "intermediate",
-    current_user: User = Depends(get_current_user),
+    current_user: SimpleUser = Depends(require_auth),
 ):
     """
     Get list of available scenarios with optional filtering
@@ -105,12 +107,12 @@ async def list_scenarios(
             category=category, difficulty=difficulty
         )
         scenarios = _add_user_recommendations(scenarios, user_level)
-        logger.info(f"Retrieved {len(scenarios)} scenarios for user {current_user.id}")
+        logger.info(f"Retrieved {len(scenarios)} scenarios for user {current_user.user_id}")
         return _build_scenarios_response(scenarios)
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to list scenarios for user {current_user.id}: {e}")
+        logger.error(f"Failed to list scenarios for user {current_user.user_id}: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve scenarios: {str(e)}"
         )
@@ -157,7 +159,7 @@ def _build_scenarios_response(scenarios: List[Dict]) -> ScenarioResponse:
 
 @router.get("/{scenario_id}", response_model=ScenarioResponse)
 async def get_scenario_details(
-    scenario_id: str, current_user: User = Depends(get_current_user)
+    scenario_id: str, current_user: SimpleUser = Depends(require_auth)
 ):
     """
     Get detailed information about a specific scenario
@@ -178,7 +180,7 @@ async def get_scenario_details(
             )
 
         logger.info(
-            f"Retrieved details for scenario {scenario_id} for user {current_user.id}"
+            f"Retrieved details for scenario {scenario_id} for user {current_user.user_id}"
         )
 
         return ScenarioResponse(
@@ -198,7 +200,7 @@ async def get_scenario_details(
 
 @router.post("/start", response_model=ScenarioResponse)
 async def start_scenario_conversation(
-    request: StartScenarioRequest, current_user: User = Depends(get_current_user)
+    request: StartScenarioRequest, current_user: SimpleUser = Depends(require_auth)
 ):
     """
     Start a new scenario-based conversation
@@ -222,7 +224,7 @@ async def start_scenario_conversation(
 
         # Start conversation with scenario
         conversation_id = await conversation_manager.start_conversation(
-            user_id=str(current_user.id),
+            user_id=str(current_user.user_id),
             language=request.language,
             learning_focus=learning_focus,
             scenario_id=request.scenario_id,
@@ -235,7 +237,7 @@ async def start_scenario_conversation(
             scenario_progress = await get_scenario_status(context.scenario_progress_id)
 
         logger.info(
-            f"Started scenario conversation {conversation_id} for user {current_user.id}"
+            f"Started scenario conversation {conversation_id} for user {current_user.user_id}"
         )
 
         return ScenarioResponse(
@@ -254,7 +256,7 @@ async def start_scenario_conversation(
         raise
     except Exception as e:
         logger.error(
-            f"Failed to start scenario conversation for user {current_user.id}: {e}"
+            f"Failed to start scenario conversation for user {current_user.user_id}: {e}"
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to start scenario conversation: {str(e)}"
@@ -263,7 +265,7 @@ async def start_scenario_conversation(
 
 @router.post("/message", response_model=ScenarioResponse)
 async def send_scenario_message(
-    request: ScenarioMessageRequest, current_user: User = Depends(get_current_user)
+    request: ScenarioMessageRequest, current_user: SimpleUser = Depends(require_auth)
 ):
     """
     Send a message in a scenario conversation
@@ -283,7 +285,7 @@ async def send_scenario_message(
             )
 
         context = conversation_manager.active_conversations[request.conversation_id]
-        if context.user_id != str(current_user.id):
+        if context.user_id != str(current_user.user_id):
             raise HTTPException(
                 status_code=403, detail="Access denied to this conversation"
             )
@@ -314,7 +316,7 @@ async def send_scenario_message(
 
 @router.get("/progress/{conversation_id}", response_model=ScenarioResponse)
 async def get_scenario_progress(
-    conversation_id: str, current_user: User = Depends(get_current_user)
+    conversation_id: str, current_user: SimpleUser = Depends(require_auth)
 ):
     """
     Get current progress for a scenario conversation
@@ -334,7 +336,7 @@ async def get_scenario_progress(
             )
 
         context = conversation_manager.active_conversations[conversation_id]
-        if context.user_id != str(current_user.id):
+        if context.user_id != str(current_user.user_id):
             raise HTTPException(
                 status_code=403, detail="Access denied to this conversation"
             )
@@ -372,7 +374,7 @@ async def get_scenario_progress(
 
 @router.post("/complete/{conversation_id}", response_model=ScenarioResponse)
 async def complete_scenario_conversation(
-    conversation_id: str, current_user: User = Depends(get_current_user)
+    conversation_id: str, current_user: SimpleUser = Depends(require_auth)
 ):
     """
     Complete a scenario conversation and get final summary
@@ -392,7 +394,7 @@ async def complete_scenario_conversation(
             )
 
         context = conversation_manager.active_conversations[conversation_id]
-        if context.user_id != str(current_user.id):
+        if context.user_id != str(current_user.user_id):
             raise HTTPException(
                 status_code=403, detail="Access denied to this conversation"
             )
@@ -417,7 +419,7 @@ async def complete_scenario_conversation(
         }
 
         logger.info(
-            f"Completed scenario conversation {conversation_id} for user {current_user.id}"
+            f"Completed scenario conversation {conversation_id} for user {current_user.user_id}"
         )
 
         return ScenarioResponse(
@@ -469,7 +471,7 @@ async def get_scenario_categories():
 # Universal Template Endpoints
 @router.get("/templates", response_model=ScenarioResponse)
 async def get_universal_templates(
-    tier: Optional[int] = None, current_user: User = Depends(get_current_user)
+    tier: Optional[int] = None, current_user: SimpleUser = Depends(require_auth)
 ):
     """Get all available universal scenario templates"""
     try:
@@ -493,7 +495,7 @@ async def get_universal_templates(
 
 
 @router.get("/templates/tier1", response_model=ScenarioResponse)
-async def get_tier1_scenarios(current_user: User = Depends(get_current_user)):
+async def get_tier1_scenarios(current_user: SimpleUser = Depends(require_auth)):
     """Get all Tier 1 (essential) scenario templates"""
     try:
         tier1_scenarios = scenario_manager.get_tier1_scenarios()
@@ -533,7 +535,7 @@ class CreateFromTemplateRequest(BaseModel):
 
 @router.post("/templates/create", response_model=ScenarioResponse)
 async def create_scenario_from_template(
-    request: CreateFromTemplateRequest, current_user: User = Depends(get_current_user)
+    request: CreateFromTemplateRequest, current_user: SimpleUser = Depends(require_auth)
 ):
     """Create a new scenario instance from a universal template"""
     try:
@@ -598,7 +600,7 @@ async def create_scenario_from_template(
 
 @router.get("/category/{category_name}", response_model=ScenarioResponse)
 async def get_scenarios_by_category(
-    category_name: str, current_user: User = Depends(get_current_user)
+    category_name: str, current_user: SimpleUser = Depends(require_auth)
 ):
     """Get all scenarios and templates for a specific category"""
     try:
