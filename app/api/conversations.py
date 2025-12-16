@@ -459,6 +459,9 @@ async def text_to_speech(
             "duration": tts_result.duration_seconds,
         }
 
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is (e.g., 400 for missing text)
+        raise
     except Exception as e:
         print(f"Text-to-speech error: {e}")
         raise HTTPException(status_code=500, detail=f"Text-to-speech failed: {str(e)}")
