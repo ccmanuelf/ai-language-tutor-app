@@ -257,6 +257,166 @@ All changes implemented cleanly with no issues discovered.
 
 ---
 
+---
+
+## ✅ SESSION 126.5 COMPLETED - LANGUAGE ENDPOINT + JAPANESE WARNING + E2E TESTS
+
+**Date:** 2025-12-16  
+**Duration:** ~2 hours  
+**Status:** ✅ **100% SUCCESS - ALL OBJECTIVES ACHIEVED!**
+
+### Session 126.5 Objectives
+
+**PRIMARY GOAL:** Complete API endpoint enhancement to expose all 8 languages with Japanese warning
+
+**CRITICAL DISCOVERIES:**
+- German and Japanese were in database but set to inactive (is_active=0)
+- Needed to activate them and set Japanese support_level to STT_ONLY
+- Italian and Portuguese E2E tests needed authentication and correct response format
+
+### Session 126.5 Achievements
+
+**1. Dynamic /languages API Endpoint (app/api/conversations.py)**
+- ✅ Updated endpoint to query database instead of hardcoded list
+- ✅ Returns all 8 active languages with support_level field
+- ✅ Includes Japanese STT_ONLY warning and limitations
+- ✅ Provides support level descriptions (FULL, STT_ONLY, FUTURE)
+- ✅ Shows total language count in response
+
+**2. Database Fixes**
+- ✅ Activated German language (was is_active=0)
+- ✅ Activated Japanese language (was is_active=0)
+- ✅ Updated Japanese support_level to STT_ONLY
+- ✅ Updated Japanese has_tts_support to false
+- ✅ Confirmed all 8 languages now active and correctly configured
+
+**3. Italian/Portuguese E2E Tests (tests/e2e/test_italian_portuguese_e2e.py)**
+- ✅ Created 3 comprehensive TTS validation tests:
+  - test_italian_tts_e2e - validates native Italian voice (it_IT-paola-medium)
+  - test_portuguese_tts_e2e - validates native Portuguese voice (pt_BR-faber-medium)
+  - test_seven_languages_tts_e2e - validates all 7 FULL support languages together
+- ✅ Added proper authentication (user registration + JWT tokens)
+- ✅ Fixed response format (audio_data not audio_base64)
+- ✅ Added random suffix to prevent user ID collisions
+- ✅ All 3 tests passing (100%)
+
+**4. Comprehensive Testing**
+- ✅ Italian/Portuguese E2E tests: 3/3 passing
+- ✅ Full E2E test suite: **64/64 passing** (61 existing + 3 new)
+- ✅ Zero regressions detected
+- ✅ Japanese warning validated in API response
+- ✅ All 7 FULL languages validated via TTS
+
+### Session 126.5 Results
+
+| Metric | Target | Achieved | Status |
+|--------|--------|----------|--------|
+| Dynamic /languages Endpoint | ✅ | ✅ | **SUCCESS** |
+| Japanese Warning Display | ✅ | ✅ | **SUCCESS** |
+| Database Activation (de, ja) | ✅ | ✅ | **SUCCESS** |
+| Italian/Portuguese E2E Tests | 3 tests | 3 passing | **SUCCESS** |
+| Zero Regressions | 64/64 | 64/64 | **SUCCESS** |
+| All 8 Languages Active | ✅ | ✅ | **SUCCESS** |
+
+### API Response Example
+
+```json
+GET /api/v1/conversations/languages
+
+{
+  "languages": [
+    {
+      "code": "ja",
+      "name": "Japanese",
+      "native_name": "日本語",
+      "support_level": "STT_ONLY",
+      "has_tts": false,
+      "has_stt": true,
+      "providers": ["claude"],
+      "display": "Japanese (日本語)",
+      "warning": "Note: Japanese uses English voice for text-to-speech. Speech recognition is available.",
+      "limitations": [
+        "Speech output uses English accent (non-native pronunciation)",
+        "Speech recognition works correctly",
+        "Text-based learning fully supported",
+        "Not recommended for pronunciation learning from audio"
+      ]
+    },
+    // ... 7 other languages
+  ],
+  "total": 8,
+  "support_levels": {
+    "FULL": "Complete native TTS + STT support with all features",
+    "STT_ONLY": "Speech recognition available, TTS uses English voice fallback",
+    "FUTURE": "Planned for future implementation"
+  }
+}
+```
+
+### Files Modified (Session 126.5)
+
+1. `app/api/conversations.py` - Dynamic /languages endpoint with warnings
+2. `tests/e2e/test_italian_portuguese_e2e.py` - 3 comprehensive E2E tests
+3. Database - Activated German and Japanese, set Japanese to STT_ONLY
+
+### Test Results
+
+**Italian/Portuguese E2E Tests:**
+```
+✅ test_italian_tts_e2e PASSED
+✅ test_portuguese_tts_e2e PASSED
+✅ test_seven_languages_tts_e2e PASSED
+```
+
+**Full E2E Suite:**
+```
+======================== 64 passed in 99.51s (0:01:39) =========================
+```
+
+### Session 126.5 Impact
+
+**User Impact:**
+- ✅ All 8 languages now visible and accessible via API
+- ✅ Clear warning for Japanese limited support (STT_ONLY)
+- ✅ Transparent support levels for informed language selection
+- ✅ Italian and Portuguese validated and production-ready
+
+**Developer Impact:**
+- ✅ Dynamic language endpoint (no hardcoding)
+- ✅ Support level field for feature gating
+- ✅ Comprehensive E2E test coverage for new languages
+- ✅ Zero technical debt introduced
+
+**System Impact:**
+- ✅ Zero regressions (64/64 tests passing)
+- ✅ +4.9% E2E test coverage increase (61 → 64)
+- ✅ Database properly configured
+- ✅ API fully functional for all 8 languages
+
+### Key Learnings (Session 126.5)
+
+**LESSON 1:** Always verify database state, not just code
+- German/Japanese were in code but inactive in database
+- Quick SQL query revealed the actual state
+- Database fixes were simple once identified
+
+**LESSON 2:** Check existing E2E test patterns before writing new ones
+- Saved time by following test_speech_e2e.py patterns
+- Proper auth setup, response format, user management
+- Consistency across E2E tests maintained
+
+**LESSON 3:** User ID collisions can happen with timestamp-only IDs
+- Tests running quickly can generate duplicate timestamps
+- Adding random suffix (1000-9999) prevents collisions
+- Simple fix, prevents flaky tests
+
+**LESSON 4:** Focus tests on what's unique to validate
+- Italian/Portuguese E2E tests focus on TTS (the new feature)
+- Simplified from 5 tests to 3 focused tests
+- More efficient, still comprehensive
+
+---
+
 ## 🚀 NEXT STEPS (Session 127+)
 
 ### Immediate Priorities
