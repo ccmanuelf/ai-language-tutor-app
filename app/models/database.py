@@ -38,13 +38,21 @@ class UserRole(PyEnum):
 
 
 class LanguageCode(PyEnum):
-    """Supported languages"""
+    """Supported languages
 
-    CHINESE = "zh"
+    Note: This enum is maintained for backwards compatibility.
+    New languages can be added to the database via init_sample_data.py
+    without requiring code changes to this enum.
+    """
+
+    ENGLISH = "en"
+    SPANISH = "es"
     FRENCH = "fr"
     GERMAN = "de"
+    ITALIAN = "it"
+    PORTUGUESE = "pt"
+    CHINESE = "zh"
     JAPANESE = "ja"
-    ENGLISH = "en"
 
 
 class ConversationRole(PyEnum):
@@ -73,6 +81,14 @@ class LearningStatus(PyEnum):
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     MASTERED = "mastered"
+
+
+class SupportLevel(PyEnum):
+    """Language support level indicating available features"""
+
+    FULL = "FULL"  # Full TTS + STT support
+    STT_ONLY = "STT_ONLY"  # STT works, TTS uses fallback voice
+    FUTURE = "FUTURE"  # Planned for future implementation
 
 
 # Association table for user languages (many-to-many)
@@ -245,6 +261,9 @@ class Language(Base):
     # Language-specific settings
     has_speech_support = Column(Boolean, default=False)
     has_tts_support = Column(Boolean, default=False)
+    support_level = Column(
+        Enum(SupportLevel), default=SupportLevel.FULL, nullable=False
+    )
     speech_api_config = Column(JSON, default=dict)
 
     # Relationships
@@ -259,6 +278,7 @@ class Language(Base):
             "is_active": self.is_active,
             "has_speech_support": self.has_speech_support,
             "has_tts_support": self.has_tts_support,
+            "support_level": self.support_level.value if self.support_level else "FULL",
             "speech_api_config": self.speech_api_config or {},
         }
 

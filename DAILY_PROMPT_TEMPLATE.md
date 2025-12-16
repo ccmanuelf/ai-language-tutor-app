@@ -1,7 +1,9 @@
-# AI Language Tutor - Session 126 Daily Prompt
+# AI Language Tutor - Session 127 Daily Prompt
 
-**Last Updated:** 2025-12-16 (Session 125 Complete - Visual Learning E2E Testing 100% SUCCESS!)  
-**Next Session:** Session 126 - Priority 2 Features (Progress Analytics, Learning Analytics, Content Management)
+**Last Updated:** 2025-12-16 (Session 126 Complete - Language Support Expansion 100% SUCCESS!)  
+**Next Session:** Session 127 - **Priority 2: Progress Analytics E2E Validation**
+
+**✅ LANGUAGE GAP CLOSED:** System now supports 8 languages (7 FULL, 1 STT_ONLY). Italian & Portuguese exposed and functional!
 
 ---
 
@@ -386,9 +388,13 @@ assert "phases" in scenario_details  # objectives nested in phases
 
 ---
 
-## 🎯 SESSION 126 OBJECTIVES
+## 🎯 SESSION 126 OBJECTIVES - CRITICAL LANGUAGE SUPPORT FIX (PRIORITY 1)
 
-### **GOAL: Begin Priority 2 Features - Progress Analytics, Learning Analytics & Content Management**
+### **⚠️ CRITICAL: Fix Language Support Gap Before Priority 2 Work**
+
+**USER REQUIREMENT:** "The system should be capable to allow the user to learn and practice ANY of the languages available, even ENGLISH if desired by the end user."
+
+### **GOAL: Expand Language Support from 6 → 7-9 Languages + Make System Extensible**
 
 **Current Status:**
 - E2E Tests: ✅ 61/61 passing (100%)
@@ -400,53 +406,112 @@ assert "phases" in scenario_details  # objectives nested in phases
 - Total Tests: 5,130+ (all passing) ✅
 - **ALL Priority 1 Categories: ✅ COMPLETE (5/5)!** 🎉
 
-**Priority 2 Progress:** 0/3 categories complete (0%) - Starting fresh!
+**Language Support Status:**
+- Current: 6 languages exposed (en, es, fr, de, zh, ja)
+- Hidden but Working: 2 languages (it, pt) - TTS voices installed!
+- Target: 7-9 fully supported languages + extensible system
 
 **Session 126 Priorities:**
 
-1. **Start Priority 2 Features E2E Testing** 🎯
-   - Progress Analytics E2E validation
-   - Learning Analytics E2E validation
-   - Content Management E2E validation
-   - Choose one category to focus on first
+1. **Expose Italian & Portuguese (Quick Win - Phase 1)** 🎯
+   - Update `init_sample_data.py` to include Italian and Portuguese
+   - Update `app/models/database.py` LanguageCode enum
+   - Update `app/models/schemas.py` LanguageEnum
+   - Verify Piper TTS mapping already exists (it does!)
+   - **Estimated:** 1-2 hours
 
-2. **Implement Comprehensive E2E Tests**
-   - Create 8-10 comprehensive workflow tests
-   - Cover happy path + error cases + edge cases
-   - Validate real service integration
-   - Test multi-user scenarios
-   - Test data aggregation and reporting
+2. **Add Support Level Field (Phase 2)**
+   - Add `support_level` column to Language model (FULL, STT_ONLY, FUTURE)
+   - Create database migration
+   - Update init script with support levels:
+     - FULL: en, es, fr, de, it, pt, zh
+     - STT_ONLY: ja, ko (if included)
+   - Update API responses to include support_level
+   - **Estimated:** 2-3 hours
 
-3. **Apply All Previous Learnings**
-   - Check route ordering (Principle 12)
-   - Verify auth dependencies
-   - Validate response structures (Principle 13)
-   - Handle HTTPException properly (Session 124)
-   - Test multi-language support
-   - Verify imports early (Principle 10)
+3. **Make System Extensible (Phase 3)**
+   - Update database.py to allow dynamic language validation
+   - Update schemas.py to make LanguageEnum dynamic
+   - Create `get_supported_languages()` utility function
+   - Add documentation for adding new languages
+   - **Estimated:** 3-4 hours
 
-4. **Verify System Health**
-   - Run full E2E suite (61 tests)
-   - Confirm 100% pass rate maintained
-   - Check for regressions
-   - Target: 69-71+ total E2E tests
+4. **Comprehensive Re-validation (Phase 5)**
+   - Re-run ALL 61 existing E2E tests (must remain passing)
+   - Test conversations in Italian and Portuguese
+   - Test scenarios in 7 FULL languages (en, es, fr, de, it, pt, zh)
+   - Test speech services in 7 FULL languages
+   - Test visual learning in 7 FULL languages
+   - Document Japanese LIMITED support (STT only, TTS fallback)
+   - **Estimated:** 4-6 hours
+
+5. **Documentation (Phase 4)**
+   - Create `LANGUAGE_SUPPORT.md` with full capability matrix
+   - Update API documentation
+   - Add UI warnings for LIMITED languages
+   - **Estimated:** 1 hour
 
 **Milestone Achievement:**
-- Building on solid Priority 1 foundation
-- Expanding into analytics and management features
-- Moving toward complete production system
+- Fix critical language support gap identified by user
+- Expand from 6 → 7-9 supported languages
+- Make system extensible for future language additions
+- Re-validate all existing features with new languages
+- **BLOCKS** Priority 2 work until complete
 
 ### Success Criteria
 
-✅ **One Priority 2 category E2E fully implemented**  
-✅ **8-10 new E2E tests created**  
-✅ **All new tests passing (100%)**  
-✅ **Zero regressions in existing 61 tests**  
-✅ **Target: 69-71+ total E2E tests**  
+✅ **Italian and Portuguese exposed and functional**  
+✅ **Support level field implemented and working**  
+✅ **System is extensible (new languages via database only)**  
+✅ **All 61 E2E tests still passing (zero regressions)**  
+✅ **Conversations tested in Italian and Portuguese**  
+✅ **Scenarios tested in 7 FULL languages (en, es, fr, de, it, pt, zh)**  
+✅ **Speech services tested in 7 FULL languages**  
+✅ **Visual learning tested in 7 FULL languages**  
+✅ **Japanese LIMITED support documented and tested**  
+✅ **LANGUAGE_SUPPORT.md created with full matrix**  
 ✅ **Any bugs found are fixed immediately**  
 ✅ **Coverage maintained at 99.50%+**  
-✅ **Documentation updated**  
+✅ **Documentation complete**  
 ✅ **Changes committed and pushed to GitHub**
+
+---
+
+## 🚨 CRITICAL LANGUAGE SUPPORT GAP (Discovered End of Session 125)
+
+### **User Observation:**
+> "I have a CRITICAL observation, when looking at the multi-language feature I noticed it refers only to Spanish, French and German, what about the rest of the languages? The system should be capable to allow the user to learn and practice ANY of the languages available, even ENGLISH if desired by the end user."
+
+### **Gap Analysis Complete:**
+
+**Current State:** Only 5-6 hardcoded languages (en, es, fr, de, zh, ja)
+
+**Discovery:** Italian and Portuguese TTS voices ARE ALREADY INSTALLED but not exposed!
+- `it_IT-paola-medium.onnx` - Italian voice (63MB)
+- `pt_BR-faber-medium.onnx` - Portuguese voice (63MB)
+- Piper service ALREADY has mapping for both languages!
+
+**TTS Capability Assessment:**
+- ✅ English, Spanish, French, German, Italian, Portuguese, Chinese - FULL TTS + STT
+- ⚠️ Japanese, Korean - STT only (TTS uses English fallback)
+- ❌ Russian, Hindi, Arabic - No TTS voices available (future enhancement)
+
+**User Requirements:**
+1. Support at least 12 languages if TTS/STT available
+2. 6 CORE languages (en, es, fr, de, zh, ja) MUST be FULLY validated
+3. Make system extensible (add languages via database, not code)
+4. Re-assess and re-test ALL features with new languages
+5. **This is Priority 1 - BLOCKS Priority 2 work**
+
+**Fix Plan:** See `LANGUAGE_SUPPORT_FIX_PLAN.md` and `LANGUAGE_SUPPORT_MATRIX.md`
+
+**Estimated Timeline:** 11.5-16.5 hours (Session 126)
+
+**Critical Files:**
+- `app/models/database.py` - Hardcoded LanguageCode enum (BLOCKS expansion)
+- `app/models/schemas.py` - Hardcoded LanguageEnum (BLOCKS expansion)
+- `app/services/piper_tts_service.py` - Has it/pt support but not exposed
+- `init_sample_data.py` - Only initializes 6 languages
 
 ---
 
@@ -594,7 +659,7 @@ assert "phases" in scenario_details  # objectives nested in phases
 
 ---
 
-## 🚀 QUICK START FOR SESSION 126
+## 🚀 QUICK START FOR SESSION 126 - LANGUAGE SUPPORT FIX
 
 ### Step 1: Verify Environment
 ```bash
@@ -605,70 +670,64 @@ which python && python --version
 # Should show: ai-tutor-env/bin/python and Python 3.12.2
 ```
 
-### Step 2: Run Full E2E Suite (Verify 61/61 Passing)
+### Step 2: Run Full E2E Suite (Verify 61/61 Passing - Baseline)
 ```bash
 cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
 source ai-tutor-env/bin/activate && \
 pytest tests/e2e/ -v --tb=short
+
+# All 61 tests should pass before starting language fix
 ```
 
-### Step 3: Choose Priority 2 Category and Check Implementation
+### Step 3: Review Language Fix Documentation
+- Read `LANGUAGE_SUPPORT_FIX_PLAN.md` - Complete implementation plan
+- Read `LANGUAGE_SUPPORT_MATRIX.md` - Current capabilities assessment
+- Review critical files to modify:
+  - `app/models/database.py` (LanguageCode enum)
+  - `app/models/schemas.py` (LanguageEnum)
+  - `init_sample_data.py` (language initialization)
+  - `app/services/piper_tts_service.py` (verify it/pt mapping exists)
+
+### Step 4: Phase 1 - Expose Italian & Portuguese (Quick Win)
 
 ```bash
-# Check existing analytics/management implementation:
-# For Progress Analytics:
-ls -la app/services/*progress*
-ls -la app/api/*progress*
-grep -r "progress.*analytics\|user.*progress" app/
-
-# For Learning Analytics:
-ls -la app/services/*analytics*
-ls -la app/api/*analytics*
-grep -r "learning.*analytics\|performance.*metrics" app/
-
-# For Content Management:
-ls -la app/services/*content*
-ls -la app/api/*content*
-grep -r "content.*management\|content.*creation" app/
-```
-
-### Step 4: Create E2E Test File
-```bash
-# Choose one category to start:
-touch tests/e2e/test_progress_analytics_e2e.py
-# OR
-touch tests/e2e/test_learning_analytics_e2e.py
-# OR
-touch tests/e2e/test_content_management_e2e.py
-```
-
-### Step 5: Review Previous Session Learnings
-- Read `SESSION_125_LOG.md` for perfect implementation patterns
-- Review `SESSION_124_LOG.md` for HTTPException handling
-- Review `SESSION_123_LOG.md` for route ordering + auth patterns
-- Check `SESSION_117_E2E_VALIDATION_PLAN.md` for overall strategy
-
-### Step 6: Implement E2E Tests
-- Apply ALL previous lessons (Principles 1-13)
-- Check API implementation first
-- Verify response structures
-- Check route ordering
-- Write comprehensive tests (8-10)
-- Test multi-user scenarios
-- Test data aggregation (for analytics)
-- Test edge cases
-- Handle HTTPException properly
-- Break complex features into testable components
-
-### Step 7: Run and Fix
-```bash
-# Run new tests:
+# Read current init script:
 cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
 source ai-tutor-env/bin/activate && \
-pytest tests/e2e/test_[category]_e2e.py -v --tb=short
+cat init_sample_data.py | grep -A 10 "languages = "
 
-# Fix any failures systematically
-# Verify zero regressions (all 61+ tests passing)
+# Read database model:
+cat app/models/database.py | grep -A 20 "class LanguageCode"
+
+# Read schema model:
+cat app/models/schemas.py | grep -A 15 "class LanguageEnum"
+```
+
+### Step 5: Implement Changes Systematically
+1. Update `app/models/database.py` - Add ITALIAN and PORTUGUESE to enum
+2. Update `app/models/schemas.py` - Add it and pt to enum
+3. Update `init_sample_data.py` - Add Italian and Portuguese to languages list
+4. Verify Piper TTS service already has mapping (it does!)
+5. Test language initialization
+
+### Step 6: Phase 2 - Add Support Level Field
+1. Update Language model with support_level column
+2. Create Alembic migration
+3. Update init script with support levels
+4. Test database changes
+
+### Step 7: Phase 5 - Comprehensive Re-validation
+```bash
+# Run all E2E tests (must remain 61/61 passing):
+cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
+source ai-tutor-env/bin/activate && \
+pytest tests/e2e/ -v --tb=short
+
+# Test conversations in Italian:
+# (Manual testing via API or create quick test)
+
+# Test conversations in Portuguese:
+# (Manual testing via API or create quick test)
 ```
 
 ### Step 8: Verify Complete Success
@@ -678,8 +737,14 @@ cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
 source ai-tutor-env/bin/activate && \
 pytest tests/e2e/ -v --tb=short
 
-# All 69-71+ tests should pass!
+# All 61 tests should STILL pass!
+# Italian and Portuguese should be available in API responses!
 ```
+
+### Step 9: Create Final Documentation
+- Create `LANGUAGE_SUPPORT.md` with full capability matrix
+- Document Japanese LIMITED support clearly
+- Update API documentation
 
 ---
 
@@ -852,76 +917,115 @@ Building on our solid foundation of essential learning features, we now expand i
 
 ---
 
-## 📝 SESSION 126 CHECKLIST
+## 📝 SESSION 126 CHECKLIST - LANGUAGE SUPPORT FIX
 
 Before starting:
-- [ ] Read `SESSION_125_LOG.md` - Understand perfect implementation patterns
-- [ ] Review Session 125 lessons learned - 6 critical insights (especially cumulative learning!)
-- [ ] Review Session 124 lessons learned (HTTPException handling)
-- [ ] Review Session 123 lessons learned (route ordering, auth patterns)
-- [ ] Read `SESSION_117_E2E_VALIDATION_PLAN.md` - E2E roadmap
+- [ ] Read `LANGUAGE_SUPPORT_FIX_PLAN.md` - Complete implementation plan
+- [ ] Read `LANGUAGE_SUPPORT_MATRIX.md` - Capability assessment
+- [ ] Review Session 125 lessons learned (cumulative learning works!)
 - [ ] Verify environment (ai-tutor-env, Python 3.12.2)
-- [ ] **Choose ONE Priority 2 category to focus on**
+- [ ] Run baseline E2E tests (verify 61/61 passing)
+- [ ] **Understand user requirement: Support ANY available language**
 
-During session:
-- [ ] Check existing implementation for chosen category (grep, file exploration)
-- [ ] Design comprehensive E2E test scenarios (8-10 tests)
-- [ ] Verify route ordering before implementing
-- [ ] Check actual API response structures
-- [ ] Test multi-user scenarios (for analytics)
-- [ ] Test data aggregation (for analytics)
-- [ ] Test edge cases (missing data, invalid inputs, etc.)
-- [ ] Handle HTTPException properly (Session 124 lesson!)
-- [ ] Break complex features into testable components (Session 125 lesson!)
-- [ ] Apply all 13 principles consistently
-- [ ] Implement 8-10 E2E tests
-- [ ] Run tests systematically
-- [ ] Fix any bugs found immediately
-- [ ] Verify zero regressions (all 61 tests passing)
+Phase 1 - Expose Italian & Portuguese:
+- [ ] Read current `init_sample_data.py` language initialization
+- [ ] Read `app/models/database.py` LanguageCode enum
+- [ ] Read `app/models/schemas.py` LanguageEnum
+- [ ] Verify Piper TTS service has it/pt mapping
+- [ ] Update database.py - Add ITALIAN and PORTUGUESE to LanguageCode
+- [ ] Update schemas.py - Add it and pt to LanguageEnum
+- [ ] Update init_sample_data.py - Add Italian and Portuguese
+- [ ] Run init script to populate database
+- [ ] Verify languages appear in API responses
+
+Phase 2 - Add Support Level Field:
+- [ ] Update Language model with support_level column
+- [ ] Create Alembic migration script
+- [ ] Run migration
+- [ ] Update init_sample_data.py with support levels
+- [ ] Re-initialize database with support levels
+- [ ] Verify API returns support_level field
+
+Phase 3 - Make System Extensible:
+- [ ] Update database.py validation to be dynamic
+- [ ] Update schemas.py validation to be dynamic
+- [ ] Create `get_supported_languages()` utility
+- [ ] Add comments for future language additions
+- [ ] Test dynamic validation works
+
+Phase 5 - Comprehensive Re-validation:
+- [ ] Run all 61 E2E tests (must remain passing)
+- [ ] Test conversations in Italian (manual or script)
+- [ ] Test conversations in Portuguese (manual or script)
+- [ ] Test scenarios in 7 FULL languages
+- [ ] Test speech services in 7 FULL languages
+- [ ] Test visual learning in 7 FULL languages
+- [ ] Document Japanese LIMITED support behavior
+
+Phase 4 - Documentation:
+- [ ] Create `LANGUAGE_SUPPORT.md` with full matrix
+- [ ] Update API documentation
+- [ ] Document Japanese/Korean limitations
+- [ ] Document future enhancement notes (Russian, Hindi, Arabic)
 
 After session:
-- [ ] Document session results
-- [ ] Create lessons learned
+- [ ] Create SESSION_126_LOG.md
+- [ ] Update lessons learned
 - [ ] Update DAILY_PROMPT_TEMPLATE.md for Session 127
-- [ ] Commit and push to GitHub
-- [ ] **Celebrate first Priority 2 category complete!**
+- [ ] Commit all changes
+- [ ] Push to GitHub
+- [ ] **Celebrate language support expansion!**
 
 Success criteria:
-- [ ] 8-10 new E2E tests created ✅
-- [ ] All new tests passing (100%) ✅
-- [ ] Zero regressions in existing 61 tests ✅
-- [ ] Target: 69-71+ total E2E tests ✅
+- [ ] Italian and Portuguese exposed and functional ✅
+- [ ] Support level field implemented ✅
+- [ ] System is extensible (new languages via database) ✅
+- [ ] All 61 E2E tests still passing (zero regressions) ✅
+- [ ] Conversations tested in Italian and Portuguese ✅
+- [ ] Scenarios tested in 7 FULL languages ✅
+- [ ] Speech tested in 7 FULL languages ✅
+- [ ] Visual learning tested in 7 FULL languages ✅
+- [ ] Japanese LIMITED support documented ✅
+- [ ] LANGUAGE_SUPPORT.md created ✅
 - [ ] Any bugs found are fixed ✅
 - [ ] Coverage maintained at 99.50%+ ✅
-- [ ] **First Priority 2 category complete** ✅
 - [ ] Documentation complete ✅
 - [ ] GitHub push successful ✅
 
 ---
 
-## 🎉 READY FOR SESSION 126 - STARTING PRIORITY 2!
+## 🎉 READY FOR SESSION 126 - CRITICAL LANGUAGE SUPPORT FIX!
 
-**Clear Objective:** Begin Priority 2 E2E validation - Choose and complete ONE category!
+**⚠️ CRITICAL: Language Support Gap Must Be Fixed Before Priority 2 Work**
 
-**Starting Point:** 61 E2E tests (all passing), 6 categories complete, ALL Priority 1 COMPLETE! 🎉  
-**Target:** 69-71+ E2E tests, 7 categories complete, **First Priority 2 category done!**
+**Clear Objective:** Expand language support from 6 → 7-9 languages + Make system extensible!
+
+**Starting Point:** 61 E2E tests (all passing), 6 languages exposed, Italian & Portuguese hidden but working!  
+**Target:** 61 E2E tests (still passing), 7-9 languages exposed, system extensible, comprehensive validation!
 
 **Expected Outcome:**
-- ✅ One Priority 2 category fully validated (Progress Analytics OR Learning Analytics OR Content Management)
-- ✅ 8-10 new comprehensive E2E tests
-- ✅ All tests passing (100%)
-- ✅ Any bugs found are fixed immediately
-- ✅ Zero regressions maintained
-- ✅ **First Priority 2 IMPORTANT feature complete!**
+- ✅ Italian and Portuguese exposed and functional (TTS voices already installed!)
+- ✅ Support level field implemented (FULL, STT_ONLY, FUTURE)
+- ✅ System is extensible (add languages via database, not code)
+- ✅ All 61 E2E tests still passing (zero regressions)
+- ✅ Conversations tested in Italian and Portuguese
+- ✅ All features tested in 7 FULL languages (en, es, fr, de, it, pt, zh)
+- ✅ Japanese LIMITED support documented and tested
+- ✅ Complete language capability matrix created
+- ✅ **Language support gap CLOSED!**
 
-**Key Insights from Session 125:**  
-- Session 125 found ZERO bugs - cumulative learning WORKS!
-- Applying all 13 principles consistently = perfect implementation
-- Breaking complex features into testable components = comprehensive coverage
-- Systematic approach + cumulative best practices = clean code
-- Excellence is achievable with discipline!
+**Why This is Critical:**
+> User: "The system should be capable to allow the user to learn and practice ANY of the languages available, even ENGLISH if desired by the end user."
 
-**This Begins Our Priority 2 Journey:**
+**Key Discovery from Assessment:**
+- 🎉 Italian and Portuguese TTS voices ARE ALREADY INSTALLED (63MB each)!
+- 🎉 Piper service ALREADY has voice mapping for both languages!
+- 🎉 Just need to expose them - they're ready to use!
+- 7 languages can have FULL support (TTS + STT)
+- 2 languages have LIMITED support (STT only: ja, ko)
+- System currently BLOCKS language expansion with hardcoded enums
+
+**This Completes Our Priority 1 Work:**
 Building on 9 sessions of E2E validation (Sessions 117-125), we now have:
 - ✅ TRUE 100% code coverage (Session 116)
 - ✅ Budget system 100% tested (Session 122)
@@ -929,10 +1033,16 @@ Building on 9 sessions of E2E validation (Sessions 117-125), we now have:
 - ✅ Speech system 100% validated (Session 124)
 - ✅ Visual Learning 100% validated (Session 125)
 - ✅ **ALL Priority 1 CRITICAL FEATURES - 100% COMPLETE!** 🎉
-- 🎯 **Now expanding to Priority 2 - Analytics & Management!**
+- 🎯 **Now fixing Priority 1 GAP - Language Support Expansion!**
 
-**Focus:** Build on solid foundation, maintain excellence standards, expand capabilities
+**After This Session:**
+- ✅ Language support gap CLOSED
+- ✅ 7-9 languages fully supported
+- ✅ System extensible for future languages
+- 🎯 **READY for Priority 2 - Analytics & Management!**
+
+**Focus:** Fix critical gap, maintain excellence standards, enable multi-language learning!
 
 ---
 
-**Let's begin Priority 2 with the same rigor and excellence! 🎯🚀⭐**
+**Let's close this language gap with the same rigor and excellence! 🎯🚀⭐**

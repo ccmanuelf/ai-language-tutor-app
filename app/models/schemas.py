@@ -28,13 +28,21 @@ class UserRoleEnum(str, Enum):
 
 
 class LanguageEnum(str, Enum):
-    """Supported languages"""
+    """Supported languages
 
-    CHINESE = "zh"
+    Note: This enum is maintained for backwards compatibility.
+    New languages can be added to the database via init_sample_data.py
+    without requiring code changes to this enum.
+    """
+
+    ENGLISH = "en"
+    SPANISH = "es"
     FRENCH = "fr"
     GERMAN = "de"
+    ITALIAN = "it"
+    PORTUGUESE = "pt"
+    CHINESE = "zh"
     JAPANESE = "ja"
-    ENGLISH = "en"
 
 
 class ConversationRoleEnum(str, Enum):

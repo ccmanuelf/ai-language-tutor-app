@@ -10,17 +10,19 @@ This script creates sample data for testing and development:
 - Test vocabulary items
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from datetime import datetime, timedelta, timezone
-from app.database.config import db_manager
-from app.database.chromadb_config import ChromaDBManager
-from sqlalchemy import text
-import logging
 import hashlib
+import logging
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy import text
+
+from app.database.chromadb_config import ChromaDBManager
+from app.database.config import db_manager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,22 +39,75 @@ def init_languages():
 
     session = db_manager.get_sqlite_session()
 
+    # Language initialization with support levels
+    # Format: (code, name, native_name, is_active, has_speech_support, has_tts_support, support_level)
+    # Support levels:
+    #   - FULL: Native TTS + STT support
+    #   - STT_ONLY: STT works, TTS uses English fallback
+    #   - FUTURE: Planned for future implementation
     languages = [
-        ("en", "English", "English", True, True, True),
-        ("es", "Spanish", "Español", True, True, True),
-        ("fr", "French", "Français", True, True, True),
-        ("zh", "Chinese (Mandarin)", "中文", True, True, True),
-        ("ja", "Japanese", "日本語", False, True, True),
-        ("de", "German", "Deutsch", False, True, True),
+        ("en", "English", "English", True, True, True, "FULL"),
+        ("es", "Spanish", "Español", True, True, True, "FULL"),
+        ("fr", "French", "Français", True, True, True, "FULL"),
+        ("de", "German", "Deutsch", True, True, True, "FULL"),
+        (
+            "it",
+            "Italian",
+            "Italiano",
+            True,
+            True,
+            True,
+            "FULL",
+        ),  # Native TTS voice available
+        (
+            "pt",
+            "Portuguese",
+            "Português",
+            True,
+            True,
+            True,
+            "FULL",
+        ),  # Native TTS voice available
+        ("zh", "Chinese (Mandarin)", "中文", True, True, True, "FULL"),
+        (
+            "ja",
+            "Japanese",
+            "日本語",
+            True,
+            True,
+            False,
+            "STT_ONLY",
+        ),  # STT only, TTS uses English fallback
     ]
 
     try:
-        for code, name, native_name, is_active, has_speech, has_tts in languages:
+        # First, check if support_level column exists, if not add it
+        try:
+            session.execute(text("SELECT support_level FROM languages LIMIT 1"))
+        except Exception:
+            # Column doesn't exist, add it
+            logger.info("Adding support_level column to languages table...")
+            session.execute(
+                text(
+                    "ALTER TABLE languages ADD COLUMN support_level VARCHAR(10) DEFAULT 'FULL'"
+                )
+            )
+            session.commit()
+
+        for (
+            code,
+            name,
+            native_name,
+            is_active,
+            has_speech,
+            has_tts,
+            support_lvl,
+        ) in languages:
             session.execute(
                 text("""
                 INSERT OR IGNORE INTO languages
-                (code, name, native_name, is_active, has_speech_support, has_tts_support)
-                VALUES (:code, :name, :native_name, :active, :speech, :tts)
+                (code, name, native_name, is_active, has_speech_support, has_tts_support, support_level)
+                VALUES (:code, :name, :native_name, :active, :speech, :tts, :support_level)
                 """),
                 {
                     "code": code,
@@ -61,6 +116,7 @@ def init_languages():
                     "active": is_active,
                     "speech": has_speech,
                     "tts": has_tts,
+                    "support_level": support_lvl,
                 },
             )
 
