@@ -468,47 +468,64 @@ async def text_to_speech(
 
 
 @router.get("/languages")
-async def get_supported_languages():
-    """Get list of supported languages and AI providers"""
+async def get_supported_languages(db: Session = Depends(get_primary_db_session)):
+    """
+    Get list of supported languages with their capabilities
+
+    Returns all active languages from the database with:
+    - Language code, name, and native name
+    - Support level (FULL, STT_ONLY, FUTURE)
+    - Feature availability (TTS, STT, speech support)
+    - User-facing warnings for limited support languages
+    """
+    from app.models.database import Language
+
+    # Query all active languages from database
+    languages = (
+        db.query(Language)
+        .filter(Language.is_active == True)
+        .order_by(Language.name)
+        .all()
+    )
+
+    # Build response with support level information
+    language_list = []
+    for lang in languages:
+        lang_info = {
+            "code": lang.code,
+            "name": lang.name,
+            "native_name": lang.native_name,
+            "support_level": lang.support_level.value if lang.support_level else "FULL",
+            "has_tts": lang.has_tts_support,
+            "has_stt": lang.has_speech_support,
+            "providers": ["claude"],  # Default provider
+            "display": f"{lang.name} ({lang.native_name})"
+            if lang.native_name
+            else lang.name,
+        }
+
+        # Add user warning for STT_ONLY languages
+        if lang.support_level and lang.support_level.value == "STT_ONLY":
+            lang_info["warning"] = (
+                f"Note: {lang.name} uses English voice for text-to-speech. Speech recognition is available."
+            )
+            lang_info["limitations"] = [
+                "Speech output uses English accent (non-native pronunciation)",
+                "Speech recognition works correctly",
+                "Text-based learning fully supported",
+                "Not recommended for pronunciation learning from audio",
+            ]
+
+        language_list.append(lang_info)
+
     return {
-        "languages": [
-            {
-                "code": "en",
-                "name": "English",
-                "providers": ["claude"],
-                "display": "English (Claude)",
-            },
-            {
-                "code": "es",
-                "name": "Spanish",
-                "providers": ["claude"],
-                "display": "Spanish (Claude)",
-            },
-            {
-                "code": "fr",
-                "name": "French",
-                "providers": ["mistral"],
-                "display": "French (Mistral)",
-            },
-            {
-                "code": "zh",
-                "name": "Chinese",
-                "providers": ["deepseek"],
-                "display": "Chinese (DeepSeek)",
-            },
-            {
-                "code": "ja",
-                "name": "Japanese",
-                "providers": ["claude"],
-                "display": "Japanese (Claude)",
-            },
-            {
-                "code": "de",
-                "name": "German",
-                "providers": ["claude"],
-                "display": "German (Claude)",
-            },
-        ]
+        "languages": language_list,
+        "total": len(language_list),
+        "support_levels": {
+            "FULL": "Complete native TTS + STT support with all features",
+            "STT_ONLY": "Speech recognition available, TTS uses English voice fallback",
+            "FUTURE": "Planned for future implementation",
+        },
     }
 
 

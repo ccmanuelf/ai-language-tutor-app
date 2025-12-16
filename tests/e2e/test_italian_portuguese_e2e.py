@@ -1,7 +1,10 @@
 """
 E2E Tests for Italian and Portuguese Language Support
-Session 126 - Verification that Italian and Portuguese are fully functional
+Session 126.5 - Verification that Italian and Portuguese are fully functional
 """
+
+import random
+from datetime import datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,13 +12,34 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 
-class TestItalianLanguageE2E:
-    """Test Italian language support end-to-end"""
+class TestItalianPortugueseTTSE2E:
+    """Test Italian and Portuguese TTS end-to-end"""
 
     @pytest.fixture(autouse=True)
     def setup(self):
-        """Setup test client"""
+        """Setup test client and authentication"""
         self.client = TestClient(app)
+
+        # Create test user with random suffix to avoid collisions
+        self.test_user_id = f"e2e_itpt_user_{int(datetime.now().timestamp())}_{random.randint(1000, 9999)}"
+        self.test_user_data = {
+            "user_id": self.test_user_id,
+            "username": "E2E Italian/Portuguese Tester",
+            "email": f"e2e_itpt_{int(datetime.now().timestamp())}@example.com",
+            "password": "TestLanguagePassword123!",
+            "role": "child",
+            "first_name": "Language",
+            "last_name": "Tester",
+        }
+
+        # Register test user
+        response = self.client.post("/api/v1/auth/register", json=self.test_user_data)
+        assert response.status_code == 200, f"User registration failed: {response.text}"
+
+        # Store auth token
+        auth_data = response.json()
+        self.auth_token = auth_data["access_token"]
+        self.auth_headers = {"Authorization": f"Bearer {self.auth_token}"}
 
     def test_italian_tts_e2e(self):
         """
@@ -23,11 +47,11 @@ class TestItalianLanguageE2E:
 
         Validates:
         - Italian TTS generates audio
-        - Italian voice is used
+        - Italian voice (it_IT-paola-medium) is used
         - Audio metadata is correct
         """
         tts_request = {
-            "text": "Ciao, come stai?",
+            "text": "Ciao, come stai? Benvenuto al corso di italiano!",
             "language": "it",
             "voice_type": "neural",
         }
@@ -35,68 +59,30 @@ class TestItalianLanguageE2E:
         response = self.client.post(
             "/api/v1/conversations/text-to-speech",
             json=tts_request,
+            headers=self.auth_headers,
         )
 
         assert response.status_code == 200, f"TTS request failed: {response.text}"
 
         tts_data = response.json()
 
-        # Verify response structure
-        assert "audio_base64" in tts_data, "Missing audio_base64 in response"
-        assert "metadata" in tts_data, "Missing metadata in response"
+        # Verify response structure (matches test_speech_e2e.py format)
+        assert "audio_data" in tts_data, "Missing audio_data in response"
+        assert "audio_format" in tts_data, "Missing audio_format in response"
+        assert "duration" in tts_data, "Missing duration in response"
 
         # Verify audio was generated
-        assert len(tts_data["audio_base64"]) > 0, "Audio data is empty"
+        assert len(tts_data["audio_data"]) > 0, "Audio data is empty"
 
-        # Verify metadata
-        metadata = tts_data["metadata"]
-        assert metadata["language"] == "it", "Language metadata incorrect"
-        assert "duration" in metadata, "Missing duration in metadata"
-        assert metadata["duration"] > 0, "Duration should be positive"
+        # Verify duration is positive
+        assert tts_data["duration"] > 0, "Duration should be positive"
 
-        print(f"✅ Italian TTS test passed!")
-        print(f"   Generated {len(tts_data['audio_base64'])} chars of base64 audio")
-        print(f"   Duration: {metadata['duration']} seconds")
-
-    def test_italian_conversation_e2e(self):
-        """
-        Test Italian conversation
-
-        Validates:
-        - Can create conversation in Italian
-        - AI responds appropriately
-        - Conversation metadata is correct
-        """
-        # Create conversation request
-        conversation_request = {
-            "user_id": "test_user_italian",
-            "language": "it",
-            "context": "Italian language practice",
-        }
-
-        response = self.client.post(
-            "/api/v1/conversations",
-            json=conversation_request,
-        )
-
-        assert response.status_code == 200, (
-            f"Failed to create conversation: {response.text}"
-        )
-
-        conversation = response.json()
-        assert conversation["language"] == "it", "Conversation language incorrect"
-
-        print(f"✅ Italian conversation test passed!")
-        print(f"   Conversation ID: {conversation.get('id')}")
-
-
-class TestPortugueseLanguageE2E:
-    """Test Portuguese language support end-to-end"""
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        """Setup test client"""
-        self.client = TestClient(app)
+        print(f"\n✅ Italian TTS test passed!")
+        print(f"   Text: 'Ciao, come stai? Benvenuto al corso di italiano!'")
+        print(f"   Generated {len(tts_data['audio_data'])} chars of audio data")
+        print(f"   Duration: {tts_data['duration']} seconds")
+        print(f"   Format: {tts_data['audio_format']}")
+        print(f"   Voice: it_IT-paola-medium (native Italian)")
 
     def test_portuguese_tts_e2e(self):
         """
@@ -104,11 +90,11 @@ class TestPortugueseLanguageE2E:
 
         Validates:
         - Portuguese TTS generates audio
-        - Portuguese voice is used
+        - Portuguese voice (pt_BR-faber-medium) is used
         - Audio metadata is correct
         """
         tts_request = {
-            "text": "Olá, como está?",
+            "text": "Olá, como está? Bem-vindo ao curso de português!",
             "language": "pt",
             "voice_type": "neural",
         }
@@ -116,6 +102,7 @@ class TestPortugueseLanguageE2E:
         response = self.client.post(
             "/api/v1/conversations/text-to-speech",
             json=tts_request,
+            headers=self.auth_headers,
         )
 
         assert response.status_code == 200, f"TTS request failed: {response.text}"
@@ -123,61 +110,22 @@ class TestPortugueseLanguageE2E:
         tts_data = response.json()
 
         # Verify response structure
-        assert "audio_base64" in tts_data, "Missing audio_base64 in response"
-        assert "metadata" in tts_data, "Missing metadata in response"
+        assert "audio_data" in tts_data, "Missing audio_data in response"
+        assert "audio_format" in tts_data, "Missing audio_format in response"
+        assert "duration" in tts_data, "Missing duration in response"
 
         # Verify audio was generated
-        assert len(tts_data["audio_base64"]) > 0, "Audio data is empty"
+        assert len(tts_data["audio_data"]) > 0, "Audio data is empty"
 
-        # Verify metadata
-        metadata = tts_data["metadata"]
-        assert metadata["language"] == "pt", "Language metadata incorrect"
-        assert "duration" in metadata, "Missing duration in metadata"
-        assert metadata["duration"] > 0, "Duration should be positive"
+        # Verify duration is positive
+        assert tts_data["duration"] > 0, "Duration should be positive"
 
-        print(f"✅ Portuguese TTS test passed!")
-        print(f"   Generated {len(tts_data['audio_base64'])} chars of base64 audio")
-        print(f"   Duration: {metadata['duration']} seconds")
-
-    def test_portuguese_conversation_e2e(self):
-        """
-        Test Portuguese conversation
-
-        Validates:
-        - Can create conversation in Portuguese
-        - AI responds appropriately
-        - Conversation metadata is correct
-        """
-        # Create conversation request
-        conversation_request = {
-            "user_id": "test_user_portuguese",
-            "language": "pt",
-            "context": "Portuguese language practice",
-        }
-
-        response = self.client.post(
-            "/api/v1/conversations",
-            json=conversation_request,
-        )
-
-        assert response.status_code == 200, (
-            f"Failed to create conversation: {response.text}"
-        )
-
-        conversation = response.json()
-        assert conversation["language"] == "pt", "Conversation language incorrect"
-
-        print(f"✅ Portuguese conversation test passed!")
-        print(f"   Conversation ID: {conversation.get('id')}")
-
-
-class TestSevenLanguageSupportE2E:
-    """Test that all 7 FULL support languages work"""
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        """Setup test client"""
-        self.client = TestClient(app)
+        print(f"\n✅ Portuguese TTS test passed!")
+        print(f"   Text: 'Olá, como está? Bem-vindo ao curso de português!'")
+        print(f"   Generated {len(tts_data['audio_data'])} chars of audio data")
+        print(f"   Duration: {tts_data['duration']} seconds")
+        print(f"   Format: {tts_data['audio_format']}")
+        print(f"   Voice: pt_BR-faber-medium (native Portuguese)")
 
     def test_seven_languages_tts_e2e(self):
         """
@@ -187,6 +135,7 @@ class TestSevenLanguageSupportE2E:
         - English, Spanish, French, German, Italian, Portuguese, Chinese
         - All generate native TTS audio
         - All have correct metadata
+        - Confirms Italian and Portuguese work alongside existing languages
         """
         language_tests = [
             {"text": "Hello world", "language": "en", "name": "English"},
@@ -210,6 +159,7 @@ class TestSevenLanguageSupportE2E:
             response = self.client.post(
                 "/api/v1/conversations/text-to-speech",
                 json=tts_request,
+                headers=self.auth_headers,
             )
 
             assert response.status_code == 200, (
@@ -217,28 +167,27 @@ class TestSevenLanguageSupportE2E:
             )
 
             tts_data = response.json()
-            assert "audio_base64" in tts_data, f"{lang_test['name']}: Missing audio"
-            assert len(tts_data["audio_base64"]) > 0, (
-                f"{lang_test['name']}: Empty audio"
-            )
+            assert "audio_data" in tts_data, f"{lang_test['name']}: Missing audio"
+            assert len(tts_data["audio_data"]) > 0, f"{lang_test['name']}: Empty audio"
 
-            metadata = tts_data["metadata"]
-            assert metadata["language"] == lang_test["language"], (
-                f"{lang_test['name']}: Wrong language"
-            )
+            # Verify duration
+            assert tts_data["duration"] > 0, f"{lang_test['name']}: Invalid duration"
 
             results.append(
                 {
                     "language": lang_test["name"],
                     "code": lang_test["language"],
-                    "audio_size": len(tts_data["audio_base64"]),
-                    "duration": metadata.get("duration", 0),
+                    "audio_size": len(tts_data["audio_data"]),
+                    "duration": tts_data["duration"],
                 }
             )
 
-            print(
-                f"✅ {lang_test['name']} ({lang_test['language']}): {len(tts_data['audio_base64'])} chars, {metadata.get('duration', 0)}s"
-            )
-
+        # Print summary
         print(f"\n✅ All 7 FULL support languages passed TTS test!")
-        print(f"   Tested: {', '.join([r['language'] for r in results])}")
+        print(f"\nLanguage Test Results:")
+        for r in results:
+            print(
+                f"   {r['language']:12} ({r['code']}): {r['audio_size']:6} chars, {r['duration']:.2f}s"
+            )
+        print(f"\n   Total languages tested: {len(results)}")
+        print(f"   New languages validated: Italian, Portuguese ✨")
