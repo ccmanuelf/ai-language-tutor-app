@@ -21,9 +21,13 @@ import random
 from datetime import datetime
 
 import pytest
+from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 
 from app.main import app
+
+# Load environment variables (including API keys)
+load_dotenv()
 
 
 class TestLanguageCarouselE2E:
