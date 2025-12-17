@@ -845,6 +845,146 @@ class APIUsage(Base):
         }
 
 
+class ProcessedContent(Base):
+    """Processed content storage for YouTube videos, documents, etc."""
+
+    __tablename__ = "processed_content"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    content_id = Column(String(100), unique=True, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    # Content metadata
+    title = Column(String(500), nullable=False)
+    content_type = Column(
+        String(50), nullable=False
+    )  # youtube_video, pdf_document, etc.
+    source_url = Column(String(1000), nullable=True)
+    language = Column(String(10), nullable=False)
+
+    # Content data
+    raw_content = Column(Text, nullable=False)  # Original extracted content
+    processed_content = Column(Text, nullable=False)  # Cleaned/processed content
+
+    # Metadata fields
+    duration = Column(Float, nullable=True)  # In minutes
+    word_count = Column(Integer, default=0)
+    difficulty_level = Column(
+        String(20), nullable=True
+    )  # beginner, intermediate, advanced
+    topics = Column(JSON, default=list)  # List of topics/tags
+    author = Column(String(255), nullable=True)
+    file_size = Column(Integer, nullable=True)
+
+    # Processing stats
+    processing_stats = Column(JSON, default=dict)  # Processing metadata and stats
+
+    # Timestamps
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User")
+    learning_materials = relationship(
+        "LearningMaterialDB",
+        back_populates="parent_content",
+        cascade="all, delete-orphan",
+    )
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_processed_content_user", "user_id"),
+        Index("idx_processed_content_type", "content_type"),
+        Index("idx_processed_content_language", "language"),
+        Index("idx_processed_content_created", "created_at"),
+    )
+
+    def to_dict(self, include_content=False):
+        data = {
+            "id": self.id,
+            "content_id": self.content_id,
+            "user_id": self.user_id,
+            "title": self.title,
+            "content_type": self.content_type,
+            "source_url": self.source_url,
+            "language": self.language,
+            "duration": self.duration,
+            "word_count": self.word_count,
+            "difficulty_level": self.difficulty_level,
+            "topics": self.topics or [],
+            "author": self.author,
+            "file_size": self.file_size,
+            "processing_stats": self.processing_stats or {},
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+        if include_content:
+            data["raw_content"] = self.raw_content
+            data["processed_content"] = self.processed_content
+
+        return data
+
+
+class LearningMaterialDB(Base):
+    """Learning materials generated from processed content"""
+
+    __tablename__ = "learning_materials"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    material_id = Column(String(100), unique=True, nullable=False, index=True)
+    content_id = Column(
+        String(100), ForeignKey("processed_content.content_id"), nullable=False
+    )
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    # Material metadata
+    material_type = Column(
+        String(50), nullable=False
+    )  # summary, flashcards, quiz, etc.
+    title = Column(String(500), nullable=False)
+    difficulty_level = Column(String(20), nullable=True)
+    estimated_time = Column(Integer, default=0)  # In minutes
+    tags = Column(JSON, default=list)
+
+    # Material content (structured JSON based on type)
+    content = Column(JSON, nullable=False)
+
+    # Timestamps
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User")
+    parent_content = relationship(
+        "ProcessedContent", back_populates="learning_materials"
+    )
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_learning_materials_user", "user_id"),
+        Index("idx_learning_materials_content", "content_id"),
+        Index("idx_learning_materials_type", "material_type"),
+        Index("idx_learning_materials_created", "created_at"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "material_id": self.material_id,
+            "content_id": self.content_id,
+            "user_id": self.user_id,
+            "material_type": self.material_type,
+            "title": self.title,
+            "difficulty_level": self.difficulty_level,
+            "estimated_time": self.estimated_time,
+            "tags": self.tags or [],
+            "content": self.content or {},
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 # Database session management
 def get_db_session():
     """
@@ -883,6 +1023,8 @@ __all__ = [
     "ScenarioProgressHistory",
     "LearningSession",
     "APIUsage",
+    "ProcessedContent",
+    "LearningMaterialDB",
     "UserRole",
     "LanguageCode",
     "ConversationRole",
