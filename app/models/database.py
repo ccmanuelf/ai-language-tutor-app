@@ -606,7 +606,12 @@ class VocabularyItem(Base):
     # Context and usage
     example_sentences = Column(JSON, default=list)
     context_tags = Column(JSON, default=list)
-    source_document_id = Column(String(100), nullable=True)  # Where it was learned
+    source_type = Column(
+        String(50), nullable=True
+    )  # 'scenario', 'document', 'manual', 'conversation'
+    source_document_id = Column(
+        String(100), nullable=True
+    )  # Where it was learned (scenario_id, content_id, etc.)
 
     # Spaced repetition
     next_review_date = Column(DateTime, nullable=True)
@@ -650,6 +655,7 @@ class VocabularyItem(Base):
             "mastery_level": self.mastery_level,
             "example_sentences": self.example_sentences or [],
             "context_tags": self.context_tags or [],
+            "source_type": self.source_type,
             "source_document_id": self.source_document_id,
             "next_review_date": self.next_review_date.isoformat()
             if self.next_review_date
@@ -663,6 +669,123 @@ class VocabularyItem(Base):
             if self.last_reviewed
             else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class ScenarioProgressHistory(Base):
+    """Historical record of completed scenarios for progress tracking and analytics"""
+
+    __tablename__ = "scenario_progress_history"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    # Scenario identification
+    scenario_id = Column(String(100), nullable=False)
+    progress_id = Column(String(100), nullable=False)  # Unique progress session ID
+
+    # Timing
+    started_at = Column(DateTime, nullable=False)
+    completed_at = Column(DateTime, nullable=False)
+    duration_minutes = Column(Integer, nullable=False)
+
+    # Progress metrics
+    phases_completed = Column(Integer, nullable=False)
+    total_phases = Column(Integer, nullable=False)
+
+    # Learning data (JSON for flexibility)
+    vocabulary_mastered = Column(JSON, default=list)  # List of mastered vocabulary
+    objectives_completed = Column(JSON, default=list)  # List of completed objectives
+
+    # Performance metrics
+    success_rate = Column(Float, default=0.0)  # 0-1 scale
+    completion_score = Column(Float, default=0.0)  # 0-100 scale
+
+    # Relationships
+    user = relationship("User")
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_scenario_history_user", "user_id"),
+        Index("idx_scenario_history_scenario", "scenario_id"),
+        Index("idx_scenario_history_completed", "completed_at"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "scenario_id": self.scenario_id,
+            "progress_id": self.progress_id,
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
+            "duration_minutes": self.duration_minutes,
+            "phases_completed": self.phases_completed,
+            "total_phases": self.total_phases,
+            "vocabulary_mastered": self.vocabulary_mastered or [],
+            "objectives_completed": self.objectives_completed or [],
+            "success_rate": self.success_rate,
+            "completion_score": self.completion_score,
+        }
+
+
+class LearningSession(Base):
+    """Track individual learning sessions for all activities (scenarios, content study, reviews)"""
+
+    __tablename__ = "learning_sessions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    # Session type and source
+    session_type = Column(
+        String(50), nullable=False
+    )  # 'scenario', 'content_study', 'vocabulary_review', 'conversation'
+    source_id = Column(String(100), nullable=True)  # scenario_id, content_id, etc.
+    language = Column(String(10), nullable=False)
+
+    # Timing
+    started_at = Column(DateTime, default=func.now(), nullable=False)
+    ended_at = Column(DateTime, nullable=True)
+    duration_seconds = Column(Integer, default=0)
+
+    # Metrics
+    items_studied = Column(Integer, default=0)  # Words, phrases, questions, etc.
+    items_correct = Column(Integer, default=0)
+    items_incorrect = Column(Integer, default=0)
+    accuracy_rate = Column(Float, default=0.0)  # 0-1 scale
+
+    # Session metadata (JSON for flexibility)
+    session_metadata = Column(JSON, default=dict)
+
+    # Relationships
+    user = relationship("User")
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_learning_session_user", "user_id"),
+        Index("idx_learning_session_type", "session_type"),
+        Index("idx_learning_session_date", "started_at"),
+        Index("idx_learning_session_source", "source_id"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "session_type": self.session_type,
+            "source_id": self.source_id,
+            "language": self.language,
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "ended_at": self.ended_at.isoformat() if self.ended_at else None,
+            "duration_seconds": self.duration_seconds,
+            "items_studied": self.items_studied,
+            "items_correct": self.items_correct,
+            "items_incorrect": self.items_incorrect,
+            "accuracy_rate": self.accuracy_rate,
+            "session_metadata": self.session_metadata or {},
         }
 
 
@@ -757,12 +880,15 @@ __all__ = [
     "Document",
     "LearningProgress",
     "VocabularyItem",
+    "ScenarioProgressHistory",
+    "LearningSession",
     "APIUsage",
     "UserRole",
     "LanguageCode",
     "ConversationRole",
     "DocumentType",
     "LearningStatus",
+    "SupportLevel",
     "user_languages",
     "get_db_session",
 ]

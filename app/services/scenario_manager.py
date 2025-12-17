@@ -760,6 +760,9 @@ class ScenarioManager:
         scenario = self.scenarios[scenario_id]
 
         # Create scenario progress tracking
+        # Generate progress ID
+        progress_id = f"{user_id}_{scenario_id}_{int(datetime.now().timestamp())}"
+
         progress = ScenarioProgress(
             scenario_id=scenario_id,
             user_id=user_id,
@@ -771,10 +774,10 @@ class ScenarioManager:
             last_activity=datetime.now(),
             total_attempts=1,
             success_rate=0.0,
+            progress_id=progress_id,  # Set progress_id in the object
         )
 
         # Store active scenario
-        progress_id = f"{user_id}_{scenario_id}_{int(datetime.now().timestamp())}"
         self.active_scenarios[progress_id] = progress
 
         # Generate opening message for the scenario
@@ -1072,7 +1075,37 @@ class ScenarioManager:
             },
         }
 
-        # Clean up completed scenario
+        # 🆕 SESSION 127: Integrate with progress tracking, SR, and learning sessions
+        try:
+            from app.services.scenario_integration_service import (
+                integrate_completed_scenario,
+            )
+
+            integration_result = await integrate_completed_scenario(
+                progress=progress,
+                user_id=progress.user_id,
+                scenario_id=progress.scenario_id,
+                total_phases=len(scenario.phases),
+                language=scenario.setting.get(
+                    "language", "en"
+                ),  # Extract language from scenario
+            )
+
+            logger.info(
+                f"Scenario integration complete: progress_id={integration_result['progress_history_id']}, "
+                f"sr_items={integration_result['sr_items_created']}, "
+                f"session_id={integration_result['learning_session_id']}"
+            )
+
+            # Add integration results to summary
+            summary["integration"] = integration_result
+
+        except Exception as e:
+            logger.error(f"Failed to integrate scenario completion: {e}")
+            # Don't fail the whole completion if integration fails
+            summary["integration"] = {"error": str(e), "integration_complete": False}
+
+        # Clean up completed scenario (after saving to database)
         del self.active_scenarios[progress_id]
 
         logger.info(

@@ -5,10 +5,10 @@ This module contains all enums, dataclasses, and data structures used
 throughout the scenario management system.
 """
 
-from datetime import datetime
-from typing import Dict, List, Any, Optional
-from enum import Enum
 from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class ScenarioCategory(Enum):
@@ -110,6 +110,7 @@ class ScenarioProgress:
     last_activity: datetime
     total_attempts: int
     success_rate: float
+    progress_id: str = None  # Added in Session 127 for progress tracking
     difficulty_adjustments: List[str] = None
 
     def __post_init__(self):

@@ -1,0 +1,34 @@
+{
+  "visualization_id": "viz_64_line_chart_20251216175000",
+  "user_id": "64",
+  "visualization_type": "line_chart",
+  "title": "Fluency Score Over Time",
+  "description": "Track your fluency improvement",
+  "data_points": [
+    {
+      "month": "Jan",
+      "score": 60
+    },
+    {
+      "month": "Feb",
+      "score": 65
+    },
+    {
+      "month": "Mar",
+      "score": 72
+    },
+    {
+      "month": "Apr",
+      "score": 78
+    }
+  ],
+  "x_axis_label": "Month",
+  "y_axis_label": "Fluency Score",
+  "color_scheme": [
+    "#6366f1",
+    "#0891b2",
+    "#f59e0b"
+  ],
+  "generated_at": "2025-12-16T17:50:00.800441",
+  "metadata": {}
+}

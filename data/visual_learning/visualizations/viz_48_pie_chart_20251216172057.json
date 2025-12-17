@@ -1,0 +1,34 @@
+{
+  "visualization_id": "viz_48_pie_chart_20251216172057",
+  "user_id": "48",
+  "visualization_type": "pie_chart",
+  "title": "Learning Time Distribution",
+  "description": "How you spend your learning time",
+  "data_points": [
+    {
+      "category": "Vocabulary",
+      "percentage": 40
+    },
+    {
+      "category": "Grammar",
+      "percentage": 30
+    },
+    {
+      "category": "Conversation",
+      "percentage": 20
+    },
+    {
+      "category": "Pronunciation",
+      "percentage": 10
+    }
+  ],
+  "x_axis_label": "",
+  "y_axis_label": "",
+  "color_scheme": [
+    "#6366f1",
+    "#0891b2",
+    "#f59e0b"
+  ],
+  "generated_at": "2025-12-16T17:20:57.023189",
+  "metadata": {}
+}
