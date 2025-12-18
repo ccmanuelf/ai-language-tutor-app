@@ -1086,9 +1086,7 @@ class ScenarioManager:
                 user_id=progress.user_id,
                 scenario_id=progress.scenario_id,
                 total_phases=len(scenario.phases),
-                language=scenario.setting.get(
-                    "language", "en"
-                ),  # Extract language from scenario
+                language="en",  # Default language (scenario.setting is a string, not dict)
             )
 
             logger.info(

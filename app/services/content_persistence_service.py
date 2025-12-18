@@ -357,11 +357,8 @@ class ContentPersistenceService:
         # Filter by topics (any topic matches)
         if topics:
             # SQLite JSON search - check if any topic is in the topics JSON array
-            topic_filters = []
-            for topic in topics:
-                topic_filters.append(ProcessedContent.topics.contains(topic))
-            if topic_filters:
-                query = query.filter(or_(*topic_filters))
+            topic_filters = [ProcessedContent.topics.contains(topic) for topic in topics]
+            query = query.filter(or_(*topic_filters))
 
         return query.order_by(desc(ProcessedContent.created_at)).limit(limit).all()
 

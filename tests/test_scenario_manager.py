@@ -598,6 +598,62 @@ class TestCompleteScenario:
         with pytest.raises(ValueError, match="Scenario progress .* not found"):
             await self.manager.complete_scenario("nonexistent_id")
 
+    @pytest.mark.asyncio
+    async def test_complete_scenario_integration_failure(self):
+        """Test complete_scenario handles integration service failures gracefully"""
+        from unittest.mock import patch
+
+        # Start scenario conversation
+        start_result = await self.manager.start_scenario_conversation(
+            user_id=self.user_id, scenario_id=self.scenario_id
+        )
+        progress_id = start_result["progress_id"]
+
+        # Mock integrate_completed_scenario to raise an exception
+        with patch(
+            'app.services.scenario_integration_service.integrate_completed_scenario',
+            side_effect=Exception("Integration service unavailable")
+        ):
+            # Complete the scenario - should handle integration failure gracefully
+            summary = await self.manager.complete_scenario(progress_id)
+
+        # Should still return summary even if integration fails
+        assert summary is not None
+        assert "progress_id" in summary
+        assert summary["progress_id"] == progress_id
+
+        # Integration should be in summary but marked as failed
+        assert "integration" in summary
+        assert summary["integration"]["integration_complete"] is False
+        assert "error" in summary["integration"]
+
+    @pytest.mark.asyncio
+    async def test_complete_scenario_integration_success(self):
+        """Test complete_scenario with successful integration"""
+        # Start scenario conversation
+        start_result = await self.manager.start_scenario_conversation(
+            user_id=self.user_id, scenario_id=self.scenario_id
+        )
+        progress_id = start_result["progress_id"]
+
+        # Complete the scenario - integration should succeed
+        summary = await self.manager.complete_scenario(progress_id)
+
+        # Should have successful integration
+        assert summary is not None
+        assert "progress_id" in summary
+        assert "integration" in summary
+
+        # Debug: print what's in integration
+        print(f"Integration result: {summary['integration']}")
+
+        # Integration should succeed (not have error)
+        assert "error" not in summary["integration"], f"Integration failed with: {summary['integration'].get('error')}"
+        assert summary["integration"].get("integration_complete") is not False
+        assert "progress_history_id" in summary["integration"]
+        assert "sr_items_created" in summary["integration"]
+        assert "learning_session_id" in summary["integration"]
+
 
 class TestGetNextScenarioRecommendations:
     """Test _get_next_scenario_recommendations method."""
