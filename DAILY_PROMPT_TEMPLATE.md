@@ -1,11 +1,21 @@
 # AI Language Tutor - Session 129 Daily Prompt
 
 **Last Updated:** 2025-12-17 (Session 128 Complete - Content Persistence SUCCESS!)  
-**Next Session:** Session 129 - **Content UI Components** (or as determined by user)
+**Next Session:** Session 129A - **Coverage Fix (Session 127-128 Services)**
 
 **🎉 CONTENT PERSISTENCE COMPLETE:** Session 128 successfully implemented content persistence layer! ProcessedContent and LearningMaterialDB tables created, ContentPersistenceService (450+ lines) with comprehensive CRUD operations, 9 E2E tests covering all functionality. Ready for UI integration! 🎉
 
 **✅ FULL VERIFICATION COMPLETE:** 84/84 E2E tests passing (100%) in 203.90 seconds - zero regressions confirmed!
+
+**📋 SESSIONS 129A-D PLAN - COVERAGE FIX + PERSONA SYSTEM:**
+User requested tutor persona selection system (5 teaching styles: Guiding Challenger, Encouraging Coach, Friendly Conversationalist, Expert Scholar, Creative Mentor). Before implementing, we discovered coverage gap (96.60% actual vs 99.50%+ stated). **Plan: Fix coverage gap to TRUE 100.00%, then implement persona system.** Split into 4 sessions for conservative approach:
+- **Session 129A:** Coverage fix Session 127-128 services (2-3 hrs, 16-22 tests) → ~98.5%
+- **Session 129B:** Coverage fix Budget files (3-4 hrs, 20-30 tests) → **TRUE 100.00%** ✅
+- **Session 129C:** Persona backend implementation (6-7 hrs, 16-20 tests)
+- **Session 129D:** Persona frontend + E2E tests (6-8 hrs, 6-8 tests)
+- **After 129D:** Resume Session 129 (Content UI Components) per original roadmap
+
+**🎯 EMPHASIS: Aim for TRUE 100.00% coverage (not 99.99%+), TRUE 100% functionality, observe all 14 core principles throughout.**
 
 ---
 
