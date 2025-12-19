@@ -541,8 +541,8 @@ class TestTextToSpeech:
             "/api/v1/conversations/text-to-speech", json={"language": "en"}
         )
 
-        # HTTPException(400) is raised but caught and re-raised as 500
-        assert response.status_code == 500
+        # HTTPException(400) is raised for validation error
+        assert response.status_code == 400
         data = response.json()
         assert "No text provided" in data["detail"]
 
@@ -1092,8 +1092,8 @@ class TestChatEndpoint:
         mock_router.select_provider.assert_called()
 
         # Verify we got FALLBACK, not AI response
-        # Fallback text contains "Hey!" for English
-        assert "Hey!" in data["response"] or "[Demo Mode]" in data["response"]
+        # Fallback text contains "Hey there!" for English demo mode
+        assert "Hey there!" in data["response"] or "[Demo Mode]" in data["response"]
 
         app.dependency_overrides.clear()
 

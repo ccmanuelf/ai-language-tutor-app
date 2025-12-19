@@ -322,6 +322,243 @@ class TestUserBudgetSettingsModel:
         assert len(settings.admin_notes) == 1000
         assert settings.admin_notes == long_note
 
+    def test_to_dict_conversion(self, db_session, test_user):
+        """Test to_dict() method converts model to dictionary"""
+        settings = UserBudgetSettings(
+            user_id=test_user.user_id,
+            monthly_limit_usd=50.0,
+            custom_limit_usd=75.0,
+            budget_period=BudgetPeriod.CUSTOM,
+            custom_period_days=14,
+            enforce_budget=True,
+            allow_budget_override=False,
+            auto_fallback_to_ollama=True,
+            alert_threshold_yellow=60.0,
+            alert_threshold_orange=80.0,
+            alert_threshold_red=95.0,
+            budget_visible_to_user=True,
+            user_can_modify_limit=False,
+            user_can_reset_budget=False,
+            admin_notes="Test notes",
+            configured_by="admin_123",
+        )
+        db_session.add(settings)
+        db_session.commit()
+        db_session.refresh(settings)
+
+        # Convert to dict
+        data = settings.to_dict()
+
+        # Verify all fields present
+        assert data["user_id"] == test_user.user_id
+        assert data["monthly_limit_usd"] == 50.0
+        assert data["custom_limit_usd"] == 75.0
+        assert data["budget_period"] == "custom"
+        assert data["custom_period_days"] == 14
+        assert data["enforce_budget"] is True
+        assert data["allow_budget_override"] is False
+        assert data["auto_fallback_to_ollama"] is True
+        assert data["alert_threshold_yellow"] == 60.0
+        assert data["alert_threshold_orange"] == 80.0
+        assert data["alert_threshold_red"] == 95.0
+        assert data["budget_visible_to_user"] is True
+        assert data["user_can_modify_limit"] is False
+        assert data["user_can_reset_budget"] is False
+        assert data["admin_notes"] == "Test notes"
+        assert data["configured_by"] == "admin_123"
+        assert "created_at" in data
+        assert "updated_at" in data
+        assert "current_period_start" in data
+        assert "current_period_end" in data
+        assert "last_reset_date" in data
+
+    def test_should_reset_budget_no_period_end(self, db_session, test_user):
+        """Test should_reset_budget() returns False when no period_end set"""
+        settings = UserBudgetSettings(
+            user_id=test_user.user_id,
+            current_period_end=None,
+        )
+        db_session.add(settings)
+        db_session.commit()
+        db_session.refresh(settings)
+
+        assert settings.should_reset_budget() is False
+
+    def test_should_reset_budget_period_not_ended(self, db_session, test_user):
+        """Test should_reset_budget() returns False when period hasn't ended"""
+        future_date = datetime.now() + timedelta(days=10)
+        settings = UserBudgetSettings(
+            user_id=test_user.user_id,
+            current_period_end=future_date,
+        )
+        db_session.add(settings)
+        db_session.commit()
+        db_session.refresh(settings)
+
+        assert settings.should_reset_budget() is False
+
+    def test_should_reset_budget_period_ended(self, db_session, test_user):
+        """Test should_reset_budget() returns True when period has ended"""
+        past_date = datetime.now() - timedelta(days=1)
+        settings = UserBudgetSettings(
+            user_id=test_user.user_id,
+            current_period_end=past_date,
+        )
+        db_session.add(settings)
+        db_session.commit()
+        db_session.refresh(settings)
+
+        assert settings.should_reset_budget() is True
+
+    def test_calculate_next_reset_date_monthly(self, db_session, test_user):
+        """Test calculate_next_reset_date() for MONTHLY period"""
+        settings = UserBudgetSettings(
+            user_id=test_user.user_id,
+            budget_period=BudgetPeriod.MONTHLY,
+        )
+        db_session.add(settings)
+        db_session.commit()
+        db_session.refresh(settings)
+
+        next_reset = settings.calculate_next_reset_date()
+        now = datetime.now()
+
+        # Should be 1st of next month
+        assert next_reset.day == 1
+        assert next_reset.hour == 0
+        assert next_reset.minute == 0
+        assert next_reset.second == 0
+
+        # Should be in the future
+        assert next_reset > now
+
+    def test_calculate_next_reset_date_monthly_december(self, db_session, test_user):
+        """Test calculate_next_reset_date() for MONTHLY period in December"""
+        from unittest.mock import MagicMock, patch
+
+        settings = UserBudgetSettings(
+            user_id=test_user.user_id,
+            budget_period=BudgetPeriod.MONTHLY,
+        )
+        db_session.add(settings)
+        db_session.commit()
+        db_session.refresh(settings)
+
+        # Mock datetime.now() to return December date
+        december_date = datetime(2025, 12, 15, 10, 30, 45)
+        with patch("app.models.budget.datetime") as mock_datetime:
+            mock_datetime.now.return_value = december_date
+            # Make datetime() constructor work as expected
+            mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+            next_reset = settings.calculate_next_reset_date()
+
+        # Should be January 1st of next year
+        assert next_reset == datetime(2026, 1, 1, 0, 0, 0)
+
+    def test_calculate_next_reset_date_weekly(self, db_session, test_user):
+        """Test calculate_next_reset_date() for WEEKLY period"""
+        settings = UserBudgetSettings(
+            user_id=test_user.user_id,
+            budget_period=BudgetPeriod.WEEKLY,
+        )
+        db_session.add(settings)
+        db_session.commit()
+        db_session.refresh(settings)
+
+        now = datetime.now()
+        next_reset = settings.calculate_next_reset_date()
+
+        # Should be 7 days from now
+        expected_reset = now + timedelta(days=7)
+        time_diff = abs((next_reset - expected_reset).total_seconds())
+        assert time_diff < 2  # Within 2 seconds
+
+    def test_calculate_next_reset_date_daily(self, db_session, test_user):
+        """Test calculate_next_reset_date() for DAILY period"""
+        settings = UserBudgetSettings(
+            user_id=test_user.user_id,
+            budget_period=BudgetPeriod.DAILY,
+        )
+        db_session.add(settings)
+        db_session.commit()
+        db_session.refresh(settings)
+
+        now = datetime.now()
+        next_reset = settings.calculate_next_reset_date()
+
+        # Should be tomorrow at midnight
+        tomorrow = now + timedelta(days=1)
+        expected_reset = datetime(tomorrow.year, tomorrow.month, tomorrow.day, 0, 0, 0)
+
+        assert next_reset == expected_reset
+
+    def test_calculate_next_reset_date_custom_with_days(self, db_session, test_user):
+        """Test calculate_next_reset_date() for CUSTOM period with custom_period_days"""
+        settings = UserBudgetSettings(
+            user_id=test_user.user_id,
+            budget_period=BudgetPeriod.CUSTOM,
+            custom_period_days=14,
+        )
+        db_session.add(settings)
+        db_session.commit()
+        db_session.refresh(settings)
+
+        now = datetime.now()
+        next_reset = settings.calculate_next_reset_date()
+
+        # Should be 14 days from now
+        expected_reset = now + timedelta(days=14)
+        time_diff = abs((next_reset - expected_reset).total_seconds())
+        assert time_diff < 2  # Within 2 seconds
+
+    def test_calculate_next_reset_date_custom_without_days(self, db_session, test_user):
+        """Test calculate_next_reset_date() for CUSTOM period without custom_period_days (falls back to monthly)"""
+        from unittest.mock import patch
+
+        settings = UserBudgetSettings(
+            user_id=test_user.user_id,
+            budget_period=BudgetPeriod.CUSTOM,
+            custom_period_days=None,
+        )
+        db_session.add(settings)
+        db_session.commit()
+        db_session.refresh(settings)
+
+        # Mock datetime.now() to return non-December date (to test else branch)
+        june_date = datetime(2025, 6, 15, 10, 30, 0)
+        with patch("app.models.budget.datetime") as mock_datetime:
+            mock_datetime.now.return_value = june_date
+            # Make datetime() constructor work as expected
+            mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+            next_reset = settings.calculate_next_reset_date()
+
+        # Should fall back to monthly - 1st of next month (July)
+        assert next_reset == datetime(2025, 7, 1, 0, 0, 0)
+
+    def test_calculate_next_reset_date_default_december(self, db_session, test_user):
+        """Test calculate_next_reset_date() default path in December"""
+        from unittest.mock import patch
+
+        settings = UserBudgetSettings(
+            user_id=test_user.user_id,
+            budget_period=BudgetPeriod.CUSTOM,
+            custom_period_days=None,  # Falls to default path
+        )
+        db_session.add(settings)
+        db_session.commit()
+        db_session.refresh(settings)
+
+        # Mock datetime.now() to return December date for default path
+        december_date = datetime(2025, 12, 20, 15, 30, 0)
+        with patch("app.models.budget.datetime") as mock_datetime:
+            mock_datetime.now.return_value = december_date
+            # Make datetime() constructor work as expected
+            mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+            next_reset = settings.calculate_next_reset_date()
+
+        # Should fall back to monthly - January 1st of next year
+        assert next_reset == datetime(2026, 1, 1, 0, 0, 0)
+
 
 class TestBudgetResetLogModel:
     """Tests for BudgetResetLog model"""
@@ -535,6 +772,48 @@ class TestBudgetResetLogModel:
         db_session.refresh(log)
 
         assert log.previous_spent == 28.50
+
+    def test_reset_log_to_dict_conversion(self, db_session, test_user):
+        """Test to_dict() method for BudgetResetLog"""
+        prev_start = datetime(2025, 11, 1, 0, 0, 0)
+        prev_end = datetime(2025, 12, 1, 0, 0, 0)
+        new_start = datetime(2025, 12, 1, 0, 0, 0)
+        new_end = datetime(2026, 1, 1, 0, 0, 0)
+
+        log = BudgetResetLog(
+            user_id=test_user.user_id,
+            reset_type="manual",
+            reset_by="admin_456",
+            previous_limit=30.0,
+            new_limit=50.0,
+            previous_spent=25.75,
+            previous_period_start=prev_start,
+            previous_period_end=prev_end,
+            new_period_start=new_start,
+            new_period_end=new_end,
+            reason="User requested increase",
+        )
+        db_session.add(log)
+        db_session.commit()
+        db_session.refresh(log)
+
+        # Convert to dict
+        data = log.to_dict()
+
+        # Verify all fields present
+        assert data["id"] == log.id
+        assert data["user_id"] == test_user.user_id
+        assert data["reset_type"] == "manual"
+        assert data["reset_by"] == "admin_456"
+        assert data["previous_limit"] == 30.0
+        assert data["new_limit"] == 50.0
+        assert data["previous_spent"] == 25.75
+        assert data["previous_period_start"] == prev_start.isoformat()
+        assert data["previous_period_end"] == prev_end.isoformat()
+        assert data["new_period_start"] == new_start.isoformat()
+        assert data["new_period_end"] == new_end.isoformat()
+        assert data["reason"] == "User requested increase"
+        assert "reset_timestamp" in data
 
 
 class TestBudgetEnums:

@@ -74,6 +74,7 @@ def mock_user():
     """Mock authenticated user"""
     user = Mock()
     user.id = 123
+    user.user_id = "123"  # SimpleUser has both id and user_id
     return user
 
 

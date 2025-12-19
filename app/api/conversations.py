@@ -144,6 +144,8 @@ def _get_fallback_texts() -> Dict[str, str]:
         "zh": "你好！我听到你说了'{message}' - 很好！我是你的中文对话伙伴。你想聊什么？",
         "ja": "こんにちは！'{message}'と言いましたね - いいですね！私はあなたの日本語会話パートナーです。何について話しましょうか？",
         "de": "Hallo! Ich habe gehört, dass du '{message}' gesagt hast - super! Ich bin dein deutscher Gesprächspartner. Worüber möchtest du sprechen?",
+        "it": "Ciao! Ho sentito '{message}' - ottimo! Sono il tuo partner di conversazione italiana. Di cosa vuoi parlare?",
+        "pt": "Olá! Ouvi você dizer '{message}' - ótimo! Sou seu parceiro de conversação em português. Sobre o que você gostaria de conversar?",
     }
 
 
@@ -156,6 +158,8 @@ def _get_demo_fallback_responses() -> Dict[str, str]:
         "zh": "你好！我听到你说了'{message}' - 很棒！私は小李，你的中文对话伙伴。我喜欢聊各种话题 - 美食、旅行、电影、音乐，什么都可以！你今天过得怎么样？有什么有趣的事情想分享吗？",
         "ja": "こんにちは！'{message}'と言ったのを聞きました - 素晴らしいです！私は優子、あなたの日本語会話パートナーです。趣味、旅行、食べ物、映画など、何でも話すのが大好きです！最近何か面白いことがありましたか？",
         "de": "Hallo! Ich habe gehört, dass du '{message}' gesagt hast - das ist großartige Übung! Ich bin Klaus, dein deutscher Gesprächspartner. Ich liebe es, über alles zu sprechen - Hobbys, Reisen, Essen, Filme, was auch immer! Was war kürzlich etwas Interessantes, das dir passiert ist?",
+        "it": "Ciao! Ho sentito '{message}' - che ottima pratica! Sono Marco, il tuo partner di conversazione italiana. Adoro parlare di tutto - hobby, viaggi, cibo, film, qualsiasi cosa! Cosa c'è di interessante che ti è successo di recente?",
+        "pt": "Olá! Ouvi você dizer '{message}' - que ótima prática! Sou Paulo, seu parceiro de conversação em português. Adoro conversar sobre qualquer coisa - hobbies, viagens, comida, filmes, o que quiser! O que há de interessante que aconteceu com você recentemente?",
     }
 
 

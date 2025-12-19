@@ -263,8 +263,8 @@ class TestConversationAIIntegration:
 
             # Should have fallback response
             assert "response" in data
-            # Fallback should contain "Hey!" or "[Demo Mode]"
-            assert "Hey!" in data["response"] or "[Demo Mode]" in data["response"]
+            # Fallback should contain "Hey there!" (demo mode) or "[Demo Mode]"
+            assert "Hey there!" in data["response"] or "[Demo Mode]" in data["response"]
 
             # Cost should be 0 for fallback
             assert data["estimated_cost"] == 0.0 or data["estimated_cost"] == 0.01

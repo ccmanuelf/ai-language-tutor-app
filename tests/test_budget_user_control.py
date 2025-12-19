@@ -317,12 +317,12 @@ class TestBudgetManagerThresholds:
         """Test budget enforcement from user preferences"""
         # Enabled
         prefs = {"ai_provider_settings": {"enforce_budget_limits": True}}
-        enforce = budget_manager.should_enforce_budget(prefs)
+        enforce = budget_manager.should_enforce_budget(user_id=None, user_preferences=prefs)
         assert enforce is True
 
         # Disabled
         prefs = {"ai_provider_settings": {"enforce_budget_limits": False}}
-        enforce = budget_manager.should_enforce_budget(prefs)
+        enforce = budget_manager.should_enforce_budget(user_id=None, user_preferences=prefs)
         assert enforce is False
 
     def test_can_override_budget_default(self):
