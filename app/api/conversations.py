@@ -76,8 +76,9 @@ async def _get_ai_response(
     user_id: str,
     db: Session,
 ) -> tuple[str, float]:
-    """Get AI response from selected provider"""
+    """Get AI response from selected provider with persona support"""
     from app.models.database import User
+    from app.services.persona_service import PersonaType, get_persona_service
 
     # Get user settings from database
     user = db.query(User).filter(User.user_id == user_id).first()
@@ -113,6 +114,31 @@ async def _get_ai_response(
     if provider_selection.service and hasattr(
         provider_selection.service, "generate_response"
     ):
+        # Get persona preference from user settings
+        persona_service = get_persona_service()
+        persona_pref = user_preferences.get("persona_preference", {})
+
+        # Extract persona settings (with defaults)
+        persona_type_str = persona_pref.get("persona_type")
+        subject = persona_pref.get("subject", "")
+        learner_level = persona_pref.get("learner_level", "beginner")
+
+        # Generate persona system prompt if persona is set
+        system_prompt = None
+        if persona_type_str and persona_service.validate_persona_type(persona_type_str):
+            try:
+                persona_type = PersonaType(persona_type_str)
+                system_prompt = persona_service.get_persona_prompt(
+                    persona_type=persona_type,
+                    subject=subject,
+                    learner_level=learner_level,
+                    language=language_code,
+                )
+                logger.info(f"Using persona {persona_type_str} for user {user_id}")
+            except Exception as e:
+                logger.warning(f"Failed to load persona {persona_type_str}: {e}, using default prompts")
+                system_prompt = None
+
         # Build complete message list with conversation history
         messages = []
         if request.conversation_history:
@@ -125,6 +151,7 @@ async def _get_ai_response(
             language=language_code,
             context={"language": language_code, "user_id": user_id},
             conversation_history=request.conversation_history,
+            system_prompt=system_prompt,  # 🆕 Inject persona system prompt
         )
         response_text = (
             ai_response.content if hasattr(ai_response, "content") else str(ai_response)

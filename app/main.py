@@ -17,6 +17,7 @@ from app.api.content import router as content_router
 from app.api.conversations import router as conversations_router
 from app.api.feature_toggles import router as feature_toggles_router
 from app.api.ollama import router as ollama_router
+from app.api.personas import router as personas_router
 from app.api.realtime_analysis import router as realtime_router
 from app.api.scenario_management import router as scenario_management_router
 from app.api.scenarios import router as scenarios_router
@@ -57,6 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(budget_router, tags=["budget"])
     app.include_router(conversations_router)
     app.include_router(content_router, prefix="/api/content", tags=["content"])
+    app.include_router(personas_router, tags=["personas"])
     app.include_router(scenarios_router)  # Router already has /api/v1/scenarios prefix
     app.include_router(realtime_router, tags=["realtime-analysis"])
     app.include_router(tutor_modes_router, tags=["tutor-modes"])

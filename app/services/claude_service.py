@@ -314,9 +314,25 @@ Respond naturally as if you're their {language} friend:"""
         message: Optional[str] = None,
         context: Optional[Dict[str, Any]] = None,
         conversation_history: Optional[List[Dict[str, str]]] = None,
+        system_prompt: Optional[str] = None,
         **kwargs,
     ) -> AIResponse:
-        """Generate natural conversation response using Claude"""
+        """
+        Generate natural conversation response using Claude
+
+        Args:
+            messages: Conversation messages (legacy)
+            language: Language code for the conversation
+            model: Claude model to use (default: claude-3-haiku-20240307)
+            message: Single message to respond to (alternative to messages)
+            context: Additional context (user_id, etc.)
+            conversation_history: Previous messages for context
+            system_prompt: Custom system prompt (overrides default conversation prompt)
+            **kwargs: Additional parameters (max_tokens, temperature, etc.)
+
+        Returns:
+            AIResponse with generated content
+        """
         start_time = datetime.now()
 
         self._validate_claude_request()
@@ -324,9 +340,14 @@ Respond naturally as if you're their {language} friend:"""
         try:
             user_message = self._extract_user_message(messages, message)
             model_name = self._get_model_name(model)
-            conversation_prompt = self._get_conversation_prompt(
-                language, user_message, conversation_history
-            )
+
+            # Use custom system prompt if provided, otherwise use default conversation prompt
+            if system_prompt:
+                conversation_prompt = f"{system_prompt}\n\nUser message: {user_message}"
+            else:
+                conversation_prompt = self._get_conversation_prompt(
+                    language, user_message, conversation_history
+                )
 
             request_params = self._build_claude_request(
                 model_name, conversation_prompt, kwargs
