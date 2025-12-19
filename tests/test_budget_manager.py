@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+from app.models.budget import BudgetPeriod, UserBudgetSettings
 from app.models.database import APIUsage, User
 from app.services.budget_manager import (
     BudgetAlert,
@@ -478,6 +479,259 @@ class TestGetCurrentBudgetStatus:
         assert status.days_remaining == 30
         assert status.projected_monthly_cost == 0.0
         assert status.is_over_budget is False
+
+        mock_db.close.assert_called_once()
+
+    @patch("app.services.budget_manager.get_primary_db_session")
+    @patch("app.services.budget_manager.get_settings")
+    @patch("app.services.budget_manager.datetime")
+    def test_budget_status_with_user_id_monthly_period(
+        self, mock_datetime, mock_settings, mock_session
+    ):
+        """Test budget status with user_id using monthly budget period"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        # Mock current time
+        now = datetime(2025, 12, 15, 10, 30, 0)
+        mock_datetime.now.return_value = now
+
+        # Mock database session
+        mock_db = MagicMock()
+        mock_session.return_value = mock_db
+
+        # Create mock user budget settings
+        period_start = datetime(2025, 12, 1, 0, 0, 0)
+        period_end = datetime(2026, 1, 1, 0, 0, 0)
+
+        mock_user_settings = MagicMock(spec=UserBudgetSettings)
+        mock_user_settings.get_effective_limit.return_value = 50.0
+        mock_user_settings.current_period_start = period_start
+        mock_user_settings.current_period_end = period_end
+        mock_user_settings.budget_period.value = "monthly"
+        mock_user_settings.alert_threshold_yellow = 50.0
+        mock_user_settings.alert_threshold_orange = 75.0
+        mock_user_settings.alert_threshold_red = 90.0
+
+        # Mock query to return user settings
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+
+        # First call returns user settings, second returns usage cost
+        mock_query.first.return_value = mock_user_settings
+        mock_query.scalar.return_value = 30.0  # $30 used of $50
+
+        manager = BudgetManager()
+        status = manager.get_current_budget_status(user_id="test_user_123")
+
+        # Verify user-specific budget was used
+        assert status.total_budget == 50.0
+        assert status.used_budget == 30.0
+        assert status.remaining_budget == 20.0
+        assert status.percentage_used == 60.0
+        assert status.alert_level == BudgetAlert.YELLOW  # 60% >= 50% (yellow threshold), < 75% (orange)
+
+        # Verify days remaining calculation (Dec 15 to Jan 1 = 16 days using .days)
+        assert status.days_remaining == 16
+
+        # Verify projected cost: 15 days elapsed (Dec 1-15), $30/15 * 30 = $60
+        assert status.projected_monthly_cost == 60.0
+
+        mock_db.close.assert_called_once()
+
+    @patch("app.services.budget_manager.get_primary_db_session")
+    @patch("app.services.budget_manager.get_settings")
+    @patch("app.services.budget_manager.datetime")
+    def test_budget_status_with_user_id_weekly_period(
+        self, mock_datetime, mock_settings, mock_session
+    ):
+        """Test budget status with user_id using weekly budget period"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        now = datetime(2025, 12, 15, 10, 30, 0)
+        mock_datetime.now.return_value = now
+
+        mock_db = MagicMock()
+        mock_session.return_value = mock_db
+
+        period_start = datetime(2025, 12, 10, 0, 0, 0)
+        period_end = datetime(2025, 12, 17, 0, 0, 0)
+
+        mock_user_settings = MagicMock(spec=UserBudgetSettings)
+        mock_user_settings.get_effective_limit.return_value = 20.0
+        mock_user_settings.current_period_start = period_start
+        mock_user_settings.current_period_end = period_end
+        mock_user_settings.budget_period.value = "weekly"
+        mock_user_settings.alert_threshold_yellow = 50.0
+        mock_user_settings.alert_threshold_orange = 75.0
+        mock_user_settings.alert_threshold_red = 90.0
+
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.first.return_value = mock_user_settings
+        mock_query.scalar.return_value = 18.0  # $18 used of $20
+
+        manager = BudgetManager()
+        status = manager.get_current_budget_status(user_id="test_user_123")
+
+        assert status.total_budget == 20.0
+        assert status.used_budget == 18.0
+        assert status.percentage_used == 90.0
+        assert status.alert_level == BudgetAlert.RED  # 90% >= 90% (red threshold)
+
+        # Days remaining: Dec 15 to Dec 17 = 1 day (using .days)
+        assert status.days_remaining == 1
+
+        # Projected weekly: 6 days elapsed (Dec 10-15), $18/6 = $3/day * 7 = $21
+        assert abs(status.projected_monthly_cost - 21.0) < 0.1
+
+        mock_db.close.assert_called_once()
+
+    @patch("app.services.budget_manager.get_primary_db_session")
+    @patch("app.services.budget_manager.get_settings")
+    @patch("app.services.budget_manager.datetime")
+    def test_budget_status_with_user_id_daily_period(
+        self, mock_datetime, mock_settings, mock_session
+    ):
+        """Test budget status with user_id using daily budget period"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        now = datetime(2025, 12, 15, 18, 30, 0)
+        mock_datetime.now.return_value = now
+
+        mock_db = MagicMock()
+        mock_session.return_value = mock_db
+
+        period_start = datetime(2025, 12, 15, 0, 0, 0)
+        period_end = datetime(2025, 12, 16, 0, 0, 0)
+
+        mock_user_settings = MagicMock(spec=UserBudgetSettings)
+        mock_user_settings.get_effective_limit.return_value = 5.0
+        mock_user_settings.current_period_start = period_start
+        mock_user_settings.current_period_end = period_end
+        mock_user_settings.budget_period.value = "daily"
+        mock_user_settings.alert_threshold_yellow = 50.0
+        mock_user_settings.alert_threshold_orange = 75.0
+        mock_user_settings.alert_threshold_red = 90.0
+
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.first.return_value = mock_user_settings
+        mock_query.scalar.return_value = 5.5  # $5.50 used of $5.00
+
+        manager = BudgetManager()
+        status = manager.get_current_budget_status(user_id="test_user_123")
+
+        assert status.total_budget == 5.0
+        assert status.used_budget == 5.5
+        assert abs(status.percentage_used - 110.0) < 0.01  # Floating point tolerance
+        assert status.alert_level == BudgetAlert.CRITICAL  # >= 100%
+        assert status.is_over_budget is True
+
+        # Days remaining: same day, so 0
+        assert status.days_remaining == 0
+
+        # Projected daily: equals current cost for daily period
+        assert status.projected_monthly_cost == 5.5
+
+        mock_db.close.assert_called_once()
+
+    @patch("app.services.budget_manager.get_primary_db_session")
+    @patch("app.services.budget_manager.get_settings")
+    @patch("app.services.budget_manager.datetime")
+    def test_budget_status_with_user_id_custom_period(
+        self, mock_datetime, mock_settings, mock_session
+    ):
+        """Test budget status with user_id using custom budget period"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        now = datetime(2025, 12, 15, 10, 0, 0)
+        mock_datetime.now.return_value = now
+
+        mock_db = MagicMock()
+        mock_session.return_value = mock_db
+
+        period_start = datetime(2025, 12, 1, 0, 0, 0)
+        period_end = datetime(2025, 12, 15, 0, 0, 0)
+
+        mock_user_settings = MagicMock(spec=UserBudgetSettings)
+        mock_user_settings.get_effective_limit.return_value = 40.0
+        mock_user_settings.current_period_start = period_start
+        mock_user_settings.current_period_end = period_end
+        mock_user_settings.budget_period.value = "custom"
+        mock_user_settings.custom_period_days = 14
+        mock_user_settings.alert_threshold_yellow = 50.0
+        mock_user_settings.alert_threshold_orange = 75.0
+        mock_user_settings.alert_threshold_red = 90.0
+
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.first.return_value = mock_user_settings
+        mock_query.scalar.return_value = 20.0  # $20 used of $40
+
+        manager = BudgetManager()
+        status = manager.get_current_budget_status(user_id="test_user_123")
+
+        assert status.total_budget == 40.0
+        assert status.used_budget == 20.0
+        assert status.percentage_used == 50.0
+        assert status.alert_level == BudgetAlert.YELLOW  # 50% >= 50% (yellow threshold)
+
+        # Days remaining: Dec 15 to Dec 15 = 0
+        assert status.days_remaining == 0
+
+        # Projected: 15 days elapsed (Dec 1-15), $20/15 * 14 = ~$18.67
+        assert abs(status.projected_monthly_cost - 18.67) < 0.1
+
+        mock_db.close.assert_called_once()
+
+    @patch("app.services.budget_manager.get_primary_db_session")
+    @patch("app.services.budget_manager.get_settings")
+    @patch("app.services.budget_manager.datetime")
+    def test_budget_status_with_user_id_custom_no_days_fallback(
+        self, mock_datetime, mock_settings, mock_session
+    ):
+        """Test budget status with user_id custom period without custom_period_days (fallback to monthly)"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        now = datetime(2025, 12, 15, 10, 0, 0)
+        mock_datetime.now.return_value = now
+
+        mock_db = MagicMock()
+        mock_session.return_value = mock_db
+
+        period_start = datetime(2025, 12, 1, 0, 0, 0)
+        period_end = datetime(2025, 12, 31, 23, 59, 59)
+
+        mock_user_settings = MagicMock(spec=UserBudgetSettings)
+        mock_user_settings.get_effective_limit.return_value = 35.0
+        mock_user_settings.current_period_start = period_start
+        mock_user_settings.current_period_end = period_end
+        mock_user_settings.budget_period.value = "custom"
+        mock_user_settings.custom_period_days = None  # No custom days set
+        mock_user_settings.alert_threshold_yellow = 50.0
+        mock_user_settings.alert_threshold_orange = 75.0
+        mock_user_settings.alert_threshold_red = 90.0
+
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.first.return_value = mock_user_settings
+        mock_query.scalar.return_value = 10.0
+
+        manager = BudgetManager()
+        status = manager.get_current_budget_status(user_id="test_user_123")
+
+        assert status.total_budget == 35.0
+        assert status.used_budget == 10.0
+        assert status.alert_level == BudgetAlert.GREEN
+
+        # Projected should use monthly fallback (30 days)
+        # 15 days elapsed (Dec 1-15), $10/15 * 30 = $20
+        assert status.projected_monthly_cost == 20.0
 
         mock_db.close.assert_called_once()
 
@@ -1838,6 +2092,285 @@ class TestCheckBudgetAlerts:
         alerts = await manager.check_budget_alerts()
 
         assert len(alerts) == 0
+
+
+# ============================================================================
+# Test BudgetManager.check_budget_threshold_alerts
+# ============================================================================
+
+
+class TestCheckBudgetThresholdAlerts:
+    """Test check_budget_threshold_alerts method for threshold ranges"""
+
+    @patch.object(BudgetManager, "get_current_budget_status")
+    @patch("app.services.budget_manager.get_settings")
+    def test_threshold_alerts_75_to_79_percent(self, mock_settings, mock_status):
+        """Test INFO alert for 75-79% usage range"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        mock_status.return_value = BudgetStatus(
+            total_budget=30.0,
+            used_budget=23.0,
+            remaining_budget=7.0,
+            percentage_used=76.7,
+            alert_level=BudgetAlert.YELLOW,
+            days_remaining=10,
+            projected_monthly_cost=30.0,
+            is_over_budget=False,
+        )
+
+        manager = BudgetManager()
+        alerts = manager.check_budget_threshold_alerts()
+
+        assert len(alerts) == 1
+        assert alerts[0].threshold_percentage == 75.0
+        assert alerts[0].severity.value == "info"
+
+    @patch.object(BudgetManager, "get_current_budget_status")
+    @patch("app.services.budget_manager.get_settings")
+    def test_threshold_alerts_80_to_89_percent(self, mock_settings, mock_status):
+        """Test WARNING alert for 80-89% usage range"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        mock_status.return_value = BudgetStatus(
+            total_budget=30.0,
+            used_budget=25.0,
+            remaining_budget=5.0,
+            percentage_used=83.3,
+            alert_level=BudgetAlert.ORANGE,
+            days_remaining=8,
+            projected_monthly_cost=32.0,
+            is_over_budget=False,
+        )
+
+        manager = BudgetManager()
+        alerts = manager.check_budget_threshold_alerts()
+
+        assert len(alerts) == 1
+        assert alerts[0].threshold_percentage == 80.0
+        assert alerts[0].severity.value == "warning"
+
+    @patch.object(BudgetManager, "get_current_budget_status")
+    @patch("app.services.budget_manager.get_settings")
+    def test_threshold_alerts_90_to_99_percent(self, mock_settings, mock_status):
+        """Test CRITICAL alert for 90-99% usage range"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        mock_status.return_value = BudgetStatus(
+            total_budget=30.0,
+            used_budget=28.5,
+            remaining_budget=1.5,
+            percentage_used=95.0,
+            alert_level=BudgetAlert.RED,
+            days_remaining=3,
+            projected_monthly_cost=35.0,
+            is_over_budget=False,
+        )
+
+        manager = BudgetManager()
+        alerts = manager.check_budget_threshold_alerts()
+
+        assert len(alerts) == 1
+        assert alerts[0].threshold_percentage == 90.0
+        assert alerts[0].severity.value == "critical"
+
+    @patch.object(BudgetManager, "get_current_budget_status")
+    @patch("app.services.budget_manager.get_settings")
+    def test_threshold_alerts_100_percent_or_more(self, mock_settings, mock_status):
+        """Test CRITICAL alert for 100%+ usage (over budget)"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        mock_status.return_value = BudgetStatus(
+            total_budget=30.0,
+            used_budget=33.0,
+            remaining_budget=0.0,
+            percentage_used=110.0,
+            alert_level=BudgetAlert.CRITICAL,
+            days_remaining=0,
+            projected_monthly_cost=40.0,
+            is_over_budget=True,
+        )
+
+        manager = BudgetManager()
+        alerts = manager.check_budget_threshold_alerts()
+
+        assert len(alerts) == 1
+        assert alerts[0].threshold_percentage == 100.0
+        assert alerts[0].severity.value == "critical"
+
+    @patch.object(BudgetManager, "get_current_budget_status")
+    @patch("app.services.budget_manager.get_settings")
+    def test_threshold_alerts_below_75_percent(self, mock_settings, mock_status):
+        """Test no alerts for usage below 75%"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        mock_status.return_value = BudgetStatus(
+            total_budget=30.0,
+            used_budget=20.0,
+            remaining_budget=10.0,
+            percentage_used=66.7,
+            alert_level=BudgetAlert.YELLOW,
+            days_remaining=15,
+            projected_monthly_cost=28.0,
+            is_over_budget=False,
+        )
+
+        manager = BudgetManager()
+        alerts = manager.check_budget_threshold_alerts()
+
+        assert len(alerts) == 0
+
+
+# ============================================================================
+# Test BudgetManager.should_enforce_budget (with user_id)
+# ============================================================================
+
+
+class TestShouldEnforceBudgetWithUserId:
+    """Test should_enforce_budget method with user_id parameter"""
+
+    @patch("app.services.budget_manager.get_primary_db_session")
+    @patch("app.services.budget_manager.get_settings")
+    def test_should_enforce_with_user_id_enforce_true(self, mock_settings, mock_session):
+        """Test should_enforce_budget returns True when user settings enforce_budget is True"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        # Mock database session
+        mock_db = MagicMock()
+        mock_session.return_value = mock_db
+
+        # Create mock user budget settings with enforce_budget=True
+        mock_user_settings = MagicMock(spec=UserBudgetSettings)
+        mock_user_settings.enforce_budget = True
+
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.first.return_value = mock_user_settings
+
+        manager = BudgetManager()
+        result = manager.should_enforce_budget(user_id="test_user_123")
+
+        assert result is True
+        mock_db.close.assert_called_once()
+
+    @patch("app.services.budget_manager.get_primary_db_session")
+    @patch("app.services.budget_manager.get_settings")
+    def test_should_enforce_with_user_id_enforce_false(self, mock_settings, mock_session):
+        """Test should_enforce_budget returns False when user settings enforce_budget is False"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        mock_db = MagicMock()
+        mock_session.return_value = mock_db
+
+        mock_user_settings = MagicMock(spec=UserBudgetSettings)
+        mock_user_settings.enforce_budget = False
+
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.first.return_value = mock_user_settings
+
+        manager = BudgetManager()
+        result = manager.should_enforce_budget(user_id="test_user_123")
+
+        assert result is False
+        mock_db.close.assert_called_once()
+
+    @patch("app.services.budget_manager.get_primary_db_session")
+    @patch("app.services.budget_manager.get_settings")
+    def test_should_enforce_with_user_id_exception_fallback(self, mock_settings, mock_session):
+        """Test should_enforce_budget falls back to preferences when database error occurs"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        mock_db = MagicMock()
+        mock_session.return_value = mock_db
+        mock_db.query.side_effect = Exception("Database connection error")
+
+        manager = BudgetManager()
+        # Should fallback to user_preferences (which is None, so returns True as default)
+        result = manager.should_enforce_budget(user_id="test_user_123", user_preferences=None)
+
+        assert result is True  # Default when preferences is None
+        # Note: session.close() is not called when exception occurs before it
+
+    @patch("app.services.budget_manager.get_primary_db_session")
+    @patch("app.services.budget_manager.get_settings")
+    def test_should_enforce_with_user_id_no_settings_found(self, mock_settings, mock_session):
+        """Test should_enforce_budget falls back to preferences when user settings not found"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        mock_db = MagicMock()
+        mock_session.return_value = mock_db
+
+        mock_query = MagicMock()
+        mock_db.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.first.return_value = None  # No user settings found
+
+        # Provide user_preferences with enforce_budget_limits = False
+        user_prefs = {
+            "ai_provider_settings": {
+                "enforce_budget_limits": False
+            }
+        }
+
+        manager = BudgetManager()
+        result = manager.should_enforce_budget(user_id="test_user_999", user_preferences=user_prefs)
+
+        assert result is False  # Should use preferences fallback
+        mock_db.close.assert_called_once()
+
+
+# ============================================================================
+# Test BudgetManager.can_override_budget
+# ============================================================================
+
+
+class TestCanOverrideBudget:
+    """Test can_override_budget method"""
+
+    @patch("app.services.budget_manager.get_settings")
+    def test_can_override_budget_with_preferences_true(self, mock_settings):
+        """Test can_override_budget returns True when preferences allow override"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        user_preferences = {
+            "ai_provider_settings": {
+                "budget_override_allowed": True
+            }
+        }
+
+        manager = BudgetManager()
+        result = manager.can_override_budget(user_preferences)
+
+        assert result is True
+
+    @patch("app.services.budget_manager.get_settings")
+    def test_can_override_budget_with_preferences_false(self, mock_settings):
+        """Test can_override_budget returns False when preferences disallow override"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        user_preferences = {
+            "ai_provider_settings": {
+                "budget_override_allowed": False
+            }
+        }
+
+        manager = BudgetManager()
+        result = manager.can_override_budget(user_preferences)
+
+        assert result is False
+
+    @patch("app.services.budget_manager.get_settings")
+    def test_can_override_budget_no_preferences(self, mock_settings):
+        """Test can_override_budget returns True (default) when no preferences provided"""
+        mock_settings.return_value.MONTHLY_BUDGET_USD = "30.00"
+
+        manager = BudgetManager()
+        result = manager.can_override_budget(user_preferences=None)
+
+        assert result is True  # Default: allow override
 
 
 # ============================================================================

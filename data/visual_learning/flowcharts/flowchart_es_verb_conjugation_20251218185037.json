@@ -1,0 +1,17 @@
+{
+  "flowchart_id": "flowchart_es_verb_conjugation_20251218185037",
+  "concept": "verb_conjugation",
+  "title": "Spanish Verb Conjugation",
+  "description": "Spanish verb conjugation guide",
+  "language": "es",
+  "difficulty_level": 2,
+  "nodes": [],
+  "connections": [],
+  "learning_outcomes": [
+    "Conjugate Spanish verbs"
+  ],
+  "created_at": "2025-12-18T18:50:37.830035",
+  "metadata": {
+    "version": "1.0"
+  }
+}

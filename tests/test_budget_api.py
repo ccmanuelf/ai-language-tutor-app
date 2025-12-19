@@ -9,7 +9,7 @@ Tests all 9 budget API endpoints:
 TRUE 100% coverage goal for budget API functionality.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import pytest
@@ -176,8 +176,8 @@ def admin_user(db_session):
 def user_budget_settings(db_session, regular_user):
     """Create budget settings for regular user"""
     # Set period start to 10 days ago to include test API usage records (which are 5 days old)
-    period_start = datetime.utcnow() - timedelta(days=10)
-    period_end = datetime.utcnow() + timedelta(days=20)
+    period_start = datetime.now(timezone.utc) - timedelta(days=10)
+    period_end = datetime.now(timezone.utc) + timedelta(days=20)
 
     settings = UserBudgetSettings(
         user_id=regular_user.user_id,
@@ -202,7 +202,7 @@ def user_budget_settings(db_session, regular_user):
 def api_usage_records(db_session, regular_user):
     """Create sample API usage records"""
     records = []
-    base_time = datetime.utcnow() - timedelta(days=5)
+    base_time = datetime.now(timezone.utc) - timedelta(days=5)
 
     for i in range(10):
         usage = APIUsage(
@@ -760,7 +760,7 @@ class TestBudgetEnforcement:
                 api_endpoint="/v1/chat/completions",
                 request_type="chat",
                 estimated_cost=0.15,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
             )
             db_session.add(usage)
 
@@ -818,7 +818,7 @@ class TestBudgetAlertLevels:
             api_endpoint="/v1/chat/completions",
             request_type="chat",
             estimated_cost=10.0,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db_session.add(usage)
         db_session.commit()
@@ -852,7 +852,7 @@ class TestBudgetAlertLevels:
             api_endpoint="/v1/chat/completions",
             request_type="chat",
             estimated_cost=80.0,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db_session.add(usage)
         db_session.commit()
@@ -885,7 +885,7 @@ class TestBudgetAlertLevels:
             api_endpoint="/v1/chat/completions",
             request_type="chat",
             estimated_cost=95.0,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db_session.add(usage)
         db_session.commit()
@@ -917,7 +917,7 @@ class TestBudgetAlertLevels:
             api_endpoint="/v1/chat/completions",
             request_type="chat",
             estimated_cost=105.0,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db_session.add(usage)
         db_session.commit()
