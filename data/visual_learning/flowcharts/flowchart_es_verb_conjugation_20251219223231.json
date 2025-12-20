@@ -1,0 +1,82 @@
+{
+  "flowchart_id": "flowchart_es_verb_conjugation_20251219223231",
+  "concept": "verb_conjugation",
+  "title": "Spanish Present Tense Conjugation",
+  "description": "Learn how to conjugate regular verbs in Spanish present tense",
+  "language": "es",
+  "difficulty_level": 2,
+  "nodes": [
+    {
+      "node_id": "node_1",
+      "title": "Start: Verb Conjugation",
+      "description": "Begin learning verb conjugation",
+      "node_type": "start",
+      "content": "Welcome to Spanish verb conjugation",
+      "examples": [],
+      "next_nodes": [
+        "node_2"
+      ],
+      "position": [
+        0,
+        0
+      ],
+      "metadata": {}
+    },
+    {
+      "node_id": "node_2",
+      "title": "Choose Verb Type",
+      "description": "Select the verb ending type",
+      "node_type": "decision",
+      "content": "What type of verb are you conjugating?",
+      "examples": [
+        "-ar verbs",
+        "-er verbs",
+        "-ir verbs"
+      ],
+      "next_nodes": [
+        "node_3"
+      ],
+      "position": [
+        1,
+        0
+      ],
+      "metadata": {}
+    },
+    {
+      "node_id": "node_3",
+      "title": "-ar Verb Conjugation",
+      "description": "Conjugate -ar verbs in present tense",
+      "node_type": "process",
+      "content": "Remove -ar and add: o, as, a, amos, áis, an",
+      "examples": [
+        "hablar → hablo, hablas, habla",
+        "cantar → canto, cantas, canta"
+      ],
+      "next_nodes": [],
+      "position": [
+        2,
+        0
+      ],
+      "metadata": {}
+    }
+  ],
+  "connections": [
+    [
+      "node_1",
+      "node_2"
+    ],
+    [
+      "node_2",
+      "node_3"
+    ]
+  ],
+  "learning_outcomes": [
+    "Conjugate -ar verbs",
+    "Conjugate -er verbs",
+    "Conjugate -ir verbs"
+  ],
+  "created_at": "2025-12-19T22:32:31.990437",
+  "metadata": {
+    "version": "1.0"
+  }
+}

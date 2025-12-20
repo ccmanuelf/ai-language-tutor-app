@@ -170,7 +170,7 @@ def create_user_budget_routes(app):
                             "timestamp": record.created_at.strftime(
                                 "%Y-%m-%d %H:%M:%S"
                             ),
-                            "provider": record.provider or "Unknown",
+                            "provider": record.api_provider or "Unknown",
                             "model": record.model_name or "Unknown",
                             "cost": record.estimated_cost or 0.0,
                             "tokens": (record.total_tokens or 0),
@@ -180,14 +180,14 @@ def create_user_budget_routes(app):
                 # Calculate spending breakdown by provider
                 provider_breakdown = (
                     db.query(
-                        APIUsage.provider,
+                        APIUsage.api_provider,
                         func.sum(APIUsage.estimated_cost).label("total_cost"),
                     )
                     .filter(
                         APIUsage.user_id == user_id,
                         APIUsage.created_at >= budget_settings.current_period_start,
                     )
-                    .group_by(APIUsage.provider)
+                    .group_by(APIUsage.api_provider)
                     .all()
                 )
 
