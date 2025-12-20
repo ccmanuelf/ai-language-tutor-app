@@ -26,6 +26,7 @@ from .content_view import create_content_view_route
 # Import modular frontend components
 from .diagnostic import create_diagnostic_route
 from .home import create_home_routes
+from .persona_profile_routes import register_persona_profile_routes
 from .profile import create_profile_route
 from .progress import create_progress_route
 from .user_budget_routes import register_user_budget_routes
@@ -54,6 +55,9 @@ def create_frontend_app():
 
     # Register user budget dashboard routes
     register_user_budget_routes(app)
+
+    # Register persona profile routes
+    register_persona_profile_routes(app)
 
     # Register admin dashboard routes and API
     register_admin_routes(app, admin_router)
