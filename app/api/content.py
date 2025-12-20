@@ -11,29 +11,32 @@ Provides:
 - Real-time processing status
 """
 
-import tempfile
 import shutil
+import tempfile
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from fastapi import (
     APIRouter,
-    HTTPException,
-    UploadFile,
+    Depends,
     File,
     Form,
-    Depends,
+    HTTPException,
+    UploadFile,
 )
 from pydantic import BaseModel, HttpUrl
-from enum import Enum
 
-from app.services.content_processor import (
-    content_processor,
-    ProcessingStatus,
-    LearningMaterialType,
-)
 from app.core.security import get_current_user
+from app.database.config import get_primary_db_session
 from app.models.simple_user import SimpleUser as User
+from app.services.content_persistence_service import ContentPersistenceService
+from app.services.content_processor import (
+    LearningMaterialType,
+    ProcessingStatus,
+    content_processor,
+)
 
 router = APIRouter()
 
@@ -514,6 +517,276 @@ async def get_content_stats(current_user: User = Depends(get_current_user)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get stats: {str(e)}")
+
+
+# ===== Tag Management Endpoints (Session 129) =====
+
+
+class AddTagRequest(BaseModel):
+    """Request model for adding a tag"""
+
+    tag: str = Field(..., min_length=1, max_length=100, description="Tag name")
+
+
+class TagResponse(BaseModel):
+    """Response model for tag"""
+
+    tag: str
+    count: int
+
+
+@router.post("/{content_id}/tags", status_code=201)
+def add_tag_to_content(
+    content_id: str,
+    request: AddTagRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_primary_db_session),
+):
+    """
+    Add a tag to content
+
+    Args:
+        content_id: Content ID
+        request: Tag to add
+        current_user: Authenticated user
+        db: Database session
+
+    Returns:
+        Success message with all tags
+
+    Raises:
+        HTTPException: If content not found or error occurs
+    """
+    try:
+        service = ContentPersistenceService(db)
+
+        added = service.add_tag(
+            content_id=content_id, user_id=current_user.id, tag=request.tag
+        )
+
+        tags = service.get_content_tags(content_id=content_id, user_id=current_user.id)
+
+        return {
+            "success": True,
+            "message": "Tag added" if added else "Tag already exists",
+            "tags": tags,
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error adding tag: {e}")
+
+
+@router.delete("/{content_id}/tags/{tag}", status_code=204)
+def remove_tag_from_content(
+    content_id: str,
+    tag: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_primary_db_session),
+):
+    """
+    Remove a tag from content
+
+    Args:
+        content_id: Content ID
+        tag: Tag to remove
+        current_user: Authenticated user
+        db: Database session
+
+    Returns:
+        No content (204)
+
+    Raises:
+        HTTPException: If tag not found
+    """
+    try:
+        service = ContentPersistenceService(db)
+
+        removed = service.remove_tag(
+            content_id=content_id, user_id=current_user.id, tag=tag
+        )
+
+        if not removed:
+            raise HTTPException(status_code=404, detail="Tag not found")
+
+        return None
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error removing tag: {e}")
+
+
+@router.get("/tags", response_model=List[TagResponse])
+def get_all_user_tags(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_primary_db_session),
+):
+    """
+    Get all tags for user with counts
+
+    Args:
+        current_user: Authenticated user
+        db: Database session
+
+    Returns:
+        List of tags with counts
+
+    Raises:
+        HTTPException: If error occurs
+    """
+    try:
+        service = ContentPersistenceService(db)
+
+        tags = service.get_all_user_tags(user_id=current_user.id)
+
+        return tags
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving tags: {e}")
+
+
+@router.get("/tags/{tag}/content")
+def get_content_by_tag(
+    tag: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_primary_db_session),
+):
+    """
+    Get all content with a specific tag
+
+    Args:
+        tag: Tag to search for
+        current_user: Authenticated user
+        db: Database session
+
+    Returns:
+        List of content items
+
+    Raises:
+        HTTPException: If error occurs
+    """
+    try:
+        service = ContentPersistenceService(db)
+
+        content_list = service.search_by_tag(user_id=current_user.id, tag=tag)
+
+        return {
+            "total": len(content_list),
+            "content": [c.to_dict() for c in content_list],
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error searching by tag: {e}")
+
+
+# ===== Favorite Management Endpoints (Session 129) =====
+
+
+@router.post("/{content_id}/favorite", status_code=201)
+def add_content_to_favorites(
+    content_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_primary_db_session),
+):
+    """
+    Mark content as favorite
+
+    Args:
+        content_id: Content ID
+        current_user: Authenticated user
+        db: Database session
+
+    Returns:
+        Success message
+
+    Raises:
+        HTTPException: If content not found
+    """
+    try:
+        service = ContentPersistenceService(db)
+
+        added = service.add_favorite(content_id=content_id, user_id=current_user.id)
+
+        return {
+            "success": True,
+            "message": "Added to favorites" if added else "Already favorited",
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error adding to favorites: {e}")
+
+
+@router.delete("/{content_id}/favorite", status_code=204)
+def remove_content_from_favorites(
+    content_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_primary_db_session),
+):
+    """
+    Remove content from favorites
+
+    Args:
+        content_id: Content ID
+        current_user: Authenticated user
+        db: Database session
+
+    Returns:
+        No content (204)
+
+    Raises:
+        HTTPException: If not favorited
+    """
+    try:
+        service = ContentPersistenceService(db)
+
+        removed = service.remove_favorite(
+            content_id=content_id, user_id=current_user.id
+        )
+
+        if not removed:
+            raise HTTPException(status_code=404, detail="Content not in favorites")
+
+        return None
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error removing from favorites: {e}"
+        )
+
+
+@router.get("/favorites")
+def get_favorited_content(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_primary_db_session),
+):
+    """
+    Get all favorited content for user
+
+    Args:
+        current_user: Authenticated user
+        db: Database session
+
+    Returns:
+        List of favorited content
+
+    Raises:
+        HTTPException: If error occurs
+    """
+    try:
+        service = ContentPersistenceService(db)
+
+        favorites = service.get_favorites(user_id=current_user.id)
+
+        return {"total": len(favorites), "content": [c.to_dict() for c in favorites]}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving favorites: {e}")
 
 
 # Health check for content processing service
