@@ -21,7 +21,12 @@ from typing import Dict, List, Optional
 from sqlalchemy import and_, desc, func, or_
 from sqlalchemy.orm import Session
 
-from app.models.database import LearningMaterialDB, ProcessedContent
+from app.models.database import (
+    ContentFavorite,
+    ContentTag,
+    LearningMaterialDB,
+    ProcessedContent,
+)
 from app.services.content_processor import (
     ContentMetadata,
     LearningMaterial,
@@ -357,7 +362,9 @@ class ContentPersistenceService:
         # Filter by topics (any topic matches)
         if topics:
             # SQLite JSON search - check if any topic is in the topics JSON array
-            topic_filters = [ProcessedContent.topics.contains(topic) for topic in topics]
+            topic_filters = [
+                ProcessedContent.topics.contains(topic) for topic in topics
+            ]
             query = query.filter(or_(*topic_filters))
 
         return query.order_by(desc(ProcessedContent.created_at)).limit(limit).all()
@@ -478,3 +485,328 @@ class ContentPersistenceService:
             "by_language": {lang: count for lang, count in by_language},
             "total_materials": total_materials or 0,
         }
+
+    # ===== Tag Management Methods (Session 129) =====
+
+    def add_tag(self, content_id: str, user_id: int, tag: str) -> bool:
+        """
+        Add a tag to content
+
+        Args:
+            content_id: Content ID
+            user_id: User ID
+            tag: Tag string
+
+        Returns:
+            True if added, False if already exists
+
+        Raises:
+            ValueError: If content not found or tag invalid
+        """
+        # Validate tag
+        if not tag or not tag.strip():
+            raise ValueError("Tag cannot be empty")
+
+        tag = tag.strip().lower()  # Normalize tag
+
+        # Verify content exists and user owns it
+        content = (
+            self.db.query(ProcessedContent)
+            .filter(
+                and_(
+                    ProcessedContent.content_id == content_id,
+                    ProcessedContent.user_id == user_id,
+                )
+            )
+            .first()
+        )
+
+        if not content:
+            raise ValueError(f"Content {content_id} not found or not owned by user")
+
+        # Check if tag already exists
+        existing = (
+            self.db.query(ContentTag)
+            .filter(
+                and_(
+                    ContentTag.content_id == content_id,
+                    ContentTag.user_id == user_id,
+                    ContentTag.tag == tag,
+                )
+            )
+            .first()
+        )
+
+        if existing:
+            logger.info(f"Tag '{tag}' already exists on content {content_id}")
+            return False
+
+        # Add tag
+        content_tag = ContentTag(user_id=user_id, content_id=content_id, tag=tag)
+
+        self.db.add(content_tag)
+        self.db.commit()
+
+        logger.info(f"Added tag '{tag}' to content {content_id}")
+        return True
+
+    def remove_tag(self, content_id: str, user_id: int, tag: str) -> bool:
+        """
+        Remove a tag from content
+
+        Args:
+            content_id: Content ID
+            user_id: User ID
+            tag: Tag string
+
+        Returns:
+            True if removed, False if not found
+        """
+        tag = tag.strip().lower()  # Normalize tag
+
+        content_tag = (
+            self.db.query(ContentTag)
+            .filter(
+                and_(
+                    ContentTag.content_id == content_id,
+                    ContentTag.user_id == user_id,
+                    ContentTag.tag == tag,
+                )
+            )
+            .first()
+        )
+
+        if not content_tag:
+            logger.info(f"Tag '{tag}' not found on content {content_id}")
+            return False
+
+        self.db.delete(content_tag)
+        self.db.commit()
+
+        logger.info(f"Removed tag '{tag}' from content {content_id}")
+        return True
+
+    def get_content_tags(self, content_id: str, user_id: int) -> List[str]:
+        """
+        Get all tags for content
+
+        Args:
+            content_id: Content ID
+            user_id: User ID
+
+        Returns:
+            List of tag strings
+        """
+        tags = (
+            self.db.query(ContentTag.tag)
+            .filter(
+                and_(
+                    ContentTag.content_id == content_id,
+                    ContentTag.user_id == user_id,
+                )
+            )
+            .all()
+        )
+
+        return [tag[0] for tag in tags]
+
+    def get_all_user_tags(self, user_id: int) -> List[Dict]:
+        """
+        Get all tags for user with counts
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            List of dictionaries with tag and count
+        """
+        tags = (
+            self.db.query(ContentTag.tag, func.count(ContentTag.id).label("count"))
+            .filter(ContentTag.user_id == user_id)
+            .group_by(ContentTag.tag)
+            .order_by(desc("count"))
+            .all()
+        )
+
+        return [{"tag": tag, "count": count} for tag, count in tags]
+
+    def search_by_tag(self, user_id: int, tag: str) -> List[ProcessedContent]:
+        """
+        Search content by tag
+
+        Args:
+            user_id: User ID
+            tag: Tag to search for
+
+        Returns:
+            List of ProcessedContent objects
+        """
+        tag = tag.strip().lower()
+
+        # Get content IDs with this tag
+        content_ids = (
+            self.db.query(ContentTag.content_id)
+            .filter(and_(ContentTag.user_id == user_id, ContentTag.tag == tag))
+            .all()
+        )
+
+        content_id_list = [cid[0] for cid in content_ids]
+
+        if not content_id_list:
+            return []
+
+        # Get content objects
+        content_list = (
+            self.db.query(ProcessedContent)
+            .filter(ProcessedContent.content_id.in_(content_id_list))
+            .order_by(desc(ProcessedContent.created_at))
+            .all()
+        )
+
+        logger.info(f"Found {len(content_list)} content items with tag '{tag}'")
+        return content_list
+
+    # ===== Favorite Management Methods (Session 129) =====
+
+    def add_favorite(self, content_id: str, user_id: int) -> bool:
+        """
+        Mark content as favorite
+
+        Args:
+            content_id: Content ID
+            user_id: User ID
+
+        Returns:
+            True if added, False if already favorited
+
+        Raises:
+            ValueError: If content not found
+        """
+        # Verify content exists and user owns it
+        content = (
+            self.db.query(ProcessedContent)
+            .filter(
+                and_(
+                    ProcessedContent.content_id == content_id,
+                    ProcessedContent.user_id == user_id,
+                )
+            )
+            .first()
+        )
+
+        if not content:
+            raise ValueError(f"Content {content_id} not found or not owned by user")
+
+        # Check if already favorited
+        existing = (
+            self.db.query(ContentFavorite)
+            .filter(
+                and_(
+                    ContentFavorite.content_id == content_id,
+                    ContentFavorite.user_id == user_id,
+                )
+            )
+            .first()
+        )
+
+        if existing:
+            logger.info(f"Content {content_id} already favorited")
+            return False
+
+        # Add favorite
+        favorite = ContentFavorite(user_id=user_id, content_id=content_id)
+
+        self.db.add(favorite)
+        self.db.commit()
+
+        logger.info(f"Added content {content_id} to favorites")
+        return True
+
+    def remove_favorite(self, content_id: str, user_id: int) -> bool:
+        """
+        Remove content from favorites
+
+        Args:
+            content_id: Content ID
+            user_id: User ID
+
+        Returns:
+            True if removed, False if not favorited
+        """
+        favorite = (
+            self.db.query(ContentFavorite)
+            .filter(
+                and_(
+                    ContentFavorite.content_id == content_id,
+                    ContentFavorite.user_id == user_id,
+                )
+            )
+            .first()
+        )
+
+        if not favorite:
+            logger.info(f"Content {content_id} not in favorites")
+            return False
+
+        self.db.delete(favorite)
+        self.db.commit()
+
+        logger.info(f"Removed content {content_id} from favorites")
+        return True
+
+    def get_favorites(self, user_id: int) -> List[ProcessedContent]:
+        """
+        Get all favorited content for user
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            List of ProcessedContent objects
+        """
+        # Get favorited content IDs
+        content_ids = (
+            self.db.query(ContentFavorite.content_id)
+            .filter(ContentFavorite.user_id == user_id)
+            .all()
+        )
+
+        content_id_list = [cid[0] for cid in content_ids]
+
+        if not content_id_list:
+            return []
+
+        # Get content objects
+        favorites = (
+            self.db.query(ProcessedContent)
+            .filter(ProcessedContent.content_id.in_(content_id_list))
+            .order_by(desc(ProcessedContent.created_at))
+            .all()
+        )
+
+        logger.info(f"Retrieved {len(favorites)} favorited content items")
+        return favorites
+
+    def is_favorite(self, content_id: str, user_id: int) -> bool:
+        """
+        Check if content is favorited
+
+        Args:
+            content_id: Content ID
+            user_id: User ID
+
+        Returns:
+            True if favorited, False otherwise
+        """
+        favorite = (
+            self.db.query(ContentFavorite)
+            .filter(
+                and_(
+                    ContentFavorite.content_id == content_id,
+                    ContentFavorite.user_id == user_id,
+                )
+            )
+            .first()
+        )
+
+        return favorite is not None

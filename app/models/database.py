@@ -985,6 +985,253 @@ class LearningMaterialDB(Base):
         }
 
 
+class ContentCollection(Base):
+    """Content collections for organizing related content"""
+
+    __tablename__ = "content_collections"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    collection_id = Column(String(100), unique=True, nullable=False, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    color = Column(String(20), nullable=True)
+    icon = Column(String(50), nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User")
+    items = relationship(
+        "ContentCollectionItem",
+        back_populates="collection",
+        cascade="all, delete-orphan",
+    )
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_collections_user", "user_id"),
+        Index("idx_collections_id", "collection_id"),
+    )
+
+    def to_dict(self, include_items=False):
+        data = {
+            "id": self.id,
+            "collection_id": self.collection_id,
+            "user_id": self.user_id,
+            "name": self.name,
+            "description": self.description,
+            "color": self.color,
+            "icon": self.icon,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+        if include_items and self.items:
+            data["items"] = [item.to_dict() for item in self.items]
+            data["item_count"] = len(self.items)
+        else:
+            data["item_count"] = len(self.items) if self.items else 0
+
+        return data
+
+
+class ContentCollectionItem(Base):
+    """Items in content collections"""
+
+    __tablename__ = "content_collection_items"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    collection_id = Column(
+        String(100), ForeignKey("content_collections.collection_id"), nullable=False
+    )
+    content_id = Column(
+        String(100), ForeignKey("processed_content.content_id"), nullable=False
+    )
+    added_at = Column(DateTime, default=func.now(), nullable=False)
+    position = Column(Integer, default=0)
+
+    # Relationships
+    collection = relationship("ContentCollection", back_populates="items")
+    content = relationship("ProcessedContent")
+
+    # Indexes and constraints
+    __table_args__ = (
+        Index("idx_collection_items_collection", "collection_id"),
+        Index("idx_collection_items_content", "content_id"),
+        UniqueConstraint("collection_id", "content_id", name="uq_collection_content"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "collection_id": self.collection_id,
+            "content_id": self.content_id,
+            "added_at": self.added_at.isoformat() if self.added_at else None,
+            "position": self.position,
+        }
+
+
+class ContentTag(Base):
+    """Tags for content organization and discovery"""
+
+    __tablename__ = "content_tags"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    content_id = Column(
+        String(100), ForeignKey("processed_content.content_id"), nullable=False
+    )
+    tag = Column(String(100), nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    # Relationships
+    user = relationship("User")
+    content = relationship("ProcessedContent")
+
+    # Indexes and constraints
+    __table_args__ = (
+        Index("idx_tags_user", "user_id"),
+        Index("idx_tags_content", "content_id"),
+        Index("idx_tags_tag", "tag"),
+        UniqueConstraint("user_id", "content_id", "tag", name="uq_user_content_tag"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "content_id": self.content_id,
+            "tag": self.tag,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ContentFavorite(Base):
+    """User's favorite content"""
+
+    __tablename__ = "content_favorites"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    content_id = Column(
+        String(100), ForeignKey("processed_content.content_id"), nullable=False
+    )
+    favorited_at = Column(DateTime, default=func.now(), nullable=False)
+
+    # Relationships
+    user = relationship("User")
+    content = relationship("ProcessedContent")
+
+    # Indexes and constraints
+    __table_args__ = (
+        Index("idx_favorites_user", "user_id"),
+        Index("idx_favorites_content", "content_id"),
+        UniqueConstraint("user_id", "content_id", name="uq_user_content_favorite"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "content_id": self.content_id,
+            "favorited_at": self.favorited_at.isoformat()
+            if self.favorited_at
+            else None,
+        }
+
+
+class ContentStudySession(Base):
+    """Study sessions for tracking content usage"""
+
+    __tablename__ = "content_study_sessions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    content_id = Column(
+        String(100), ForeignKey("processed_content.content_id"), nullable=False
+    )
+    started_at = Column(DateTime, default=func.now(), nullable=False)
+    ended_at = Column(DateTime, nullable=True)
+    duration_seconds = Column(Integer, nullable=True)
+    materials_studied = Column(JSON, default=dict)
+    items_correct = Column(Integer, default=0)
+    items_total = Column(Integer, default=0)
+    completion_percentage = Column(Float, default=0.0)
+
+    # Relationships
+    user = relationship("User")
+    content = relationship("ProcessedContent")
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_study_sessions_user", "user_id"),
+        Index("idx_study_sessions_content", "content_id"),
+        Index("idx_study_sessions_date", "started_at"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "content_id": self.content_id,
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "ended_at": self.ended_at.isoformat() if self.ended_at else None,
+            "duration_seconds": self.duration_seconds,
+            "materials_studied": self.materials_studied or {},
+            "items_correct": self.items_correct,
+            "items_total": self.items_total,
+            "completion_percentage": self.completion_percentage,
+        }
+
+
+class ContentMasteryStatus(Base):
+    """Mastery status for content items"""
+
+    __tablename__ = "content_mastery_status"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    content_id = Column(
+        String(100), ForeignKey("processed_content.content_id"), nullable=False
+    )
+    mastery_level = Column(String(20), default="not_started")
+    total_study_time_seconds = Column(Integer, default=0)
+    total_sessions = Column(Integer, default=0)
+    last_studied_at = Column(DateTime, nullable=True)
+    items_mastered = Column(Integer, default=0)
+    items_total = Column(Integer, default=0)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User")
+    content = relationship("ProcessedContent")
+
+    # Indexes and constraints
+    __table_args__ = (
+        Index("idx_mastery_user", "user_id"),
+        Index("idx_mastery_content", "content_id"),
+        Index("idx_mastery_level", "mastery_level"),
+        UniqueConstraint("user_id", "content_id", name="uq_user_content_mastery"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "content_id": self.content_id,
+            "mastery_level": self.mastery_level,
+            "total_study_time_seconds": self.total_study_time_seconds,
+            "total_sessions": self.total_sessions,
+            "last_studied_at": self.last_studied_at.isoformat()
+            if self.last_studied_at
+            else None,
+            "items_mastered": self.items_mastered,
+            "items_total": self.items_total,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 # Database session management
 def get_db_session():
     """
@@ -1025,6 +1272,12 @@ __all__ = [
     "APIUsage",
     "ProcessedContent",
     "LearningMaterialDB",
+    "ContentCollection",
+    "ContentCollectionItem",
+    "ContentTag",
+    "ContentFavorite",
+    "ContentStudySession",
+    "ContentMasteryStatus",
     "UserRole",
     "LanguageCode",
     "ConversationRole",
