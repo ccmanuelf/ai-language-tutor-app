@@ -22,7 +22,8 @@ from pathlib import Path
 
 def get_db_path():
     """Get the database path"""
-    db_path = Path(__file__).parent / "data" / "language_tutor.db"
+    # Use the correct database file from .env (ai_language_tutor.db)
+    db_path = Path(__file__).parent / "data" / "ai_language_tutor.db"
     if not db_path.exists():
         raise FileNotFoundError(f"Database not found at {db_path}")
     return str(db_path)

@@ -21,6 +21,7 @@ from app.core.config import get_settings
 
 from .admin_routes import register_admin_routes
 from .chat import create_chat_route
+from .collections import create_collections_routes
 from .content_view import create_content_view_route
 
 # Import modular frontend components
@@ -29,6 +30,7 @@ from .home import create_home_routes
 from .persona_profile_routes import register_persona_profile_routes
 from .profile import create_profile_route
 from .progress import create_progress_route
+from .study_session import create_study_routes
 from .user_budget_routes import register_user_budget_routes
 from .visual_learning import create_visual_learning_routes
 
@@ -52,6 +54,10 @@ def create_frontend_app():
     create_progress_route(app)
     create_content_view_route(app)
     create_visual_learning_routes(app)
+
+    # Session 129: Content Organization & Study Tracking
+    create_collections_routes(app)
+    create_study_routes(app)
 
     # Register user budget dashboard routes
     register_user_budget_routes(app)
