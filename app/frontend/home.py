@@ -10,6 +10,7 @@ Provides:
 """
 
 from datetime import datetime
+
 from fasthtml.common import *
 
 
@@ -87,6 +88,50 @@ def create_youlearn_sidebar():
                 onmouseout="this.style.backgroundColor='transparent'",
             ),
             style="margin-bottom: 2rem;",
+        ),
+        # Content Organization section (Session 129)
+        Div(
+            H3(
+                "Content Organization",
+                style="color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem; padding: 0 1rem;",
+            ),
+                Span(create_heroicon_svg("book", "20"), style="margin-right: 0.75rem;"),
+                "Content Library",
+                href="/library",
+                style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
+                onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                onmouseout="this.style.backgroundColor='transparent'",
+            ),
+            A(
+                Span(
+                    create_heroicon_svg("folder", "20"), style="margin-right: 0.75rem;"
+                ),
+                "My Collections",
+                href="/collections",
+                style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
+                onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                onmouseout="this.style.backgroundColor='transparent'",
+            ),
+            A(
+                Span(create_heroicon_svg("star", "20"), style="margin-right: 0.75rem;"),
+                ),
+                "Favorites",
+                href="/favorites",
+                style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
+                onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                onmouseout="this.style.backgroundColor='transparent'",
+            ),
+            A(
+                Span(
+                    create_heroicon_svg("target", "20"), style="margin-right: 0.75rem;"
+                ),
+                "Study Stats",
+                href="/study-stats",
+                style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
+                onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                onmouseout="this.style.backgroundColor='transparent'",
+            ),
+            style="margin-bottom: 2rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;",
         ),
         # Spaces section
         Div(

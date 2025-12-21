@@ -22,6 +22,7 @@ from app.core.config import get_settings
 from .admin_routes import register_admin_routes
 from .chat import create_chat_route
 from .collections import create_collections_routes
+from .content_library import create_content_library_routes
 from .content_view import create_content_view_route
 
 # Import modular frontend components
@@ -56,6 +57,7 @@ def create_frontend_app():
     create_visual_learning_routes(app)
 
     # Session 129: Content Organization & Study Tracking
+    create_content_library_routes(app)  # Main content hub
     create_collections_routes(app)
     create_study_routes(app)
 
