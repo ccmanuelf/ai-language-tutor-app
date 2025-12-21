@@ -26,7 +26,8 @@ from fastapi import (
     HTTPException,
     UploadFile,
 )
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl
+from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
 from app.database.config import get_primary_db_session
