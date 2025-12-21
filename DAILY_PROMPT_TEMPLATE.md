@@ -1,27 +1,231 @@
-# Daily Session Prompt Template - SANITY CHECK & PRE-PRODUCTION VALIDATION
+# AI Language Tutor - Daily Prompt Template
 
-**Session Type:** COMPREHENSIVE SANITY CHECK  
-**Date:** [To be filled]  
-**Objective:** Complete validation of all implementation, documentation, and testing before Production Release  
-**Status:** NOT STARTED
+**Last Updated:** 2025-12-21 (CORE PRINCIPLES RESTORED + Sanity Check Methodology)  
+**Purpose:** Guide all development sessions with core principles and comprehensive validation methodology
 
 ---
 
-## 🎯 CRITICAL MISSION
+## 🔴 FOUNDATIONAL PRINCIPLES (NON-NEGOTIABLE)
 
-Before ANY production release, we MUST verify:
-1. ✅ All planned features are 100% implemented (Backend + Frontend)
-2. ✅ All tracker files show complete status
-3. ✅ All tests are passing with no gaps
-4. ✅ All backend APIs are connected to frontend
-5. ✅ All documentation is accurate and complete
-6. ✅ No assumptions - everything validated from end-user perspective
+### **PRINCIPLE 1: NO SUCH THING AS "ACCEPTABLE"**
+- **Standard:** We aim for PERFECTION by whatever it takes
+- **Rule:** 100.00% coverage - NOT 98%, NOT 99%, NOT 99.9%
+- **Action:** If coverage is not 100%, we refactor source code to make it testable
+- **History:** We have tackled defensive error handling before and succeeded
+- **Commitment:** No exceptions, no omissions, no regressions, no compromises
+- **Example:** Apply ALL improvements (no shortcuts), achieve TRUE 100% perfection
 
-**Rule:** NO ASSUMPTIONS. Every claim must be verified with evidence.
+### **PRINCIPLE 2: PATIENCE IS OUR CORE VIRTUE**
+- **Rule:** NEVER kill a long-running process unless unresponsive for >5 minutes
+- **Reason:** Killing processes masks issues and creates gaps in coverage
+- **Action:** Monitor processes, enlarge timeout windows if needed, but WAIT
+- **Lesson:** Premature termination = incomplete data = hidden problems
+- **Verification:** Also verify work properly - don't skip test runs
+  - Running tests separately ≠ Running full suite
+  - Always run complete suite before claiming success
+  - 4 minutes is NOTHING - patience prevents quality shortcuts
+
+### **PRINCIPLE 3: TRUE 100% MEANS VALIDATE ALL CODE PATHS**
+- **Standard:** 100% coverage = ALL code executed AND validated
+- **Rule:** Simply calling functions is NOT enough - must validate actual behavior
+- **Critical Discovery:** FastHTML functions need `to_xml()` for HTML validation, not just `str()`
+- **Action:** Read implementation to understand exact field names, return types, and transformations
+- **Lesson:** "Untested & unverified = Bad Code & Useless project"
+- **Requirement:** Every assertion must validate actual output, not just that code runs
+
+**Example:**
+```python
+# ❌ WRONG - Only calls function, doesn't validate output:
+result = language_config_card(...)
+assert result is not None  # Useless test!
+
+# ✅ CORRECT - Validates actual HTML generation:
+result = language_config_card(...)
+result_str = to_xml(result)  # Get actual HTML
+assert "Spanish" in result_str  # Validate content
+assert "toggleLanguageFeature('es', 'stt'" in result_str  # Validate callbacks
+```
+
+### **PRINCIPLE 4: CORRECT ENVIRONMENT ALWAYS - USE ai-tutor-env VENV**
+- **CRITICAL:** This project uses `ai-tutor-env` virtual environment, NOT anaconda
+- **Rule:** ALWAYS activate ai-tutor-env before ANY commands
+- **Why:** Wrong environment = tests skip, dependencies missing, false results
+- **Project Environment:** Python 3.12.2 (ai-tutor-env virtual environment)
+
+**⚠️ CRITICAL DISCOVERY:** Environment activation is NOT persistent across bash commands!
+
+**Each bash command is a NEW shell - previous activations DON'T persist!**
+
+```bash
+# ❌ WRONG - These are SEPARATE shell sessions:
+source ai-tutor-env/bin/activate  # Activates in Shell #1
+pytest tests/                      # Runs in Shell #2 (NOT activated!)
+
+# ✅ CORRECT - Single shell session with && operator:
+source ai-tutor-env/bin/activate && pytest tests/
+```
+
+**🔴 MANDATORY PRACTICE - ALWAYS combine activation + command:**
+
+```bash
+cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
+source ai-tutor-env/bin/activate && \
+<your command here>
+```
+
+**Verification Steps:**
+```bash
+cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
+source ai-tutor-env/bin/activate && \
+which python && python --version
+
+# Expected output:
+# /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/bin/python
+# Python 3.12.2
+
+# ❌ If you see /opt/anaconda3/bin/python - YOU'RE IN WRONG ENVIRONMENT!
+```
+
+**Impact of Wrong Environment:**
+- ❌ Tests skip (72 skipped due to missing dependencies)
+- ❌ False coverage results (0% due to wrong module path)
+- ❌ Missing dependencies
+- ❌ Invalid test results
+- ✅ Correct environment = all tests pass, proper coverage, accurate results
+
+### **PRINCIPLE 5: ZERO FAILURES ALLOWED**
+- **Rule:** ALL tests must pass - no exceptions, even if "unrelated" to current work
+- **Action:** When ANY test fails, investigate and fix it immediately
+- **Banned:** Ignoring failures as "pre-existing" or "not my problem"
+- **Standard:** Full test suite must show 100% pass rate before session completion
+- **Verification:** Run complete test suite, wait for full completion, verify zero failures
+
+### **PRINCIPLE 6: FIX BUGS IMMEDIATELY, NO SHORTCUTS**
+- **Rule:** When a bug is found, it is MANDATORY to fix it NOW
+- **Banned:** "Document for later," "address as future enhancement," "acceptable gap"
+- **Banned:** Using --ignore flags during assessments to skip issues
+- **Standard:** Cover ALL statements, cover ALL branches, no exceptions
+
+### **PRINCIPLE 7: DOCUMENT AND PREPARE THOROUGHLY**
+- **Requirements:**
+  1. Save session logs after completion
+  2. Write lessons learned
+  3. Update project tracker
+  4. Update DAILY_PROMPT_TEMPLATE.md for next session
+  5. Push latest state to GitHub
+- **Purpose:** Keep repositories synced, preserve context for next session
+
+**🔴 GITHUB AUTHENTICATION:**
+- **Method:** Uses GITHUB_PERSONAL_ACCESS_TOKEN for authentication
+- **Push Command:** `git push origin main` (requires token configured)
+- **Note:** If push fails with authentication error, token may need refresh
+- **Fallback:** Commits are saved locally and can be pushed later
+
+### **PRINCIPLE 8: TIME IS NOT A CONSTRAINT**
+- **Fact:** We have plenty of time to do things right
+- **Criteria:** Quality and performance above all
+- **Valid Exit Reasons:**
+  - Session goals/objectives accomplished ✅
+  - Session context becoming too long (save progress, start fresh) ✅
+- **Invalid Exit Reason:**
+  - Time elapsed ❌ (NOT a decision criteria)
+- **Commitment:** Never rush, never compromise standards to "save time"
+
+### **PRINCIPLE 9: EXCELLENCE IS OUR IDENTITY**
+- **Philosophy:** "No matter if they call us perfectionists, we call it doing things right"
+- **Standards:** We refuse to lower our standards
+- **Truth:** "Labels don't define us, our results do"
+- **Position:** "If aiming high makes us perfectionists, then good. We are not here to settle."
+
+### **PRINCIPLE 10: VERIFY IMPORTS EARLY**
+- **Rule:** After creating ANY file with imports, verify imports work immediately
+- **Why:** Prevents cascading import errors at the end
+- **Action:** Run a quick import test or simple test case
+- **Pattern:** Check existing codebase for correct import paths BEFORE writing imports
+
+**Common Import Patterns:**
+```python
+# Base class
+from app.models.database import Base  # NOT app.models.base
+
+# User role enum
+from app.models.database import UserRole  # NOT Role
+
+# Admin authentication
+from app.services.admin_auth import require_admin_access  # NOT require_admin
+
+# Database session
+db = get_primary_db_session()  # Returns Session directly, NOT generator
+```
+
+### **PRINCIPLE 11: COMPREHENSIVE TESTING**
+- **Standard:** Test ALL paths - happy, error, edge cases
+- **Rule:** Unit tests + Integration tests + E2E tests
+- **Requirement:** Real AI integration in E2E tests (not mocked)
+- **Coverage:** TRUE 100% = statement + branch coverage
+- **Validation:** User quality interventions encouraged
+
+### **PRINCIPLE 12: NO REGRESSIONS EVER**
+- **Rule:** New work cannot break existing functionality
+- **Verification:** Full test suite must pass after every change
+- **Standard:** Zero regression tolerance
+- **Action:** If regression found, fix immediately before continuing
+
+### **PRINCIPLE 13: GIT HYGIENE**
+- **Rule:** Clean, atomic commits with clear messages
+- **Standard:** Each commit should represent one logical change
+- **Message Format:** Include emoji + clear description
+- **Example:** "✅ Phase 3A.14: Achieve 94% coverage for mistral_service.py"
+
+### **PRINCIPLE 14: CODE EXCELLENCE**
+- **Standard:** Production-grade code quality
+- **Requirements:**
+  - Zero warnings
+  - Zero TODOs (or documented in tracker)
+  - Clean code patterns
+  - Proper error handling
+  - Security best practices
+- **Validation:** Code review before session completion
 
 ---
 
-## 📋 PRE-SESSION CHECKLIST
+## ⚠️ CRITICAL REMINDERS
+
+### DO:
+✅ Wait for processes to complete (< 5 min is fine)
+✅ Fix bugs immediately when found
+✅ Run complete test suites (no --ignore)
+✅ Write comprehensive tests (happy + error + edge)
+✅ Document everything thoroughly
+✅ Focus on ONE module at a time
+✅ Verify imports as files are created
+✅ Check existing patterns before coding
+✅ Place specific routes before generic routes
+✅ Check actual API responses before writing tests
+✅ Apply systematic debugging approach
+✅ **Apply ALL improvements (no shortcuts)**
+✅ **Run full test suite before claiming success**
+✅ **Save verification logs with timestamps**
+
+### DON'T:
+❌ Kill processes under 5 minutes
+❌ Document bugs "for later"
+❌ Use --ignore in assessments
+❌ Write minimal tests
+❌ Skip documentation
+❌ Split focus across modules
+❌ Assume import paths
+❌ Put generic routes before specific ones
+❌ Assume response structures
+❌ **Skip improvements to save time**
+❌ **Claim success without full verification**
+❌ **Take shortcuts (PRINCIPLE 1)**
+
+---
+
+## 📋 PRE-PRODUCTION SANITY CHECK METHODOLOGY
+
+**Use this methodology when preparing for production release or comprehensive validation**
 
 ### Phase 1: Documentation Review (CRITICAL)
 
@@ -36,8 +240,6 @@ Before ANY production release, we MUST verify:
 - `docs/*_TRACKER.md` files
 - Any `TODO.md`, `ROADMAP.md`, or similar files
 
-**Deliverable:** Complete list of all tracker documents with their current status.
-
 **Validation Questions:**
 - Are there any sessions with "IN PROGRESS" status?
 - Are there any sessions with incomplete user stories?
@@ -45,9 +247,7 @@ Before ANY production release, we MUST verify:
 - Are there any sessions with known bugs or issues?
 
 #### 1.2 Review Session Completion Status
-**Action:** For EACH session document found, verify:
-
-**Checklist per Session:**
+**For EACH session document found, verify:**
 - [ ] Session objectives clearly stated?
 - [ ] All user stories marked as complete?
 - [ ] All tasks marked as complete?
@@ -57,18 +257,7 @@ Before ANY production release, we MUST verify:
 - [ ] Integration verified?
 - [ ] Lessons learned documented?
 
-**Critical Sessions to Review:**
-- Session 129 (Content Organization) - MUST be 100% complete
-- Any session with database changes
-- Any session with API changes
-- Any session with frontend changes
-- Any session with authentication/authorization changes
-
-**Deliverable:** Matrix showing completion status of all sessions.
-
 #### 1.3 Cross-Reference Plans vs. Reality
-**Action:** For each plan document (e.g., SESSION_129_FRONTEND_PLAN.md):
-
 **Verification Steps:**
 1. List all planned features
 2. Verify each feature exists in codebase
@@ -82,8 +271,6 @@ Before ANY production release, we MUST verify:
 - Implemented differently than planned
 
 #### 1.4 Validate "COMPLETE" Claims
-**Action:** For each document claiming "COMPLETE" status:
-
 **Evidence Required:**
 - [ ] Code files exist and contain claimed functionality
 - [ ] Tests exist and are passing
@@ -92,16 +279,11 @@ Before ANY production release, we MUST verify:
 - [ ] No TODOs or FIXMEs in code
 - [ ] No "coming soon" or "not implemented" messages in UI
 
-**Deliverable:** Verified completion list with evidence links.
-
----
-
 ### Phase 2: Backend Validation (CRITICAL)
 
 #### 2.1 API Inventory & Status
 **Action:** Create complete inventory of ALL API endpoints.
 
-**Method:**
 ```bash
 # Find all API route definitions
 grep -r "@app.route\|@router.get\|@router.post\|@router.put\|@router.delete\|@router.patch" app/api/
@@ -117,20 +299,9 @@ grep -r "@app.route\|@router.get\|@router.post\|@router.put\|@router.delete\|@ro
 - [ ] Connected to frontend?
 - [ ] Error handling implemented?
 
-**Deliverable:** Complete API inventory with test coverage and frontend integration status.
-
 #### 2.2 Database Schema Validation
 **Action:** Verify database matches all documented tables.
 
-**Steps:**
-1. List all SQLAlchemy models in `app/models/`
-2. List all tables in actual database
-3. Verify migrations are up-to-date
-4. Check for orphaned tables
-5. Check for missing foreign keys
-6. Validate indexes exist
-
-**SQL Queries to Run:**
 ```sql
 -- List all tables
 SELECT name FROM sqlite_master WHERE type='table';
@@ -142,36 +313,12 @@ SELECT sql FROM sqlite_master WHERE type='table';
 PRAGMA foreign_key_list(table_name);
 ```
 
-**Deliverable:** Database schema report with validation status.
-
-#### 2.3 Service Layer Validation
-**Action:** Verify all service layer methods are tested and used.
-
-**For Each Service File:**
-- [ ] All public methods have unit tests?
-- [ ] All public methods called from API layer?
-- [ ] No unused/dead code?
-- [ ] Error handling comprehensive?
-- [ ] Multi-user isolation verified?
-
-**Deliverable:** Service layer coverage report.
-
-#### 2.4 Test Coverage Analysis
-**Action:** Run comprehensive test suite and analyze coverage.
-
+#### 2.3 Test Coverage Analysis
 **Commands to Run:**
 ```bash
-# Run all tests with coverage
+cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
+source ai-tutor-env/bin/activate && \
 pytest --cov=app --cov-report=html --cov-report=term-missing
-
-# Check for test failures
-pytest -v --tb=short
-
-# Run only E2E tests
-pytest tests/e2e/ -v
-
-# Run only unit tests
-pytest tests/ -v --ignore=tests/e2e/
 ```
 
 **Coverage Targets:**
@@ -180,16 +327,11 @@ pytest tests/ -v --ignore=tests/e2e/
 - API endpoints: 100%
 - Service layer: >90%
 
-**Deliverable:** Coverage report with gaps identified.
-
----
-
 ### Phase 3: Frontend Validation (CRITICAL)
 
 #### 3.1 Page Inventory & Accessibility
 **Action:** List ALL frontend pages and verify accessibility.
 
-**Method:**
 ```bash
 # Find all route definitions
 grep -r "@app.route\|def.*_page\|def.*_view" app/frontend/
@@ -199,27 +341,11 @@ grep -r "@app.route\|def.*_page\|def.*_view" app/frontend/
 - [ ] Route registered in main.py?
 - [ ] Navigation link exists?
 - [ ] Page loads without errors?
-- [ ] All Session 129 features present (if applicable)?
 - [ ] Mobile responsive?
 - [ ] Error states handled?
 - [ ] Loading states implemented?
 
-**Critical Pages to Verify:**
-- `/` (Home)
-- `/library` (Content Library) - NEW
-- `/collections` (Collections List) - NEW
-- `/collections/{id}` (Collection Detail) - NEW
-- `/favorites` (Favorites) - NEW
-- `/content/{id}` (Content View) - ENHANCED
-- `/study-stats` (Study Stats) - NEW
-- `/chat` (Chat/Upload)
-- `/profile` (User Profile)
-
-**Deliverable:** Page accessibility matrix.
-
 #### 3.2 Backend-Frontend Integration Verification
-**Action:** For EACH API endpoint, verify frontend integration.
-
 **Verification Method:**
 1. Grep for fetch() calls in frontend files
 2. Match each fetch URL to backend API endpoint
@@ -227,7 +353,6 @@ grep -r "@app.route\|def.*_page\|def.*_view" app/frontend/
 4. Verify request payload structure matches API schema
 5. Verify response handling is correct
 
-**Commands:**
 ```bash
 # Find all API calls in frontend
 grep -r "fetch(" app/frontend/
@@ -236,91 +361,23 @@ grep -r "fetch(" app/frontend/
 grep -r "@router\." app/api/
 ```
 
-**Deliverable:** API-to-Frontend mapping table showing:
-- API endpoint
-- Frontend file using it
-- Line number
-- Integration status (✅ correct, ⚠️ issues, ❌ not used)
-
-#### 3.3 Session 129 Feature Validation
-**Action:** Specifically validate ALL Session 129 features from user perspective.
-
-**User Stories to Manually Test:**
-
-**Epic 1: Collections (5 stories)**
-- [ ] US-1.1: Navigate to /collections, click "Create Collection", fill form, verify created
-- [ ] US-1.2: Open content library, click "Add to Collection" on content, verify added
-- [ ] US-1.3: View collections list, see all collections with correct counts
-- [ ] US-1.4: Click collection, see all content items in that collection
-- [ ] US-1.5: In collection detail, click "Remove" on item, verify removed
-
-**Epic 2: Tags (4 stories)**
-- [ ] US-2.1: Open content view, add tag in input field, verify appears
-- [ ] US-2.2: View content card, see tags displayed correctly
-- [ ] US-2.3: Click tag or use tag filter, verify filtered results
-- [ ] US-2.4: Remove tag from content, verify removed
-
-**Epic 3: Favorites (3 stories)**
-- [ ] US-3.1: Click favorite heart on content card, verify marked
-- [ ] US-3.2: Navigate to /favorites, see only favorited content
-- [ ] US-3.3: Click unfavorite, verify removed from favorites page
-
-**Epic 4: Study Tracking (6 stories)**
-- [ ] US-4.1: Click "Start Study Session", verify modal opens with timer
-- [ ] US-4.2: Fill in items studied/correct, verify inputs work
-- [ ] US-4.3: Click "Complete Session", verify mastery updates
-- [ ] US-4.4: View content, see correct mastery badge color
-- [ ] US-4.5: Navigate to study stats, see recent sessions
-- [ ] US-4.6: View study stats dashboard, verify all metrics accurate
-
-**Deliverable:** User story validation checklist with pass/fail status and screenshots/evidence.
-
-#### 3.4 Navigation Flow Validation
-**Action:** Verify all navigation paths work correctly.
-
-**Navigation Paths to Test:**
-1. Home → Content Library → Content Detail → Back to Library
-2. Home → Collections → Collection Detail → Back to Collections
-3. Home → Favorites → Content Detail → Back to Favorites
-4. Home → Study Stats → Back to Home
-5. Content Detail → Add to Collection → Collection Detail
-6. Content Library → Filter by Tag → Clear Filter
-7. Content Detail → Start Study → Complete Session → View Stats
-
-**Deliverable:** Navigation flow diagram with validation status.
-
----
-
 ### Phase 4: Testing Gap Analysis (CRITICAL)
 
 #### 4.1 Identify Untested Code Paths
-**Action:** Find code without test coverage.
-
-**Method:**
-1. Run coverage report: `pytest --cov=app --cov-report=html`
-2. Open `htmlcov/index.html`
-3. Identify files with <80% coverage
-4. For each file, identify untested functions/branches
-
-**Deliverable:** List of untested code paths with priority (Critical/High/Medium/Low).
+```bash
+cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
+source ai-tutor-env/bin/activate && \
+pytest --cov=app --cov-report=html
+# Then open htmlcov/index.html
+```
 
 #### 4.2 Identify Missing E2E Tests
-**Action:** Compare user stories to E2E test coverage.
-
-**Current E2E Tests:**
-- test_content_organization_e2e.py (5 tests for Session 129)
-- [List other E2E test files]
-
 **Questions:**
 - Are there user stories without E2E tests?
 - Are there critical workflows without E2E tests?
 - Are there multi-step processes without E2E tests?
 
-**Deliverable:** E2E test gap analysis.
-
 #### 4.3 Error Scenario Testing
-**Action:** Verify error handling for all critical paths.
-
 **Scenarios to Test:**
 - API returns 404 (not found)
 - API returns 401 (unauthorized)
@@ -331,16 +388,9 @@ grep -r "@router\." app/api/
 - Delete non-existent resource
 - Access resource owned by another user
 
-**Deliverable:** Error scenario test results.
-
----
-
-### Phase 5: Code Quality & Technical Debt (IMPORTANT)
+### Phase 5: Code Quality & Technical Debt
 
 #### 5.1 Find All TODOs and FIXMEs
-**Action:** Search codebase for incomplete work markers.
-
-**Commands:**
 ```bash
 # Find all TODOs
 grep -r "TODO" app/ --exclude-dir=__pycache__
@@ -348,22 +398,11 @@ grep -r "TODO" app/ --exclude-dir=__pycache__
 # Find all FIXMEs
 grep -r "FIXME" app/ --exclude-dir=__pycache__
 
-# Find all XXXs
-grep -r "XXX" app/ --exclude-dir=__pycache__
-
-# Find all HACKs
-grep -r "HACK" app/ --exclude-dir=__pycache__
-
 # Find "not implemented" messages
 grep -r "not implemented\|NotImplemented" app/ --exclude-dir=__pycache__
 ```
 
-**Deliverable:** List of all TODOs/FIXMEs with priority classification.
-
 #### 5.2 Find Console.logs and Debug Code
-**Action:** Remove debugging artifacts.
-
-**Commands:**
 ```bash
 # Find console.log
 grep -r "console.log" app/frontend/
@@ -375,55 +414,27 @@ grep -r "print(" app/ --exclude-dir=__pycache__ | grep -v "logger\|logging"
 grep -r "DEBUG.*True\|debug=True" app/
 ```
 
-**Deliverable:** List of debug code to clean up.
-
-#### 5.3 Check for Hardcoded Values
-**Action:** Find and replace hardcoded configuration.
-
-**Search for:**
-- Hardcoded URLs
-- Hardcoded API keys
-- Hardcoded user IDs
-- Hardcoded file paths
-- Magic numbers
-
-**Deliverable:** List of hardcoded values to move to configuration.
-
-#### 5.4 Security Scan
-**Action:** Check for common security issues.
-
+#### 5.3 Security Scan
 **Items to Verify:**
 - [ ] No passwords in code
 - [ ] No API keys in code
 - [ ] SQL injection prevention (parameterized queries)
 - [ ] XSS prevention (proper escaping)
-- [ ] CSRF protection (if applicable)
 - [ ] Input validation on all endpoints
 - [ ] Authentication on protected routes
 - [ ] Authorization checks before data access
 
-**Deliverable:** Security audit report.
-
----
-
-### Phase 6: Documentation Accuracy (IMPORTANT)
+### Phase 6: Documentation Accuracy
 
 #### 6.1 README Validation
-**Action:** Verify README.md is accurate and complete.
-
 **Sections to Validate:**
 - [ ] Installation instructions work
 - [ ] Dependencies list is complete
 - [ ] Setup steps are correct
 - [ ] Running tests instructions work
 - [ ] Environment variables documented
-- [ ] API documentation link works
-
-**Deliverable:** Updated README.md if needed.
 
 #### 6.2 API Documentation Validation
-**Action:** Verify API docs match implementation.
-
 **For Each Documented Endpoint:**
 - [ ] Endpoint path correct
 - [ ] HTTP method correct
@@ -432,186 +443,88 @@ grep -r "DEBUG.*True\|debug=True" app/
 - [ ] Error responses documented
 - [ ] Examples work
 
-**Deliverable:** API documentation accuracy report.
+---
 
-#### 6.3 Architecture Documentation
-**Action:** Verify architecture docs reflect current state.
+## 🎯 SESSION EXECUTION BEST PRACTICES
 
-**Check:**
-- Database schema diagrams
-- System architecture diagrams
-- Data flow diagrams
-- Component interaction diagrams
+### Before Starting Any Session:
+1. Activate environment: `cd /path && source ai-tutor-env/bin/activate`
+2. Verify Python version: `python --version` (expect 3.12.2)
+3. Read previous session's handover/lessons learned
+4. Review relevant tracker documents
+5. Run full test suite to establish baseline
 
-**Deliverable:** Updated architecture documentation if needed.
+### During Session:
+1. Focus on ONE objective at a time (PRINCIPLE 1)
+2. Test frequently (every 10-15 minutes)
+3. Fix bugs immediately (PRINCIPLE 6)
+4. Commit incrementally with clear messages (PRINCIPLE 13)
+5. Document as you go (don't defer to end)
+
+### Before Ending Session:
+1. Run complete test suite: `pytest tests/ -v`
+2. Verify zero failures (PRINCIPLE 5)
+3. Check for regressions (PRINCIPLE 12)
+4. Update tracker documents (PRINCIPLE 7)
+5. Create session summary/lessons learned
+6. Update this template for next session
+7. Commit all changes with clear messages
+8. Push to GitHub (if token available)
 
 ---
 
-## 🎯 SESSION EXECUTION PLAN
+## 📊 QUALITY METRICS TO TRACK
 
-### Step 1: Documentation Audit (2 hours)
-1. Find all tracker files
-2. Create completion matrix
-3. Identify gaps
-4. Document findings
+### Test Metrics:
+- Total test count
+- Pass rate (must be 100%)
+- Coverage percentage (target >80%, critical paths >95%)
+- E2E test count
+- Test execution time
 
-**Deliverable:** `SANITY_CHECK_DOCS_AUDIT.md`
+### Code Metrics:
+- Modules at TRUE 100% coverage
+- Lines of code added/modified
+- Number of bugs found and fixed
+- Number of TODO items
 
-### Step 2: Backend Validation (2 hours)
-1. API inventory
-2. Database validation
-3. Service layer review
-4. Test coverage analysis
-
-**Deliverable:** `SANITY_CHECK_BACKEND_AUDIT.md`
-
-### Step 3: Frontend Validation (2 hours)
-1. Page accessibility check
-2. API integration verification
-3. Session 129 feature testing
-4. Navigation flow testing
-
-**Deliverable:** `SANITY_CHECK_FRONTEND_AUDIT.md`
-
-### Step 4: Testing Gap Analysis (1 hour)
-1. Coverage gaps
-2. E2E gaps
-3. Error scenario gaps
-
-**Deliverable:** `SANITY_CHECK_TEST_GAPS.md`
-
-### Step 5: Code Quality Review (1 hour)
-1. TODO/FIXME cleanup
-2. Debug code removal
-3. Hardcoded value identification
-4. Security scan
-
-**Deliverable:** `SANITY_CHECK_CODE_QUALITY.md`
-
-### Step 6: Final Report (1 hour)
-1. Consolidate findings
-2. Prioritize issues
-3. Create action plan
-4. Document sign-off criteria
-
-**Deliverable:** `SANITY_CHECK_FINAL_REPORT.md`
+### Documentation Metrics:
+- Session logs created
+- Lessons learned documented
+- Tracker updates made
+- README accuracy
 
 ---
 
-## 📊 SUCCESS CRITERIA
+## 🎓 LESSONS LEARNED TEMPLATE
 
-### Production-Ready Checklist
+After each session, document:
 
-**Documentation:**
-- [ ] All session trackers show 100% completion
-- [ ] All planned features implemented
-- [ ] All documentation accurate
-- [ ] README works for new developers
+**What Went Well:**
+- [List successes]
 
-**Backend:**
-- [ ] All APIs have tests (>95% coverage)
-- [ ] All APIs documented
-- [ ] Database schema validated
-- [ ] No orphaned code
-- [ ] All TODOs resolved or documented
+**What Went Wrong:**
+- [List problems/challenges]
 
-**Frontend:**
-- [ ] All pages accessible via navigation
-- [ ] All APIs connected to UI
-- [ ] All Session 129 features verified
-- [ ] Error handling complete
-- [ ] Loading states complete
-- [ ] Mobile responsive
+**What We Learned:**
+- [List insights/discoveries]
 
-**Testing:**
-- [ ] Overall coverage >80%
-- [ ] Critical path coverage >95%
-- [ ] All E2E tests passing
-- [ ] No test gaps in user stories
-- [ ] Error scenarios covered
+**What We'll Do Differently:**
+- [List process improvements]
 
-**Code Quality:**
-- [ ] No console.log or print() statements
-- [ ] No hardcoded credentials
-- [ ] No security vulnerabilities
-- [ ] No linter errors
-- [ ] No type errors (if using TypeScript)
-
-**Integration:**
-- [ ] All backend APIs used by frontend
-- [ ] All frontend features use backend APIs
-- [ ] No broken links
-- [ ] No 404 errors
-- [ ] No CORS issues
+**Critical Discoveries:**
+- [List any critical findings that affect project]
 
 ---
 
-## 🚨 CRITICAL REMINDERS
+## 🚀 READY TO START!
 
-1. **NO ASSUMPTIONS** - Every "complete" claim must be verified with evidence
-2. **END-USER PERSPECTIVE** - Test as a user, not as a developer
-3. **DOCUMENT EVERYTHING** - Create audit trail for all findings
-4. **PRIORITIZE ISSUES** - Not everything needs to be fixed, but must be documented
-5. **BE THOROUGH** - Better to spend time now than debug in production
+**Remember the Core Philosophy:**
+- Quality over speed (PRINCIPLE 8)
+- Perfection over "acceptable" (PRINCIPLE 1)
+- Patience over rushing (PRINCIPLE 2)
+- Excellence over settling (PRINCIPLE 9)
 
----
+**The 14 CORE PRINCIPLES are NON-NEGOTIABLE. They guide every decision, every line of code, every test we write.**
 
-## 📝 OUTPUT TEMPLATE
-
-For each phase, create a markdown document with:
-
-```markdown
-# [Phase Name] Audit Report
-
-**Date:** [Date]
-**Auditor:** Claude
-**Status:** [Complete/In Progress]
-
-## Summary
-[2-3 sentence overview of findings]
-
-## Methodology
-[How the audit was conducted]
-
-## Findings
-
-### ✅ Verified Items
-- [Item 1] - Evidence: [link/description]
-- [Item 2] - Evidence: [link/description]
-
-### ⚠️ Issues Found
-- [Issue 1] - Priority: [Critical/High/Medium/Low] - Impact: [description]
-- [Issue 2] - Priority: [Critical/High/Medium/Low] - Impact: [description]
-
-### ❌ Gaps Identified
-- [Gap 1] - Required Action: [description]
-- [Gap 2] - Required Action: [description]
-
-## Recommendations
-1. [Recommendation 1]
-2. [Recommendation 2]
-
-## Sign-Off Criteria
-- [ ] Criterion 1
-- [ ] Criterion 2
-
-## Next Steps
-1. [Step 1]
-2. [Step 2]
-```
-
----
-
-## 🎓 LESSONS LEARNED (To Document)
-
-After sanity check, document:
-1. What gaps were found?
-2. Why were they missed initially?
-3. How to prevent in future sessions?
-4. What processes need improvement?
-
----
-
-**Remember: The goal is CONFIDENCE in production readiness, not perfection. Document what you find, prioritize what matters, and create a clear action plan.**
-
-**Good luck! Be thorough, be systematic, and don't skip steps.** 🚀
+**Good luck! Be thorough, be systematic, and uphold the principles.** ✨
