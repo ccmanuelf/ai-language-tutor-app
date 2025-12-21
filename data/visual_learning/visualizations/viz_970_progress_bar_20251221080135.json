@@ -1,0 +1,22 @@
+{
+  "visualization_id": "viz_970_progress_bar_20251221080135",
+  "user_id": "970",
+  "visualization_type": "progress_bar",
+  "title": "Course Completion",
+  "description": "Your progress through the course",
+  "data_points": [
+    {
+      "module": "Spanish Basics",
+      "completion": 85
+    }
+  ],
+  "x_axis_label": "",
+  "y_axis_label": "",
+  "color_scheme": [
+    "#6366f1",
+    "#0891b2",
+    "#f59e0b"
+  ],
+  "generated_at": "2025-12-21T08:01:35.003141",
+  "metadata": {}
+}

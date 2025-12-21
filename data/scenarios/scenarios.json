@@ -774,5 +774,1654 @@
     "is_active": true,
     "created_at": "2025-09-28T20:59:28.923435",
     "updated_at": "2025-09-28T20:59:28.923435"
+  },
+  "business_meeting_first_time": {
+    "scenario_id": "business_meeting_first_time",
+    "name": "First Business Meeting with International Partners",
+    "category": "business",
+    "difficulty": "beginner",
+    "description": "Practice conducting your first business meeting with international colleagues, including introductions, small talk, discussing the agenda, and closing professionally.",
+    "user_role": "business_professional",
+    "ai_role": "business_colleague",
+    "setting": "Modern conference room in an international company office",
+    "duration_minutes": 15,
+    "phases": [
+      {
+        "phase_id": "professional_introductions",
+        "name": "Professional Introductions",
+        "description": "Exchange introductions and business cards",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "introduction",
+          "colleague",
+          "position",
+          "department",
+          "company",
+          "pleased",
+          "meet"
+        ],
+        "essential_phrases": [
+          "Nice to meet you, I'm...",
+          "I work in the... department",
+          "What's your role in the company?",
+          "Pleased to meet you too"
+        ],
+        "learning_objectives": [
+          "Make professional introductions",
+          "Exchange business card etiquette",
+          "Use appropriate formal greetings"
+        ],
+        "cultural_notes": "In international business, firm handshakes and eye contact show professionalism. Business cards should be presented and received with both hands in many Asian cultures.",
+        "success_criteria": [
+          "Introduce yourself professionally",
+          "Exchange roles and departments",
+          "Show appropriate business etiquette"
+        ]
+      },
+      {
+        "phase_id": "small_talk_rapport",
+        "name": "Small Talk and Rapport Building",
+        "description": "Build professional rapport through appropriate small talk",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "weather",
+          "travel",
+          "comfortable",
+          "office",
+          "facilities",
+          "journey",
+          "accommodation"
+        ],
+        "essential_phrases": [
+          "How was your journey here?",
+          "Have you had time to see the city?",
+          "Is everything comfortable with your accommodation?",
+          "The weather has been nice lately"
+        ],
+        "learning_objectives": [
+          "Build professional rapport",
+          "Engage in appropriate business small talk",
+          "Show cultural awareness and courtesy"
+        ],
+        "cultural_notes": "Small talk before business is important in most cultures. Keep topics neutral (weather, travel) and avoid politics or religion.",
+        "success_criteria": [
+          "Engage in at least 2 minutes of small talk",
+          "Ask courteous questions about their comfort",
+          "Transition smoothly to business discussion"
+        ]
+      },
+      {
+        "phase_id": "agenda_discussion",
+        "name": "Agenda Discussion",
+        "description": "Review agenda and participate in business discussions",
+        "expected_duration_minutes": 7,
+        "key_vocabulary": [
+          "agenda",
+          "objective",
+          "timeline",
+          "proposal",
+          "discussion",
+          "review",
+          "decision",
+          "action items"
+        ],
+        "essential_phrases": [
+          "Let's review today's agenda",
+          "Our main objective is to...",
+          "What are your thoughts on this proposal?",
+          "Should we move to the next item?",
+          "Let me make a note of that"
+        ],
+        "learning_objectives": [
+          "Follow structured meeting agenda",
+          "Participate in business discussions",
+          "Express opinions professionally",
+          "Take and assign action items"
+        ],
+        "cultural_notes": "In Western business culture, meetings are usually structured with a clear agenda. Everyone is expected to contribute. In some cultures, junior members speak less.",
+        "success_criteria": [
+          "Follow agenda structure",
+          "Contribute to at least one discussion point",
+          "Understand action items assigned"
+        ]
+      },
+      {
+        "phase_id": "professional_closing",
+        "name": "Professional Closing",
+        "description": "Summarize decisions and agree on next steps",
+        "expected_duration_minutes": 2,
+        "key_vocabulary": [
+          "summary",
+          "next steps",
+          "follow up",
+          "deadline",
+          "meeting",
+          "schedule",
+          "contact"
+        ],
+        "essential_phrases": [
+          "Let me summarize our key decisions",
+          "What are our next steps?",
+          "When should we schedule our follow-up?",
+          "Thank you for your time today",
+          "I'll send you the meeting notes"
+        ],
+        "learning_objectives": [
+          "Summarize meeting outcomes",
+          "Agree on follow-up actions",
+          "Close meeting professionally"
+        ],
+        "cultural_notes": "Always end with clear next steps and deadlines. Following up with written notes is professional practice in most business cultures.",
+        "success_criteria": [
+          "Understand meeting summary",
+          "Confirm next steps and timeline",
+          "Exchange contact information if needed"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "basic_greetings",
+      "professional_vocabulary",
+      "time_expressions"
+    ],
+    "learning_outcomes": [
+      "Conduct professional business meetings",
+      "Navigate intercultural business situations",
+      "Follow meeting protocols effectively"
+    ],
+    "vocabulary_focus": [
+      "meeting",
+      "agenda",
+      "colleague",
+      "introduction",
+      "department",
+      "proposal",
+      "discussion",
+      "objective",
+      "action items",
+      "follow up",
+      "schedule",
+      "deadline",
+      "professional",
+      "presentation"
+    ],
+    "cultural_context": {
+      "meeting_etiquette": "Arrive on time, silence phones, take notes, participate actively",
+      "communication_style": "Direct but polite communication is valued in international business",
+      "hierarchical_awareness": "Be aware that some cultures have stronger hierarchy than others"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T12:48:56.576539",
+    "updated_at": "2025-12-21T12:48:56.576539"
+  },
+  "job_interview_professional": {
+    "scenario_id": "job_interview_professional",
+    "name": "Professional Job Interview",
+    "category": "business",
+    "difficulty": "intermediate",
+    "description": "Practice interviewing for a professional position, including self-introduction, discussing experience, answering competency questions, and asking about the role.",
+    "user_role": "job_candidate",
+    "ai_role": "interviewer",
+    "setting": "Company interview room or virtual video call",
+    "duration_minutes": 20,
+    "phases": [
+      {
+        "phase_id": "introduction_icebreaker",
+        "name": "Introduction and Icebreaker",
+        "description": "Professional self-introduction and initial questions",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "background",
+          "experience",
+          "position",
+          "apply",
+          "interested",
+          "opportunity",
+          "qualified",
+          "resume"
+        ],
+        "essential_phrases": [
+          "Thank you for inviting me to interview",
+          "Tell me about yourself",
+          "I have... years of experience in...",
+          "What interests you about this role?"
+        ],
+        "learning_objectives": [
+          "Give professional self-introduction",
+          "Express motivation clearly",
+          "Make positive first impression"
+        ],
+        "cultural_notes": "First impressions matter greatly. Dress professionally, arrive 10 minutes early, and maintain confident body language. In video interviews, ensure good lighting and quiet background.",
+        "success_criteria": [
+          "Deliver clear 2-minute self-introduction",
+          "Express genuine interest in the role",
+          "Demonstrate professionalism and confidence"
+        ]
+      },
+      {
+        "phase_id": "experience_discussion",
+        "name": "Experience Discussion",
+        "description": "Discuss work history and achievements",
+        "expected_duration_minutes": 6,
+        "key_vocabulary": [
+          "responsibility",
+          "achievement",
+          "project",
+          "teamwork",
+          "challenge",
+          "solution",
+          "skills",
+          "accomplishment"
+        ],
+        "essential_phrases": [
+          "In my previous role, I was responsible for...",
+          "One of my key achievements was...",
+          "I successfully led a project to...",
+          "I developed skills in...",
+          "I worked with a team to..."
+        ],
+        "learning_objectives": [
+          "Describe work experience clearly",
+          "Highlight achievements with examples",
+          "Demonstrate relevant skills"
+        ],
+        "cultural_notes": "Use the STAR method (Situation, Task, Action, Result) to structure answers. Be specific with examples and quantify achievements when possible.",
+        "success_criteria": [
+          "Describe at least 2 relevant experiences",
+          "Give specific examples of achievements",
+          "Demonstrate skills matching the job requirements"
+        ]
+      },
+      {
+        "phase_id": "competency_questions",
+        "name": "Competency Questions",
+        "description": "Answer behavioral and situational questions",
+        "expected_duration_minutes": 7,
+        "key_vocabulary": [
+          "strength",
+          "weakness",
+          "conflict",
+          "deadline",
+          "pressure",
+          "problem-solving",
+          "leadership",
+          "teamwork"
+        ],
+        "essential_phrases": [
+          "My greatest strength is...",
+          "I'm working on improving...",
+          "When faced with that situation, I...",
+          "I handled it by...",
+          "The result was..."
+        ],
+        "learning_objectives": [
+          "Answer behavioral questions effectively",
+          "Demonstrate problem-solving abilities",
+          "Show self-awareness and growth mindset"
+        ],
+        "cultural_notes": "Be honest but positive about weaknesses. Show how you're improving. Western culture values taking initiative and speaking up about accomplishments.",
+        "success_criteria": [
+          "Answer competency questions using examples",
+          "Demonstrate problem-solving skills",
+          "Show self-awareness and learning ability"
+        ]
+      },
+      {
+        "phase_id": "questions_closing",
+        "name": "Questions and Closing",
+        "description": "Ask about role and understand next steps",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "expectations",
+          "team",
+          "culture",
+          "growth",
+          "next steps",
+          "timeline",
+          "decision"
+        ],
+        "essential_phrases": [
+          "What would you expect from me in the first 90 days?",
+          "Can you tell me about the team I'd be working with?",
+          "What are the opportunities for growth?",
+          "What are the next steps in the process?",
+          "When can I expect to hear back?"
+        ],
+        "learning_objectives": [
+          "Ask intelligent questions about the role",
+          "Show interest in company culture",
+          "Understand hiring timeline"
+        ],
+        "cultural_notes": "Asking questions shows genuine interest. Avoid asking about salary in first interview unless they bring it up. Always thank them for their time.",
+        "success_criteria": [
+          "Ask at least 2-3 thoughtful questions",
+          "Understand next steps in hiring process",
+          "Close interview professionally"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "professional_vocabulary",
+      "past_tense",
+      "describing_experiences"
+    ],
+    "learning_outcomes": [
+      "Successfully interview for professional positions",
+      "Present qualifications effectively",
+      "Navigate interview process confidently"
+    ],
+    "vocabulary_focus": [
+      "resume",
+      "experience",
+      "qualification",
+      "responsibility",
+      "achievement",
+      "skills",
+      "teamwork",
+      "leadership",
+      "challenge",
+      "solution",
+      "deadline",
+      "career",
+      "opportunity",
+      "growth"
+    ],
+    "cultural_context": {
+      "interview_preparation": "Research the company beforehand, prepare questions, bring copies of resume",
+      "appropriate_attire": "Business professional or business casual depending on company culture",
+      "follow_up": "Send thank-you email within 24 hours reiterating interest"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T12:54:44.470080",
+    "updated_at": "2025-12-21T12:54:44.470080"
+  },
+  "making_friends_social_event": {
+    "scenario_id": "making_friends_social_event",
+    "name": "Making New Friends at a Social Event",
+    "category": "social",
+    "difficulty": "beginner",
+    "description": "Practice meeting someone new at a social gathering, finding common interests, making plans to meet again, and exchanging contact information.",
+    "user_role": "social_participant",
+    "ai_role": "potential_friend",
+    "setting": "Casual social event like a party, community gathering, or hobby meetup",
+    "duration_minutes": 12,
+    "phases": [
+      {
+        "phase_id": "breaking_ice",
+        "name": "Breaking the Ice",
+        "description": "Initiate friendly conversation",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "introduce",
+          "name",
+          "nice",
+          "meet",
+          "first time",
+          "event",
+          "enjoy"
+        ],
+        "essential_phrases": [
+          "Hi, I'm... What's your name?",
+          "Is this your first time here?",
+          "Are you enjoying the event?",
+          "How do you know the host?"
+        ],
+        "learning_objectives": [
+          "Initiate friendly conversations",
+          "Ask open-ended questions",
+          "Show friendly interest"
+        ],
+        "cultural_notes": "Smiling and open body language are universal signs of friendliness. In some cultures, physical proximity varies - be aware of personal space preferences.",
+        "success_criteria": [
+          "Introduce yourself naturally",
+          "Start conversation with friendly question",
+          "Show genuine interest in the other person"
+        ]
+      },
+      {
+        "phase_id": "common_interests",
+        "name": "Finding Common Interests",
+        "description": "Discover shared hobbies and activities",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "hobby",
+          "interest",
+          "enjoy",
+          "love",
+          "favorite",
+          "free time",
+          "weekend",
+          "activity"
+        ],
+        "essential_phrases": [
+          "What do you like to do in your free time?",
+          "I really enjoy...",
+          "Oh, I love that too!",
+          "Have you tried...?",
+          "That sounds interesting!"
+        ],
+        "learning_objectives": [
+          "Discuss hobbies and interests",
+          "Find shared activities",
+          "Express enthusiasm"
+        ],
+        "cultural_notes": "Finding common ground builds friendship. Be genuinely curious about their interests even if different from yours. Active listening shows respect.",
+        "success_criteria": [
+          "Share at least 2 personal interests",
+          "Discover at least 1 common interest",
+          "Express enthusiasm appropriately"
+        ]
+      },
+      {
+        "phase_id": "making_plans",
+        "name": "Making Plans",
+        "description": "Suggest activity and arrange to meet again",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "plans",
+          "weekend",
+          "coffee",
+          "lunch",
+          "movie",
+          "activity",
+          "schedule",
+          "available",
+          "free"
+        ],
+        "essential_phrases": [
+          "We should hang out sometime!",
+          "Are you free next weekend?",
+          "Would you like to grab coffee?",
+          "Let's go to...",
+          "That sounds great!"
+        ],
+        "learning_objectives": [
+          "Suggest activities casually",
+          "Discuss availability",
+          "Make concrete plans"
+        ],
+        "cultural_notes": "Making specific plans shows genuine interest. In some cultures, invitations are more spontaneous; in others, advanced planning is preferred.",
+        "success_criteria": [
+          "Suggest a specific activity",
+          "Agree on a tentative time",
+          "Show enthusiasm for meeting again"
+        ]
+      },
+      {
+        "phase_id": "contact_exchange",
+        "name": "Exchanging Contact Information",
+        "description": "Exchange contact details and conclude warmly",
+        "expected_duration_minutes": 2,
+        "key_vocabulary": [
+          "phone",
+          "number",
+          "contact",
+          "social media",
+          "message",
+          "text",
+          "call",
+          "connect"
+        ],
+        "essential_phrases": [
+          "Can I get your number?",
+          "Are you on social media?",
+          "I'll send you a message",
+          "Let's stay in touch!",
+          "Great meeting you!"
+        ],
+        "learning_objectives": [
+          "Exchange contact details naturally",
+          "Use modern communication methods",
+          "Conclude conversation warmly"
+        ],
+        "cultural_notes": "In digital age, social media connections are common. Choose method both are comfortable with. Follow up within a day or two to maintain momentum.",
+        "success_criteria": [
+          "Exchange contact information successfully",
+          "Agree on how to follow up",
+          "End conversation on positive note"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "basic_greetings",
+      "hobbies_vocabulary",
+      "making_plans"
+    ],
+    "learning_outcomes": [
+      "Initiate and maintain friendships",
+      "Build social connections naturally",
+      "Navigate social situations confidently"
+    ],
+    "vocabulary_focus": [
+      "friend",
+      "hobby",
+      "interest",
+      "enjoy",
+      "free time",
+      "weekend",
+      "plans",
+      "coffee",
+      "hang out",
+      "contact",
+      "phone",
+      "message",
+      "social media",
+      "fun"
+    ],
+    "cultural_context": {
+      "friendship_building": "Friendships take time to develop. Multiple interactions build trust and connection",
+      "social_norms": "Be yourself while being respectful of cultural differences in friendship customs",
+      "follow_through": "Following up after initial meeting is crucial. Don't wait too long to reconnect"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T12:54:44.470080",
+    "updated_at": "2025-12-21T12:54:44.470080"
+  },
+  "attending_cultural_festival": {
+    "scenario_id": "attending_cultural_festival",
+    "name": "Attending a Cultural Festival",
+    "category": "social",
+    "difficulty": "intermediate",
+    "description": "Experience a local cultural festival, learning about traditions, trying foods, and engaging with cultural activities while practicing language skills.",
+    "user_role": "festival_visitor",
+    "ai_role": "local_guide",
+    "setting": "Community cultural festival with food stalls, performances, and activities",
+    "duration_minutes": 18,
+    "phases": [
+      {
+        "phase_id": "festival_overview",
+        "name": "Festival Overview",
+        "description": "Learn about festival significance and plan",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "festival",
+          "tradition",
+          "celebrate",
+          "culture",
+          "heritage",
+          "event",
+          "significance",
+          "history"
+        ],
+        "essential_phrases": [
+          "What is this festival celebrating?",
+          "Can you tell me about the traditions?",
+          "What should I see first?",
+          "What's the history behind this?",
+          "This is fascinating!"
+        ],
+        "learning_objectives": [
+          "Ask about cultural significance",
+          "Show respect for traditions",
+          "Plan festival visit"
+        ],
+        "cultural_notes": "Cultural festivals celebrate heritage and community. Showing genuine interest and respect is appreciated. Ask questions to learn more.",
+        "success_criteria": [
+          "Understand festival's cultural significance",
+          "Ask at least 3 questions about traditions",
+          "Create plan for experiencing festival"
+        ]
+      },
+      {
+        "phase_id": "trying_food",
+        "name": "Trying Traditional Foods",
+        "description": "Sample traditional dishes and learn about cuisine",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "dish",
+          "traditional",
+          "ingredients",
+          "flavor",
+          "recipe",
+          "spicy",
+          "sweet",
+          "delicious",
+          "recommend"
+        ],
+        "essential_phrases": [
+          "What do you recommend trying?",
+          "What's in this dish?",
+          "Is it spicy?",
+          "This tastes amazing!",
+          "Can I try a sample?",
+          "I'd like to order..."
+        ],
+        "learning_objectives": [
+          "Order traditional foods confidently",
+          "Describe flavors and textures",
+          "Learn about cultural cuisine"
+        ],
+        "cultural_notes": "Food is central to cultural identity. Be adventurous but know your limits. Complimenting food shows appreciation for culture.",
+        "success_criteria": [
+          "Try at least 2 traditional dishes",
+          "Ask about ingredients and preparation",
+          "Express appreciation appropriately"
+        ]
+      },
+      {
+        "phase_id": "cultural_activities",
+        "name": "Participating in Activities",
+        "description": "Join traditional activities or watch performances",
+        "expected_duration_minutes": 6,
+        "key_vocabulary": [
+          "performance",
+          "dance",
+          "music",
+          "participate",
+          "watch",
+          "traditional",
+          "costume",
+          "demonstration"
+        ],
+        "essential_phrases": [
+          "What's happening over there?",
+          "Can I participate?",
+          "How do I do this?",
+          "That was beautiful!",
+          "What does that symbolize?"
+        ],
+        "learning_objectives": [
+          "Engage with cultural activities",
+          "Ask about symbolism and meaning",
+          "Participate respectfully"
+        ],
+        "cultural_notes": "Participation is usually welcomed if done respectfully. Ask before taking photos, especially of people in traditional dress.",
+        "success_criteria": [
+          "Participate in or observe at least 1 activity",
+          "Ask about cultural symbolism",
+          "Show respect for traditions"
+        ]
+      },
+      {
+        "phase_id": "reflection_gratitude",
+        "name": "Reflection and Gratitude",
+        "description": "Share experience and express appreciation",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "experience",
+          "appreciate",
+          "grateful",
+          "learn",
+          "wonderful",
+          "memory",
+          "culture",
+          "thank"
+        ],
+        "essential_phrases": [
+          "Thank you for sharing your culture",
+          "I learned so much today",
+          "This was a wonderful experience",
+          "I really appreciate your help",
+          "I'll remember this"
+        ],
+        "learning_objectives": [
+          "Express gratitude sincerely",
+          "Reflect on cultural learning",
+          "Make meaningful connections"
+        ],
+        "cultural_notes": "Expressing genuine appreciation for cultural sharing builds bridges. Many people love sharing their heritage with interested visitors.",
+        "success_criteria": [
+          "Express sincere gratitude",
+          "Share what you learned",
+          "Make personal connection"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "food_vocabulary",
+      "asking_questions",
+      "expressing_opinions"
+    ],
+    "learning_outcomes": [
+      "Navigate cultural events confidently",
+      "Engage respectfully with traditions",
+      "Build cross-cultural understanding"
+    ],
+    "vocabulary_focus": [
+      "festival",
+      "tradition",
+      "culture",
+      "celebrate",
+      "heritage",
+      "traditional",
+      "dish",
+      "performance",
+      "participate",
+      "appreciate",
+      "costume",
+      "music",
+      "dance",
+      "experience"
+    ],
+    "cultural_context": {
+      "respectful_participation": "Show respect through genuine interest, appropriate dress, and following local customs",
+      "photography_etiquette": "Always ask before photographing people or sacred objects",
+      "cultural_exchange": "Festivals are opportunities for cultural exchange and building understanding"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T12:54:44.470080",
+    "updated_at": "2025-12-21T12:54:44.470080"
+  },
+  "doctor_visit_consultation": {
+    "scenario_id": "doctor_visit_consultation",
+    "name": "Doctor's Visit for Health Consultation",
+    "category": "healthcare",
+    "difficulty": "intermediate",
+    "description": "Visit a doctor for a health concern, describing symptoms, understanding diagnosis, and discussing treatment options.",
+    "user_role": "patient",
+    "ai_role": "doctor",
+    "setting": "Doctor's office or medical clinic",
+    "duration_minutes": 20,
+    "phases": [
+      {
+        "phase_id": "check_in_symptoms",
+        "name": "Check-in and Symptoms",
+        "description": "Describe reason for visit and symptoms",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "symptoms",
+          "pain",
+          "fever",
+          "dizzy",
+          "nausea",
+          "headache",
+          "cough",
+          "sore",
+          "duration"
+        ],
+        "essential_phrases": [
+          "I've been feeling...",
+          "It started... days ago",
+          "The pain is in my...",
+          "It hurts when I...",
+          "I also have..."
+        ],
+        "learning_objectives": [
+          "Describe symptoms accurately",
+          "Explain duration and severity",
+          "Answer medical history questions"
+        ],
+        "cultural_notes": "Be specific about symptoms - doctors need details. In Western medicine, directness about bodily functions is professional, not embarrassing.",
+        "success_criteria": [
+          "Clearly describe main symptoms",
+          "Provide timeline of symptoms",
+          "Answer doctor's questions accurately"
+        ]
+      },
+      {
+        "phase_id": "examination_questions",
+        "name": "Examination and Questions",
+        "description": "Undergo examination and answer questions",
+        "expected_duration_minutes": 6,
+        "key_vocabulary": [
+          "examine",
+          "temperature",
+          "blood pressure",
+          "breathe",
+          "allergies",
+          "medication",
+          "medical history"
+        ],
+        "essential_phrases": [
+          "Where does it hurt?",
+          "Take a deep breath",
+          "Does this hurt?",
+          "Do you have any allergies?",
+          "Are you taking any medications?"
+        ],
+        "learning_objectives": [
+          "Understand examination instructions",
+          "Provide medical history",
+          "Respond to physical exam prompts"
+        ],
+        "cultural_notes": "Doctors may ask personal questions necessary for diagnosis. Patient privacy is protected by law in most countries.",
+        "success_criteria": [
+          "Follow examination instructions",
+          "Provide complete medical history",
+          "Communicate discomfort or concerns"
+        ]
+      },
+      {
+        "phase_id": "diagnosis_explanation",
+        "name": "Diagnosis and Explanation",
+        "description": "Understand diagnosis and ask questions",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "diagnosis",
+          "condition",
+          "infection",
+          "inflammation",
+          "test",
+          "results",
+          "cause",
+          "serious"
+        ],
+        "essential_phrases": [
+          "What's wrong with me?",
+          "Is it serious?",
+          "What caused this?",
+          "Will I need tests?",
+          "How long will it last?"
+        ],
+        "learning_objectives": [
+          "Understand medical diagnosis",
+          "Ask clarifying questions",
+          "Comprehend medical terminology"
+        ],
+        "cultural_notes": "Don't hesitate to ask doctor to explain in simpler terms. Understanding your diagnosis is your right as a patient.",
+        "success_criteria": [
+          "Understand the diagnosis",
+          "Ask at least 2 clarifying questions",
+          "Know if further tests needed"
+        ]
+      },
+      {
+        "phase_id": "treatment_followup",
+        "name": "Treatment and Follow-up",
+        "description": "Discuss treatment plan and next steps",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "treatment",
+          "prescription",
+          "dosage",
+          "side effects",
+          "rest",
+          "follow-up",
+          "appointment",
+          "recovery"
+        ],
+        "essential_phrases": [
+          "What's the treatment?",
+          "How do I take this medication?",
+          "Are there side effects?",
+          "When should I come back?",
+          "What should I avoid?",
+          "When will I feel better?"
+        ],
+        "learning_objectives": [
+          "Understand treatment instructions",
+          "Learn medication usage",
+          "Know when to return"
+        ],
+        "cultural_notes": "Always ask about medication instructions, side effects, and what to do if symptoms worsen. Keep a list of your medications.",
+        "success_criteria": [
+          "Understand treatment plan completely",
+          "Know medication dosage and timing",
+          "Schedule follow-up if needed"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "body_parts_vocabulary",
+      "describing_sensations",
+      "time_expressions"
+    ],
+    "learning_outcomes": [
+      "Communicate health concerns effectively",
+      "Understand medical advice",
+      "Navigate healthcare system"
+    ],
+    "vocabulary_focus": [
+      "symptoms",
+      "pain",
+      "doctor",
+      "examination",
+      "diagnosis",
+      "treatment",
+      "prescription",
+      "medication",
+      "fever",
+      "headache",
+      "allergies",
+      "follow-up",
+      "appointment",
+      "recovery"
+    ],
+    "cultural_context": {
+      "patient_rights": "Patients have right to understand diagnosis, ask questions, and participate in treatment decisions",
+      "privacy": "Medical information is confidential. Doctors cannot share without permission",
+      "second_opinions": "Seeking second opinion for serious diagnosis is acceptable and common"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T12:54:44.470080",
+    "updated_at": "2025-12-21T12:54:44.470080"
+  },
+  "medical_emergency_response": {
+    "scenario_id": "medical_emergency_response",
+    "name": "Responding to Medical Emergency",
+    "category": "emergency",
+    "difficulty": "advanced",
+    "description": "Handle a medical emergency situation, calling for help, providing information to emergency services, and communicating urgently.",
+    "user_role": "caller",
+    "ai_role": "emergency_dispatcher",
+    "setting": "Emergency phone call to 911/emergency services",
+    "duration_minutes": 10,
+    "phases": [
+      {
+        "phase_id": "emergency_call",
+        "name": "Making Emergency Call",
+        "description": "Call emergency services and state emergency",
+        "expected_duration_minutes": 2,
+        "key_vocabulary": [
+          "emergency",
+          "ambulance",
+          "help",
+          "urgent",
+          "injured",
+          "unconscious",
+          "breathing",
+          "accident"
+        ],
+        "essential_phrases": [
+          "I need an ambulance!",
+          "There's been an accident",
+          "Someone is injured",
+          "Please send help immediately",
+          "This is an emergency"
+        ],
+        "learning_objectives": [
+          "State emergency clearly and quickly",
+          "Request appropriate help",
+          "Stay calm under pressure"
+        ],
+        "cultural_notes": "Emergency number varies by country (911 in US/Canada, 999 in UK, 112 in EU). Staying calm helps dispatcher help you faster.",
+        "success_criteria": [
+          "State type of emergency clearly",
+          "Request ambulance/help immediately",
+          "Demonstrate urgency appropriately"
+        ]
+      },
+      {
+        "phase_id": "location_details",
+        "name": "Providing Location",
+        "description": "Give precise location information",
+        "expected_duration_minutes": 2,
+        "key_vocabulary": [
+          "address",
+          "location",
+          "street",
+          "building",
+          "landmark",
+          "cross street",
+          "floor",
+          "apartment"
+        ],
+        "essential_phrases": [
+          "We're at...",
+          "The address is...",
+          "Near the... (landmark)",
+          "Between... and... streets",
+          "In the... building"
+        ],
+        "learning_objectives": [
+          "Provide exact location quickly",
+          "Use landmarks if address unknown",
+          "Give access information"
+        ],
+        "cultural_notes": "Know your address or be able to identify landmarks. Dispatchers need precise location to send help. If unsure, describe surroundings.",
+        "success_criteria": [
+          "Provide exact address or clear location",
+          "Give additional identifying information",
+          "Clarify how responders can access"
+        ]
+      },
+      {
+        "phase_id": "victim_condition",
+        "name": "Describing Victim's Condition",
+        "description": "Describe person's symptoms and status",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "conscious",
+          "breathing",
+          "bleeding",
+          "pulse",
+          "responsive",
+          "chest pain",
+          "seizure",
+          "alert"
+        ],
+        "essential_phrases": [
+          "He/She is not breathing",
+          "They're unconscious",
+          "There's a lot of bleeding",
+          "They're having chest pain",
+          "They can't speak",
+          "They're responsive/not responsive"
+        ],
+        "learning_objectives": [
+          "Assess and describe condition",
+          "Answer dispatcher's questions",
+          "Provide critical information"
+        ],
+        "cultural_notes": "Dispatchers are trained to extract crucial information. Answer their questions directly. They may guide you through first aid steps.",
+        "success_criteria": [
+          "Describe consciousness level",
+          "Report breathing status",
+          "Identify visible injuries"
+        ]
+      },
+      {
+        "phase_id": "following_instructions",
+        "name": "Following Instructions",
+        "description": "Follow dispatcher's first aid instructions",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "instructions",
+          "CPR",
+          "pressure",
+          "position",
+          "tilt",
+          "compress",
+          "rescue breaths",
+          "stay calm"
+        ],
+        "essential_phrases": [
+          "What should I do?",
+          "How do I do that?",
+          "I'm doing it now",
+          "Should I continue?",
+          "They're still not breathing",
+          "Help is here"
+        ],
+        "learning_objectives": [
+          "Follow emergency instructions",
+          "Perform basic first aid",
+          "Update dispatcher on changes"
+        ],
+        "cultural_notes": "Stay on the line until help arrives. Dispatchers can guide life-saving procedures. Don't hang up unless told to.",
+        "success_criteria": [
+          "Follow dispatcher's instructions",
+          "Perform actions as directed",
+          "Stay on line until help arrives"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "basic_medical_vocabulary",
+      "giving_directions",
+      "imperative_commands"
+    ],
+    "learning_outcomes": [
+      "Handle emergency situations effectively",
+      "Communicate under pressure",
+      "Provide life-saving information"
+    ],
+    "vocabulary_focus": [
+      "emergency",
+      "ambulance",
+      "help",
+      "accident",
+      "injured",
+      "unconscious",
+      "breathing",
+      "bleeding",
+      "address",
+      "location",
+      "CPR",
+      "conscious",
+      "responsive",
+      "urgent"
+    ],
+    "cultural_context": {
+      "emergency_numbers": "Know local emergency number. In many countries you can call emergency services even without phone credit",
+      "dispatcher_role": "Emergency dispatchers are trained to help. Trust their guidance and stay calm",
+      "staying_safe": "Your safety is also important. Don't put yourself in danger while helping others"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T12:54:44.470080",
+    "updated_at": "2025-12-21T12:54:44.470080"
+  },
+  "pharmacy_visit": {
+    "scenario_id": "pharmacy_visit",
+    "name": "At the Pharmacy",
+    "category": "daily_life",
+    "difficulty": "beginner",
+    "description": "Visit a pharmacy to pick up prescription medication, ask about over-the-counter options, and understand usage instructions.",
+    "user_role": "customer",
+    "ai_role": "pharmacist",
+    "setting": "Local pharmacy",
+    "duration_minutes": 12,
+    "phases": [
+      {
+        "phase_id": "prescription_pickup",
+        "name": "Picking Up Prescription",
+        "description": "Provide information and collect prescription",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "prescription",
+          "medication",
+          "pharmacy",
+          "refill",
+          "ready",
+          "name",
+          "date of birth",
+          "insurance"
+        ],
+        "essential_phrases": [
+          "I'm here to pick up a prescription",
+          "My name is...",
+          "My date of birth is...",
+          "Is it ready?",
+          "I need a refill"
+        ],
+        "learning_objectives": [
+          "Request prescription pickup",
+          "Provide identification information",
+          "Handle prescription process"
+        ],
+        "cultural_notes": "Pharmacies verify identity for safety. Have ID ready. Insurance cards may be needed. Some prescriptions require signatures.",
+        "success_criteria": [
+          "Provide correct identification",
+          "Confirm prescription details",
+          "Complete pickup process"
+        ]
+      },
+      {
+        "phase_id": "usage_instructions",
+        "name": "Understanding Instructions",
+        "description": "Learn how to take medication properly",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "dosage",
+          "instructions",
+          "take",
+          "times per day",
+          "with food",
+          "before bed",
+          "side effects",
+          "warning"
+        ],
+        "essential_phrases": [
+          "How do I take this?",
+          "How many times a day?",
+          "Should I take it with food?",
+          "What are the side effects?",
+          "What should I avoid?",
+          "When will it start working?"
+        ],
+        "learning_objectives": [
+          "Understand medication instructions",
+          "Learn about side effects",
+          "Know what to avoid"
+        ],
+        "cultural_notes": "Always ask questions about medication. Pharmacists are experts and happy to explain. Follow instructions exactly as given.",
+        "success_criteria": [
+          "Understand when and how to take medication",
+          "Know potential side effects",
+          "Understand warnings and interactions"
+        ]
+      },
+      {
+        "phase_id": "otc_recommendations",
+        "name": "Over-the-Counter Options",
+        "description": "Ask about non-prescription remedies",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "recommend",
+          "over-the-counter",
+          "pain relief",
+          "cold",
+          "allergy",
+          "vitamins",
+          "brand",
+          "generic"
+        ],
+        "essential_phrases": [
+          "What do you recommend for...?",
+          "Do you have something for...?",
+          "Is there a cheaper option?",
+          "What's the difference between these?",
+          "Which one is better?"
+        ],
+        "learning_objectives": [
+          "Ask for recommendations",
+          "Compare options",
+          "Make informed choices"
+        ],
+        "cultural_notes": "Generic medications are same quality as brand names but cheaper. Pharmacists can recommend options for common ailments.",
+        "success_criteria": [
+          "Get recommendation for need",
+          "Understand product options",
+          "Make appropriate selection"
+        ]
+      },
+      {
+        "phase_id": "payment_questions",
+        "name": "Payment and Final Questions",
+        "description": "Complete purchase and ask remaining questions",
+        "expected_duration_minutes": 2,
+        "key_vocabulary": [
+          "cost",
+          "insurance",
+          "copay",
+          "payment",
+          "receipt",
+          "refund",
+          "return"
+        ],
+        "essential_phrases": [
+          "How much is it?",
+          "Does insurance cover this?",
+          "What's my copay?",
+          "Can I return it if it doesn't work?",
+          "Do I need a receipt?"
+        ],
+        "learning_objectives": [
+          "Handle payment process",
+          "Understand insurance coverage",
+          "Know return policies"
+        ],
+        "cultural_notes": "Keep receipts for insurance reimbursement or returns. Copays vary by insurance. Some medications cannot be returned once purchased.",
+        "success_criteria": [
+          "Complete payment successfully",
+          "Receive and keep receipt",
+          "Understand coverage and costs"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "basic_shopping_vocabulary",
+      "numbers_and_money",
+      "health_vocabulary"
+    ],
+    "learning_outcomes": [
+      "Navigate pharmacy visits confidently",
+      "Understand medication instructions",
+      "Communicate health needs effectively"
+    ],
+    "vocabulary_focus": [
+      "pharmacy",
+      "prescription",
+      "medication",
+      "dosage",
+      "instructions",
+      "side effects",
+      "refill",
+      "over-the-counter",
+      "recommend",
+      "insurance",
+      "copay",
+      "pain relief",
+      "vitamins",
+      "receipt"
+    ],
+    "cultural_context": {
+      "pharmacist_expertise": "Pharmacists are medication experts. They can answer questions and catch potential problems",
+      "privacy": "Pharmacies have privacy laws. Your medication information is confidential",
+      "medication_adherence": "Taking medications as prescribed is crucial for effectiveness and safety"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T12:54:44.470080",
+    "updated_at": "2025-12-21T12:54:44.470080"
+  },
+  "post_office_visit": {
+    "scenario_id": "post_office_visit",
+    "name": "At the Post Office",
+    "category": "daily_life",
+    "difficulty": "beginner",
+    "description": "Visit post office to send a package, buy stamps, and handle various postal services.",
+    "user_role": "customer",
+    "ai_role": "postal_clerk",
+    "setting": "Local post office",
+    "duration_minutes": 15,
+    "phases": [
+      {
+        "phase_id": "sending_package",
+        "name": "Sending a Package",
+        "description": "Prepare and send a package",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "package",
+          "mail",
+          "send",
+          "destination",
+          "address",
+          "weight",
+          "fragile",
+          "tracking"
+        ],
+        "essential_phrases": [
+          "I'd like to send this package",
+          "Where is it going?",
+          "How much does it weigh?",
+          "What's inside?",
+          "Is it fragile?",
+          "I need tracking"
+        ],
+        "learning_objectives": [
+          "Describe package details",
+          "Understand shipping questions",
+          "Provide necessary information"
+        ],
+        "cultural_notes": "Post offices ask about contents for safety and customs. Be honest. Declaring items incorrectly can cause delays or legal issues.",
+        "success_criteria": [
+          "Provide complete destination information",
+          "Answer questions about contents",
+          "Select appropriate mailing service"
+        ]
+      },
+      {
+        "phase_id": "shipping_options",
+        "name": "Choosing Shipping Options",
+        "description": "Compare speeds and costs",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "express",
+          "priority",
+          "standard",
+          "delivery",
+          "days",
+          "cost",
+          "insurance",
+          "signature"
+        ],
+        "essential_phrases": [
+          "What are my options?",
+          "How fast will it arrive?",
+          "What's the difference in cost?",
+          "I need it there by...",
+          "Which is cheapest?",
+          "Can I insure it?"
+        ],
+        "learning_objectives": [
+          "Compare shipping options",
+          "Understand costs and timeframes",
+          "Make appropriate choice"
+        ],
+        "cultural_notes": "Faster shipping costs more. Insurance protects valuable items. Signature confirmation ensures delivery to person, not just door.",
+        "success_criteria": [
+          "Understand all available options",
+          "Compare costs and delivery times",
+          "Select option matching needs"
+        ]
+      },
+      {
+        "phase_id": "buying_stamps",
+        "name": "Buying Stamps",
+        "description": "Purchase stamps and understand usage",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "stamp",
+          "letter",
+          "postcard",
+          "international",
+          "domestic",
+          "sheet",
+          "book",
+          "forever"
+        ],
+        "essential_phrases": [
+          "I need stamps for...",
+          "How many stamps do I need?",
+          "Do you have international stamps?",
+          "Can I get a book of stamps?",
+          "These are for letters/postcards"
+        ],
+        "learning_objectives": [
+          "Request appropriate stamps",
+          "Understand stamp types",
+          "Calculate quantity needed"
+        ],
+        "cultural_notes": "'Forever stamps' in US never expire and are always valid for first-class mail regardless of price increases. Good investment.",
+        "success_criteria": [
+          "Purchase correct stamp type",
+          "Get appropriate quantity",
+          "Understand how to use them"
+        ]
+      },
+      {
+        "phase_id": "completing_transaction",
+        "name": "Payment and Receipt",
+        "description": "Complete payment and get documentation",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "total",
+          "payment",
+          "receipt",
+          "tracking number",
+          "confirmation",
+          "cash",
+          "card"
+        ],
+        "essential_phrases": [
+          "What's the total?",
+          "Can I pay by card?",
+          "May I have a receipt?",
+          "What's the tracking number?",
+          "When will it arrive?"
+        ],
+        "learning_objectives": [
+          "Complete payment transaction",
+          "Obtain tracking information",
+          "Keep necessary documentation"
+        ],
+        "cultural_notes": "Keep tracking numbers and receipts. They're proof of mailing and needed for claims if package is lost. Most post offices accept cards now.",
+        "success_criteria": [
+          "Pay correctly and get receipt",
+          "Record tracking number",
+          "Understand expected delivery"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "basic_shopping_vocabulary",
+      "numbers_and_money",
+      "giving_addresses"
+    ],
+    "learning_outcomes": [
+      "Handle postal services independently",
+      "Understand shipping options",
+      "Communicate mailing needs effectively"
+    ],
+    "vocabulary_focus": [
+      "post office",
+      "package",
+      "mail",
+      "send",
+      "stamp",
+      "delivery",
+      "tracking",
+      "express",
+      "priority",
+      "standard",
+      "address",
+      "weight",
+      "fragile",
+      "receipt"
+    ],
+    "cultural_context": {
+      "postal_services": "Post offices offer many services beyond mailing: passports, money orders, PO boxes",
+      "customs_forms": "International packages require customs forms declaring contents and value",
+      "proof_of_mailing": "Always get receipt with tracking for important items. It's your proof of sending"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T12:54:44.470080",
+    "updated_at": "2025-12-21T12:54:44.470080"
+  },
+  "sports_discussion": {
+    "scenario_id": "sports_discussion",
+    "name": "Discussing Sports and Games",
+    "category": "hobbies",
+    "difficulty": "beginner",
+    "description": "Have a casual conversation about sports, favorite teams, recent games, and sports-related activities.",
+    "user_role": "sports_fan",
+    "ai_role": "fellow_fan",
+    "setting": "Casual setting like bar, party, or workplace break room",
+    "duration_minutes": 15,
+    "phases": [
+      {
+        "phase_id": "favorite_sports",
+        "name": "Talking About Favorite Sports",
+        "description": "Discuss sports preferences and interests",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "sport",
+          "team",
+          "favorite",
+          "play",
+          "watch",
+          "fan",
+          "follow",
+          "season"
+        ],
+        "essential_phrases": [
+          "What sports do you follow?",
+          "I'm a big fan of...",
+          "Do you play any sports?",
+          "Who's your favorite team?",
+          "I love watching..."
+        ],
+        "learning_objectives": [
+          "Discuss sports preferences",
+          "Express enthusiasm",
+          "Find common interests"
+        ],
+        "cultural_notes": "Sports are common social topics. Being a fan creates connections. Different regions have different popular sports (football/soccer, American football, basketball, baseball, cricket, etc.).",
+        "success_criteria": [
+          "Share favorite sports and teams",
+          "Ask about other person's preferences",
+          "Show interest and engagement"
+        ]
+      },
+      {
+        "phase_id": "recent_games",
+        "name": "Discussing Recent Games",
+        "description": "Talk about recent matches and performances",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "game",
+          "match",
+          "win",
+          "lose",
+          "score",
+          "player",
+          "amazing",
+          "disappointing",
+          "exciting"
+        ],
+        "essential_phrases": [
+          "Did you see the game last night?",
+          "What a game!",
+          "They played really well",
+          "I can't believe they lost",
+          "That was an amazing play",
+          "The score was..."
+        ],
+        "learning_objectives": [
+          "Describe game outcomes",
+          "Express opinions about performances",
+          "Use past tense fluently"
+        ],
+        "cultural_notes": "Sports discussions can be passionate but friendly. Regional and national pride often involved. Be respectful of rival team fans.",
+        "success_criteria": [
+          "Discuss at least one recent game",
+          "Express opinions about performances",
+          "Use sports vocabulary naturally"
+        ]
+      },
+      {
+        "phase_id": "predictions_opinions",
+        "name": "Predictions and Opinions",
+        "description": "Share predictions and debate sports topics",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "predict",
+          "think",
+          "believe",
+          "championship",
+          "playoffs",
+          "underdog",
+          "favorite",
+          "chances"
+        ],
+        "essential_phrases": [
+          "I think they'll win",
+          "Who do you think will win?",
+          "They have a good chance",
+          "I'm not so sure about...",
+          "They're the favorites",
+          "It's going to be close"
+        ],
+        "learning_objectives": [
+          "Make predictions",
+          "Express and defend opinions",
+          "Use future tense and conditionals"
+        ],
+        "cultural_notes": "Sports predictions and debates are fun social activities. Friendly disagreement is normal. Avoid betting discussions unless others bring it up.",
+        "success_criteria": [
+          "Make at least one prediction",
+          "Explain reasoning",
+          "Engage in friendly debate"
+        ]
+      },
+      {
+        "phase_id": "personal_experience",
+        "name": "Personal Sports Experience",
+        "description": "Share personal sports participation",
+        "expected_duration_minutes": 2,
+        "key_vocabulary": [
+          "play",
+          "practice",
+          "coach",
+          "teammate",
+          "exercise",
+          "fitness",
+          "injury",
+          "hobby"
+        ],
+        "essential_phrases": [
+          "I used to play...",
+          "I play... on weekends",
+          "I'm trying to get back into...",
+          "I coach a youth team",
+          "I just watch, I don't play"
+        ],
+        "learning_objectives": [
+          "Discuss personal sports involvement",
+          "Share experiences and stories",
+          "Connect through shared activities"
+        ],
+        "cultural_notes": "Many people enjoy sports recreationally. Youth sports are important in many cultures. Playing sports shows activity and health consciousness.",
+        "success_criteria": [
+          "Share personal sports experience",
+          "Show interest in others' activities",
+          "Make personal connection"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "basic_past_tense",
+      "expressing_opinions",
+      "making_predictions"
+    ],
+    "learning_outcomes": [
+      "Engage in sports conversations naturally",
+      "Express opinions and predictions",
+      "Build social connections through shared interests"
+    ],
+    "vocabulary_focus": [
+      "sports",
+      "team",
+      "game",
+      "match",
+      "win",
+      "lose",
+      "score",
+      "player",
+      "fan",
+      "season",
+      "championship",
+      "favorite",
+      "predict",
+      "exciting"
+    ],
+    "cultural_context": {
+      "sports_culture": "Sports are major social topics globally. Understanding local favorites helps integration",
+      "team_loyalty": "Team loyalty is often regional or family-based and can be lifelong",
+      "sportsmanship": "Good sportsmanship values winning graciously and losing with dignity"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T12:54:44.470080",
+    "updated_at": "2025-12-21T12:54:44.470080"
   }
 }

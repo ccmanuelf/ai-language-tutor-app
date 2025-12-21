@@ -95,6 +95,7 @@ def create_youlearn_sidebar():
                 "Content Organization",
                 style="color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem; padding: 0 1rem;",
             ),
+            A(
                 Span(create_heroicon_svg("book", "20"), style="margin-right: 0.75rem;"),
                 "Content Library",
                 href="/library",
@@ -114,7 +115,6 @@ def create_youlearn_sidebar():
             ),
             A(
                 Span(create_heroicon_svg("star", "20"), style="margin-right: 0.75rem;"),
-                ),
                 "Favorites",
                 href="/favorites",
                 style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
