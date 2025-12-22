@@ -2423,5 +2423,2521 @@
     "is_active": true,
     "created_at": "2025-12-21T12:54:44.470080",
     "updated_at": "2025-12-21T12:54:44.470080"
+  },
+  "banking_account_services": {
+    "scenario_id": "banking_account_services",
+    "name": "Banking and Financial Services",
+    "category": "daily_life",
+    "difficulty": "intermediate",
+    "description": "Visit a bank to open an account, discuss financial products, understand banking services, and handle transactions.",
+    "user_role": "customer",
+    "ai_role": "bank_representative",
+    "setting": "Bank branch or online banking consultation",
+    "duration_minutes": 18,
+    "phases": [
+      {
+        "phase_id": "opening_account",
+        "name": "Opening an Account",
+        "description": "Learn about account types and open a new account",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "account",
+          "checking",
+          "savings",
+          "deposit",
+          "minimum balance",
+          "interest rate",
+          "fees",
+          "documents",
+          "identification",
+          "signature"
+        ],
+        "essential_phrases": [
+          "I'd like to open an account",
+          "What types of accounts do you offer?",
+          "What are the fees?",
+          "Is there a minimum balance required?",
+          "What documents do I need?",
+          "I'd like to open a checking account"
+        ],
+        "learning_objectives": [
+          "Understand different account types",
+          "Ask about fees and requirements",
+          "Provide necessary documentation"
+        ],
+        "cultural_notes": "Banks in many countries require government-issued ID and proof of address. Opening an account may require an initial deposit. Ask about all fees upfront - monthly maintenance, overdraft, ATM fees. Compare different account types before deciding.",
+        "success_criteria": [
+          "Ask about at least 2 account types",
+          "Understand fee structure",
+          "Successfully provide required information"
+        ]
+      },
+      {
+        "phase_id": "banking_services",
+        "name": "Banking Services Overview",
+        "description": "Learn about available banking services and products",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "debit card",
+          "credit card",
+          "online banking",
+          "mobile app",
+          "direct deposit",
+          "wire transfer",
+          "bill pay",
+          "overdraft protection",
+          "ATM",
+          "PIN"
+        ],
+        "essential_phrases": [
+          "How does online banking work?",
+          "Can I get a debit card?",
+          "What about mobile banking?",
+          "How do I set up direct deposit?",
+          "Are there ATM fees?",
+          "Can I transfer money internationally?"
+        ],
+        "learning_objectives": [
+          "Understand modern banking services",
+          "Learn about digital banking options",
+          "Ask about card services"
+        ],
+        "cultural_notes": "Online and mobile banking are standard in most countries. Set up online banking immediately - it's more convenient than visiting branches. Direct deposit is preferred by most employers. Keep your PIN secret and change it regularly.",
+        "success_criteria": [
+          "Understand online banking setup",
+          "Know how to get debit/credit cards",
+          "Ask about fees for various services"
+        ]
+      },
+      {
+        "phase_id": "making_transaction",
+        "name": "Making a Transaction",
+        "description": "Perform common banking transactions",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "deposit",
+          "withdrawal",
+          "transfer",
+          "balance",
+          "transaction",
+          "receipt",
+          "cash",
+          "check",
+          "account number",
+          "routing number"
+        ],
+        "essential_phrases": [
+          "I'd like to deposit this check",
+          "I need to withdraw some cash",
+          "Can I transfer money to another account?",
+          "What's my current balance?",
+          "May I have a receipt?",
+          "How long will this transaction take?"
+        ],
+        "learning_objectives": [
+          "Perform deposits and withdrawals",
+          "Transfer money between accounts",
+          "Check account balance"
+        ],
+        "cultural_notes": "Always get receipts for transactions. Checks take 1-5 business days to clear. Wire transfers are usually same-day but have fees. ATMs are convenient but may charge fees if not from your bank. Keep transaction records for taxes.",
+        "success_criteria": [
+          "Complete at least one transaction",
+          "Understand processing times",
+          "Keep proper documentation"
+        ]
+      },
+      {
+        "phase_id": "security",
+        "name": "Questions and Security",
+        "description": "Ask about security features and get contact information",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "security",
+          "fraud protection",
+          "password",
+          "security questions",
+          "customer service",
+          "phone number",
+          "email",
+          "branch hours",
+          "two-factor authentication"
+        ],
+        "essential_phrases": [
+          "How is my account protected?",
+          "What if I see fraudulent charges?",
+          "How do I contact customer service?",
+          "What are your hours?",
+          "Is my information secure?"
+        ],
+        "learning_objectives": [
+          "Understand security measures",
+          "Know how to report fraud",
+          "Have contact information for help"
+        ],
+        "cultural_notes": "Banks have fraud protection, but report suspicious activity immediately. Use strong passwords and enable two-factor authentication. Never share passwords or PINs. Customer service is available 24/7 for most banks. Register your phone for alerts about unusual activity.",
+        "success_criteria": [
+          "Understand fraud protection procedures",
+          "Have customer service contact info",
+          "Know security best practices"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "basic_numbers",
+      "identifying_documents",
+      "financial_vocabulary"
+    ],
+    "learning_outcomes": [
+      "Successfully navigate banking system",
+      "Open and manage accounts",
+      "Perform transactions confidently"
+    ],
+    "vocabulary_focus": [
+      "account",
+      "deposit",
+      "withdrawal",
+      "balance",
+      "transfer",
+      "debit card",
+      "online banking",
+      "PIN",
+      "fees",
+      "security",
+      "fraud",
+      "transaction"
+    ],
+    "cultural_context": {
+      "banking_hours": "Most banks open weekdays 9 AM - 5 PM, some Saturday mornings",
+      "documentation": "Bring passport/ID and proof of address for new accounts",
+      "fees": "Ask about ALL fees - monthly maintenance, ATM, overdraft, wire transfer",
+      "online_banking": "Essential for modern banking; set up immediately",
+      "security": "Banks never ask for passwords by email or phone"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T13:08:32.125209",
+    "updated_at": "2025-12-21T13:08:32.125209"
+  },
+  "dental_checkup_appointment": {
+    "scenario_id": "dental_checkup_appointment",
+    "name": "Dental Check-up and Treatment",
+    "category": "healthcare",
+    "difficulty": "beginner",
+    "description": "Schedule and attend a dental appointment, describe dental issues, understand treatment options, and learn proper dental care.",
+    "user_role": "patient",
+    "ai_role": "dentist",
+    "setting": "Dental clinic",
+    "duration_minutes": 15,
+    "phases": [
+      {
+        "phase_id": "scheduling",
+        "name": "Scheduling Appointment",
+        "description": "Call dentist office and schedule appointment",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "appointment",
+          "dentist",
+          "available",
+          "schedule",
+          "checkup",
+          "cleaning",
+          "emergency",
+          "insurance",
+          "new patient"
+        ],
+        "essential_phrases": [
+          "I'd like to schedule a dental appointment",
+          "Is this an emergency or routine checkup?",
+          "When are you available?",
+          "I'm a new patient",
+          "Do you accept my insurance?",
+          "I have a toothache"
+        ],
+        "learning_objectives": [
+          "Schedule dental appointment by phone",
+          "Explain type of visit needed",
+          "Provide insurance information"
+        ],
+        "cultural_notes": "Schedule checkups every 6 months for prevention. Emergency dental care available for severe pain or injury. Bring insurance card and ID to first appointment. New patient forms can often be filled out online before visit.",
+        "success_criteria": [
+          "Successfully schedule appointment",
+          "Communicate urgency if emergency",
+          "Confirm insurance coverage"
+        ]
+      },
+      {
+        "phase_id": "examination",
+        "name": "Check-up Examination",
+        "description": "Undergo dental examination and describe problems",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "tooth",
+          "teeth",
+          "gums",
+          "cavity",
+          "pain",
+          "sensitivity",
+          "x-ray",
+          "examination",
+          "bite",
+          "bleeding",
+          "swelling"
+        ],
+        "essential_phrases": [
+          "I have pain in this tooth",
+          "My gums bleed when I brush",
+          "This tooth is sensitive to cold",
+          "Does this hurt?",
+          "I think I have a cavity",
+          "When did the pain start?"
+        ],
+        "learning_objectives": [
+          "Describe dental pain and problems",
+          "Understand examination procedures",
+          "Answer dentist's questions about symptoms"
+        ],
+        "cultural_notes": "Be specific about pain location and type (sharp, dull, constant, occasional). Dental x-rays are safe and help find hidden problems. Tell dentist about fear or anxiety - they can help. Inform them of any medical conditions or medications.",
+        "success_criteria": [
+          "Accurately describe symptoms",
+          "Understand examination process",
+          "Communicate pain or discomfort during exam"
+        ]
+      },
+      {
+        "phase_id": "treatment",
+        "name": "Treatment Discussion",
+        "description": "Learn about necessary treatments and options",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "filling",
+          "crown",
+          "root canal",
+          "extraction",
+          "treatment",
+          "procedure",
+          "anesthesia",
+          "numbing",
+          "cost",
+          "appointment"
+        ],
+        "essential_phrases": [
+          "What treatment do I need?",
+          "How much will it cost?",
+          "Does my insurance cover this?",
+          "Will it hurt?",
+          "How long will the procedure take?",
+          "When should I schedule this?"
+        ],
+        "learning_objectives": [
+          "Understand treatment recommendations",
+          "Ask about costs and insurance coverage",
+          "Learn about procedure details"
+        ],
+        "cultural_notes": "Dental work can be expensive. Ask for cost estimate before proceeding. Many dentists offer payment plans. Get second opinion for expensive treatments if unsure. Dental insurance often covers preventive care 100% but only 50-80% of major work.",
+        "success_criteria": [
+          "Understand what treatment is needed",
+          "Know total costs",
+          "Schedule treatment if needed"
+        ]
+      },
+      {
+        "phase_id": "care_instructions",
+        "name": "Dental Care Instructions",
+        "description": "Receive care instructions and prevention advice",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "brush",
+          "floss",
+          "toothpaste",
+          "mouthwash",
+          "twice daily",
+          "dentist-recommended",
+          "prevent",
+          "followup",
+          "next visit"
+        ],
+        "essential_phrases": [
+          "How should I care for my teeth?",
+          "How often should I floss?",
+          "When should I come back?",
+          "What toothpaste do you recommend?",
+          "How can I prevent cavities?"
+        ],
+        "learning_objectives": [
+          "Learn proper dental hygiene",
+          "Understand prevention strategies",
+          "Schedule next checkup"
+        ],
+        "cultural_notes": "Brush twice daily for 2 minutes, floss daily. Use fluoride toothpaste. Replace toothbrush every 3 months. Limit sugary foods and drinks. Regular checkups prevent expensive problems. Schedule next appointment before leaving.",
+        "success_criteria": [
+          "Know proper brushing/flossing technique",
+          "Understand prevention strategies",
+          "Schedule follow-up appointment"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "body_parts_vocabulary",
+      "describing_pain",
+      "basic_medical_terms"
+    ],
+    "learning_outcomes": [
+      "Navigate dental care system",
+      "Communicate dental problems effectively",
+      "Understand treatment options"
+    ],
+    "vocabulary_focus": [
+      "dentist",
+      "tooth",
+      "teeth",
+      "cavity",
+      "filling",
+      "gums",
+      "pain",
+      "brush",
+      "floss",
+      "checkup",
+      "appointment",
+      "treatment"
+    ],
+    "cultural_context": {
+      "regular_checkups": "Every 6 months is standard for prevention",
+      "insurance": "Dental usually separate from medical insurance",
+      "costs": "Preventive care cheaper than treatment; get estimates upfront",
+      "emergency_care": "Severe pain, bleeding, or injury requires immediate care"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T13:09:09.639753",
+    "updated_at": "2025-12-21T13:09:09.639753"
+  },
+  "meeting_neighbors_community": {
+    "scenario_id": "meeting_neighbors_community",
+    "name": "Meeting Your New Neighbors",
+    "category": "social",
+    "difficulty": "beginner",
+    "description": "Introduce yourself to neighbors, learn about the neighborhood, build community connections, and understand local customs.",
+    "user_role": "new_resident",
+    "ai_role": "neighbor",
+    "setting": "Casual neighborhood encounter (hallway, street, yard)",
+    "duration_minutes": 12,
+    "phases": [
+      {
+        "phase_id": "introduction",
+        "name": "Introduction and Greeting",
+        "description": "Initiate friendly introduction as new neighbor",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "neighbor",
+          "new",
+          "move in",
+          "introduce",
+          "welcome",
+          "apartment",
+          "house",
+          "building",
+          "floor",
+          "unit"
+        ],
+        "essential_phrases": [
+          "Hi, I'm your new neighbor",
+          "I just moved in",
+          "We're in apartment 3B",
+          "Nice to meet you",
+          "Welcome to the neighborhood!",
+          "How long have you lived here?"
+        ],
+        "learning_objectives": [
+          "Introduce yourself to neighbors",
+          "Explain you're new to area",
+          "Exchange basic information"
+        ],
+        "cultural_notes": "In many cultures, introducing yourself to neighbors is polite and expected. A friendly wave or 'hello' builds community. Some cultures are more private, others very social. Observe local norms. Small talk about weather or area is safe conversation starter.",
+        "success_criteria": [
+          "Introduce yourself clearly",
+          "Establish you're new to area",
+          "Show friendly, open attitude"
+        ]
+      },
+      {
+        "phase_id": "learning_area",
+        "name": "Learning About the Area",
+        "description": "Ask about neighborhood amenities and recommendations",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "neighborhood",
+          "area",
+          "nearby",
+          "recommend",
+          "grocery store",
+          "restaurant",
+          "park",
+          "public transportation",
+          "safe",
+          "quiet",
+          "convenient"
+        ],
+        "essential_phrases": [
+          "How do you like living here?",
+          "Are there good restaurants nearby?",
+          "Where's the closest grocery store?",
+          "Is this a quiet neighborhood?",
+          "What do you recommend?",
+          "Is there a park nearby?"
+        ],
+        "learning_objectives": [
+          "Ask about local amenities",
+          "Get recommendations for services",
+          "Learn about neighborhood character"
+        ],
+        "cultural_notes": "Neighbors are great sources of local knowledge. Ask about favorite spots, services to avoid, safety tips. Most people enjoy helping newcomers. Questions about area show genuine interest in community. This builds relationships and helps you settle in.",
+        "success_criteria": [
+          "Ask at least 3 questions about area",
+          "Get specific recommendations",
+          "Learn about neighborhood amenities"
+        ]
+      },
+      {
+        "phase_id": "common_interests",
+        "name": "Discussing Common Interests",
+        "description": "Find common ground and shared interests",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "interest",
+          "hobby",
+          "enjoy",
+          "kids",
+          "pets",
+          "work",
+          "originally from",
+          "common",
+          "similar",
+          "also"
+        ],
+        "essential_phrases": [
+          "Do you have kids?",
+          "Do you have any pets?",
+          "What do you do for work?",
+          "Where are you originally from?",
+          "I also enjoy that!",
+          "We have that in common"
+        ],
+        "learning_objectives": [
+          "Share personal information appropriately",
+          "Find shared interests",
+          "Build connection through commonalities"
+        ],
+        "cultural_notes": "Finding common ground builds friendships. Safe topics: kids, pets, hobbies, work (general). Avoid politics or religion initially. If they have kids/pets and you do too, that's instant connection. Show genuine interest in their responses.",
+        "success_criteria": [
+          "Share at least 2 personal details",
+          "Discover at least 1 common interest",
+          "Establish friendly rapport"
+        ]
+      },
+      {
+        "phase_id": "contact_exchange",
+        "name": "Exchanging Contacts",
+        "description": "Exchange contact information and express interest in staying connected",
+        "expected_duration_minutes": 2,
+        "key_vocabulary": [
+          "phone number",
+          "contact",
+          "reach out",
+          "stay in touch",
+          "helpful",
+          "anytime",
+          "welcome",
+          "call",
+          "text",
+          "neighbor"
+        ],
+        "essential_phrases": [
+          "Can I get your phone number?",
+          "Feel free to call if you need anything",
+          "Let me know if you need help",
+          "We should get together sometime",
+          "Thanks for the welcome!",
+          "Great meeting you!"
+        ],
+        "learning_objectives": [
+          "Exchange contact information naturally",
+          "Offer and request help appropriately",
+          "Conclude conversation warmly"
+        ],
+        "cultural_notes": "Exchanging numbers shows openness to friendship but doesn't obligate anyone. 'Let me know if you need anything' is polite offer in many cultures. Following through shows good neighborliness. A friendly relationship with neighbors improves quality of life and safety.",
+        "success_criteria": [
+          "Exchange contact information",
+          "Express willingness to help",
+          "End conversation positively"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "basic_greetings",
+      "introducing_yourself",
+      "asking_questions"
+    ],
+    "learning_outcomes": [
+      "Build community connections",
+      "Gather local information",
+      "Establish neighborly relationships"
+    ],
+    "vocabulary_focus": [
+      "neighbor",
+      "neighborhood",
+      "new",
+      "move in",
+      "recommend",
+      "nearby",
+      "area",
+      "introduce",
+      "welcome",
+      "contact"
+    ],
+    "cultural_context": {
+      "neighborliness": "Varies by culture - some very social, others more private",
+      "boundaries": "Friendly but respect privacy; don't be intrusive",
+      "community": "Good neighbors enhance safety and quality of life",
+      "local_knowledge": "Neighbors know best restaurants, services, safety tips"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T13:10:14.505800",
+    "updated_at": "2025-12-21T13:10:14.505800"
+  },
+  "airport_navigation_departure": {
+    "scenario_id": "airport_navigation_departure",
+    "name": "Navigating the Airport (Departure)",
+    "category": "travel",
+    "difficulty": "intermediate",
+    "description": "Navigate airport from check-in through security to boarding, handle travel documents, understand announcements, and deal with common situations.",
+    "user_role": "passenger",
+    "ai_role": "airline_staff",
+    "setting": "Airport from check-in to boarding gate",
+    "duration_minutes": 20,
+    "phases": [
+      {
+        "phase_id": "checkin",
+        "name": "Check-in and Baggage",
+        "description": "Check in for flight and check baggage",
+        "expected_duration_minutes": 6,
+        "key_vocabulary": [
+          "check-in",
+          "boarding pass",
+          "passport",
+          "ticket",
+          "confirmation number",
+          "baggage",
+          "carry-on",
+          "checked bag",
+          "weight limit",
+          "fee",
+          "seat assignment"
+        ],
+        "essential_phrases": [
+          "I'd like to check in for my flight",
+          "Here's my passport and confirmation",
+          "I have one checked bag",
+          "Can I get a window seat?",
+          "What's the weight limit?",
+          "Is there a baggage fee?",
+          "Where do I check my luggage?"
+        ],
+        "learning_objectives": [
+          "Check in for international or domestic flight",
+          "Handle baggage check-in process",
+          "Understand weight limits and fees"
+        ],
+        "cultural_notes": "Arrive 2-3 hours before international flights, 90 minutes for domestic. Have passport/ID and confirmation ready. Most airlines charge for checked bags. Carry-on must fit size restrictions. Liquids limited to 3.4oz containers in clear bag. Check airline's baggage policy online before arriving.",
+        "success_criteria": [
+          "Successfully check in and get boarding pass",
+          "Check baggage properly",
+          "Understand seat assignment and gate number"
+        ]
+      },
+      {
+        "phase_id": "security",
+        "name": "Security Screening",
+        "description": "Navigate airport security checkpoint",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "security",
+          "screening",
+          "metal detector",
+          "x-ray",
+          "remove",
+          "shoes",
+          "belt",
+          "laptop",
+          "liquids",
+          "bins",
+          "TSA",
+          "security officer"
+        ],
+        "essential_phrases": [
+          "Do I need to remove my shoes?",
+          "Should I take out my laptop?",
+          "Where do I put my belongings?",
+          "Am I allowed to bring this?",
+          "Is this the security line?",
+          "Can I keep my belt on?"
+        ],
+        "learning_objectives": [
+          "Understand security procedures",
+          "Follow TSA/security instructions",
+          "Prepare belongings for screening"
+        ],
+        "cultural_notes": "Security procedures vary by country but generally similar. Remove shoes, belt, jacket. Take out laptop and liquids. Put items in bins. Walk through metal detector when told. Stay calm and follow instructions. Security officers are there for everyone's safety. Answer questions honestly and clearly.",
+        "success_criteria": [
+          "Successfully pass through security",
+          "Follow all security procedures",
+          "Keep required documents accessible"
+        ]
+      },
+      {
+        "phase_id": "finding_gate",
+        "name": "Finding Your Gate",
+        "description": "Navigate terminal and locate departure gate",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "terminal",
+          "gate",
+          "concourse",
+          "departure",
+          "boarding time",
+          "delay",
+          "monitor",
+          "announcement",
+          "flight number",
+          "on time"
+        ],
+        "essential_phrases": [
+          "Where is gate B23?",
+          "Which terminal is my flight?",
+          "Is my flight on time?",
+          "What's the boarding time?",
+          "How do I get to concourse C?",
+          "Is there a delay?"
+        ],
+        "learning_objectives": [
+          "Read departure boards",
+          "Navigate terminal layout",
+          "Understand flight status announcements"
+        ],
+        "cultural_notes": "Check departure monitors frequently - gates can change. Listen for announcements about your flight. Boarding usually starts 30-45 minutes before departure. Be at gate at least 30 minutes before boarding time. Airports have shops and restaurants but stay near your gate. Free WiFi usually available.",
+        "success_criteria": [
+          "Locate correct gate",
+          "Understand boarding time",
+          "Arrive at gate with time to spare"
+        ]
+      },
+      {
+        "phase_id": "boarding",
+        "name": "Boarding Process",
+        "description": "Board aircraft and find seat",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "boarding",
+          "group",
+          "zone",
+          "seat number",
+          "overhead bin",
+          "aisle",
+          "window",
+          "middle seat",
+          "row",
+          "fasten seatbelt"
+        ],
+        "essential_phrases": [
+          "What boarding group am I?",
+          "Can I board now?",
+          "Where is row 24?",
+          "Is this my seat?",
+          "Can you help with my bag?",
+          "Which way is the aisle?"
+        ],
+        "learning_objectives": [
+          "Understand boarding groups/zones",
+          "Find seat efficiently",
+          "Stow carry-on luggage properly"
+        ],
+        "cultural_notes": "Boarding is by groups/zones - wait for your group to be called. Have boarding pass ready. Seat numbers on overhead bins help you find row. Put small bag under seat in front, larger in overhead bin. Be considerate of other passengers. Turn off phone or switch to airplane mode. Fasten seatbelt when seated.",
+        "success_criteria": [
+          "Board at appropriate time",
+          "Find seat and stow luggage",
+          "Settle in for departure"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "travel_vocabulary",
+      "understanding_announcements",
+      "following_instructions"
+    ],
+    "learning_outcomes": [
+      "Navigate airports confidently",
+      "Handle security procedures",
+      "Manage travel documents",
+      "Board flights smoothly"
+    ],
+    "vocabulary_focus": [
+      "check-in",
+      "boarding pass",
+      "security",
+      "gate",
+      "terminal",
+      "baggage",
+      "carry-on",
+      "boarding",
+      "departure",
+      "flight",
+      "delay"
+    ],
+    "cultural_context": {
+      "timing": "Arrive early; international flights require more time",
+      "security": "Procedures strict but protect everyone; cooperate fully",
+      "documentation": "Keep passport and boarding pass accessible always",
+      "flexibility": "Flights can be delayed; stay informed and patient"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T13:10:14.505800",
+    "updated_at": "2025-12-21T13:10:14.505800"
+  },
+  "car_rental_process": {
+    "scenario_id": "car_rental_process",
+    "name": "Renting a Car",
+    "category": "travel",
+    "difficulty": "intermediate",
+    "description": "Rent a car for travel, understand rental agreement, discuss insurance options, and learn about vehicle operation and return procedures.",
+    "user_role": "customer",
+    "ai_role": "rental_agent",
+    "setting": "Car rental counter at airport or location",
+    "duration_minutes": 18,
+    "phases": [
+      {
+        "phase_id": "reservation",
+        "name": "Reservation and Pickup",
+        "description": "Confirm reservation and provide required documents",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "reservation",
+          "confirmation number",
+          "driver's license",
+          "credit card",
+          "rental agreement",
+          "pickup",
+          "return",
+          "dates",
+          "insurance",
+          "upgrade"
+        ],
+        "essential_phrases": [
+          "I have a reservation under [name]",
+          "Here's my confirmation number",
+          "I need a car for three days",
+          "What documents do you need?",
+          "Here's my driver's license",
+          "Can I pay with a debit card?"
+        ],
+        "learning_objectives": [
+          "Confirm reservation details",
+          "Provide required documentation",
+          "Understand pickup procedures"
+        ],
+        "cultural_notes": "Need valid driver's license (international license if from another country), credit card in your name, and minimum age (usually 21-25). Reservation guarantees vehicle type but not specific car. Early arrival helps ensure availability. Some companies don't accept debit cards or charge extra fees.",
+        "success_criteria": [
+          "Successfully verify reservation",
+          "Provide all required documents",
+          "Understand rental terms and dates"
+        ]
+      },
+      {
+        "phase_id": "vehicle_selection",
+        "name": "Vehicle Selection and Features",
+        "description": "Choose vehicle and learn about its features",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "vehicle",
+          "car type",
+          "economy",
+          "sedan",
+          "SUV",
+          "automatic",
+          "manual",
+          "GPS",
+          "features",
+          "fuel type",
+          "mileage"
+        ],
+        "essential_phrases": [
+          "What size car did I reserve?",
+          "Is this automatic or manual?",
+          "Does it have GPS?",
+          "What's the fuel efficiency?",
+          "Can I upgrade to a larger car?",
+          "How do I operate this feature?"
+        ],
+        "learning_objectives": [
+          "Understand vehicle categories",
+          "Learn vehicle features and controls",
+          "Make informed choices about upgrades"
+        ],
+        "cultural_notes": "In US/Canada, most cars are automatic. In Europe, manual is common. GPS helpful in unfamiliar areas but may cost extra. Full-to-full fuel policy is fairest - return with full tank. Unlimited mileage typical in US, limited in some countries. Inspect car before leaving lot.",
+        "success_criteria": [
+          "Select appropriate vehicle",
+          "Understand vehicle features",
+          "Know how to operate basic controls"
+        ]
+      },
+      {
+        "phase_id": "insurance",
+        "name": "Insurance and Agreement",
+        "description": "Discuss insurance coverage and sign rental contract",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "insurance",
+          "coverage",
+          "collision damage waiver",
+          "liability",
+          "personal accident",
+          "deductible",
+          "decline",
+          "credit card coverage",
+          "rental agreement",
+          "terms and conditions"
+        ],
+        "essential_phrases": [
+          "What insurance do you offer?",
+          "What does this cover?",
+          "My credit card includes rental insurance",
+          "What's the deductible?",
+          "I'll decline the extra insurance",
+          "Can you explain this charge?"
+        ],
+        "learning_objectives": [
+          "Understand insurance options",
+          "Make informed insurance decisions",
+          "Read and comprehend rental agreement"
+        ],
+        "cultural_notes": "Collision Damage Waiver (CDW) covers damage to rental car. Liability covers damage to other vehicles. Personal Accident Insurance covers injuries. Check if your credit card or personal auto insurance covers rentals before buying expensive coverage. Read agreement carefully - note mileage limits, fuel policy, return time. Ask about all fees.",
+        "success_criteria": [
+          "Understand all insurance options",
+          "Make informed coverage decision",
+          "Comprehend rental agreement terms"
+        ]
+      },
+      {
+        "phase_id": "inspection",
+        "name": "Vehicle Inspection and Return Info",
+        "description": "Inspect vehicle and understand return procedures",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "inspection",
+          "damage",
+          "scratch",
+          "dent",
+          "fuel",
+          "return location",
+          "drop-off time",
+          "late fee",
+          "keys",
+          "receipt"
+        ],
+        "essential_phrases": [
+          "I see a scratch here",
+          "Should we note this damage?",
+          "Where do I return the car?",
+          "What time is it due back?",
+          "What if I return it late?",
+          "Where do I drop off the keys?"
+        ],
+        "learning_objectives": [
+          "Document existing damage",
+          "Understand return procedures",
+          "Avoid unexpected charges"
+        ],
+        "cultural_notes": "Walk around car with agent noting all scratches, dents, damage before leaving. Take photos as evidence. Know exact return location and time - late returns incur hourly fees. Return with full tank if that's policy, or pay inflated fuel charges. Most locations have after-hours drop-off. Get receipt showing condition when returned.",
+        "success_criteria": [
+          "Document all existing damage",
+          "Know return location and deadline",
+          "Understand fuel and late return policies"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "driver's_license_vocabulary",
+      "reading_contracts",
+      "making_decisions"
+    ],
+    "learning_outcomes": [
+      "Rent vehicles independently",
+      "Understand rental agreements",
+      "Manage insurance decisions",
+      "Avoid unexpected charges"
+    ],
+    "vocabulary_focus": [
+      "rental",
+      "reservation",
+      "insurance",
+      "collision",
+      "liability",
+      "agreement",
+      "fuel",
+      "mileage",
+      "deposit",
+      "damage",
+      "return"
+    ],
+    "cultural_context": {
+      "age_requirements": "Usually 21-25 minimum, surcharges for young drivers",
+      "international_driving": "May need International Driving Permit",
+      "insurance": "Coverage rules vary; check personal policy and credit card benefits",
+      "fuel_policy": "Full-to-full most common; cheaper than prepaid options"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T13:11:20.453614",
+    "updated_at": "2025-12-21T13:11:20.453614"
+  },
+  "grocery_store_shopping": {
+    "scenario_id": "grocery_store_shopping",
+    "name": "Grocery Store Shopping",
+    "category": "shopping",
+    "difficulty": "beginner",
+    "description": "Navigate a grocery store, find items, ask for help, understand products, and complete checkout process.",
+    "user_role": "shopper",
+    "ai_role": "store_employee",
+    "setting": "Supermarket or grocery store",
+    "duration_minutes": 15,
+    "phases": [
+      {
+        "phase_id": "finding_products",
+        "name": "Finding Products",
+        "description": "Navigate store layout and locate items",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "aisle",
+          "produce",
+          "dairy",
+          "meat",
+          "frozen",
+          "bakery",
+          "deli",
+          "section",
+          "fresh",
+          "organic"
+        ],
+        "essential_phrases": [
+          "Where can I find the milk?",
+          "Which aisle is the bread in?",
+          "Where's the produce section?",
+          "Do you have fresh fish?",
+          "Is this the organic section?",
+          "Can you help me find something?"
+        ],
+        "learning_objectives": [
+          "Navigate grocery store layout",
+          "Ask employees for help finding items",
+          "Understand store organization"
+        ],
+        "cultural_notes": "Stores organized by sections: produce (fruits/vegetables), dairy (milk/cheese), meat, frozen foods, bakery. Aisles numbered with signs showing categories. Organic products usually have separate section or labels. Store employees wear name tags or uniforms. Don't hesitate to ask for help - they're there to assist.",
+        "success_criteria": [
+          "Successfully locate at least 3 different sections",
+          "Ask employee for help when needed",
+          "Navigate store independently"
+        ]
+      },
+      {
+        "phase_id": "reading_labels",
+        "name": "Reading Labels and Selecting",
+        "description": "Read product labels and make selections",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "ingredients",
+          "nutrition facts",
+          "price",
+          "weight",
+          "expiration date",
+          "best by",
+          "sell by",
+          "on sale",
+          "discount",
+          "brand",
+          "generic"
+        ],
+        "essential_phrases": [
+          "What's the price per pound?",
+          "When does this expire?",
+          "Is this on sale?",
+          "What's the difference between these?",
+          "Which is the better deal?",
+          "Does this contain nuts?"
+        ],
+        "learning_objectives": [
+          "Read and understand food labels",
+          "Compare prices and products",
+          "Check expiration dates"
+        ],
+        "cultural_notes": "Expiration dates: 'Best by' is quality recommendation, 'Use by' is safety. Price per unit (ounce/pound) helps compare different sizes. Generic/store brands usually cheaper than name brands with similar quality. Check for sales - yellow tags, shelf tags, or weekly ads. Organic products cost more. Read ingredients if you have allergies.",
+        "success_criteria": [
+          "Read at least 3 product labels",
+          "Compare prices effectively",
+          "Select appropriate products"
+        ]
+      },
+      {
+        "phase_id": "asking_staff",
+        "name": "Asking Staff for Help",
+        "description": "Request assistance from store employees",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "staff",
+          "employee",
+          "help",
+          "recommend",
+          "substitute",
+          "in stock",
+          "out of stock",
+          "location",
+          "department"
+        ],
+        "essential_phrases": [
+          "Excuse me, can you help me?",
+          "Do you have any more of these?",
+          "Is this in stock?",
+          "What do you recommend?",
+          "Can you check in the back?",
+          "Where's the manager?"
+        ],
+        "learning_objectives": [
+          "Request assistance politely",
+          "Ask about product availability",
+          "Get recommendations from staff"
+        ],
+        "cultural_notes": "Store employees are resources - ask for help finding items, checking stock, or recommendations. If item is out of stock, they can check inventory or suggest substitutes. Managers can help with special requests or complaints. Be polite and patient - they help many customers daily.",
+        "success_criteria": [
+          "Successfully request help",
+          "Get question answered or problem solved",
+          "Interact professionally with staff"
+        ]
+      },
+      {
+        "phase_id": "checkout",
+        "name": "Checkout and Payment",
+        "description": "Complete purchase at checkout",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "checkout",
+          "cashier",
+          "cash",
+          "credit card",
+          "debit card",
+          "receipt",
+          "total",
+          "bag",
+          "reusable bag",
+          "loyalty card",
+          "coupon"
+        ],
+        "essential_phrases": [
+          "I'm ready to check out",
+          "Do you take credit cards?",
+          "I have a loyalty card",
+          "Can I use this coupon?",
+          "I brought my own bags",
+          "May I have a receipt?"
+        ],
+        "learning_objectives": [
+          "Complete checkout process",
+          "Use payment methods",
+          "Understand loyalty programs"
+        ],
+        "cultural_notes": "Most stores accept credit/debit cards, some cash only. Loyalty cards offer discounts and earn rewards - sign up is usually free. Some places charge for plastic bags; bring reusable bags to save money and environment. Coupons save money but check expiration dates. Always get receipt for returns or price verification.",
+        "success_criteria": [
+          "Successfully complete transaction",
+          "Use loyalty card if available",
+          "Receive receipt and correct change"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "basic_food_vocabulary",
+      "numbers_and_money",
+      "shopping_basics"
+    ],
+    "learning_outcomes": [
+      "Shop independently for groceries",
+      "Read product labels",
+      "Find items efficiently",
+      "Complete checkout"
+    ],
+    "vocabulary_focus": [
+      "aisle",
+      "produce",
+      "dairy",
+      "frozen",
+      "price",
+      "sale",
+      "expiration date",
+      "checkout",
+      "receipt",
+      "bag",
+      "organic",
+      "fresh"
+    ],
+    "cultural_context": {
+      "store_layout": "Similar organization in most countries; ask if lost",
+      "bagging": "Some countries bag for you, others self-service",
+      "loyalty_cards": "Free and provide discounts; worth signing up",
+      "organic_specialty": "More expensive but growing in popularity"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T13:11:20.453614",
+    "updated_at": "2025-12-21T13:11:20.453614"
+  },
+  "electronics_store_purchase": {
+    "scenario_id": "electronics_store_purchase",
+    "name": "Buying Electronics",
+    "category": "shopping",
+    "difficulty": "intermediate",
+    "description": "Purchase electronics, compare products, understand technical specifications, discuss warranties, and arrange delivery or setup.",
+    "user_role": "customer",
+    "ai_role": "sales_associate",
+    "setting": "Electronics retail store",
+    "duration_minutes": 18,
+    "phases": [
+      {
+        "phase_id": "product_inquiry",
+        "name": "Product Inquiry",
+        "description": "Ask about products and compare options",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "laptop",
+          "smartphone",
+          "tablet",
+          "specifications",
+          "features",
+          "model",
+          "brand",
+          "compare",
+          "recommend",
+          "budget"
+        ],
+        "essential_phrases": [
+          "I'm looking for a new laptop",
+          "What's the difference between these models?",
+          "Which one do you recommend?",
+          "What's in my budget?",
+          "Can you show me the features?",
+          "How does this compare to that one?"
+        ],
+        "learning_objectives": [
+          "Describe what you're looking for",
+          "Ask about product features",
+          "Compare different options"
+        ],
+        "cultural_notes": "Sales associates work on commission so may push expensive models. Know your needs and budget beforehand. Do research online before visiting store. Ask specific questions about features you need. Don't feel pressured to buy immediately - compare prices at different stores or online.",
+        "success_criteria": [
+          "Clearly communicate needs",
+          "Get information about at least 2 products",
+          "Ask relevant comparison questions"
+        ]
+      },
+      {
+        "phase_id": "technical_specs",
+        "name": "Technical Specifications",
+        "description": "Understand technical details and compatibility",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "processor",
+          "memory",
+          "storage",
+          "RAM",
+          "screen size",
+          "battery life",
+          "compatible",
+          "ports",
+          "wireless",
+          "operating system"
+        ],
+        "essential_phrases": [
+          "How much memory does this have?",
+          "What's the processor speed?",
+          "How long does the battery last?",
+          "Is this compatible with my devices?",
+          "Does it have a USB-C port?",
+          "What operating system does it run?"
+        ],
+        "learning_objectives": [
+          "Understand technical specifications",
+          "Ask about compatibility",
+          "Determine if product meets needs"
+        ],
+        "cultural_notes": "Technical specs matter for performance. More RAM and faster processor = better performance. Storage (GB/TB) determines how much you can store. Battery life important for portability. Check compatibility with your existing devices. USB-C is newer standard. Operating system (Windows, Mac, Android, iOS) affects software availability.",
+        "success_criteria": [
+          "Understand key technical specifications",
+          "Verify compatibility needs",
+          "Determine if product is suitable"
+        ]
+      },
+      {
+        "phase_id": "warranty",
+        "name": "Warranty and Protection Plans",
+        "description": "Learn about warranties and decide on protection",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "warranty",
+          "guarantee",
+          "protection plan",
+          "coverage",
+          "manufacturer warranty",
+          "extended warranty",
+          "accident protection",
+          "replacement",
+          "repair",
+          "terms"
+        ],
+        "essential_phrases": [
+          "What warranty comes with this?",
+          "What does the warranty cover?",
+          "Should I buy the extended warranty?",
+          "What if it breaks?",
+          "How long is the coverage?",
+          "What's not covered?"
+        ],
+        "learning_objectives": [
+          "Understand warranty options",
+          "Make informed decision about protection",
+          "Know coverage terms"
+        ],
+        "cultural_notes": "Manufacturer warranty typically 1 year, covers defects not accidents. Extended warranties cost extra and may not be worth it - check credit card benefits first. Accident protection covers drops/spills but read fine print. Some warranties require registration. Keep receipt and warranty information. Electronics can be returned within 14-30 days at most stores if unopened.",
+        "success_criteria": [
+          "Understand warranty coverage",
+          "Make informed protection plan decision",
+          "Know how to use warranty if needed"
+        ]
+      },
+      {
+        "phase_id": "purchase_delivery",
+        "name": "Purchase and Delivery",
+        "description": "Complete purchase and arrange delivery/setup",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "purchase",
+          "price",
+          "tax",
+          "total",
+          "delivery",
+          "pickup",
+          "installation",
+          "setup",
+          "receipt",
+          "return policy"
+        ],
+        "essential_phrases": [
+          "What's the total with tax?",
+          "Do you offer delivery?",
+          "Can I pick it up today?",
+          "Do you provide installation?",
+          "What's your return policy?",
+          "Can I get this in writing?"
+        ],
+        "learning_objectives": [
+          "Complete purchase transaction",
+          "Arrange delivery or pickup",
+          "Understand return policy"
+        ],
+        "cultural_notes": "Sales tax added at checkout (not included in displayed price in US). Large items can often be delivered for fee or free over certain amount. Some stores offer installation/setup services. Keep all packaging and receipts for potential returns. Return policies vary: typically 14-30 days, may require original packaging, some charge restocking fee.",
+        "success_criteria": [
+          "Complete purchase successfully",
+          "Arrange delivery or pickup",
+          "Understand return/exchange policies"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "technology_vocabulary",
+      "making_comparisons",
+      "negotiating_purchases"
+    ],
+    "learning_outcomes": [
+      "Purchase electronics confidently",
+      "Understand technical specifications",
+      "Make informed warranty decisions"
+    ],
+    "vocabulary_focus": [
+      "specifications",
+      "warranty",
+      "compatible",
+      "processor",
+      "memory",
+      "storage",
+      "features",
+      "coverage",
+      "delivery",
+      "return policy"
+    ],
+    "cultural_context": {
+      "research_first": "Check reviews and prices online before visiting store",
+      "sales_tactics": "Associates may push expensive items or warranties",
+      "return_policies": "Vary by store; keep packaging and receipts",
+      "price_matching": "Many stores match competitor prices if you ask"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T13:12:24.977689",
+    "updated_at": "2025-12-21T13:12:24.977689"
+  },
+  "reporting_crime_police": {
+    "scenario_id": "reporting_crime_police",
+    "name": "Reporting a Crime to Police",
+    "category": "emergency",
+    "difficulty": "intermediate",
+    "description": "Report a crime to police, describe what happened, provide details, understand police procedures, and get case information.",
+    "user_role": "victim/witness",
+    "ai_role": "police_officer",
+    "setting": "Police station or phone call to police",
+    "duration_minutes": 15,
+    "phases": [
+      {
+        "phase_id": "initial_report",
+        "name": "Initial Report",
+        "description": "Report what happened and request help",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "report",
+          "crime",
+          "theft",
+          "robbery",
+          "burglary",
+          "stolen",
+          "victim",
+          "witness",
+          "police",
+          "officer"
+        ],
+        "essential_phrases": [
+          "I need to report a crime",
+          "My wallet was stolen",
+          "I witnessed a robbery",
+          "This just happened",
+          "I need help",
+          "Where can I file a report?"
+        ],
+        "learning_objectives": [
+          "State clearly what crime occurred",
+          "Request appropriate assistance",
+          "Provide initial information"
+        ],
+        "cultural_notes": "Call emergency number (911 in US, 999 in UK, 112 in EU) for crimes in progress or immediate danger. Visit police station for non-emergency reports. Be clear and direct - police need facts to help. Stay calm even if upset. You have right to report any crime. Police must take reports seriously.",
+        "success_criteria": [
+          "Clearly state type of crime",
+          "Communicate when and where it occurred",
+          "Request police assistance"
+        ]
+      },
+      {
+        "phase_id": "providing_details",
+        "name": "Providing Details",
+        "description": "Give detailed information about incident",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "when",
+          "where",
+          "what",
+          "who",
+          "suspect",
+          "description",
+          "height",
+          "clothing",
+          "vehicle",
+          "direction",
+          "evidence",
+          "belongings"
+        ],
+        "essential_phrases": [
+          "It happened at 3 PM today",
+          "On Main Street near the bank",
+          "The suspect was about 6 feet tall",
+          "He was wearing a black jacket",
+          "They drove away in a blue car",
+          "I didn't see which direction"
+        ],
+        "learning_objectives": [
+          "Provide specific time and location",
+          "Describe suspects in detail",
+          "Explain sequence of events"
+        ],
+        "cultural_notes": "Be as specific as possible with descriptions: height, weight, age, hair, clothing, distinctive features. Note direction suspect went, vehicle description if any. List what was taken with serial numbers if available. Tell what you saw, not assumptions. Police will write report - verify accuracy before signing.",
+        "success_criteria": [
+          "Provide accurate time and location",
+          "Give detailed suspect description",
+          "List stolen or damaged items"
+        ]
+      },
+      {
+        "phase_id": "answering_questions",
+        "name": "Answering Questions",
+        "description": "Respond to officer's questions and clarify details",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "statement",
+          "questions",
+          "clarify",
+          "remember",
+          "certain",
+          "approximately",
+          "identify",
+          "confirm",
+          "details",
+          "accurate"
+        ],
+        "essential_phrases": [
+          "I'm not sure about that detail",
+          "I think it was around 5:30",
+          "I can identify them if I see them again",
+          "That's correct",
+          "Let me think about that",
+          "I didn't get a clear look"
+        ],
+        "learning_objectives": [
+          "Answer police questions accurately",
+          "Clarify uncertain information",
+          "Admit when you don't know something"
+        ],
+        "cultural_notes": "Only state what you actually saw or know - don't guess or embellish. 'I don't know' is acceptable answer. Police may ask same question multiple ways to verify details. Being uncertain about some details is normal and honest. You may be asked to give written statement or identify suspects from photos later.",
+        "success_criteria": [
+          "Answer questions honestly",
+          "Clarify uncertain details",
+          "Provide additional information if remembered"
+        ]
+      },
+      {
+        "phase_id": "next_steps",
+        "name": "Next Steps and Case Number",
+        "description": "Understand what happens next and get case information",
+        "expected_duration_minutes": 2,
+        "key_vocabulary": [
+          "case number",
+          "report number",
+          "investigation",
+          "detective",
+          "follow up",
+          "contact",
+          "insurance",
+          "victim services",
+          "updates"
+        ],
+        "essential_phrases": [
+          "What happens next?",
+          "Will someone contact me?",
+          "Can I get a case number?",
+          "I need this for insurance",
+          "How long will the investigation take?",
+          "Who should I call for updates?"
+        ],
+        "learning_objectives": [
+          "Obtain case/report number",
+          "Understand investigation process",
+          "Know who to contact for updates"
+        ],
+        "cultural_notes": "Case/report number is essential for insurance claims and follow-up. Keep copy of police report - you may need to pay small fee for certified copy. Detective may be assigned for serious crimes. Not all crimes are solved - police prioritize based on evidence and seriousness. Victim services provide support and information. Follow up if you remember additional details.",
+        "success_criteria": [
+          "Obtain case/report number",
+          "Understand next steps",
+          "Know how to get updates or provide more info"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "describing_events",
+      "giving_details",
+      "following_procedures"
+    ],
+    "learning_outcomes": [
+      "Report crimes effectively",
+      "Communicate with police",
+      "Navigate legal procedures"
+    ],
+    "vocabulary_focus": [
+      "report",
+      "crime",
+      "theft",
+      "stolen",
+      "suspect",
+      "description",
+      "witness",
+      "police",
+      "case number",
+      "investigation",
+      "statement"
+    ],
+    "cultural_context": {
+      "emergency_vs_nonemergency": "Know which number to call",
+      "rights": "You have right to report crimes and receive police assistance",
+      "language": "Request interpreter if needed - police must provide",
+      "documentation": "Keep case number and report copy for insurance/legal purposes"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T13:12:24.977689",
+    "updated_at": "2025-12-21T13:12:24.977689"
+  },
+  "lost_documents_replacement": {
+    "scenario_id": "lost_documents_replacement",
+    "name": "Dealing with Lost or Stolen Documents",
+    "category": "emergency",
+    "difficulty": "advanced",
+    "description": "Report lost/stolen passport, ID, or important documents, navigate bureaucracy, understand replacement process, and prevent identity theft.",
+    "user_role": "document_owner",
+    "ai_role": "embassy_official",
+    "setting": "Embassy, consulate, or government office",
+    "duration_minutes": 16,
+    "phases": [
+      {
+        "phase_id": "reporting_loss",
+        "name": "Reporting the Loss",
+        "description": "Report lost or stolen documents to authorities",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "lost",
+          "stolen",
+          "passport",
+          "ID card",
+          "driver's license",
+          "documents",
+          "report",
+          "police report",
+          "circumstances",
+          "last seen"
+        ],
+        "essential_phrases": [
+          "I lost my passport",
+          "My wallet was stolen with my ID",
+          "I need to report missing documents",
+          "It happened yesterday",
+          "I don't know where I lost it",
+          "I need a police report"
+        ],
+        "learning_objectives": [
+          "Report loss to appropriate authorities",
+          "Explain circumstances of loss",
+          "Obtain police report if required"
+        ],
+        "cultural_notes": "Report lost passport immediately to police and embassy/consulate. Police report often required for replacement. For stolen documents, report to prevent identity theft. Cancel credit cards immediately. Some countries allow online reporting. Time is critical - quick reporting prevents fraudulent use.",
+        "success_criteria": [
+          "Report loss to police",
+          "Obtain police report number/document",
+          "Understand why quick reporting is critical"
+        ]
+      },
+      {
+        "phase_id": "embassy_contact",
+        "name": "Embassy/Consulate Contact",
+        "description": "Contact embassy for passport replacement",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "embassy",
+          "consulate",
+          "citizen services",
+          "appointment",
+          "emergency passport",
+          "temporary travel document",
+          "fee",
+          "processing time",
+          "citizen",
+          "travel plans"
+        ],
+        "essential_phrases": [
+          "I'm a [country] citizen",
+          "I need to replace my passport",
+          "Do I need an appointment?",
+          "How long will it take?",
+          "Can I get an emergency passport?",
+          "What's the fee?"
+        ],
+        "learning_objectives": [
+          "Contact appropriate embassy/consulate",
+          "Understand replacement process",
+          "Learn about emergency travel documents"
+        ],
+        "cultural_notes": "Your country's embassy/consulate helps citizens abroad. Regular passport replacement takes 2-4 weeks. Emergency passports available if travel is urgent but limited validity. Bring police report, ID photos, proof of citizenship, and fee (usually $100-200). Some embassies have walk-in hours, others require appointments. Consulates in major cities provide same services.",
+        "success_criteria": [
+          "Contact embassy successfully",
+          "Schedule appointment if required",
+          "Understand timeline and requirements"
+        ]
+      },
+      {
+        "phase_id": "replacement_docs",
+        "name": "Replacement Documentation",
+        "description": "Learn requirements and gather necessary documents",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "requirements",
+          "documents needed",
+          "proof of citizenship",
+          "birth certificate",
+          "photos",
+          "application form",
+          "fee",
+          "affidavit",
+          "notarized",
+          "certified copy"
+        ],
+        "essential_phrases": [
+          "What documents do I need?",
+          "Do I need passport photos?",
+          "Can I get a birth certificate copy?",
+          "How much is the fee?",
+          "Where do I submit the application?",
+          "Do I need witnesses?"
+        ],
+        "learning_objectives": [
+          "Understand document requirements",
+          "Know where to obtain needed documents",
+          "Complete application correctly"
+        ],
+        "cultural_notes": "Passport replacement requirements: application form, police report, 2 passport photos, proof of citizenship (birth certificate or previous passport), government ID if available, fee. Photos must meet specific requirements (size, background). Some documents may need to be notarized or certified. Keep copies of all documents submitted. Payment often by money order or credit card, not always cash.",
+        "success_criteria": [
+          "Know all required documents",
+          "Obtain necessary items",
+          "Complete application form correctly"
+        ]
+      },
+      {
+        "phase_id": "prevention_followup",
+        "name": "Prevention and Follow-up",
+        "description": "Understand fraud prevention and follow-up procedures",
+        "expected_duration_minutes": 2,
+        "key_vocabulary": [
+          "identity theft",
+          "fraud alert",
+          "credit monitoring",
+          "protection",
+          "tracking",
+          "status update",
+          "pickup",
+          "delivery",
+          "notification"
+        ],
+        "essential_phrases": [
+          "How will I know when it's ready?",
+          "Should I worry about identity theft?",
+          "How do I protect myself?",
+          "Can you track the application?",
+          "Will you email me updates?",
+          "Can someone else pick it up?"
+        ],
+        "learning_objectives": [
+          "Understand identity theft risks",
+          "Know how to protect yourself",
+          "Track application status"
+        ],
+        "cultural_notes": "Lost/stolen documents can be used for identity theft. Place fraud alert with credit bureaus. Monitor bank accounts for suspicious activity. Some countries notify database when passport reported lost - old one becomes invalid even if found. New passport will have different number. Most replacements ready in 2-6 weeks. Emergency documents take 1-3 days but limited validity. Pickup usually in person with ID.",
+        "success_criteria": [
+          "Understand fraud protection steps",
+          "Know how to track application",
+          "Understand pickup/delivery procedure"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "formal_communication",
+      "bureaucratic_procedures",
+      "understanding_official_language"
+    ],
+    "learning_outcomes": [
+      "Handle document loss efficiently",
+      "Navigate government procedures",
+      "Protect against identity theft"
+    ],
+    "vocabulary_focus": [
+      "lost",
+      "stolen",
+      "passport",
+      "embassy",
+      "replacement",
+      "documents",
+      "police report",
+      "fraud",
+      "identity theft",
+      "application"
+    ],
+    "cultural_context": {
+      "embassy_services": "Your embassy helps citizens abroad with lost documents",
+      "processing_time": "Regular replacement takes weeks; emergency faster but limited",
+      "costs": "Replacement fees typically $100-200 plus document costs",
+      "prevention": "Carry copies of important documents separately when traveling"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T13:13:35.327485",
+    "updated_at": "2025-12-21T13:13:35.327485"
+  },
+  "gym_membership_signup": {
+    "scenario_id": "gym_membership_signup",
+    "name": "Joining a Gym or Fitness Center",
+    "category": "hobbies",
+    "difficulty": "beginner",
+    "description": "Sign up for gym membership, take facility tour, understand equipment and classes, and learn gym etiquette.",
+    "user_role": "prospective_member",
+    "ai_role": "gym_staff",
+    "setting": "Gym or fitness center",
+    "duration_minutes": 14,
+    "phases": [
+      {
+        "phase_id": "membership_options",
+        "name": "Membership Options",
+        "description": "Discuss membership plans and costs",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "membership",
+          "monthly",
+          "annual",
+          "contract",
+          "commitment",
+          "fee",
+          "initiation fee",
+          "cancel",
+          "freeze",
+          "dues"
+        ],
+        "essential_phrases": [
+          "What membership options do you have?",
+          "Is there a contract?",
+          "Can I cancel anytime?",
+          "What's the monthly cost?",
+          "Are there any hidden fees?",
+          "Can I freeze my membership?"
+        ],
+        "learning_objectives": [
+          "Understand different membership types",
+          "Compare costs and commitments",
+          "Ask about cancellation policies"
+        ],
+        "cultural_notes": "Gyms have various plans: month-to-month (more expensive, no commitment), annual (cheaper, requires commitment), multi-year (best rate, long commitment). Initiation fees common. Read contract carefully - some hard to cancel. Ask about trial period or day passes first. January has signup promotions (New Year's resolutions). Can often negotiate better rates, especially if paying year upfront.",
+        "success_criteria": [
+          "Understand at least 2 membership options",
+          "Know cancellation policy",
+          "Aware of all fees"
+        ]
+      },
+      {
+        "phase_id": "facility_tour",
+        "name": "Facility Tour",
+        "description": "Tour facility and learn about equipment and amenities",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "cardio equipment",
+          "weight machines",
+          "free weights",
+          "locker room",
+          "shower",
+          "pool",
+          "sauna",
+          "classes",
+          "personal trainer",
+          "hours"
+        ],
+        "essential_phrases": [
+          "Can I see the equipment?",
+          "What classes do you offer?",
+          "Do you have a pool?",
+          "What are your hours?",
+          "Are towels provided?",
+          "Do you have trainers?"
+        ],
+        "learning_objectives": [
+          "Familiarize with gym layout",
+          "Understand available amenities",
+          "Know operating hours"
+        ],
+        "cultural_notes": "Modern gyms have cardio (treadmills, bikes, ellipticals), weights (machines and free weights), group fitness classes, locker rooms with showers. Some have pool, sauna, basketball court. Hours vary - 24-hour gyms common. Towels may be provided or bring your own. Lock valuables in locker. Peak hours 5-7 PM weekdays. Wear athletic shoes and appropriate clothing.",
+        "success_criteria": [
+          "See all major facility areas",
+          "Understand available equipment",
+          "Know hours and amenities"
+        ]
+      },
+      {
+        "phase_id": "getting_started",
+        "name": "Getting Started",
+        "description": "Set goals and learn how to begin",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "fitness goals",
+          "weight loss",
+          "muscle gain",
+          "cardio",
+          "strength training",
+          "workout plan",
+          "orientation",
+          "instructor",
+          "beginner",
+          "routine"
+        ],
+        "essential_phrases": [
+          "I'm new to working out",
+          "Can someone show me the equipment?",
+          "What do you recommend for beginners?",
+          "I want to lose weight",
+          "Do you offer orientations?",
+          "Can I work with a trainer?"
+        ],
+        "learning_objectives": [
+          "State fitness goals",
+          "Get beginner guidance",
+          "Understand available support"
+        ],
+        "cultural_notes": "Most gyms offer free orientation for new members - take it! Staff shows how to use equipment safely. Personal trainers available (extra cost) for customized workout plans. Group classes good for motivation and instruction. Start slowly if new to exercise - injury prevention important. Gyms have staff who can answer questions. Don't be intimidated - everyone started as beginner.",
+        "success_criteria": [
+          "Communicate fitness goals",
+          "Schedule orientation or first session",
+          "Understand how to get help"
+        ]
+      },
+      {
+        "phase_id": "policies_etiquette",
+        "name": "Policies and Etiquette",
+        "description": "Learn gym rules and proper etiquette",
+        "expected_duration_minutes": 2,
+        "key_vocabulary": [
+          "rules",
+          "etiquette",
+          "wipe down",
+          "share",
+          "time limit",
+          "noise",
+          "phone",
+          "clean up",
+          "dress code"
+        ],
+        "essential_phrases": [
+          "What are the gym rules?",
+          "Should I wipe down equipment?",
+          "Is there a time limit on machines?",
+          "Can I bring a guest?",
+          "What's not allowed?"
+        ],
+        "learning_objectives": [
+          "Understand gym policies",
+          "Learn proper etiquette",
+          "Know what's not permitted"
+        ],
+        "cultural_notes": "Gym etiquette: wipe down equipment after use, share equipment during peak hours, return weights to rack, don't drop weights, limit phone use, wear deodorant, don't reserve equipment, respect personal space. Some gyms ban certain behaviors (grunting, taking photos, dropping weights). Guest policies vary. Proper shoes required. Clean gym clothes expected. Following etiquette makes gym pleasant for everyone.",
+        "success_criteria": [
+          "Understand key rules",
+          "Know proper gym etiquette",
+          "Understand guest policies"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "basic_fitness_vocabulary",
+      "making_commitments",
+      "asking_about_services"
+    ],
+    "learning_outcomes": [
+      "Join gym confidently",
+      "Understand membership options",
+      "Use facilities properly",
+      "Follow gym etiquette"
+    ],
+    "vocabulary_focus": [
+      "membership",
+      "gym",
+      "workout",
+      "equipment",
+      "cardio",
+      "weights",
+      "classes",
+      "trainer",
+      "fitness",
+      "contract",
+      "cancel"
+    ],
+    "cultural_context": {
+      "membership_types": "Month-to-month most flexible, annual cheapest",
+      "peak_hours": "5-7 PM weekdays busiest; mornings and midday quieter",
+      "etiquette": "Wiping equipment and sharing are universal expectations",
+      "personal_space": "Gyms can feel intimidating but everyone welcome"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T13:13:35.327485",
+    "updated_at": "2025-12-21T13:13:35.327485"
+  },
+  "concert_event_attendance": {
+    "scenario_id": "concert_event_attendance",
+    "name": "Attending a Concert or Live Show",
+    "category": "hobbies",
+    "difficulty": "beginner",
+    "description": "Purchase tickets, navigate venue, find seats, order concessions, and discuss the performance.",
+    "user_role": "attendee",
+    "ai_role": "venue_staff",
+    "setting": "Concert hall, theater, or music venue",
+    "duration_minutes": 13,
+    "phases": [
+      {
+        "phase_id": "ticket_purchase",
+        "name": "Ticket Purchase",
+        "description": "Buy tickets for event",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "ticket",
+          "seat",
+          "section",
+          "orchestra",
+          "balcony",
+          "box office",
+          "online",
+          "sold out",
+          "price",
+          "general admission"
+        ],
+        "essential_phrases": [
+          "Do you have tickets for tonight's show?",
+          "How much are the tickets?",
+          "Where are these seats?",
+          "Is this section better?",
+          "Are there any cheaper seats?",
+          "Is the show sold out?"
+        ],
+        "learning_objectives": [
+          "Purchase tickets at box office or online",
+          "Understand seating sections",
+          "Ask about availability and prices"
+        ],
+        "cultural_notes": "Buy tickets online (convenient, fees apply) or box office (no service fees). Seat prices vary by location - closer and center cost more. General admission is standing room, no assigned seats. Shows can sell out days or weeks in advance for popular acts. Scalpers sell tickets outside but illegal in some places and may be fraudulent. Print or mobile tickets usually both accepted.",
+        "success_criteria": [
+          "Successfully purchase tickets",
+          "Understand seat location",
+          "Know ticket policies (refund, transfer)"
+        ]
+      },
+      {
+        "phase_id": "venue_navigation",
+        "name": "Venue Entry and Navigation",
+        "description": "Enter venue and find seats",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "entrance",
+          "will call",
+          "ticket scanner",
+          "usher",
+          "aisle",
+          "row",
+          "seat number",
+          "restroom",
+          "lobby",
+          "venue map"
+        ],
+        "essential_phrases": [
+          "Where's the entrance?",
+          "I have mobile tickets",
+          "Which way to section B?",
+          "Can you help me find my seat?",
+          "Where are the restrooms?",
+          "What time does it start?"
+        ],
+        "learning_objectives": [
+          "Navigate venue layout",
+          "Find assigned seats",
+          "Locate amenities"
+        ],
+        "cultural_notes": "Arrive 30-45 minutes early for parking, entry, and finding seats. Have tickets ready (printed or on phone). Ushers help find seats - tip them if seated personally (optional $1-2). Restrooms have long lines at intermission - go before show. Photography/video often prohibited. Turn off phone before show starts. Some venues have coat check.",
+        "success_criteria": [
+          "Successfully enter venue",
+          "Find seats without difficulty",
+          "Locate key amenities"
+        ]
+      },
+      {
+        "phase_id": "concessions",
+        "name": "Ordering Concessions",
+        "description": "Order food and drinks at venue",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "concessions",
+          "snacks",
+          "drinks",
+          "beer",
+          "soda",
+          "popcorn",
+          "candy",
+          "bar",
+          "price",
+          "cash or card"
+        ],
+        "essential_phrases": [
+          "Can I get a soda?",
+          "How much is a beer?",
+          "Do you have water?",
+          "Can I pay with a card?",
+          "I'll have popcorn and a drink",
+          "Where's the bar?"
+        ],
+        "learning_objectives": [
+          "Order concessions in venue",
+          "Understand venue prices",
+          "Find concession stands"
+        ],
+        "cultural_notes": "Venue prices expensive (2-3x normal). Concession stands throughout venue. Long lines before show and at intermission. Some venues allow bringing water bottles. Alcoholic drinks at most concerts/shows (ID required, usually 18-21+ depending on country). Credit cards accepted but small purchases may require minimum. Tip bartenders $1-2 per drink.",
+        "success_criteria": [
+          "Successfully order items",
+          "Know concession locations",
+          "Complete transaction"
+        ]
+      },
+      {
+        "phase_id": "discussing_show",
+        "name": "Discussing the Show",
+        "description": "Talk about the performance with others",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "performance",
+          "amazing",
+          "incredible",
+          "disappointing",
+          "favorite part",
+          "encore",
+          "setlist",
+          "performer",
+          "stage",
+          "atmosphere"
+        ],
+        "essential_phrases": [
+          "What did you think?",
+          "That was amazing!",
+          "What was your favorite part?",
+          "The encore was incredible",
+          "I loved when they played...",
+          "Would you see them again?"
+        ],
+        "learning_objectives": [
+          "Express opinions about performance",
+          "Discuss memorable moments",
+          "Use entertainment vocabulary"
+        ],
+        "cultural_notes": "Encore is additional performance after main set - show appreciation by clapping/cheering. Standing ovation for exceptional performances (audience stands and claps). No talking during quiet performances (classical, theater). Singing along okay at some concerts, not others - follow crowd. Sharing experience on social media common. Live music creates shared memories - discussing it enhances enjoyment.",
+        "success_criteria": [
+          "Express opinion about performance",
+          "Identify favorite moments",
+          "Engage in discussion naturally"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "entertainment_vocabulary",
+      "expressing_opinions",
+      "event_attendance"
+    ],
+    "learning_outcomes": [
+      "Attend live events confidently",
+      "Navigate venues",
+      "Discuss performances",
+      "Enhance cultural participation"
+    ],
+    "vocabulary_focus": [
+      "ticket",
+      "concert",
+      "show",
+      "performance",
+      "seat",
+      "venue",
+      "stage",
+      "encore",
+      "amazing",
+      "favorite",
+      "concessions"
+    ],
+    "cultural_context": {
+      "timing": "Arrive early; shows often start on time",
+      "etiquette": "No talking during performance, phones off, standing ovation for exceptional shows",
+      "costs": "Tickets vary widely; venue concessions expensive",
+      "experience": "Live shows are social and cultural experiences to be shared"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T19:16:12.239682",
+    "updated_at": "2025-12-21T19:16:12.239682"
+  },
+  "language_class_enrollment": {
+    "scenario_id": "language_class_enrollment",
+    "name": "Enrolling in a Language or Adult Education Class",
+    "category": "education",
+    "difficulty": "beginner",
+    "description": "Inquire about classes, understand levels and schedules, register for course, and prepare for first day.",
+    "user_role": "prospective_student",
+    "ai_role": "school_administrator",
+    "setting": "Language school or adult education center",
+    "duration_minutes": 15,
+    "phases": [
+      {
+        "phase_id": "class_inquiry",
+        "name": "Class Inquiry",
+        "description": "Ask about available courses and programs",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "course",
+          "class",
+          "level",
+          "beginner",
+          "intermediate",
+          "advanced",
+          "schedule",
+          "days",
+          "times",
+          "duration",
+          "session"
+        ],
+        "essential_phrases": [
+          "What language courses do you offer?",
+          "I'm interested in Spanish classes",
+          "What levels are available?",
+          "When do classes meet?",
+          "How long is the course?",
+          "Do you have evening classes?"
+        ],
+        "learning_objectives": [
+          "Inquire about course offerings",
+          "Understand level system",
+          "Ask about schedules"
+        ],
+        "cultural_notes": "Adult education widely available in community colleges, language schools, cultural centers. Classes often 6-12 weeks, meeting 1-3 times weekly. Morning, afternoon, evening, and weekend options accommodate work schedules. Summer intensive courses also available. Most programs use Common European Framework levels (A1, A2, B1, B2, C1, C2) or equivalent.",
+        "success_criteria": [
+          "Understand available courses",
+          "Know schedule options",
+          "Identify appropriate level"
+        ]
+      },
+      {
+        "phase_id": "assessment",
+        "name": "Assessment and Placement",
+        "description": "Discuss current level and take placement test",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "placement test",
+          "assessment",
+          "current level",
+          "experience",
+          "self-study",
+          "previous classes",
+          "fluent",
+          "conversational",
+          "basic knowledge"
+        ],
+        "essential_phrases": [
+          "What's my level?",
+          "Do I need a placement test?",
+          "I studied Spanish in high school",
+          "I know some basic words",
+          "I've never studied this language",
+          "How do you determine the level?"
+        ],
+        "learning_objectives": [
+          "Assess own language level",
+          "Take placement test if required",
+          "Get appropriate placement"
+        ],
+        "cultural_notes": "Placement tests help put you in right level for success. Tests usually written (grammar, vocabulary) and sometimes oral (speaking ability). Being placed lower than expected is okay - solid foundation important. Can move up if class too easy. Self-assessment often inaccurate. Starting in beginner class is fine - no shame in being a beginner.",
+        "success_criteria": [
+          "Take placement test if required",
+          "Get accurate level placement",
+          "Understand why placement matters"
+        ]
+      },
+      {
+        "phase_id": "registration",
+        "name": "Registration and Payment",
+        "description": "Enroll in class and complete payment",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "enroll",
+          "register",
+          "registration fee",
+          "tuition",
+          "payment",
+          "installments",
+          "deadline",
+          "refund policy",
+          "materials",
+          "textbook"
+        ],
+        "essential_phrases": [
+          "How do I register?",
+          "What's the tuition?",
+          "Can I pay in installments?",
+          "When is the registration deadline?",
+          "What's the refund policy?",
+          "What materials do I need?"
+        ],
+        "learning_objectives": [
+          "Complete registration process",
+          "Understand payment options",
+          "Know materials needed"
+        ],
+        "cultural_notes": "Registration usually online or in person. Pay tuition (full course cost) plus registration fee. Textbooks extra cost ($30-100). Payment plans may be available. Deadlines for registration and payment - register early as classes fill up. Refund policies vary - full refund if dropped before class starts, partial if dropped in first week. Financial aid sometimes available for low-income students.",
+        "success_criteria": [
+          "Successfully register for class",
+          "Complete payment",
+          "Know what materials to buy"
+        ]
+      },
+      {
+        "phase_id": "first_day_prep",
+        "name": "First Day Preparation",
+        "description": "Understand expectations and prepare for first class",
+        "expected_duration_minutes": 3,
+        "key_vocabulary": [
+          "expectations",
+          "homework",
+          "attendance",
+          "participate",
+          "textbook",
+          "notebook",
+          "dictionary",
+          "first day",
+          "class location",
+          "parking"
+        ],
+        "essential_phrases": [
+          "Where does the class meet?",
+          "What should I bring?",
+          "Will there be homework?",
+          "How much time should I study?",
+          "Where can I park?",
+          "What if I miss a class?"
+        ],
+        "learning_objectives": [
+          "Know class location and logistics",
+          "Understand homework expectations",
+          "Prepare materials for first day"
+        ],
+        "cultural_notes": "Attendance important - most classes allow few absences. Homework expected (1-2 hours per class session). Bring textbook, notebook, pen, dictionary to every class. Participate actively - language learning requires practice. Ask questions when confused. Study between classes essential for progress. Form study groups with classmates. Many teachers use email for assignments and announcements.",
+        "success_criteria": [
+          "Know exact class location and time",
+          "Have required materials",
+          "Understand course expectations"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "education_vocabulary",
+      "making_inquiries",
+      "following_registration_procedures"
+    ],
+    "learning_outcomes": [
+      "Enroll in educational programs confidently",
+      "Understand assessment",
+      "Manage registration",
+      "Prepare for classes"
+    ],
+    "vocabulary_focus": [
+      "enroll",
+      "register",
+      "level",
+      "beginner",
+      "intermediate",
+      "class",
+      "course",
+      "tuition",
+      "homework",
+      "textbook",
+      "placement test"
+    ],
+    "cultural_context": {
+      "lifelong_learning": "Adult education valued and widely available",
+      "flexibility": "Many schedule options accommodate working adults",
+      "assessment": "Placement tests ensure appropriate level for success",
+      "participation": "Active engagement expected in language classes"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T19:16:12.239682",
+    "updated_at": "2025-12-21T19:16:12.239682"
+  },
+  "parent_teacher_conference": {
+    "scenario_id": "parent_teacher_conference",
+    "name": "Attending a Parent-Teacher Conference",
+    "category": "education",
+    "difficulty": "intermediate",
+    "description": "Meet with teacher to discuss child's progress, understand educational system, ask questions, and collaborate on child's success.",
+    "user_role": "parent",
+    "ai_role": "teacher",
+    "setting": "School classroom or meeting room",
+    "duration_minutes": 16,
+    "phases": [
+      {
+        "phase_id": "progress_overview",
+        "name": "Progress Overview",
+        "description": "Hear about child's academic and social progress",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "progress",
+          "grades",
+          "academic",
+          "behavior",
+          "performance",
+          "strengths",
+          "challenges",
+          "participation",
+          "social skills",
+          "report card"
+        ],
+        "essential_phrases": [
+          "How is my child doing?",
+          "What are their strengths?",
+          "Where do they need improvement?",
+          "How are their grades?",
+          "Are they participating in class?",
+          "How do they get along with others?"
+        ],
+        "learning_objectives": [
+          "Understand child's academic performance",
+          "Learn about behavioral/social development",
+          "Identify strengths and challenges"
+        ],
+        "cultural_notes": "Parent-teacher conferences typically 15-30 minutes, scheduled 1-2 times per year. Teachers discuss academics, behavior, and social development. Bring questions and notepad. Both parents encouraged to attend. If non-native English speaker, request translator in advance. Teachers want to partner with parents for student success. Remain calm and open even if hearing concerns.",
+        "success_criteria": [
+          "Understand child's current performance",
+          "Know specific strengths",
+          "Identify areas needing work"
+        ]
+      },
+      {
+        "phase_id": "challenges",
+        "name": "Discussing Challenges",
+        "description": "Address concerns and understand issues",
+        "expected_duration_minutes": 4,
+        "key_vocabulary": [
+          "concerns",
+          "struggling",
+          "difficulty",
+          "attention",
+          "focus",
+          "homework",
+          "reading level",
+          "math skills",
+          "behavior issues",
+          "missing assignments"
+        ],
+        "essential_phrases": [
+          "What are your concerns?",
+          "Why is he/she struggling?",
+          "Is the work too difficult?",
+          "Are they turning in homework?",
+          "How can we help?",
+          "Is this normal for their age?"
+        ],
+        "learning_objectives": [
+          "Understand specific problems",
+          "Ask questions about concerns",
+          "Avoid becoming defensive"
+        ],
+        "cultural_notes": "Teachers have child's best interest at heart. Concerns about performance, behavior, or social skills should be taken seriously. Ask specific questions about what's observed. Share information about home situation if relevant (stress, changes, health issues). Work together rather than blaming. Some struggling is normal - early intervention helps prevent bigger problems.",
+        "success_criteria": [
+          "Understand nature of challenges",
+          "Ask clarifying questions",
+          "Maintain collaborative attitude"
+        ]
+      },
+      {
+        "phase_id": "action_plan",
+        "name": "Creating Action Plan",
+        "description": "Develop strategies to support child's success",
+        "expected_duration_minutes": 5,
+        "key_vocabulary": [
+          "action plan",
+          "strategies",
+          "support",
+          "practice",
+          "resources",
+          "tutoring",
+          "homework routine",
+          "reading together",
+          "goals",
+          "follow-up"
+        ],
+        "essential_phrases": [
+          "What can we do at home?",
+          "Should we get a tutor?",
+          "How much should they practice?",
+          "Are there resources available?",
+          "What are the goals?",
+          "When should we meet again?"
+        ],
+        "learning_objectives": [
+          "Develop concrete action steps",
+          "Understand parent responsibilities",
+          "Know available school resources"
+        ],
+        "cultural_notes": "Teachers often suggest specific strategies: reading 20 minutes nightly, math practice websites, homework routine, limiting screen time. Ask for resource recommendations. Many schools offer free tutoring, reading programs, counseling. Special education services available if needed (evaluation required). Set realistic goals and timeline. Consistency at home crucial for improvement. Stay in communication via email.",
+        "success_criteria": [
+          "Have specific action plan",
+          "Know parent role in supporting child",
+          "Understand available resources"
+        ]
+      },
+      {
+        "phase_id": "followup",
+        "name": "Questions and Follow-up",
+        "description": "Ask remaining questions and schedule follow-up",
+        "expected_duration_minutes": 2,
+        "key_vocabulary": [
+          "questions",
+          "contact",
+          "email",
+          "phone",
+          "communication",
+          "updates",
+          "check-in",
+          "next meeting",
+          "available",
+          "progress report"
+        ],
+        "essential_phrases": [
+          "Can I email you with questions?",
+          "How often should we communicate?",
+          "When can we meet again?",
+          "Will you send progress updates?",
+          "What's the best way to reach you?",
+          "Thank you for your time"
+        ],
+        "learning_objectives": [
+          "Establish communication plan",
+          "Schedule follow-up if needed",
+          "Express appreciation"
+        ],
+        "cultural_notes": "Teachers appreciate involved parents. Email is usually best for non-urgent questions. Response may take 24-48 hours. Schedule another conference if serious concerns. Most teachers send progress reports between conferences. Parent portal shows grades online. Open communication helps student success. Thank teacher for their work and time.",
+        "success_criteria": [
+          "Have teacher's contact information",
+          "Understand communication preferences",
+          "Schedule follow-up if needed"
+        ]
+      }
+    ],
+    "prerequisites": [
+      "education_vocabulary",
+      "discussing_children",
+      "collaborative_communication"
+    ],
+    "learning_outcomes": [
+      "Navigate parent-teacher conferences effectively",
+      "Advocate for child",
+      "Collaborate with teachers"
+    ],
+    "vocabulary_focus": [
+      "progress",
+      "grades",
+      "behavior",
+      "homework",
+      "challenges",
+      "strengths",
+      "improvement",
+      "support",
+      "resources",
+      "action plan"
+    ],
+    "cultural_context": {
+      "partnership": "Teachers and parents work together for student success",
+      "frequency": "Conferences 1-2 times yearly, more if concerns",
+      "communication": "Email main method between conferences",
+      "resources": "Schools offer tutoring, counseling, special education if needed"
+    },
+    "is_active": true,
+    "created_at": "2025-12-21T19:16:12.239682",
+    "updated_at": "2025-12-21T19:16:12.239682"
   }
 }
