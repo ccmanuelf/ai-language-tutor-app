@@ -667,6 +667,93 @@ def create_main_content():
                 ),
                 style="text-align: center;",
             ),
+            # Trending Scenarios Section
+            Div(
+                Div(
+                    H2(
+                        "🔥 Trending Scenarios",
+                        style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);",
+                    ),
+                    A(
+                        "View all",
+                        href="/discover",
+                        style="""
+                            color: var(--primary-color);
+                            text-decoration: none;
+                            font-weight: 500;
+                            font-size: 0.9rem;
+                            transition: all 0.2s;
+                        """,
+                        onmouseover="this.style.textDecoration='underline'",
+                        onmouseout="this.style.textDecoration='none'",
+                    ),
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;",
+                ),
+                # Trending scenarios cards (loaded via JavaScript)
+                Div(
+                    id="trendingScenarios",
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;",
+                ),
+                style="max-width: 1000px; margin: 0 auto 3rem auto;",
+            ),
+            # Recommended For You Section
+            Div(
+                Div(
+                    H2(
+                        "✨ Recommended For You",
+                        style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);",
+                    ),
+                    A(
+                        "See more",
+                        href="/discover?tab=for-you",
+                        style="""
+                            color: var(--primary-color);
+                            text-decoration: none;
+                            font-weight: 500;
+                            font-size: 0.9rem;
+                            transition: all 0.2s;
+                        """,
+                        onmouseover="this.style.textDecoration='underline'",
+                        onmouseout="this.style.textDecoration='none'",
+                    ),
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;",
+                ),
+                # Recommended scenarios cards (loaded via JavaScript)
+                Div(
+                    id="recommendedScenarios",
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;",
+                ),
+                style="max-width: 1000px; margin: 0 auto 3rem auto;",
+            ),
+            # Popular Collections Section
+            Div(
+                Div(
+                    H2(
+                        "📚 Popular Collections",
+                        style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);",
+                    ),
+                    A(
+                        "Browse all",
+                        href="/my-collections?tab=public",
+                        style="""
+                            color: var(--primary-color);
+                            text-decoration: none;
+                            font-weight: 500;
+                            font-size: 0.9rem;
+                            transition: all 0.2s;
+                        """,
+                        onmouseover="this.style.textDecoration='underline'",
+                        onmouseout="this.style.textDecoration='none'",
+                    ),
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;",
+                ),
+                # Popular collections cards (loaded via JavaScript)
+                Div(
+                    id="popularCollections",
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;",
+                ),
+                style="max-width: 1000px; margin: 0 auto 3rem auto;",
+            ),
             # Explore section
             Div(
                 Div(
@@ -1057,6 +1144,187 @@ def create_content_processing_modals():
 def create_content_processing_scripts():
     """Create JavaScript for content processing functionality"""
     return Script("""
+        // Load trending scenarios, recommended scenarios, and collections on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load trending scenarios
+            try {
+                const trendingResponse = await fetch('/api/v1/scenario-organization/trending?limit=4');
+                if (trendingResponse.ok) {
+                    const data = await trendingResponse.json();
+                    renderScenarioCards(data.scenarios, 'trendingScenarios');
+                }
+            } catch (error) {
+                console.error('Failed to load trending scenarios:', error);
+            }
+
+            // Load recommended scenarios (if user is logged in)
+            try {
+                const recommendedResponse = await fetch('/api/v1/scenario-organization/recommended?limit=4');
+                if (recommendedResponse.ok) {
+                    const data = await recommendedResponse.json();
+                    renderScenarioCards(data.scenarios, 'recommendedScenarios');
+                }
+            } catch (error) {
+                console.error('Failed to load recommended scenarios:', error);
+                // Hide section if not logged in or error
+                document.getElementById('recommendedScenarios').closest('div').style.display = 'none';
+            }
+
+            // Load popular collections
+            try {
+                const collectionsResponse = await fetch('/api/v1/scenario-organization/public-collections?limit=3');
+                if (collectionsResponse.ok) {
+                    const data = await collectionsResponse.json();
+                    renderCollectionCards(data.collections, 'popularCollections');
+                }
+            } catch (error) {
+                console.error('Failed to load popular collections:', error);
+            }
+        });
+
+        // Render scenario cards
+        function renderScenarioCards(scenarios, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            scenarios.forEach(scenario => {
+                const card = createScenarioCard(scenario);
+                container.appendChild(card);
+            });
+        }
+
+        // Create scenario card element
+        function createScenarioCard(scenario) {
+            const card = document.createElement('a');
+            card.href = `/chat?scenario_id=${scenario.scenario_id}`;
+            card.style.cssText = `
+                display: block;
+                text-decoration: none;
+                color: var(--text-primary);
+                background: var(--bg-primary);
+                border-radius: var(--radius-lg);
+                overflow: hidden;
+                transition: all 0.3s ease;
+                border: 1px solid var(--border-light);
+            `;
+
+            const categoryColors = {
+                'restaurant': '#10b981',
+                'travel': '#3b82f6',
+                'shopping': '#f59e0b',
+                'business': '#6366f1',
+                'social': '#ec4899',
+                'healthcare': '#ef4444',
+                'emergency': '#dc2626',
+                'daily_life': '#8b5cf6',
+                'hobbies': '#14b8a6',
+                'education': '#0891b2'
+            };
+
+            const categoryColor = categoryColors[scenario.category] || '#6366f1';
+
+            card.innerHTML = `
+                <div style="padding: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span style="background: ${categoryColor}; color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600;">
+                            ${scenario.category}
+                        </span>
+                        ${scenario.difficulty ? `<span style="color: var(--text-muted); font-size: 0.75rem;">${scenario.difficulty}</span>` : ''}
+                    </div>
+                    <h3 style="font-weight: 600; font-size: 1rem; margin-bottom: 0.5rem; line-height: 1.3;">${scenario.title}</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5;">
+                        ${scenario.description?.substring(0, 100)}${scenario.description?.length > 100 ? '...' : ''}
+                    </p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--border-light);">
+                        <div style="display: flex; align-items: center; gap: 0.25rem; color: var(--text-muted); font-size: 0.85rem;">
+                            <span>⭐</span>
+                            <span>${scenario.average_rating ? scenario.average_rating.toFixed(1) : 'New'}</span>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 0.85rem;">
+                            ${scenario.estimated_duration || 15} min
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            card.onmouseover = function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = 'var(--shadow-md)';
+                this.style.borderColor = 'var(--border-color)';
+            };
+            card.onmouseout = function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+                this.style.borderColor = 'var(--border-light)';
+            };
+
+            return card;
+        }
+
+        // Render collection cards
+        function renderCollectionCards(collections, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            collections.forEach(collection => {
+                const card = createCollectionCard(collection);
+                container.appendChild(card);
+            });
+        }
+
+        // Create collection card element
+        function createCollectionCard(collection) {
+            const card = document.createElement('a');
+            card.href = `/my-collections?collection_id=${collection.id}`;
+            card.style.cssText = `
+                display: block;
+                text-decoration: none;
+                color: var(--text-primary);
+                background: var(--bg-primary);
+                border-radius: var(--radius-lg);
+                overflow: hidden;
+                transition: all 0.3s ease;
+                border: 1px solid var(--border-light);
+            `;
+
+            card.innerHTML = `
+                <div style="padding: 1.5rem;">
+                    ${collection.is_learning_path ? `
+                        <div style="margin-bottom: 0.75rem;">
+                            <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600;">
+                                Learning Path
+                            </span>
+                        </div>
+                    ` : ''}
+                    <h3 style="font-weight: 600; font-size: 1rem; margin-bottom: 0.5rem; line-height: 1.3;">${collection.name}</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5;">
+                        ${collection.description?.substring(0, 100)}${collection.description?.length > 100 ? '...' : ''}
+                    </p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--border-light);">
+                        <div style="color: var(--text-muted); font-size: 0.85rem;">
+                            ${collection.scenario_count || 0} scenarios
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 0.85rem;">
+                            By ${collection.creator_username || 'Anonymous'}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            card.onmouseover = function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = 'var(--shadow-md)';
+                this.style.borderColor = 'var(--border-color)';
+            };
+            card.onmouseout = function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+                this.style.borderColor = 'var(--border-light)';
+            };
+
+            return card;
+        }
+
         // Modal functionality
         function showContentProcessingModal(type) {
             if (type === 'upload') {

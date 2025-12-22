@@ -21,7 +21,9 @@ from app.api.feature_toggles import router as feature_toggles_router
 from app.api.ollama import router as ollama_router
 from app.api.personas import router as personas_router
 from app.api.realtime_analysis import router as realtime_router
+from app.api.scenario_builder import router as scenario_builder_router
 from app.api.scenario_management import router as scenario_management_router
+from app.api.scenario_organization import router as scenario_organization_router
 from app.api.scenarios import router as scenarios_router
 from app.api.tutor_modes import router as tutor_modes_router
 from app.api.visual_learning import router as visual_learning_router
@@ -68,6 +70,12 @@ def create_app() -> FastAPI:
     )
     app.include_router(personas_router, tags=["personas"])
     app.include_router(scenarios_router)  # Router already has /api/v1/scenarios prefix
+    app.include_router(
+        scenario_builder_router
+    )  # Router already has /api/v1/scenario-builder prefix
+    app.include_router(
+        scenario_organization_router
+    )  # Router already has /api/v1/scenario-organization prefix
     app.include_router(realtime_router, tags=["realtime-analysis"])
     app.include_router(tutor_modes_router, tags=["tutor-modes"])
     app.include_router(feature_toggles_router, tags=["feature-toggles"])
@@ -75,6 +83,17 @@ def create_app() -> FastAPI:
     app.include_router(scenario_management_router, tags=["scenario-management"])
     app.include_router(visual_learning_router, tags=["visual-learning"])
     app.include_router(ollama_router, prefix="/api/v1/ollama", tags=["ollama"])
+
+    # Frontend routes
+    from app.frontend.scenario_builder import create_scenario_builder_route
+    from app.frontend.scenario_collections import create_collections_route
+    from app.frontend.scenario_detail import create_scenario_detail_route
+    from app.frontend.scenario_discovery import create_discovery_hub_route
+
+    app.get("/scenario-builder")(create_scenario_builder_route())
+    app.get("/my-collections")(create_collections_route())
+    app.get("/discover")(create_discovery_hub_route())
+    app.get("/scenarios/{scenario_id}")(create_scenario_detail_route())
 
     # Health check endpoint
     @app.get("/health")

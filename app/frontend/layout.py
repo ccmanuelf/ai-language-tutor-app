@@ -29,6 +29,20 @@ def create_header(current_page: str = "home"):
                 ),
                 Li(
                     A(
+                        "Discover",
+                        href="/discover",
+                        cls="active" if current_page == "discover" else "",
+                    )
+                ),
+                Li(
+                    A(
+                        "My Collections",
+                        href="/my-collections",
+                        cls="active" if current_page == "collections" else "",
+                    )
+                ),
+                Li(
+                    A(
                         "Conversation",
                         href="/chat",
                         cls="active" if current_page == "chat" else "",

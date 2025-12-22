@@ -1,530 +1,437 @@
-# AI Language Tutor - Daily Prompt Template
-
-**Last Updated:** 2025-12-21 (CORE PRINCIPLES RESTORED + Sanity Check Methodology)  
-**Purpose:** Guide all development sessions with core principles and comprehensive validation methodology
+# Daily Session Prompt Template
+**Session:** 134 - Analytics Validation  
+**Date:** [To be filled]  
+**Previous Session:** 133 (Content Organization System - COMPLETE)  
+**Next Planned:** 135 (Advanced Analytics Dashboard)
 
 ---
 
-## 🔴 FOUNDATIONAL PRINCIPLES (NON-NEGOTIABLE)
+## 🎯 SESSION 134 OBJECTIVE
 
-### **PRINCIPLE 1: NO SUCH THING AS "ACCEPTABLE"**
-- **Standard:** We aim for PERFECTION by whatever it takes
-- **Rule:** 100.00% coverage - NOT 98%, NOT 99%, NOT 99.9%
-- **Action:** If coverage is not 100%, we refactor source code to make it testable
-- **History:** We have tackled defensive error handling before and succeeded
-- **Commitment:** No exceptions, no omissions, no regressions, no compromises
-- **Example:** Apply ALL improvements (no shortcuts), achieve TRUE 100% perfection
+**Primary Goal:** Validate all analytics calculations and recommendation algorithms in the Content Organization System
 
-### **PRINCIPLE 2: PATIENCE IS OUR CORE VIRTUE**
-- **Rule:** NEVER kill a long-running process unless unresponsive for >5 minutes
-- **Reason:** Killing processes masks issues and creates gaps in coverage
-- **Action:** Monitor processes, enlarge timeout windows if needed, but WAIT
-- **Lesson:** Premature termination = incomplete data = hidden problems
-- **Verification:** Also verify work properly - don't skip test runs
-  - Running tests separately ≠ Running full suite
-  - Always run complete suite before claiming success
-  - 4 minutes is NOTHING - patience prevents quality shortcuts
+**Context:** Session 133 implemented a complete content organization system with:
+- Trending algorithm (pre-computed scores)
+- Popularity metrics (completion-based)
+- Recommendation system (personalized)
+- Rating aggregation (multi-dimensional)
+- Discovery hub (6 discovery modes)
 
-### **PRINCIPLE 3: TRUE 100% MEANS VALIDATE ALL CODE PATHS**
-- **Standard:** 100% coverage = ALL code executed AND validated
-- **Rule:** Simply calling functions is NOT enough - must validate actual behavior
-- **Critical Discovery:** FastHTML functions need `to_xml()` for HTML validation, not just `str()`
-- **Action:** Read implementation to understand exact field names, return types, and transformations
-- **Lesson:** "Untested & unverified = Bad Code & Useless project"
-- **Requirement:** Every assertion must validate actual output, not just that code runs
+**This Session:** Ensure all analytics are accurate, performant, and production-ready.
 
-**Example:**
+---
+
+## 📋 SESSION 134 SCOPE
+
+### Phase 1: Analytics Algorithm Validation (2-3 hours)
+
+**Trending Algorithm:**
+- Validate trending_score calculation formula
+- Test with known data sets (expected vs actual)
+- Verify time decay works correctly
+- Test edge cases (zero data, extreme values)
+- Performance test with 1000+ scenarios
+
+**Popularity Metrics:**
+- Validate popularity_score calculation
+- Test completion count accuracy
+- Verify sorting by popularity
+- Test with various completion rates
+- Performance benchmarks
+
+**Recommendation Algorithm:**
+- Validate personalization logic
+- Test collaborative filtering (if implemented)
+- Verify category/difficulty matching
+- Test with various user profiles
+- Check diversity of recommendations
+
+### Phase 2: Rating Aggregation Validation (1-2 hours)
+
+**Rating Summary Calculations:**
+- Validate average rating math
+- Test weighted ratings (if applicable)
+- Verify count accuracy
+- Test dimension-specific averages
+- Edge case: zero ratings
+
+**Rating Distribution:**
+- Validate star distribution (5-star breakdown)
+- Test percentile calculations
+- Verify helpful vote counts
+- Test review sorting algorithms
+
+### Phase 3: Discovery Query Performance (1-2 hours)
+
+**Search Performance:**
+- Benchmark search queries (< 100ms target)
+- Test with 100, 1000, 10000 scenarios
+- Verify pagination performance
+- Test filter combinations
+- Check index usage (EXPLAIN queries)
+
+**Discovery Hub Load Time:**
+- Measure full hub data load time
+- Test concurrent user loads
+- Verify caching effectiveness
+- Check N+1 query prevention
+- Benchmark API response times
+
+### Phase 4: Data Integrity Validation (1 hour)
+
+**Analytics Consistency:**
+- Verify analytics match actual data
+- Test update trigger accuracy
+- Check for orphaned records
+- Validate foreign key integrity
+- Test cascade delete behavior
+
+**Edge Case Testing:**
+- Empty collections behavior
+- Zero ratings scenarios
+- New user recommendations
+- Deleted scenario cleanup
+- Concurrent update handling
+
+### Phase 5: Integration Testing (1 hour)
+
+**End-to-End Workflows:**
+- User completes scenario → analytics update
+- User rates scenario → trending recalculated
+- User bookmarks → recommendation influenced
+- Collection created → discovery updated
+- Tag added → search updated
+
+**Cross-System Validation:**
+- Scenario progress → analytics link
+- Content persistence → rating link
+- Persona preference → recommendation link
+- Achievement system integration (future)
+
+### Phase 6: Documentation & Benchmarks (1 hour)
+
+**Document:**
+- Algorithm formulas clearly
+- Performance benchmarks
+- Known limitations
+- Recommended thresholds
+- Tuning parameters
+
+**Create:**
+- Analytics validation report
+- Performance benchmark results
+- Algorithm documentation
+- Tuning guide
+
+---
+
+## 📊 SUCCESS CRITERIA
+
+### Must Have
+- [ ] All analytics calculations mathematically correct
+- [ ] Trending algorithm validated with test data
+- [ ] Popularity metrics accurate
+- [ ] Recommendation algorithm produces sensible results
+- [ ] Rating aggregations correct
+- [ ] Discovery queries < 100ms (95th percentile)
+- [ ] Zero N+1 queries in discovery hub
+- [ ] All indexes being used correctly
+- [ ] Edge cases handled gracefully
+- [ ] Documentation complete
+
+### Should Have
+- [ ] Performance benchmarks documented
+- [ ] Algorithm tuning guide created
+- [ ] Known limitations documented
+- [ ] Optimization recommendations
+- [ ] Monitoring metrics defined
+
+### Nice to Have
+- [ ] A/B test framework for recommendations
+- [ ] Analytics dashboard for monitoring
+- [ ] Alerting thresholds defined
+- [ ] ML readiness assessment
+
+---
+
+## 🔧 TECHNICAL APPROACH
+
+### Validation Method
+1. **Create Test Data Sets:** Known scenarios with controlled ratings/completions
+2. **Calculate Expected Results:** Manual calculation of what analytics should be
+3. **Run System Calculations:** Execute actual analytics updates
+4. **Compare Results:** Assert expected == actual
+5. **Document Discrepancies:** Fix or explain any differences
+
+### Performance Testing
+1. **Baseline:** Measure current performance
+2. **Load Test:** Generate 1000+ test scenarios
+3. **Benchmark Queries:** Measure key discovery queries
+4. **Identify Bottlenecks:** Profile slow queries
+5. **Optimize:** Add indexes, refactor queries as needed
+6. **Re-test:** Verify improvements
+
+### Tools
+- `pytest` for validation tests
+- `pytest-benchmark` for performance tests
+- Database `EXPLAIN` for query analysis
+- `cProfile` for Python profiling (if needed)
+
+---
+
+## 📁 FILES TO REVIEW
+
+### Analytics Implementation
+- `app/services/scenario_organization_service.py` (lines with analytics logic)
+- `app/models/scenario_db_models.py` (ScenarioAnalytics model)
+- `alembic/versions/9e145591946b_add_scenario_organization_tables.py` (analytics table)
+
+### Discovery Endpoints
+- `app/api/scenario_organization.py` (trending, popular, recommended endpoints)
+
+### Existing Tests
+- `tests/test_scenario_organization_service.py` (analytics tests)
+- `tests/test_scenario_organization_api.py` (discovery endpoint tests)
+- `tests/test_scenario_organization_integration.py` (end-to-end tests)
+
+---
+
+## 📝 FILES TO CREATE
+
+### New Test Files
+- `tests/test_analytics_validation.py` - Algorithm validation tests
+- `tests/test_analytics_performance.py` - Performance benchmarks
+- `tests/test_recommendation_algorithm.py` - Recommendation quality tests
+
+### Documentation
+- `docs/ANALYTICS_ALGORITHMS.md` - Algorithm documentation
+- `docs/ANALYTICS_PERFORMANCE_BENCHMARKS.md` - Benchmark results
+- `docs/ANALYTICS_TUNING_GUIDE.md` - Parameter tuning guide
+- `SESSION_134_VALIDATION_REPORT.md` - Session results
+
+---
+
+## 🎓 KEY PRINCIPLES FROM PREVIOUS SESSIONS
+
+1. **Validate with Known Data:** Use controlled test sets with expected outcomes
+2. **Test Edge Cases:** Zero data, extreme values, empty results
+3. **Performance First:** < 100ms for user-facing queries
+4. **Document Everything:** Algorithms, assumptions, limitations
+5. **Real Data Testing:** Test with production-like data volumes
+6. **Index Verification:** Use EXPLAIN to confirm index usage
+7. **No N+1 Queries:** Eager load relationships
+8. **Graceful Degradation:** System works even with bad data
+9. **Monitoring Ready:** Define metrics for production monitoring
+10. **User Impact:** Fast, accurate, helpful recommendations
+
+---
+
+## 🚀 GETTING STARTED
+
+### Step 1: Review Session 133 Implementation
+```bash
+# Read the analytics service implementation
+cat app/services/scenario_organization_service.py | grep -A 20 "update_analytics\|trending\|popular\|recommended"
+
+# Check existing tests
+pytest tests/test_scenario_organization_service.py -k analytics -v
+```
+
+### Step 2: Create Validation Test Framework
 ```python
-# ❌ WRONG - Only calls function, doesn't validate output:
-result = language_config_card(...)
-assert result is not None  # Useless test!
+# tests/test_analytics_validation.py
 
-# ✅ CORRECT - Validates actual HTML generation:
-result = language_config_card(...)
-result_str = to_xml(result)  # Get actual HTML
-assert "Spanish" in result_str  # Validate content
-assert "toggleLanguageFeature('es', 'stt'" in result_str  # Validate callbacks
+def test_trending_score_calculation():
+    """Validate trending score formula with known data"""
+    # Given: scenario with 100 starts, 80 completions, 4.5 rating
+    # When: trending score calculated
+    # Then: score should be X (based on formula)
+    
+def test_popularity_score_calculation():
+    """Validate popularity score formula"""
+    # Similar pattern
 ```
 
-### **PRINCIPLE 4: CORRECT ENVIRONMENT ALWAYS - USE ai-tutor-env VENV**
-- **CRITICAL:** This project uses `ai-tutor-env` virtual environment, NOT anaconda
-- **Rule:** ALWAYS activate ai-tutor-env before ANY commands
-- **Why:** Wrong environment = tests skip, dependencies missing, false results
-- **Project Environment:** Python 3.12.2 (ai-tutor-env virtual environment)
-
-**⚠️ CRITICAL DISCOVERY:** Environment activation is NOT persistent across bash commands!
-
-**Each bash command is a NEW shell - previous activations DON'T persist!**
-
+### Step 3: Run Performance Benchmarks
 ```bash
-# ❌ WRONG - These are SEPARATE shell sessions:
-source ai-tutor-env/bin/activate  # Activates in Shell #1
-pytest tests/                      # Runs in Shell #2 (NOT activated!)
+# Create 1000 test scenarios
+pytest tests/test_analytics_performance.py --benchmark-only
 
-# ✅ CORRECT - Single shell session with && operator:
-source ai-tutor-env/bin/activate && pytest tests/
+# Profile discovery hub query
+python -m cProfile -s cumtime -m pytest tests/test_discovery_performance.py
 ```
 
-**🔴 MANDATORY PRACTICE - ALWAYS combine activation + command:**
-
-```bash
-cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
-source ai-tutor-env/bin/activate && \
-<your command here>
-```
-
-**Verification Steps:**
-```bash
-cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
-source ai-tutor-env/bin/activate && \
-which python && python --version
-
-# Expected output:
-# /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app/ai-tutor-env/bin/python
-# Python 3.12.2
-
-# ❌ If you see /opt/anaconda3/bin/python - YOU'RE IN WRONG ENVIRONMENT!
-```
-
-**Impact of Wrong Environment:**
-- ❌ Tests skip (72 skipped due to missing dependencies)
-- ❌ False coverage results (0% due to wrong module path)
-- ❌ Missing dependencies
-- ❌ Invalid test results
-- ✅ Correct environment = all tests pass, proper coverage, accurate results
-
-### **PRINCIPLE 5: ZERO FAILURES ALLOWED**
-- **Rule:** ALL tests must pass - no exceptions, even if "unrelated" to current work
-- **Action:** When ANY test fails, investigate and fix it immediately
-- **Banned:** Ignoring failures as "pre-existing" or "not my problem"
-- **Standard:** Full test suite must show 100% pass rate before session completion
-- **Verification:** Run complete test suite, wait for full completion, verify zero failures
-
-### **PRINCIPLE 6: FIX BUGS IMMEDIATELY, NO SHORTCUTS**
-- **Rule:** When a bug is found, it is MANDATORY to fix it NOW
-- **Banned:** "Document for later," "address as future enhancement," "acceptable gap"
-- **Banned:** Using --ignore flags during assessments to skip issues
-- **Standard:** Cover ALL statements, cover ALL branches, no exceptions
-
-### **PRINCIPLE 7: DOCUMENT AND PREPARE THOROUGHLY**
-- **Requirements:**
-  1. Save session logs after completion
-  2. Write lessons learned
-  3. Update project tracker
-  4. Update DAILY_PROMPT_TEMPLATE.md for next session
-  5. Push latest state to GitHub
-- **Purpose:** Keep repositories synced, preserve context for next session
-
-**🔴 GITHUB AUTHENTICATION:**
-- **Method:** Uses GITHUB_PERSONAL_ACCESS_TOKEN for authentication
-- **Push Command:** `git push origin main` (requires token configured)
-- **Note:** If push fails with authentication error, token may need refresh
-- **Fallback:** Commits are saved locally and can be pushed later
-
-### **PRINCIPLE 8: TIME IS NOT A CONSTRAINT**
-- **Fact:** We have plenty of time to do things right
-- **Criteria:** Quality and performance above all
-- **Valid Exit Reasons:**
-  - Session goals/objectives accomplished ✅
-  - Session context becoming too long (save progress, start fresh) ✅
-- **Invalid Exit Reason:**
-  - Time elapsed ❌ (NOT a decision criteria)
-- **Commitment:** Never rush, never compromise standards to "save time"
-
-### **PRINCIPLE 9: EXCELLENCE IS OUR IDENTITY**
-- **Philosophy:** "No matter if they call us perfectionists, we call it doing things right"
-- **Standards:** We refuse to lower our standards
-- **Truth:** "Labels don't define us, our results do"
-- **Position:** "If aiming high makes us perfectionists, then good. We are not here to settle."
-
-### **PRINCIPLE 10: VERIFY IMPORTS EARLY**
-- **Rule:** After creating ANY file with imports, verify imports work immediately
-- **Why:** Prevents cascading import errors at the end
-- **Action:** Run a quick import test or simple test case
-- **Pattern:** Check existing codebase for correct import paths BEFORE writing imports
-
-**Common Import Patterns:**
-```python
-# Base class
-from app.models.database import Base  # NOT app.models.base
-
-# User role enum
-from app.models.database import UserRole  # NOT Role
-
-# Admin authentication
-from app.services.admin_auth import require_admin_access  # NOT require_admin
-
-# Database session
-db = get_primary_db_session()  # Returns Session directly, NOT generator
-```
-
-### **PRINCIPLE 11: COMPREHENSIVE TESTING**
-- **Standard:** Test ALL paths - happy, error, edge cases
-- **Rule:** Unit tests + Integration tests + E2E tests
-- **Requirement:** Real AI integration in E2E tests (not mocked)
-- **Coverage:** TRUE 100% = statement + branch coverage
-- **Validation:** User quality interventions encouraged
-
-### **PRINCIPLE 12: NO REGRESSIONS EVER**
-- **Rule:** New work cannot break existing functionality
-- **Verification:** Full test suite must pass after every change
-- **Standard:** Zero regression tolerance
-- **Action:** If regression found, fix immediately before continuing
-
-### **PRINCIPLE 13: GIT HYGIENE**
-- **Rule:** Clean, atomic commits with clear messages
-- **Standard:** Each commit should represent one logical change
-- **Message Format:** Include emoji + clear description
-- **Example:** "✅ Phase 3A.14: Achieve 94% coverage for mistral_service.py"
-
-### **PRINCIPLE 14: CODE EXCELLENCE**
-- **Standard:** Production-grade code quality
-- **Requirements:**
-  - Zero warnings
-  - Zero TODOs (or documented in tracker)
-  - Clean code patterns
-  - Proper error handling
-  - Security best practices
-- **Validation:** Code review before session completion
+### Step 4: Document Findings
+- Algorithm formulas
+- Performance results
+- Optimization opportunities
+- Known limitations
 
 ---
 
-## ⚠️ CRITICAL REMINDERS
+## 🎯 SESSION DELIVERABLES
 
-### DO:
-✅ Wait for processes to complete (< 5 min is fine)
-✅ Fix bugs immediately when found
-✅ Run complete test suites (no --ignore)
-✅ Write comprehensive tests (happy + error + edge)
-✅ Document everything thoroughly
-✅ Focus on ONE module at a time
-✅ Verify imports as files are created
-✅ Check existing patterns before coding
-✅ Place specific routes before generic routes
-✅ Check actual API responses before writing tests
-✅ Apply systematic debugging approach
-✅ **Apply ALL improvements (no shortcuts)**
-✅ **Run full test suite before claiming success**
-✅ **Save verification logs with timestamps**
+By end of session, we should have:
 
-### DON'T:
-❌ Kill processes under 5 minutes
-❌ Document bugs "for later"
-❌ Use --ignore in assessments
-❌ Write minimal tests
-❌ Skip documentation
-❌ Split focus across modules
-❌ Assume import paths
-❌ Put generic routes before specific ones
-❌ Assume response structures
-❌ **Skip improvements to save time**
-❌ **Claim success without full verification**
-❌ **Take shortcuts (PRINCIPLE 1)**
+1. **Validation Test Suite** (~30-40 tests)
+   - Trending algorithm tests (10 tests)
+   - Popularity algorithm tests (8 tests)
+   - Recommendation algorithm tests (12 tests)
+   - Rating aggregation tests (10 tests)
+
+2. **Performance Benchmarks**
+   - Discovery hub load time
+   - Search query performance
+   - Trending query performance
+   - Popular query performance
+   - Recommendation query performance
+
+3. **Documentation**
+   - Algorithm formulas documented
+   - Performance benchmarks recorded
+   - Tuning guide created
+   - Known limitations listed
+
+4. **Validation Report**
+   - SESSION_134_VALIDATION_REPORT.md
+   - All analytics verified correct OR
+   - Issues identified and fixed OR
+   - Issues documented with workarounds
 
 ---
 
-## 📋 PRE-PRODUCTION SANITY CHECK METHODOLOGY
+## ⚠️ POTENTIAL ISSUES TO WATCH FOR
 
-**Use this methodology when preparing for production release or comprehensive validation**
+### Algorithm Issues
+- Trending score doesn't decay over time correctly
+- Popularity score doesn't account for scenario age
+- Recommendations too homogeneous (filter bubble)
+- Recommendations too random (not personalized enough)
+- Rating averages incorrect due to type coercion
 
-### Phase 1: Documentation Review (CRITICAL)
+### Performance Issues
+- Discovery hub loads > 500ms
+- Search queries scanning without indexes
+- N+1 queries loading scenarios
+- Trending calculation too expensive
+- Recommendation calculation times out
 
-#### 1.1 Locate All Tracker Files
-**Action:** Find and list ALL session tracking documents across the project.
-
-**Expected Locations:**
-- `docs/SESSION_*.md` files
-- `docs/*_PLAN.md` files
-- `docs/*_PROGRESS.md` files
-- `docs/*_COMPLETE.md` files
-- `docs/*_TRACKER.md` files
-- Any `TODO.md`, `ROADMAP.md`, or similar files
-
-**Validation Questions:**
-- Are there any sessions with "IN PROGRESS" status?
-- Are there any sessions with incomplete user stories?
-- Are there any sessions with pending tasks?
-- Are there any sessions with known bugs or issues?
-
-#### 1.2 Review Session Completion Status
-**For EACH session document found, verify:**
-- [ ] Session objectives clearly stated?
-- [ ] All user stories marked as complete?
-- [ ] All tasks marked as complete?
-- [ ] All tests marked as passing?
-- [ ] Backend implementation documented?
-- [ ] Frontend implementation documented?
-- [ ] Integration verified?
-- [ ] Lessons learned documented?
-
-#### 1.3 Cross-Reference Plans vs. Reality
-**Verification Steps:**
-1. List all planned features
-2. Verify each feature exists in codebase
-3. Verify each feature has tests
-4. Verify each feature is accessible from UI
-5. Document any deviations from plan
-
-**Deliverable:** Gap analysis showing:
-- Planned but not implemented
-- Implemented but not planned
-- Implemented differently than planned
-
-#### 1.4 Validate "COMPLETE" Claims
-**Evidence Required:**
-- [ ] Code files exist and contain claimed functionality
-- [ ] Tests exist and are passing
-- [ ] Frontend UI exists and is accessible
-- [ ] Documentation matches implementation
-- [ ] No TODOs or FIXMEs in code
-- [ ] No "coming soon" or "not implemented" messages in UI
-
-### Phase 2: Backend Validation (CRITICAL)
-
-#### 2.1 API Inventory & Status
-**Action:** Create complete inventory of ALL API endpoints.
-
-```bash
-# Find all API route definitions
-grep -r "@app.route\|@router.get\|@router.post\|@router.put\|@router.delete\|@router.patch" app/api/
-```
-
-**For Each API Endpoint:**
-- [ ] Endpoint path documented?
-- [ ] HTTP method correct?
-- [ ] Request/response schemas defined?
-- [ ] Authentication/authorization implemented?
-- [ ] Unit tests exist?
-- [ ] Integration tests exist?
-- [ ] Connected to frontend?
-- [ ] Error handling implemented?
-
-#### 2.2 Database Schema Validation
-**Action:** Verify database matches all documented tables.
-
-```sql
--- List all tables
-SELECT name FROM sqlite_master WHERE type='table';
-
--- Check table structures
-SELECT sql FROM sqlite_master WHERE type='table';
-
--- Verify foreign keys
-PRAGMA foreign_key_list(table_name);
-```
-
-#### 2.3 Test Coverage Analysis
-**Commands to Run:**
-```bash
-cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
-source ai-tutor-env/bin/activate && \
-pytest --cov=app --cov-report=html --cov-report=term-missing
-```
-
-**Coverage Targets:**
-- Overall coverage: >80%
-- Critical paths (auth, data persistence): >95%
-- API endpoints: 100%
-- Service layer: >90%
-
-### Phase 3: Frontend Validation (CRITICAL)
-
-#### 3.1 Page Inventory & Accessibility
-**Action:** List ALL frontend pages and verify accessibility.
-
-```bash
-# Find all route definitions
-grep -r "@app.route\|def.*_page\|def.*_view" app/frontend/
-```
-
-**For Each Page:**
-- [ ] Route registered in main.py?
-- [ ] Navigation link exists?
-- [ ] Page loads without errors?
-- [ ] Mobile responsive?
-- [ ] Error states handled?
-- [ ] Loading states implemented?
-
-#### 3.2 Backend-Frontend Integration Verification
-**Verification Method:**
-1. Grep for fetch() calls in frontend files
-2. Match each fetch URL to backend API endpoint
-3. Verify HTTP method matches
-4. Verify request payload structure matches API schema
-5. Verify response handling is correct
-
-```bash
-# Find all API calls in frontend
-grep -r "fetch(" app/frontend/
-
-# Find all API endpoints in backend
-grep -r "@router\." app/api/
-```
-
-### Phase 4: Testing Gap Analysis (CRITICAL)
-
-#### 4.1 Identify Untested Code Paths
-```bash
-cd /Users/mcampos.cerda/Documents/Programming/ai-language-tutor-app && \
-source ai-tutor-env/bin/activate && \
-pytest --cov=app --cov-report=html
-# Then open htmlcov/index.html
-```
-
-#### 4.2 Identify Missing E2E Tests
-**Questions:**
-- Are there user stories without E2E tests?
-- Are there critical workflows without E2E tests?
-- Are there multi-step processes without E2E tests?
-
-#### 4.3 Error Scenario Testing
-**Scenarios to Test:**
-- API returns 404 (not found)
-- API returns 401 (unauthorized)
-- API returns 500 (server error)
-- Network timeout
-- Invalid input data
-- Duplicate creation attempts
-- Delete non-existent resource
-- Access resource owned by another user
-
-### Phase 5: Code Quality & Technical Debt
-
-#### 5.1 Find All TODOs and FIXMEs
-```bash
-# Find all TODOs
-grep -r "TODO" app/ --exclude-dir=__pycache__
-
-# Find all FIXMEs
-grep -r "FIXME" app/ --exclude-dir=__pycache__
-
-# Find "not implemented" messages
-grep -r "not implemented\|NotImplemented" app/ --exclude-dir=__pycache__
-```
-
-#### 5.2 Find Console.logs and Debug Code
-```bash
-# Find console.log
-grep -r "console.log" app/frontend/
-
-# Find print statements (outside logging)
-grep -r "print(" app/ --exclude-dir=__pycache__ | grep -v "logger\|logging"
-
-# Find debug flags
-grep -r "DEBUG.*True\|debug=True" app/
-```
-
-#### 5.3 Security Scan
-**Items to Verify:**
-- [ ] No passwords in code
-- [ ] No API keys in code
-- [ ] SQL injection prevention (parameterized queries)
-- [ ] XSS prevention (proper escaping)
-- [ ] Input validation on all endpoints
-- [ ] Authentication on protected routes
-- [ ] Authorization checks before data access
-
-### Phase 6: Documentation Accuracy
-
-#### 6.1 README Validation
-**Sections to Validate:**
-- [ ] Installation instructions work
-- [ ] Dependencies list is complete
-- [ ] Setup steps are correct
-- [ ] Running tests instructions work
-- [ ] Environment variables documented
-
-#### 6.2 API Documentation Validation
-**For Each Documented Endpoint:**
-- [ ] Endpoint path correct
-- [ ] HTTP method correct
-- [ ] Request schema accurate
-- [ ] Response schema accurate
-- [ ] Error responses documented
-- [ ] Examples work
+### Data Issues
+- Analytics out of sync with actual data
+- Orphaned analytics records
+- Null/zero handling breaks calculations
+- Concurrent updates race conditions
+- Analytics not updating on scenario actions
 
 ---
 
-## 🎯 SESSION EXECUTION BEST PRACTICES
+## 📖 REFERENCE: SESSION 133 CONTEXT
 
-### Before Starting Any Session:
-1. Activate environment: `cd /path && source ai-tutor-env/bin/activate`
-2. Verify Python version: `python --version` (expect 3.12.2)
-3. Read previous session's handover/lessons learned
-4. Review relevant tracker documents
-5. Run full test suite to establish baseline
+### Analytics Implementation (from Session 133)
 
-### During Session:
-1. Focus on ONE objective at a time (PRINCIPLE 1)
-2. Test frequently (every 10-15 minutes)
-3. Fix bugs immediately (PRINCIPLE 6)
-4. Commit incrementally with clear messages (PRINCIPLE 13)
-5. Document as you go (don't defer to end)
+**ScenarioAnalytics Table:**
+- `trending_score` (Float) - Pre-computed trending metric
+- `popularity_score` (Float) - Pre-computed popularity metric
+- `total_starts` (Integer) - Scenario start count
+- `total_completions` (Integer) - Completion count
+- `average_rating` (Float) - Average user rating
+- `total_ratings` (Integer) - Number of ratings
 
-### Before Ending Session:
-1. Run complete test suite: `pytest tests/ -v`
-2. Verify zero failures (PRINCIPLE 5)
-3. Check for regressions (PRINCIPLE 12)
-4. Update tracker documents (PRINCIPLE 7)
-5. Create session summary/lessons learned
-6. Update this template for next session
-7. Commit all changes with clear messages
-8. Push to GitHub (if token available)
+**Service Methods:**
+- `update_analytics(scenario_id)` - Recalculate all metrics
+- `record_scenario_start(scenario_id, user_id)` - Increment starts
+- `record_scenario_completion(scenario_id, user_id)` - Increment completions
+- `get_trending_scenarios(category=None, limit=20)` - Query by trending_score
+- `get_popular_scenarios(category=None, limit=20)` - Query by popularity_score
+- `get_recommended_scenarios(user_id, limit=10)` - Personalized recommendations
 
----
-
-## 📊 QUALITY METRICS TO TRACK
-
-### Test Metrics:
-- Total test count
-- Pass rate (must be 100%)
-- Coverage percentage (target >80%, critical paths >95%)
-- E2E test count
-- Test execution time
-
-### Code Metrics:
-- Modules at TRUE 100% coverage
-- Lines of code added/modified
-- Number of bugs found and fixed
-- Number of TODO items
-
-### Documentation Metrics:
-- Session logs created
-- Lessons learned documented
-- Tracker updates made
-- README accuracy
+**Discovery Endpoints:**
+- `GET /api/v1/scenario-organization/trending`
+- `GET /api/v1/scenario-organization/popular`
+- `GET /api/v1/scenario-organization/recommended`
+- `GET /api/v1/scenario-organization/discovery-hub`
 
 ---
 
-## 🎓 LESSONS LEARNED TEMPLATE
+## 🎉 EXPECTED OUTCOME
 
-After each session, document:
+**By End of Session 134:**
+- ✅ All analytics algorithms validated and documented
+- ✅ Performance benchmarks meet targets (< 100ms)
+- ✅ Recommendation quality verified
+- ✅ Edge cases handled correctly
+- ✅ Production monitoring metrics defined
+- ✅ Tuning guide created for future optimization
+- ✅ Complete validation report with findings
+- ✅ Any issues found are fixed or documented
+- ✅ System ready for Session 135 (Advanced Analytics Dashboard)
 
-**What Went Well:**
-- [List successes]
-
-**What Went Wrong:**
-- [List problems/challenges]
-
-**What We Learned:**
-- [List insights/discoveries]
-
-**What We'll Do Differently:**
-- [List process improvements]
-
-**Critical Discoveries:**
-- [List any critical findings that affect project]
+**Confidence Level:** Analytics system is mathematically correct, performant, and production-ready.
 
 ---
 
-## 🚀 READY TO START!
+## 📅 AFTER SESSION 134
 
-**Remember the Core Philosophy:**
-- Quality over speed (PRINCIPLE 8)
-- Perfection over "acceptable" (PRINCIPLE 1)
-- Patience over rushing (PRINCIPLE 2)
-- Excellence over settling (PRINCIPLE 9)
+### Session 135: Advanced Analytics Dashboard
+**Focus:** Build visual analytics dashboard for users
+- Learning progress visualizations
+- Achievement timelines
+- Skill progression graphs
+- Study pattern insights
+- Personalized recommendations UI
 
-**The 14 CORE PRINCIPLES are NON-NEGOTIABLE. They guide every decision, every line of code, every test we write.**
+### Session 136: Gamification System
+**Focus:** Achievement engine and rewards
+- Achievement definitions
+- Badge system
+- Streak tracking
+- Milestone celebrations
+- Leaderboards (optional)
 
-**Good luck! Be thorough, be systematic, and uphold the principles.** ✨
+---
+
+## 🆘 IF STUCK
+
+### Common Issues & Solutions
+
+**Issue:** Analytics calculations seem incorrect  
+**Solution:** Create small test data set with hand-calculated expected values, debug discrepancy
+
+**Issue:** Performance too slow  
+**Solution:** Use `EXPLAIN` to check if indexes being used, add missing indexes
+
+**Issue:** Recommendations not diverse  
+**Solution:** Add randomization factor, category balancing, or recency boost
+
+**Issue:** Trending algorithm unclear  
+**Solution:** Document formula clearly, create visual explanation, add comments
+
+**Issue:** Tests failing unexpectedly  
+**Solution:** Check for timezone issues, async race conditions, or data setup problems
+
+---
+
+## 📚 RESOURCES
+
+### Documentation
+- Session 133 Summary: `SESSION_133_COMPLETE_SUMMARY.md`
+- Lessons Learned: `SESSION_133_LESSONS_LEARNED.md`
+- Service Implementation: `app/services/scenario_organization_service.py`
+
+### Testing References
+- Existing service tests: `tests/test_scenario_organization_service.py`
+- Performance testing: `pytest-benchmark` documentation
+- Query optimization: SQLAlchemy query profiling
+
+### Algorithm Resources
+- Trending algorithms: Reddit, Hacker News algorithms
+- Recommendation systems: Collaborative filtering basics
+- Rating aggregation: Weighted averages, Bayesian ratings
+
+---
+
+**LET'S VALIDATE THOSE ANALYTICS AND ENSURE PRODUCTION READINESS!** 🚀
+
+*Template created: December 22, 2025*  
+*Ready for Session 134*  
+*All Session 133 systems operational and awaiting validation*

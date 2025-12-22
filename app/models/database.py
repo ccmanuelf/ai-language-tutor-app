@@ -1257,6 +1257,18 @@ def get_db_session():
             session.close()
 
 
+# Import scenario models
+from app.models.scenario_db_models import (
+    Scenario,
+    ScenarioAnalytics,
+    ScenarioBookmark,
+    ScenarioCollection,
+    ScenarioCollectionItem,
+    ScenarioPhase,
+    ScenarioRating,
+    ScenarioTag,
+)
+
 # Export all models for easy importing
 __all__ = [
     "Base",
@@ -1278,6 +1290,14 @@ __all__ = [
     "ContentFavorite",
     "ContentStudySession",
     "ContentMasteryStatus",
+    "Scenario",
+    "ScenarioPhase",
+    "ScenarioCollection",
+    "ScenarioCollectionItem",
+    "ScenarioTag",
+    "ScenarioBookmark",
+    "ScenarioRating",
+    "ScenarioAnalytics",
     "UserRole",
     "LanguageCode",
     "ConversationRole",
