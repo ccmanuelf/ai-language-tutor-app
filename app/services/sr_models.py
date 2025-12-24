@@ -3,10 +3,10 @@ Data models for Spaced Repetition system
 Defines enums and dataclasses used across SR modules
 """
 
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Dict, List, Optional
 
 
 class ItemType(Enum):
@@ -64,7 +64,7 @@ class SpacedRepetitionItem:
     definition: str = ""
     pronunciation_guide: str = ""
     example_usage: str = ""
-    context_tags: List[str] = None
+    context_tags: Optional[List[str]] = None
     difficulty_level: int = 1
     ease_factor: float = 2.5
     repetition_number: int = 0
@@ -77,14 +77,14 @@ class SpacedRepetitionItem:
     streak_count: int = 0
     mastery_level: float = 0.0
     confidence_score: float = 0.0
-    first_seen_date: datetime = None
+    first_seen_date: Optional[datetime] = None
     last_studied_date: Optional[datetime] = None
     average_response_time_ms: int = 0
     learning_speed_factor: float = 1.0
     retention_rate: float = 0.0
     source_session_id: str = ""
     source_content: str = ""
-    metadata: Dict = None
+    metadata: Optional[Dict] = None
     is_active: bool = True
 
     def __post_init__(self):
@@ -104,7 +104,7 @@ class LearningSession:
     user_id: int
     language_code: str
     session_type: str
-    mode_specific_data: Dict = None
+    mode_specific_data: Optional[Dict] = None
     duration_minutes: int = 0
     items_studied: int = 0
     items_correct: int = 0
@@ -122,7 +122,7 @@ class LearningSession:
     ai_model_used: str = ""
     tutor_mode: str = ""
     scenario_id: str = ""
-    started_at: datetime = None
+    started_at: Optional[datetime] = None
     ended_at: Optional[datetime] = None
 
     def __post_init__(self):
@@ -155,8 +155,8 @@ class LearningGoal:
     milestones_reached: int = 0
     total_milestones: int = 5
     last_progress_update: Optional[datetime] = None
-    start_date: datetime = None
-    target_date: datetime = None
+    start_date: Optional[datetime] = None
+    target_date: Optional[datetime] = None
     completed_date: Optional[datetime] = None
     status: str = "active"
 

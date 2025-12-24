@@ -10,7 +10,7 @@ import json
 import logging
 import uuid
 from datetime import datetime, timedelta
-from typing import Dict, List, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.services.sr_database import DatabaseManager
 from app.services.sr_models import (
@@ -185,7 +185,7 @@ class SM2Algorithm:
                 ease_factor - self.config["ease_factor_change"] * 0.5,
                 self.config["minimum_ease_factor"],
             )
-            interval = max(interval * 1.2, interval + 1)
+            interval = int(max(interval * 1.2, interval + 1))
             repetition += 1
         elif review_result == ReviewResult.GOOD:
             # Standard progression
@@ -226,10 +226,10 @@ class SM2Algorithm:
         definition: str = "",
         pronunciation_guide: str = "",
         example_usage: str = "",
-        context_tags: List[str] = None,
+        context_tags: Optional[List[str]] = None,
         source_session_id: str = "",
         source_content: str = "",
-        metadata: Dict = None,
+        metadata: Optional[Dict] = None,
     ) -> str:
         """
         Add a new item to spaced repetition system

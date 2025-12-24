@@ -6,8 +6,8 @@ using Anthropic's Claude API with optimized prompts for educational conversation
 """
 
 import logging
-from typing import Dict, List, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 try:
     import anthropic
@@ -17,8 +17,8 @@ except ImportError:
     ANTHROPIC_AVAILABLE = False
     anthropic = None
 
-from app.services.ai_service_base import BaseAIService, AIResponse, AIResponseStatus
 from app.core.config import get_settings
+from app.services.ai_service_base import AIResponse, AIResponseStatus, BaseAIService
 
 logger = logging.getLogger(__name__)
 

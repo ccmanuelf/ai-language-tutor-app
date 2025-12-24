@@ -7,7 +7,7 @@ spaced repetition progress, achievements, and gamification elements.
 """
 
 from fasthtml.common import *
-from typing import Dict, List
+from typing import Dict, List, Optional
 from datetime import datetime
 
 
@@ -422,7 +422,7 @@ def learning_analytics_styles():
     """)
 
 
-def analytics_dashboard_page(user_data: Dict = None, analytics_data: Dict = None):
+def analytics_dashboard_page(user_data: Dict = None, analytics_data: Optional[Dict] = None):
     """Main learning analytics dashboard page"""
 
     # Default data if none provided

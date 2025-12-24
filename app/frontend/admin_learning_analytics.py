@@ -6,8 +6,9 @@ FastHTML components for admin configuration of spaced repetition algorithms,
 learning analytics settings, and gamification parameters.
 """
 
+from typing import Dict, Optional
+
 from fasthtml.common import *
-from typing import Dict
 
 
 def admin_learning_analytics_styles():
@@ -388,7 +389,7 @@ def admin_learning_analytics_styles():
 
 
 def admin_learning_analytics_page(
-    current_config: Dict = None, system_stats: Dict = None
+    current_config: Optional[Dict] = None, system_stats: Optional[Dict] = None
 ):
     """Main admin learning analytics configuration page"""
 
@@ -1140,7 +1141,7 @@ def admin_analytics_scripts():
 
 
 def admin_learning_analytics_page_with_scripts(
-    current_config: Dict = None, system_stats: Dict = None
+    current_config: Optional[Dict] = None, system_stats: Optional[Dict] = None
 ):
     """Complete admin learning analytics page with scripts"""
     return Div(

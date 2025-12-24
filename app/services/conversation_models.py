@@ -16,10 +16,10 @@ Features:
 - Type-safe data structures with comprehensive validation
 """
 
-from datetime import datetime
-from typing import Dict, List, Any, Optional
-from enum import Enum
 from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class ConversationStatus(Enum):
@@ -108,11 +108,11 @@ class ConversationContext:
     learning_focus: LearningFocus
     current_topic: Optional[str] = None
     vocabulary_level: str = "intermediate"
-    learning_goals: List[str] = None
-    mistakes_tracked: List[Dict[str, Any]] = None
-    vocabulary_introduced: List[str] = None
-    session_start_time: datetime = None
-    last_activity: datetime = None
+    learning_goals: Optional[List[str]] = None
+    mistakes_tracked: Optional[List[Dict[str, Any]]] = None
+    vocabulary_introduced: Optional[List[str]] = None
+    session_start_time: Optional[datetime] = None
+    last_activity: Optional[datetime] = None
     # Scenario-based learning support
     is_scenario_based: bool = False
     scenario_id: Optional[str] = None

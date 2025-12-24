@@ -1,0 +1,32 @@
+{
+  "guide_id": "pronunciation_es_hola_20251224170451",
+  "word_or_phrase": "hola",
+  "language": "es",
+  "phonetic_spelling": "OH-lah",
+  "ipa_notation": "/ˈola/",
+  "audio_url": null,
+  "breakdown": [
+    {
+      "syllable": "ho",
+      "sound": "OH",
+      "tips": "Like 'oh' in English"
+    },
+    {
+      "syllable": "la",
+      "sound": "lah",
+      "tips": "Like 'la' in 'lava'"
+    }
+  ],
+  "visual_mouth_positions": [],
+  "common_mistakes": [
+    "Don't pronounce the 'h'",
+    "Avoid adding an 'r' sound"
+  ],
+  "practice_tips": [
+    "Practice saying 'OH-lah' slowly",
+    "Listen to native speakers"
+  ],
+  "difficulty_level": 1,
+  "created_at": "2025-12-24T17:04:51.192779",
+  "metadata": {}
+}

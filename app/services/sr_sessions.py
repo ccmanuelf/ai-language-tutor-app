@@ -7,7 +7,7 @@ import json
 import logging
 import uuid
 from datetime import date, datetime, timedelta
-from typing import Dict
+from typing import Dict, Optional
 
 from app.services.sr_database import DatabaseManager
 from app.services.sr_models import LearningSession, SessionType
@@ -40,7 +40,7 @@ class SessionManager:
         user_id: int,
         language_code: str,
         session_type: SessionType,
-        mode_specific_data: Dict = None,
+        mode_specific_data: Optional[Dict] = None,
         content_source: str = "",
         ai_model_used: str = "",
         tutor_mode: str = "",

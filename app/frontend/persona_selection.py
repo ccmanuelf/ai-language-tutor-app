@@ -205,7 +205,7 @@ def create_persona_customization_form(
     )
 
 
-def create_persona_detail_modal(persona: Dict, current_customization: Dict = None) -> Div:
+def create_persona_detail_modal(persona: Dict, current_customization: Optional[Dict] = None) -> Div:
     """
     Create detailed persona information modal
 
@@ -316,7 +316,7 @@ def create_persona_detail_modal(persona: Dict, current_customization: Dict = Non
 def create_persona_selection_section(
     available_personas: List[Dict],
     current_persona: Dict,
-    current_customization: Dict = None,
+    current_customization: Optional[Dict] = None,
 ) -> Div:
     """
     Create complete persona selection section

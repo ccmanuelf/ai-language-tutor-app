@@ -144,11 +144,11 @@ class AIProviderSettings(BaseSchema):
         description="Preferred Ollama model for all conversations (e.g., 'llama2:13b', 'mistral:7b')",
     )
     ollama_model_by_language: Optional[Dict[str, str]] = Field(
-        default_factory=dict,
+        default_factory=lambda: {},
         description="Language-specific Ollama models (e.g., {'en': 'neural-chat:7b', 'fr': 'mistral:7b'})",
     )
     ollama_model_by_use_case: Optional[Dict[str, str]] = Field(
-        default_factory=dict,
+        default_factory=lambda: {},
         description="Use-case specific Ollama models (e.g., {'technical': 'codellama:7b', 'grammar': 'llama2:13b'})",
     )
 
@@ -291,8 +291,8 @@ class UserCreate(UserBase):
 
     user_id: str = Field(..., min_length=3, max_length=50)
     password: Optional[str] = Field(None, min_length=8)
-    preferences: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    privacy_settings: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    preferences: Optional[Dict[str, Any]] = Field(default_factory=lambda: {})
+    privacy_settings: Optional[Dict[str, Any]] = Field(default_factory=lambda: {})
 
     @field_validator("user_id")
     @classmethod
@@ -325,7 +325,7 @@ class UserResponse(UserBase):
     id: int
     user_id: str
     avatar_url: Optional[str] = None
-    preferences: Dict[str, Any] = Field(default_factory=dict)
+    preferences: Dict[str, Any] = Field(default_factory=lambda: {})
     is_active: bool = True
     is_verified: bool = False
     last_login: Optional[datetime] = None
@@ -336,8 +336,8 @@ class UserResponse(UserBase):
 class UserProfile(UserResponse):
     """Extended user profile with learning data"""
 
-    languages: List[Dict[str, Any]] = Field(default_factory=list)
-    learning_progress: List[Dict[str, Any]] = Field(default_factory=list)
+    languages: List[Dict[str, Any]] = Field(default_factory=lambda: [])
+    learning_progress: List[Dict[str, Any]] = Field(default_factory=lambda: [])
     total_conversations: int = 0
     total_study_time_minutes: int = 0
 
@@ -357,14 +357,14 @@ class LanguageBase(BaseSchema):
 class LanguageCreate(LanguageBase):
     """Schema for creating a language"""
 
-    speech_api_config: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    speech_api_config: Optional[Dict[str, Any]] = Field(default_factory=lambda: {})
 
 
 class LanguageResponse(LanguageBase):
     """Schema for language responses"""
 
     id: int
-    speech_api_config: Dict[str, Any] = Field(default_factory=dict)
+    speech_api_config: Dict[str, Any] = Field(default_factory=lambda: {})
 
 
 # Conversation Schemas
@@ -380,7 +380,7 @@ class ConversationCreate(ConversationBase):
     """Schema for creating a conversation"""
 
     conversation_id: str = Field(..., max_length=100)
-    context_data: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    context_data: Optional[Dict[str, Any]] = Field(default_factory=lambda: {})
 
 
 class ConversationUpdate(BaseSchema):
@@ -397,7 +397,7 @@ class ConversationResponse(ConversationBase):
     id: int
     conversation_id: str
     user_id: int
-    context_data: Dict[str, Any] = Field(default_factory=dict)
+    context_data: Dict[str, Any] = Field(default_factory=lambda: {})
     is_active: bool = True
     message_count: int = 0
     total_tokens: int = 0
@@ -420,7 +420,7 @@ class MessageCreate(MessageBase):
     """Schema for creating a message"""
 
     conversation_id: int
-    pronunciation_feedback: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    pronunciation_feedback: Optional[Dict[str, Any]] = Field(default_factory=lambda: {})
 
 
 class MessageResponse(MessageBase):
@@ -433,7 +433,7 @@ class MessageResponse(MessageBase):
     processing_time_ms: int = 0
     audio_url: Optional[str] = None
     pronunciation_score: Optional[float] = None
-    pronunciation_feedback: Dict[str, Any] = Field(default_factory=dict)
+    pronunciation_feedback: Dict[str, Any] = Field(default_factory=lambda: {})
     sentiment_score: Optional[float] = None
     complexity_score: Optional[float] = None
     vocabulary_level: Optional[int] = None
@@ -480,12 +480,12 @@ class DocumentResponse(DocumentBase):
     file_url: Optional[str] = None
     is_processed: bool = False
     processing_status: str = "pending"
-    processing_metadata: Dict[str, Any] = Field(default_factory=dict)
+    processing_metadata: Dict[str, Any] = Field(default_factory=lambda: {})
     word_count: int = 0
     complexity_score: Optional[float] = None
     reading_time_minutes: int = 0
-    key_topics: List[str] = Field(default_factory=list)
-    vocabulary_extracted: List[str] = Field(default_factory=list)
+    key_topics: List[str] = Field(default_factory=lambda: [])
+    vocabulary_extracted: List[str] = Field(default_factory=lambda: [])
     uploaded_at: datetime
     processed_at: Optional[datetime] = None
 
@@ -510,7 +510,7 @@ class LearningProgressCreate(LearningProgressBase):
     """Schema for creating learning progress"""
 
     current_level: int = Field(1, ge=1, le=10)
-    goals: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    goals: Optional[Dict[str, Any]] = Field(default_factory=lambda: {})
 
 
 class LearningProgressUpdate(BaseSchema):
@@ -542,8 +542,8 @@ class LearningProgressResponse(LearningProgressBase):
     improvement_rate: float = 0.0
     consistency_score: float = 0.0
     status: LearningStatusEnum = LearningStatusEnum.NOT_STARTED
-    goals: Dict[str, Any] = Field(default_factory=dict)
-    achievements: List[str] = Field(default_factory=list)
+    goals: Dict[str, Any] = Field(default_factory=lambda: {})
+    achievements: List[str] = Field(default_factory=lambda: [])
     started_at: Optional[datetime] = None
     last_activity: Optional[datetime] = None
     updated_at: datetime
@@ -565,8 +565,8 @@ class VocabularyCreate(VocabularyBase):
 
     phonetic_transcription: Optional[str] = Field(None, max_length=255)
     difficulty_level: int = Field(1, ge=1, le=10)
-    example_sentences: Optional[List[str]] = Field(default_factory=list)
-    context_tags: Optional[List[str]] = Field(default_factory=list)
+    example_sentences: Optional[List[str]] = Field(default_factory=lambda: [])
+    context_tags: Optional[List[str]] = Field(default_factory=lambda: [])
     source_document_id: Optional[str] = Field(None, max_length=100)
 
 
@@ -596,8 +596,8 @@ class VocabularyResponse(VocabularyBase):
     times_correct: int = 0
     times_incorrect: int = 0
     mastery_level: float = 0.0
-    example_sentences: List[str] = Field(default_factory=list)
-    context_tags: List[str] = Field(default_factory=list)
+    example_sentences: List[str] = Field(default_factory=lambda: [])
+    context_tags: List[str] = Field(default_factory=lambda: [])
     source_document_id: Optional[str] = None
     next_review_date: Optional[datetime] = None
     repetition_interval_days: int = 1
@@ -622,8 +622,8 @@ class APIUsageCreate(APIUsageBase):
     user_id: Optional[int] = None
     tokens_used: int = Field(0, ge=0)
     estimated_cost: float = Field(0.0, ge=0.0)
-    request_metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    response_metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    request_metadata: Optional[Dict[str, Any]] = Field(default_factory=lambda: {})
+    response_metadata: Optional[Dict[str, Any]] = Field(default_factory=lambda: {})
     status: str = Field("success", max_length=20)
     error_message: Optional[str] = None
 
@@ -636,8 +636,8 @@ class APIUsageResponse(APIUsageBase):
     tokens_used: int = 0
     estimated_cost: float = 0.0
     actual_cost: Optional[float] = None
-    request_metadata: Dict[str, Any] = Field(default_factory=dict)
-    response_metadata: Dict[str, Any] = Field(default_factory=dict)
+    request_metadata: Dict[str, Any] = Field(default_factory=lambda: {})
+    response_metadata: Dict[str, Any] = Field(default_factory=lambda: {})
     status: str = "success"
     error_message: Optional[str] = None
     created_at: datetime
@@ -647,7 +647,7 @@ class APIUsageResponse(APIUsageBase):
 class ConversationWithMessages(ConversationResponse):
     """Conversation with included messages"""
 
-    messages: List[MessageResponse] = Field(default_factory=list)
+    messages: List[MessageResponse] = Field(default_factory=lambda: [])
 
 
 class UserLanguageAssociation(BaseSchema):
@@ -663,7 +663,7 @@ class BulkOperation(BaseSchema):
 
     operation: str = Field(..., max_length=50)
     items: List[Dict[str, Any]]
-    options: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    options: Optional[Dict[str, Any]] = Field(default_factory=lambda: {})
 
 
 class BulkOperationResponse(BaseSchema):
@@ -673,15 +673,15 @@ class BulkOperationResponse(BaseSchema):
     total_items: int
     successful_items: int
     failed_items: int
-    errors: List[str] = Field(default_factory=list)
-    results: List[Dict[str, Any]] = Field(default_factory=list)
+    errors: List[str] = Field(default_factory=lambda: [])
+    results: List[Dict[str, Any]] = Field(default_factory=lambda: [])
 
 
 class SearchRequest(BaseSchema):
     """Schema for search requests"""
 
     query: str = Field(..., min_length=1, max_length=500)
-    filters: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    filters: Optional[Dict[str, Any]] = Field(default_factory=lambda: {})
     limit: int = Field(10, ge=1, le=100)
     offset: int = Field(0, ge=0)
 
@@ -693,8 +693,8 @@ class SearchResponse(BaseSchema):
     total_results: int
     limit: int
     offset: int
-    results: List[Dict[str, Any]] = Field(default_factory=list)
-    filters_applied: Dict[str, Any] = Field(default_factory=dict)
+    results: List[Dict[str, Any]] = Field(default_factory=lambda: [])
+    filters_applied: Dict[str, Any] = Field(default_factory=lambda: {})
 
 
 class ErrorResponse(BaseSchema):
@@ -702,7 +702,7 @@ class ErrorResponse(BaseSchema):
 
     error_code: str
     error_message: str
-    details: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    details: Optional[Dict[str, Any]] = Field(default_factory=lambda: {})
     timestamp: datetime = Field(default_factory=datetime.now)
 
 

@@ -315,7 +315,7 @@ class GuestUserManager:
         self.guest_session_data: Dict[str, Any] = {}
 
     def create_guest_session(
-        self, session_id: str, device_info: Dict[str, Any] = None
+        self, session_id: str, device_info: Optional[Dict[str, Any]] = None
     ) -> bool:
         """Create a guest session (only one allowed concurrently)"""
         if self.active_guest_session:
@@ -333,7 +333,7 @@ class GuestUserManager:
         logger.info(f"Created guest session: {session_id}")
         return True
 
-    def terminate_guest_session(self, session_id: str = None) -> bool:
+    def terminate_guest_session(self, session_id: Optional[str] = None) -> bool:
         """Terminate guest session"""
         if session_id and session_id != self.active_guest_session:
             return False
@@ -488,7 +488,9 @@ def check_admin_permission(permission: str):
 
     def decorator(func):
         @wraps(func)
-        async def wrapper(*args, current_user: Dict[str, Any] = None, **kwargs):
+        async def wrapper(
+            *args, current_user: Optional[Dict[str, Any]] = None, **kwargs
+        ):
             if not current_user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"

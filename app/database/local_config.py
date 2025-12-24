@@ -7,17 +7,17 @@ This module handles local/offline database operations using:
 - Hybrid approach for optimal performance and functionality
 """
 
+import json
 import logging
-from typing import Dict, List, Optional
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
+from typing import Dict, List, Optional
+
 import duckdb
-from sqlalchemy import create_engine, text, Engine
+from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-import json
-from datetime import datetime
-
 
 logger = logging.getLogger(__name__)
 
@@ -73,9 +73,7 @@ class LocalDatabaseManager:
         """Get or create SQLite session factory"""
         if self._sqlite_session_factory is None:
             self._sqlite_session_factory = sessionmaker(
-                autocommit=False,
-                autoflush=False,
-                bind=self.sqlite_engine
+                autocommit=False, autoflush=False, bind=self.sqlite_engine
             )
         return self._sqlite_session_factory
 
@@ -199,7 +197,7 @@ class LocalDatabaseManager:
         """
 
         with self.sqlite_engine.connect() as conn:
-            for statement in schema_sql.split(';'):
+            for statement in schema_sql.split(";"):
                 if statement.strip():
                     conn.execute(text(statement))
             conn.commit()
@@ -273,7 +271,7 @@ class LocalDatabaseManager:
         """
 
         # Execute schema creation
-        statements = [stmt.strip() for stmt in schema_sql.split(';') if stmt.strip()]
+        statements = [stmt.strip() for stmt in schema_sql.split(";") if stmt.strip()]
         for statement in statements:
             try:
                 self.duckdb_connection.execute(statement)
@@ -303,24 +301,33 @@ class LocalDatabaseManager:
             self.duckdb_connection.rollback()
             raise
 
-    def add_user_profile(self, user_id: str, username: str, email: str = None, preferences: Dict = None) -> bool:
+    def add_user_profile(
+        self,
+        user_id: str,
+        username: str,
+        email: Optional[str] = None,
+        preferences: Optional[Dict] = None,
+    ) -> bool:
         """Add or update user profile in local SQLite database"""
         try:
             with self.sqlite_session() as session:
                 preferences_json = json.dumps(preferences or {})
 
                 # Use raw SQL for better control
-                session.execute(text("""
+                session.execute(
+                    text("""
                     INSERT OR REPLACE INTO user_profiles
                     (user_id, username, email, preferences, updated_at)
                     VALUES (:user_id, :username, :email, :preferences, :updated_at)
-                """), {
-                    "user_id": user_id,
-                    "username": username,
-                    "email": email,
-                    "preferences": preferences_json,
-                    "updated_at": datetime.now()
-                })
+                """),
+                    {
+                        "user_id": user_id,
+                        "username": username,
+                        "email": email,
+                        "preferences": preferences_json,
+                        "updated_at": datetime.now(),
+                    },
+                )
 
                 logger.info(f"User profile added/updated: {user_id}")
                 return True
@@ -332,10 +339,13 @@ class LocalDatabaseManager:
         """Get user profile from local SQLite database"""
         try:
             with self.sqlite_session() as session:
-                result = session.execute(text("""
+                result = session.execute(
+                    text("""
                     SELECT user_id, username, email, preferences, created_at, updated_at
                     FROM user_profiles WHERE user_id = :user_id
-                """), {"user_id": user_id}).fetchone()
+                """),
+                    {"user_id": user_id},
+                ).fetchone()
 
                 if result:
                     return {
@@ -344,33 +354,42 @@ class LocalDatabaseManager:
                         "email": result[2],
                         "preferences": json.loads(result[3] or "{}"),
                         "created_at": result[4],
-                        "updated_at": result[5]
+                        "updated_at": result[5],
                     }
                 return None
         except Exception as e:
             logger.error(f"Error getting user profile: {e}")
             return None
 
-    def save_conversation_locally(self, user_id: str, conversation_id: str,
-                                message_type: str, content: str, language: str = None,
-                                metadata: Dict = None) -> bool:
+    def save_conversation_locally(
+        self,
+        user_id: str,
+        conversation_id: str,
+        message_type: str,
+        content: str,
+        language: Optional[str] = None,
+        metadata: Optional[Dict] = None,
+    ) -> bool:
         """Save conversation message to local SQLite database"""
         try:
             with self.sqlite_session() as session:
                 metadata_json = json.dumps(metadata or {})
 
-                session.execute(text("""
+                session.execute(
+                    text("""
                     INSERT INTO local_conversations
                     (user_id, conversation_id, message_type, content, language, metadata)
                     VALUES (:user_id, :conversation_id, :message_type, :content, :language, :metadata)
-                """), {
-                    "user_id": user_id,
-                    "conversation_id": conversation_id,
-                    "message_type": message_type,
-                    "content": content,
-                    "language": language,
-                    "metadata": metadata_json
-                })
+                """),
+                    {
+                        "user_id": user_id,
+                        "conversation_id": conversation_id,
+                        "message_type": message_type,
+                        "content": content,
+                        "language": language,
+                        "metadata": metadata_json,
+                    },
+                )
 
                 return True
         except Exception as e:
@@ -381,13 +400,16 @@ class LocalDatabaseManager:
         """Get recent conversations from local SQLite database"""
         try:
             with self.sqlite_session() as session:
-                results = session.execute(text("""
+                results = session.execute(
+                    text("""
                     SELECT conversation_id, message_type, content, language, timestamp, metadata
                     FROM local_conversations
                     WHERE user_id = :user_id
                     ORDER BY timestamp DESC
                     LIMIT :limit
-                """), {"user_id": user_id, "limit": limit}).fetchall()
+                """),
+                    {"user_id": user_id, "limit": limit},
+                ).fetchall()
 
                 return [
                     {
@@ -396,7 +418,7 @@ class LocalDatabaseManager:
                         "content": row[2],
                         "language": row[3],
                         "timestamp": row[4],
-                        "metadata": json.loads(row[5] or "{}")
+                        "metadata": json.loads(row[5] or "{}"),
                     }
                     for row in results
                 ]
@@ -429,7 +451,7 @@ class LocalDatabaseManager:
                         "avg_session_duration": result[1] or 0,
                         "total_words_learned": result[2] or 0,
                         "avg_pronunciation_accuracy": result[3] or 0,
-                        "topics_covered": result[4] or []
+                        "topics_covered": result[4] or [],
                     }
                 return {}
         except Exception as e:
@@ -442,7 +464,7 @@ class LocalDatabaseManager:
             data = {
                 "profile": self.get_user_profile(user_id),
                 "conversations": self.get_recent_conversations(user_id, limit=1000),
-                "export_timestamp": datetime.now().isoformat()
+                "export_timestamp": datetime.now().isoformat(),
             }
 
             # Add analytics data if available
@@ -451,8 +473,10 @@ class LocalDatabaseManager:
                 SELECT * FROM learning_analytics WHERE user_id = ?
                 """
                 analytics_results = conn.execute(analytics_query, [user_id]).fetchall()
-                data["analytics"] = [dict(zip([col[0] for col in conn.description], row))
-                                   for row in analytics_results]
+                data["analytics"] = [
+                    dict(zip([col[0] for col in conn.description], row))
+                    for row in analytics_results
+                ]
 
             return data
         except Exception as e:
@@ -464,24 +488,34 @@ class LocalDatabaseManager:
         try:
             # SQLite cleanup
             tables_to_clean = [
-                "user_profiles", "user_settings", "local_conversations",
-                "learning_progress", "cached_documents", "vocabulary_lists"
+                "user_profiles",
+                "user_settings",
+                "local_conversations",
+                "learning_progress",
+                "cached_documents",
+                "vocabulary_lists",
             ]
 
             with self.sqlite_session() as session:
                 for table in tables_to_clean:
-                    session.execute(text(f"DELETE FROM {table} WHERE user_id = :user_id"),
-                                  {"user_id": user_id})
+                    session.execute(
+                        text(f"DELETE FROM {table} WHERE user_id = :user_id"),
+                        {"user_id": user_id},
+                    )
 
             # DuckDB cleanup
             with self.duckdb_cursor() as conn:
                 duckdb_tables = [
-                    "learning_analytics", "conversation_analysis",
-                    "document_analytics", "performance_metrics"
+                    "learning_analytics",
+                    "conversation_analysis",
+                    "document_analytics",
+                    "performance_metrics",
                 ]
                 for table in duckdb_tables:
                     try:
-                        conn.execute(f"DELETE FROM {table} WHERE user_id = ?", [user_id])
+                        conn.execute(
+                            f"DELETE FROM {table} WHERE user_id = ?", [user_id]
+                        )
                     except Exception as e:
                         logger.warning(f"Error cleaning {table}: {e}")
 
@@ -499,11 +533,17 @@ class LocalDatabaseManager:
             # SQLite stats
             with self.sqlite_session() as session:
                 sqlite_tables = [
-                    "user_profiles", "user_settings", "local_conversations",
-                    "learning_progress", "cached_documents", "vocabulary_lists"
+                    "user_profiles",
+                    "user_settings",
+                    "local_conversations",
+                    "learning_progress",
+                    "cached_documents",
+                    "vocabulary_lists",
                 ]
                 for table in sqlite_tables:
-                    result = session.execute(text(f"SELECT COUNT(*) FROM {table}")).fetchone()
+                    result = session.execute(
+                        text(f"SELECT COUNT(*) FROM {table}")
+                    ).fetchone()
                     stats["sqlite"][table] = result[0] if result else 0
         except Exception as e:
             logger.error(f"Error getting SQLite stats: {e}")
@@ -512,12 +552,16 @@ class LocalDatabaseManager:
             # DuckDB stats
             with self.duckdb_cursor() as conn:
                 duckdb_tables = [
-                    "learning_analytics", "conversation_analysis",
-                    "document_analytics", "performance_metrics"
+                    "learning_analytics",
+                    "conversation_analysis",
+                    "document_analytics",
+                    "performance_metrics",
                 ]
                 for table in duckdb_tables:
                     try:
-                        result = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()
+                        result = conn.execute(
+                            f"SELECT COUNT(*) FROM {table}"
+                        ).fetchone()
                         stats["duckdb"][table] = result[0] if result else 0
                     except Exception:
                         stats["duckdb"][table] = 0
@@ -554,7 +598,12 @@ def get_local_db_manager():
     return local_db_manager
 
 
-def save_user_profile_locally(user_id: str, username: str, email: str = None, preferences: Dict = None):
+def save_user_profile_locally(
+    user_id: str,
+    username: str,
+    email: Optional[str] = None,
+    preferences: Optional[Dict] = None,
+):
     """Save user profile locally"""
     return local_db_manager.add_user_profile(user_id, username, email, preferences)
 

@@ -10,8 +10,8 @@ for improved cost efficiency and performance.
 """
 
 import logging
-from typing import Dict, List, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 try:
     import openai  # DeepSeek uses OpenAI-compatible API
@@ -21,8 +21,8 @@ except ImportError:
     DEEPSEEK_AVAILABLE = False
     openai = None
 
-from app.services.ai_service_base import BaseAIService, AIResponse, AIResponseStatus
 from app.core.config import get_settings
+from app.services.ai_service_base import AIResponse, AIResponseStatus, BaseAIService
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +147,7 @@ Respond naturally and engagingly, as if talking with a friend. Be authentic and 
 
     async def generate_response(
         self,
-        messages: List[Dict[str, str]] = None,
+        messages: Optional[List[Dict[str, str]]] = None,
         language: str = "en",
         model: Optional[str] = None,
         message: Optional[str] = None,

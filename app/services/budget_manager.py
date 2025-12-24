@@ -13,9 +13,12 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from sqlalchemy import func
+
+if TYPE_CHECKING:
+    from app.models.schemas import BudgetThresholdAlert
 
 from app.core.config import get_settings
 from app.database.config import get_primary_db_session
@@ -95,7 +98,7 @@ class BudgetManager:
             },
         }
 
-    def get_current_budget_status(self, user_id: str = None) -> BudgetStatus:
+    def get_current_budget_status(self, user_id: Optional[str] = None) -> BudgetStatus:
         """
         Get current budget status for the user
 
@@ -785,7 +788,7 @@ class BudgetManager:
         return alerts
 
     def should_enforce_budget(
-        self, user_id: str = None, user_preferences: Optional[Dict[str, Any]] = None
+        self, user_id: Optional[str] = None, user_preferences: Optional[Dict[str, Any]] = None
     ) -> bool:
         """
         Determine if budget should be enforced based on user settings

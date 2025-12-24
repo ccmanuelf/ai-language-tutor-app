@@ -9,8 +9,8 @@ for the spaced repetition system.
 import json
 import logging
 import uuid
-from typing import Dict, Any
 from contextlib import contextmanager
+from typing import Any, Dict, Optional
 
 from app.services.sr_database import DatabaseManager
 from app.services.sr_models import AchievementType, ReviewResult, SpacedRepetitionItem
@@ -25,7 +25,9 @@ class GamificationEngine:
     for the spaced repetition system.
     """
 
-    def __init__(self, db_manager: DatabaseManager, config: Dict[str, Any] = None):
+    def __init__(
+        self, db_manager: DatabaseManager, config: Optional[Dict[str, Any]] = None
+    ):
         """
         Initialize the GamificationEngine.
 

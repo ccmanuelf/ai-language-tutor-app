@@ -88,13 +88,13 @@ class TutorSession:
     language: str
     difficulty: DifficultyLevel
     topic: Optional[str] = None
-    start_time: datetime = None
-    last_activity: datetime = None
+    start_time: Optional[datetime] = None
+    last_activity: Optional[datetime] = None
     interaction_count: int = 0
-    progress_metrics: Dict[str, float] = None
-    vocabulary_introduced: List[str] = None
-    corrections_made: List[Dict[str, Any]] = None
-    session_goals: List[str] = None
+    progress_metrics: Optional[Dict[str, float]] = None
+    vocabulary_introduced: Optional[List[str]] = None
+    corrections_made: Optional[List[Dict[str, Any]]] = None
+    session_goals: Optional[List[str]] = None
 
     def __post_init__(self):
         if self.start_time is None:
@@ -643,7 +643,7 @@ Create engaging, topic-focused conversations that improve language skills while 
         self,
         session_id: str,
         user_message: str,
-        context_messages: List[Dict[str, str]] = None,
+        context_messages: Optional[List[Dict[str, str]]] = None,
     ) -> Dict[str, Any]:
         """Generate AI response for tutor mode session"""
 

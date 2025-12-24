@@ -15,9 +15,10 @@ Features:
 - Performance comparison and improvement trend analysis
 """
 
-from fasthtml.common import *
-from typing import Dict, List
 from datetime import datetime
+from typing import Dict, List, Optional
+
+from fasthtml.common import *
 
 
 def progress_analytics_styles():
@@ -704,7 +705,7 @@ def progress_analytics_styles():
 
 
 def progress_analytics_dashboard_page(
-    user_data: Dict = None, analytics_data: Dict = None
+    user_data: Optional[Dict] = None, analytics_data: Optional[Dict] = None
 ):
     """Enhanced progress analytics dashboard page"""
 

@@ -60,7 +60,7 @@ class ScenarioPhase:
     essential_phrases: List[str]
     learning_objectives: List[str]
     cultural_notes: Optional[str] = None
-    success_criteria: List[str] = None
+    success_criteria: Optional[List[str]] = None
 
     def __post_init__(self):
         if self.success_criteria is None:
@@ -83,9 +83,9 @@ class ConversationScenario:
     phases: List[ScenarioPhase]
     vocabulary_focus: List[str]
     cultural_context: Dict[str, Any]
-    learning_goals: List[str] = None
-    learning_outcomes: List[str] = None
-    prerequisites: List[str] = None
+    learning_goals: Optional[List[str]] = None
+    learning_outcomes: Optional[List[str]] = None
+    prerequisites: Optional[List[str]] = None
 
     def __post_init__(self):
         if self.prerequisites is None:
@@ -110,8 +110,8 @@ class ScenarioProgress:
     last_activity: datetime
     total_attempts: int
     success_rate: float
-    progress_id: str = None  # Added in Session 127 for progress tracking
-    difficulty_adjustments: List[str] = None
+    progress_id: Optional[str] = None  # Added in Session 127 for progress tracking
+    difficulty_adjustments: Optional[List[str]] = None
 
     def __post_init__(self):
         if self.difficulty_adjustments is None:

@@ -8,15 +8,15 @@ This module handles ChromaDB setup for vector storage used in:
 - User-specific learning pattern analysis
 """
 
-import os
 import logging
-from typing import List, Dict, Any, Optional
-from chromadb import PersistentClient
-from chromadb.config import Settings
-from chromadb.api.models.Collection import Collection
-from sentence_transformers import SentenceTransformer
+import os
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
+from chromadb import PersistentClient
+from chromadb.api.models.Collection import Collection
+from chromadb.config import Settings
+from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class ChromaDBManager:
                 settings=Settings(
                     anonymized_telemetry=False,
                     allow_reset=True,
-                )
+                ),
             )
         return self._client
 
@@ -57,10 +57,14 @@ class ChromaDBManager:
         """Get or create sentence transformer model for embeddings"""
         if self._embedding_model is None:
             # Using a multilingual model that supports Chinese, French, German, Japanese
-            self._embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+            self._embedding_model = SentenceTransformer(
+                "paraphrase-multilingual-MiniLM-L12-v2"
+            )
         return self._embedding_model
 
-    def get_or_create_collection(self, name: str, metadata: Optional[Dict] = None) -> Collection:
+    def get_or_create_collection(
+        self, name: str, metadata: Optional[Dict] = None
+    ) -> Collection:
         """
         Get existing collection or create new one
 
@@ -80,8 +84,7 @@ class ChromaDBManager:
         except ValueError:
             # Collection doesn't exist, create it
             collection = self.client.create_collection(
-                name=name,
-                metadata=metadata or {}
+                name=name, metadata=metadata or {}
             )
             logger.info(f"Created new collection: {name}")
 
@@ -92,20 +95,30 @@ class ChromaDBManager:
         """Initialize all required collections for the app"""
         collections = {
             "documents": {
-                "metadata": {"description": "Uploaded document embeddings for content-driven learning"}
+                "metadata": {
+                    "description": "Uploaded document embeddings for content-driven learning"
+                }
             },
             "conversations": {
-                "metadata": {"description": "Conversation history embeddings for context retrieval"}
+                "metadata": {
+                    "description": "Conversation history embeddings for context retrieval"
+                }
             },
             "learning_content": {
-                "metadata": {"description": "Language learning content vectors for semantic search"}
+                "metadata": {
+                    "description": "Language learning content vectors for semantic search"
+                }
             },
             "user_patterns": {
-                "metadata": {"description": "User learning pattern analysis and recommendations"}
+                "metadata": {
+                    "description": "User learning pattern analysis and recommendations"
+                }
             },
             "vocabulary": {
-                "metadata": {"description": "Vocabulary words and phrases with multilingual embeddings"}
-            }
+                "metadata": {
+                    "description": "Vocabulary words and phrases with multilingual embeddings"
+                }
+            },
         }
 
         for collection_name, config in collections.items():
@@ -113,11 +126,7 @@ class ChromaDBManager:
             logger.info(f"Initialized collection: {collection_name}")
 
     def add_document_embedding(
-        self,
-        user_id: str,
-        document_id: str,
-        content: str,
-        metadata: Dict[str, Any]
+        self, user_id: str, document_id: str, content: str, metadata: Dict[str, Any]
     ) -> str:
         """
         Add document embedding to the documents collection
@@ -143,26 +152,24 @@ class ChromaDBManager:
         collection.add(
             embeddings=[embedding],
             documents=[content],
-            metadatas=[{
-                "user_id": user_id,
-                "document_id": document_id,
-                "timestamp": metadata.get("timestamp"),
-                "language": metadata.get("language", "unknown"),
-                "content_type": metadata.get("content_type", "text"),
-                **metadata
-            }],
-            ids=[embedding_id]
+            metadatas=[
+                {
+                    "user_id": user_id,
+                    "document_id": document_id,
+                    "timestamp": metadata.get("timestamp"),
+                    "language": metadata.get("language", "unknown"),
+                    "content_type": metadata.get("content_type", "text"),
+                    **metadata,
+                }
+            ],
+            ids=[embedding_id],
         )
 
         logger.info(f"Added document embedding: {embedding_id}")
         return embedding_id
 
     def add_conversation_embedding(
-        self,
-        user_id: str,
-        conversation_id: str,
-        content: str,
-        metadata: Dict[str, Any]
+        self, user_id: str, conversation_id: str, content: str, metadata: Dict[str, Any]
     ) -> str:
         """
         Add conversation embedding for context retrieval
@@ -188,15 +195,17 @@ class ChromaDBManager:
         collection.add(
             embeddings=[embedding],
             documents=[content],
-            metadatas=[{
-                "user_id": user_id,
-                "conversation_id": conversation_id,
-                "timestamp": metadata.get("timestamp"),
-                "language": metadata.get("language", "unknown"),
-                "turn_type": metadata.get("turn_type", "unknown"),  # user/assistant
-                **metadata
-            }],
-            ids=[embedding_id]
+            metadatas=[
+                {
+                    "user_id": user_id,
+                    "conversation_id": conversation_id,
+                    "timestamp": metadata.get("timestamp"),
+                    "language": metadata.get("language", "unknown"),
+                    "turn_type": metadata.get("turn_type", "unknown"),  # user/assistant
+                    **metadata,
+                }
+            ],
+            ids=[embedding_id],
         )
 
         logger.info(f"Added conversation embedding: {embedding_id}")
@@ -206,9 +215,9 @@ class ChromaDBManager:
         self,
         query: str,
         collection_name: str,
-        user_id: Optional[str] = None,
+        user_id: str,
         language: Optional[str] = None,
-        n_results: int = 5
+        n_results: int = 5,
     ) -> Dict[str, Any]:
         """
         Search for similar content using semantic similarity
@@ -240,13 +249,17 @@ class ChromaDBManager:
             query_embeddings=[query_embedding],
             n_results=n_results,
             where=where_clause if where_clause else None,
-            include=["documents", "metadatas", "distances"]
+            include=["documents", "metadatas", "distances"],
         )
 
-        logger.info(f"Search in {collection_name}: {len(results['documents'][0])} results found")
+        logger.info(
+            f"Search in {collection_name}: {len(results['documents'][0])} results found"
+        )
         return results
 
-    def get_user_learning_patterns(self, user_id: str, language: str) -> List[Dict[str, Any]]:
+    def get_user_learning_patterns(
+        self, user_id: str, language: str
+    ) -> List[Dict[str, Any]]:
         """
         Retrieve user learning patterns for personalized recommendations
 
@@ -262,19 +275,15 @@ class ChromaDBManager:
             collection_name="user_patterns",
             user_id=user_id,
             language=language,
-            n_results=10
+            n_results=10,
         )
 
         return [
-            {
-                "content": doc,
-                "metadata": meta,
-                "distance": dist
-            }
+            {"content": doc, "metadata": meta, "distance": dist}
             for doc, meta, dist in zip(
                 results["documents"][0],
                 results["metadatas"][0],
-                results["distances"][0]
+                results["distances"][0],
             )
         ]
 
@@ -296,7 +305,9 @@ class ChromaDBManager:
 
                 if user_items["ids"]:
                     collection.delete(ids=user_items["ids"])
-                    logger.info(f"Deleted {len(user_items['ids'])} items from {collection_name} for user {user_id}")
+                    logger.info(
+                        f"Deleted {len(user_items['ids'])} items from {collection_name} for user {user_id}"
+                    )
 
             except Exception as e:
                 logger.error(f"Error deleting user data from {collection_name}: {e}")
@@ -305,7 +316,13 @@ class ChromaDBManager:
         """Get statistics for all collections"""
         stats = {}
 
-        for collection_name in ["documents", "conversations", "learning_content", "user_patterns", "vocabulary"]:
+        for collection_name in [
+            "documents",
+            "conversations",
+            "learning_content",
+            "user_patterns",
+            "vocabulary",
+        ]:
             try:
                 collection = self.get_or_create_collection(collection_name)
                 count = collection.count()
@@ -329,7 +346,13 @@ class ChromaDBManager:
 
     def reset_all_collections(self):
         """Reset all collections (complete reset)"""
-        collections = ["documents", "conversations", "learning_content", "user_patterns", "vocabulary"]
+        collections = [
+            "documents",
+            "conversations",
+            "learning_content",
+            "user_patterns",
+            "vocabulary",
+        ]
         for collection_name in collections:
             self.reset_collection(collection_name)
 
@@ -354,23 +377,27 @@ def get_chromadb_client():
     return chroma_manager.client
 
 
-def search_documents(query: str, user_id: str, language: str = None, n_results: int = 5):
+def search_documents(
+    query: str, user_id: str, language: Optional[str] = None, n_results: int = 5
+):
     """Search user documents"""
     return chroma_manager.search_similar_content(
         query=query,
         collection_name="documents",
         user_id=user_id,
         language=language,
-        n_results=n_results
+        n_results=n_results,
     )
 
 
-def search_conversations(query: str, user_id: str, language: str = None, n_results: int = 5):
+def search_conversations(
+    query: str, user_id: str, language: Optional[str] = None, n_results: int = 5
+):
     """Search conversation history"""
     return chroma_manager.search_similar_content(
         query=query,
         collection_name="conversations",
         user_id=user_id,
         language=language,
-        n_results=n_results
+        n_results=n_results,
     )

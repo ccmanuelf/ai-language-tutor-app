@@ -1,0 +1,17 @@
+{
+  "flowchart_id": "flowchart_fr_sentence_structure_20251224134728",
+  "concept": "sentence_structure",
+  "title": "French Sentence Structure",
+  "description": "Learn French sentence structure",
+  "language": "fr",
+  "difficulty_level": 3,
+  "nodes": [],
+  "connections": [],
+  "learning_outcomes": [
+    "Build French sentences"
+  ],
+  "created_at": "2025-12-24T13:47:28.433392",
+  "metadata": {
+    "version": "1.0"
+  }
+}

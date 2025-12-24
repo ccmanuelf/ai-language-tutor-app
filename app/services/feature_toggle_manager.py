@@ -8,14 +8,14 @@ Author: AI Assistant
 Date: 2025-09-27
 """
 
-import sqlite3
 import json
 import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
-from enum import Enum
+import sqlite3
 import threading
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class FeatureToggle:
     category: str = "general"
     requires_restart: bool = False
     min_role: str = "CHILD"
-    configuration: Dict[str, Any] = None
+    configuration: Optional[Dict[str, Any]] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
@@ -286,8 +286,8 @@ class FeatureToggleManager:
             cursor = conn.cursor()
 
             # Build update query dynamically
-            updates = []
-            params = []
+            updates: List[str] = []
+            params: List[Any] = []
 
             if is_enabled is not None:
                 updates.append("is_enabled = ?")
@@ -398,7 +398,7 @@ class FeatureToggleManager:
             if "conn" in locals():
                 conn.close()
 
-    def _calculate_basic_stats(self, features: Dict[str, Any]) -> Dict[str, int]:
+    def _calculate_basic_stats(self, features: Dict[str, Any]) -> Dict[str, Any]:
         """Calculate basic feature statistics"""
         return {
             "total_features": len(features),

@@ -474,7 +474,7 @@ class SpeechProcessor:
         voice_type: str,
         speaking_rate: float,
         provider: str = "auto",
-        original_text: str = None,
+        original_text: Optional[str] = None,
         voice: Optional[str] = None,
     ) -> SpeechSynthesisResult:
         """Select TTS provider and process text-to-speech with fallback logic"""

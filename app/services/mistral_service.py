@@ -231,7 +231,7 @@ Respond naturally and engagingly, as if talking with a friend. Be authentic and 
 
     async def generate_response(
         self,
-        messages: List[Dict[str, str]] = None,
+        messages: Optional[List[Dict[str, str]]] = None,
         language: str = "fr",
         model: Optional[str] = None,
         message: Optional[str] = None,

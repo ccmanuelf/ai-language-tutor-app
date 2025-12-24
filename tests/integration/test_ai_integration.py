@@ -662,6 +662,18 @@ class TestPreferredProviderIntegration:
             budget_manager,
         )
 
+        # Mock budget OK
+        mock_budget_status = BudgetStatus(
+            total_budget=30.0,
+            used_budget=15.0,
+            remaining_budget=15.0,
+            percentage_used=50.0,
+            alert_level=BudgetAlert.YELLOW,
+            days_remaining=15,
+            projected_monthly_cost=30.0,
+            is_over_budget=False,
+        )
+
         with patch.object(
             budget_manager, "get_current_budget_status", return_value=mock_budget_status
         ):
@@ -678,8 +690,8 @@ class TestPreferredProviderIntegration:
             assert selection.requires_budget_override is False
 
     @pytest.mark.asyncio
-    async def test_cost_optimization_when_no_preferred_provider(self):
-        """Test cost optimization still works when no provider specified"""
+    async def test_cost_optimization_fallback_to_local_when_budget_low(self):
+        """Test fallback to cost-effective provider when budget is low"""
         from app.services.ai_router import ai_router
         from app.services.budget_manager import (
             BudgetAlert,

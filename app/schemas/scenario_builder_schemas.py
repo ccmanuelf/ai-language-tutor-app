@@ -118,16 +118,16 @@ class CreateScenarioRequest(BaseModel):
     )
 
     prerequisites: Optional[List[str]] = Field(
-        default_factory=list, description="Required prior knowledge"
+        default_factory=lambda: [], description="Required prior knowledge"
     )
     learning_outcomes: Optional[List[str]] = Field(
-        default_factory=list, description="Expected outcomes"
+        default_factory=lambda: [], description="Expected outcomes"
     )
     vocabulary_focus: Optional[List[str]] = Field(
-        default_factory=list, description="Key vocabulary"
+        default_factory=lambda: [], description="Key vocabulary"
     )
     cultural_context: Optional[Dict[str, str]] = Field(
-        default_factory=dict, description="Cultural notes"
+        default_factory=lambda: {}, description="Cultural notes"
     )
 
     @field_validator("category")
@@ -257,7 +257,7 @@ class CreateFromTemplateRequest(BaseModel):
 
     template_id: str = Field(..., description="Template identifier")
     customization: Dict[str, Any] = Field(
-        default_factory=dict,
+        default_factory=lambda: {},
         description="Custom overrides (title, description, difficulty)",
     )
 

@@ -7,6 +7,7 @@ import sqlite3
 import tempfile
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from typing import Optional
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -137,7 +138,7 @@ def insert_learning_session(
     items_studied: int = 20,
     accuracy_percentage: float = 85.0,
     new_items_learned: int = 5,
-    started_at: datetime = None,
+    started_at: Optional[datetime] = None,
 ):
     """Insert a learning session for testing"""
     if started_at is None:
@@ -172,7 +173,7 @@ def insert_sr_item(
     user_id: int = 1,
     language_code: str = "es",
     mastery_level: float = 0.5,
-    next_review_date: datetime = None,
+    next_review_date: Optional[datetime] = None,
     is_active: int = 1,
 ):
     """Insert a spaced repetition item for testing"""
@@ -209,7 +210,7 @@ def insert_streak(
     current_streak: int = 5,
     longest_streak: int = 10,
     total_active_days: int = 50,
-    last_activity_date: date = None,
+    last_activity_date: Optional[date] = None,
 ):
     """Insert a learning streak for testing"""
     if last_activity_date is None:
@@ -243,7 +244,7 @@ def insert_achievement(
     achievement_type: str = "streak",
     title: str = "Test Achievement",
     points_awarded: int = 100,
-    earned_at: datetime = None,
+    earned_at: Optional[datetime] = None,
 ):
     """Insert an achievement for testing"""
     if earned_at is None:

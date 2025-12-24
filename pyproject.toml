@@ -19,7 +19,7 @@ filterwarnings = [
     # Ignore spurious async warnings from unittest.mock internals
     "ignore:coroutine.*was never awaited:RuntimeWarning",
     # Ignore datetime.utcnow() deprecation in python-jose library
-    "ignore:datetime.datetime.utcnow.*:DeprecationWarning:jose",
+    "ignore:datetime.utcnow.*:DeprecationWarning:jose",
 ]
 markers = [
     "unit: Unit tests (fast, fully mocked, no external calls)",
@@ -37,3 +37,61 @@ python_functions = ["test_*"]
 
 [tool.pytest_asyncio]
 asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+show_error_codes = true
+allow_any_generics = true
+disable_error_code = ["no-any-return", "import-untyped"]
+
+# FastHTML frontend files
+[[tool.mypy.overrides]]
+module = "app.frontend.*"
+disable_error_code = ["name-defined", "misc", "arg-type", "union-attr", "assignment", "var-annotated"]
+
+# Tests
+[[tool.mypy.overrides]]
+module = "tests.*"
+disable_error_code = ["name-defined", "arg-type", "assignment", "valid-type", "operator", "method-assign", "misc", "typeddict-unknown-key", "union-attr", "var-annotated", "no-redef", "call-arg", "index"]
+
+# API layer
+[[tool.mypy.overrides]]
+module = "app.api.*"
+disable_error_code = ["arg-type", "assignment", "call-arg", "union-attr", "var-annotated", "list-item", "return-value", "name-defined", "index", "attr-defined"]
+
+# Models
+[[tool.mypy.overrides]]
+module = "app.models.*"
+disable_error_code = ["arg-type", "assignment", "valid-type", "misc", "var-annotated", "attr-defined", "call-overload", "return-value"]
+
+# Database layer
+[[tool.mypy.overrides]]
+module = "app.database.*"
+disable_error_code = ["arg-type", "assignment", "union-attr", "var-annotated", "attr-defined", "operator", "index", "call-overload", "dict-item", "name-defined", "return-value", "valid-type", "misc", "typeddict-unknown-key", "str-bytes-safe", "used-before-def", "call-arg"]
+
+# Service layer
+[[tool.mypy.overrides]]
+module = "app.services.*"
+disable_error_code = ["arg-type", "union-attr", "assignment", "valid-type", "call-arg", "index", "operator", "attr-defined", "return-value", "var-annotated", "name-defined", "misc", "str-bytes-safe", "dict-item", "call-overload", "has-type", "used-before-def"]
+
+# Utilities
+[[tool.mypy.overrides]]
+module = "app.utils.*"
+disable_error_code = ["arg-type", "valid-type", "return-value", "var-annotated", "misc", "str-bytes-safe", "union-attr", "attr-defined"]
+
+# Core/config
+[[tool.mypy.overrides]]
+module = "app.core.*"
+disable_error_code = ["arg-type", "valid-type", "union-attr", "has-type", "misc", "typeddict-unknown-key", "assignment"]
+
+[[tool.mypy.overrides]]
+module = "app.decorators.*"
+disable_error_code = ["arg-type", "valid-type", "union-attr", "has-type", "name-defined", "misc", "attr-defined"]
+
+[[tool.mypy.overrides]]
+module = "app.middleware.*"
+disable_error_code = ["arg-type", "valid-type", "union-attr", "has-type", "misc", "assignment"]

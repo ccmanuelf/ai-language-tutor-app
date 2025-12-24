@@ -258,7 +258,10 @@ class RealTimeAnalyzer:
         self.analysis_cache = deque(maxlen=1000)
 
     async def start_analysis_session(
-        self, user_id: str, language: str, analysis_types: List[AnalysisType] = None
+        self,
+        user_id: str,
+        language: str,
+        analysis_types: Optional[List[AnalysisType]] = None,
     ) -> str:
         """Start a new real-time analysis session"""
 
@@ -368,7 +371,7 @@ class RealTimeAnalyzer:
         self,
         session_id: str,
         audio_segment: AudioSegment,
-        analysis_types: List[AnalysisType] = None,
+        analysis_types: Optional[List[AnalysisType]] = None,
     ) -> List[RealTimeFeedback]:
         """Analyze an audio segment in real-time"""
         session = self._validate_session(session_id)
@@ -850,7 +853,9 @@ realtime_analyzer = RealTimeAnalyzer()
 
 # Convenience functions
 async def start_realtime_analysis(
-    user_id: str, language: str, analysis_types: List[AnalysisType] = None
+    user_id: str,
+    language: str,
+    analysis_types: Optional[List[AnalysisType]] = None,
 ) -> str:
     """Start real-time analysis session"""
     return await realtime_analyzer.start_analysis_session(

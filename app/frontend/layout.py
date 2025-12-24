@@ -99,7 +99,7 @@ def create_layout(
     )
 
 
-def create_card(content, title: str = None, class_name: str = "card"):
+def create_card(content, title: Optional[str] = None, class_name: str = "card"):
     """Create a styled card component"""
     card_content = []
     if title:
@@ -151,7 +151,7 @@ def create_alert(message: str, alert_type: str = "info"):
     return Div(Span(icon, style="margin-right: 0.5rem;"), message, cls=css_class)
 
 
-def create_form_group(label: str, input_element, help_text: str = None):
+def create_form_group(label: str, input_element, help_text: Optional[str] = None):
     """Create a styled form group with label and input"""
     form_group = [Label(label, cls="form-label"), input_element]
 
@@ -164,7 +164,7 @@ def create_form_group(label: str, input_element, help_text: str = None):
 
 
 def create_button(
-    text: str, button_type: str = "primary", onclick: str = None, **kwargs
+    text: str, button_type: str = "primary", onclick: Optional[str] = None, **kwargs
 ):
     """Create a styled button component"""
     css_class = f"btn btn-{button_type}"

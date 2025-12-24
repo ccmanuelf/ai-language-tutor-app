@@ -301,7 +301,10 @@ class AuthenticationService:
 
     # Session Management
     def create_session(
-        self, user_id: str, device_info: Dict[str, Any] = None, ip_address: str = None
+        self,
+        user_id: str,
+        device_info: Optional[Dict[str, Any]] = None,
+        ip_address: Optional[str] = None,
     ) -> str:
         """Create a new user session"""
         session_id = secrets.token_urlsafe(32)

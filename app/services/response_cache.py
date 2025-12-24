@@ -39,8 +39,8 @@ class CacheEntry:
     cache_type: CacheType
     created_at: datetime
     hit_count: int = 0
-    last_accessed: datetime = None
-    expires_at: datetime = None
+    last_accessed: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
 
     def is_expired(self) -> bool:
         """Check if cache entry has expired"""
@@ -102,7 +102,10 @@ class ResponseCache:
         }
 
     def _generate_cache_key(
-        self, messages: List[Dict[str, str]], language: str, provider: str = None
+        self,
+        messages: List[Dict[str, str]],
+        language: str,
+        provider: Optional[str] = None,
     ) -> str:
         """Generate a unique cache key for the request"""
 
@@ -156,7 +159,10 @@ class ResponseCache:
         return cache_type is not None
 
     def get(
-        self, messages: List[Dict[str, str]], language: str, provider: str = None
+        self,
+        messages: List[Dict[str, str]],
+        language: str,
+        provider: Optional[str] = None,
     ) -> Optional[CacheEntry]:
         """Retrieve cached response if available"""
 

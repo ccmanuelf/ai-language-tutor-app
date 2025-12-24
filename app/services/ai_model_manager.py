@@ -105,9 +105,9 @@ class ModelConfiguration:
     weight: float = 1.0  # Routing weight
 
     # Metadata
-    created_at: datetime = None
-    updated_at: datetime = None
-    last_used: datetime = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    last_used: Optional[datetime] = None
 
     def __post_init__(self):
         if not self.created_at:
@@ -145,8 +145,8 @@ class ModelUsageStats:
     last_7d_requests: int = 0
     last_30d_requests: int = 0
 
-    first_used: datetime = None
-    last_used: datetime = None
+    first_used: Optional[datetime] = None
+    last_used: Optional[datetime] = None
 
 
 @dataclass
@@ -618,7 +618,7 @@ class AIModelManager:
         tokens_used: int,
         cost: float,
         success: bool = True,
-        quality_rating: float = None,
+        quality_rating: Optional[float] = None,
     ):
         """Track model usage for analytics"""
         if model_id not in self.usage_stats:
@@ -675,7 +675,7 @@ class AIModelManager:
         response_time_ms: float,
         tokens_used: int,
         cost: float,
-        quality_rating: float = None,
+        quality_rating: Optional[float] = None,
     ):
         """Log detailed performance data"""
         with sqlite3.connect(self.db_path) as conn:
@@ -924,7 +924,7 @@ class AIModelManager:
         self,
         language: str = "en",
         use_case: str = "conversation",
-        budget_limit: float = None,
+        budget_limit: Optional[float] = None,
     ) -> List[str]:
         """Get optimized model recommendations for specific use case"""
         models = await self.get_all_models(enabled_only=True)

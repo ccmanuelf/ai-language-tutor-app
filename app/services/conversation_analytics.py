@@ -17,8 +17,8 @@ reusable analytics functionality with minimal dependencies.
 """
 
 import logging
-from typing import Dict, Any, List
 from datetime import datetime
+from typing import Any, Dict, List
 
 from app.services.conversation_models import (
     ConversationContext,
@@ -152,7 +152,7 @@ class LearningAnalyzer:
         ai_words = set(ai_response.lower().split())
 
         # Get words already introduced in this session
-        recent_vocabulary = set(context.vocabulary_introduced)
+        recent_vocabulary = set(context.vocabulary_introduced or [])
 
         # Find new words (limit to 3 for focused learning)
         potential_new_vocab = list(ai_words - recent_vocabulary)[:3]
@@ -302,7 +302,9 @@ class LearningAnalyzer:
         context.vocabulary_introduced.extend(insights.vocabulary_new)
 
         # Keep vocabulary list unique and limit to 50 most recent words
-        context.vocabulary_introduced = list(set(context.vocabulary_introduced))[-50:]
+        context.vocabulary_introduced = list(set(context.vocabulary_introduced or []))[
+            -50:
+        ]
 
         # Update last activity timestamp
         context.last_activity = datetime.now()
