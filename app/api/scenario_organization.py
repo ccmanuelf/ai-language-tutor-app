@@ -159,7 +159,7 @@ async def get_user_collections(
 @router.post("/collections/{collection_id}/scenarios")
 async def add_scenario_to_collection(
     collection_id: str,
-    scenario_id: int = Query(..., gt=0),
+    scenario_id: str = Query(..., min_length=1),
     notes: Optional[str] = Query(None, max_length=500),
     current_user: SimpleUser = Depends(require_auth),
     db: Session = Depends(get_db_session),
@@ -169,7 +169,7 @@ async def add_scenario_to_collection(
 
     Args:
         collection_id: Collection identifier
-        scenario_id: Scenario database ID to add
+        scenario_id: Scenario identifier (string)
         notes: Optional notes about this scenario
 
     Returns:
@@ -201,7 +201,7 @@ async def add_scenario_to_collection(
 @router.delete("/collections/{collection_id}/scenarios/{scenario_id}")
 async def remove_scenario_from_collection(
     collection_id: str,
-    scenario_id: int,
+    scenario_id: str,
     current_user: SimpleUser = Depends(require_auth),
     db: Session = Depends(get_db_session),
 ):
@@ -239,7 +239,7 @@ async def remove_scenario_from_collection(
 @router.put("/collections/{collection_id}/reorder")
 async def reorder_collection(
     collection_id: str,
-    scenario_order: List[int] = Query(..., description="Ordered list of scenario IDs"),
+    request: dict,  # Expect JSON body with scenario_order
     current_user: SimpleUser = Depends(require_auth),
     db: Session = Depends(get_db_session),
 ):
@@ -248,16 +248,18 @@ async def reorder_collection(
 
     Args:
         collection_id: Collection identifier
-        scenario_order: List of scenario IDs in desired order
+        request: JSON body containing scenario_order (list of scenario IDs as strings)
 
     Returns:
         Success status
     """
+    scenario_order = request.get("scenario_order", [])
+
     try:
         service = ScenarioOrganizationService(db)
         success = await service.reorder_collection(
             collection_id=collection_id,
-            scenario_order=scenario_order,
+            scenario_order=scenario_order,  # Now expects List[str]
             user_id=current_user.id,
         )
 
@@ -353,7 +355,7 @@ async def get_public_collections(
 
 @router.post("/scenarios/{scenario_id}/tags")
 async def add_user_tag(
-    scenario_id: int,
+    scenario_id: str,
     tag: str = Query(..., min_length=2, max_length=50),
     current_user: SimpleUser = Depends(require_auth),
     db: Session = Depends(get_db_session),
@@ -390,8 +392,8 @@ async def add_user_tag(
 
 @router.post("/scenarios/{scenario_id}/ai-tags")
 async def add_ai_tags(
-    scenario_id: int,
-    tags: List[str] = Query(..., description="List of AI-generated tags"),
+    scenario_id: str,
+    request: dict,  # Expect JSON body with tags list
     current_user: SimpleUser = Depends(require_auth),
     db: Session = Depends(get_db_session),
 ):
@@ -400,7 +402,7 @@ async def add_ai_tags(
 
     Args:
         scenario_id: Scenario database ID
-        tags: List of AI-generated tags
+        request: JSON body containing tags (list of strings)
 
     Returns:
         List of created tags
@@ -408,6 +410,8 @@ async def add_ai_tags(
     Note: This endpoint is typically called internally by the AI service,
     but can be used by admins for manual tagging.
     """
+    tags = request.get("tags", [])
+
     try:
         service = ScenarioOrganizationService(db)
         scenario_tags = await service.add_ai_tags(
@@ -429,7 +433,7 @@ async def add_ai_tags(
 
 @router.get("/scenarios/{scenario_id}/tags")
 async def get_scenario_tags(
-    scenario_id: int,
+    scenario_id: str,
     tag_type: Optional[str] = Query(None, pattern="^(user|ai)$"),
     current_user: SimpleUser = Depends(require_auth),
     db: Session = Depends(get_db_session),
@@ -502,7 +506,7 @@ async def search_by_tag(
 
 @router.post("/bookmarks")
 async def add_bookmark(
-    scenario_id: int = Query(..., gt=0),
+    scenario_id: str = Query(..., min_length=1),
     folder: Optional[str] = Query(None, max_length=100),
     notes: Optional[str] = Query(None, max_length=500),
     current_user: SimpleUser = Depends(require_auth),
@@ -542,7 +546,7 @@ async def add_bookmark(
 
 @router.delete("/bookmarks/{scenario_id}")
 async def remove_bookmark(
-    scenario_id: int,
+    scenario_id: str,
     current_user: SimpleUser = Depends(require_auth),
     db: Session = Depends(get_db_session),
 ):
@@ -630,7 +634,7 @@ async def get_user_folders(
 
 @router.get("/bookmarks/{scenario_id}/check")
 async def check_bookmark_status(
-    scenario_id: int,
+    scenario_id: str,
     current_user: SimpleUser = Depends(require_auth),
     db: Session = Depends(get_db_session),
 ):
@@ -667,7 +671,7 @@ async def check_bookmark_status(
 
 @router.post("/ratings")
 async def add_rating(
-    scenario_id: int = Query(..., gt=0),
+    scenario_id: str = Query(..., min_length=1),
     rating: int = Query(..., ge=1, le=5),
     review: Optional[str] = Query(None, max_length=2000),
     difficulty_rating: Optional[int] = Query(None, ge=1, le=5),
@@ -719,7 +723,7 @@ async def add_rating(
 
 @router.get("/scenarios/{scenario_id}/ratings")
 async def get_scenario_ratings(
-    scenario_id: int,
+    scenario_id: str,
     public_only: bool = Query(True),
     limit: int = Query(50, ge=1, le=100),
     current_user: SimpleUser = Depends(require_auth),
@@ -756,7 +760,7 @@ async def get_scenario_ratings(
 
 @router.get("/scenarios/{scenario_id}/ratings/summary")
 async def get_rating_summary(
-    scenario_id: int,
+    scenario_id: str,
     current_user: SimpleUser = Depends(require_auth),
     db: Session = Depends(get_db_session),
 ):
@@ -785,7 +789,7 @@ async def get_rating_summary(
 
 @router.get("/ratings/my-rating/{scenario_id}")
 async def get_user_rating(
-    scenario_id: int,
+    scenario_id: str,
     current_user: SimpleUser = Depends(require_auth),
     db: Session = Depends(get_db_session),
 ):
@@ -817,7 +821,7 @@ async def get_user_rating(
 
 @router.delete("/ratings/{scenario_id}")
 async def delete_rating(
-    scenario_id: int,
+    scenario_id: str,
     current_user: SimpleUser = Depends(require_auth),
     db: Session = Depends(get_db_session),
 ):

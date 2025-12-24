@@ -12,10 +12,9 @@ Provides:
 from fasthtml.common import *
 
 
-def create_content_view_route(app):
-    """Create content view routes"""
+def create_content_view_route():
+    """Create content view route handler"""
 
-    @app.route("/content/{content_id}")
     def content_view(content_id: str):
         """Display processed content and learning materials"""
         return Html(
@@ -1001,3 +1000,5 @@ def create_content_view_route(app):
                 style="margin: 0; padding: 0;",
             ),
         )
+
+    return content_view

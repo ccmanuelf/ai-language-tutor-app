@@ -126,7 +126,7 @@ class TestScenarioAPI:
         from app.api.scenario_builder import router
 
         assert router is not None
-        assert len(router.routes) == 10, "Should have 10 API endpoints"
+        assert len(router.routes) == 11, "Should have 11 API endpoints"
 
     def test_api_route_paths(self):
         """Test that all expected routes are registered"""

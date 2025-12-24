@@ -76,6 +76,7 @@ coverage==7.3.2
 # Production Dependencies
 gunicorn==21.2.0
 redis==5.0.1
+pytz==2024.1
 
 # Monitoring and Logging
 structlog==23.2.0

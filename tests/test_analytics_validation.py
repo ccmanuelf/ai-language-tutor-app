@@ -158,17 +158,21 @@ async def test_trending_score_formula_validation(
     - Average rating of 4.5 (created with REAL ratings)
     - Expected: (10 * 3) + (25 * 1) + (4.5 * 10) = 30 + 25 + 45 = 100
     """
+    # Cleanup any existing test data first
+    db_session.query(ScenarioRating).filter(
+        ScenarioRating.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.commit()
+
     # Step 1: Create REAL ratings that average to 4.5
     # Ratings: [5, 5, 5, 4, 4, 4, 4, 5] = 36 / 8 = 4.5
     rating_values = [5, 5, 5, 4, 4, 4, 4, 5]
-
-    from app.models.database import ScenarioRating
 
     for i, rating_val in enumerate(rating_values):
         user = User(
             user_id=f"trending_user_{i}_{datetime.now().timestamp()}",
             username=f"trending_user_{i}",
-            email=f"trending_{i}@test.com",
+            email=f"trending_{i}_{datetime.now().timestamp()}@test.com",
             password_hash="test",
         )
         db_session.add(user)
@@ -205,7 +209,9 @@ async def test_trending_score_formula_validation(
     assert expected_trending_score == 100.0, "Expected score calculation is correct"
 
     # Step 4: Trigger REAL analytics update (will recalculate from actual ratings)
-    updated_analytics = await scenario_org_service.update_analytics(test_scenario.id)
+    updated_analytics = await scenario_org_service.update_analytics(
+        test_scenario.scenario_id
+    )
 
     # Step 5: Validate actual matches expected
     assert updated_analytics.average_rating == expected_average_rating, (
@@ -253,7 +259,9 @@ async def test_trending_score_zero_rating(
     # Expected: (5 * 3) + (15 * 1) + (0 * 10) = 30
     expected_trending_score = (5 * 3) + (15 * 1) + (0 * 10)
 
-    updated_analytics = await scenario_org_service.update_analytics(test_scenario.id)
+    updated_analytics = await scenario_org_service.update_analytics(
+        test_scenario.scenario_id
+    )
 
     assert updated_analytics.trending_score == expected_trending_score
 
@@ -262,6 +270,7 @@ async def test_trending_score_zero_rating(
 async def test_trending_score_high_activity(
     db_session: Session,
     test_scenario: Scenario,
+    test_user: User,
     scenario_org_service: ScenarioOrganizationService,
 ):
     """
@@ -269,24 +278,61 @@ async def test_trending_score_high_activity(
 
     Simulates a viral scenario with lots of recent completions.
     """
+    # Create REAL ratings averaging to 4.8
+    # Use 10 ratings: [5,5,5,5,5,5,4,4,5,5] = 48/10 = 4.8
+    rating_values = [5, 5, 5, 5, 5, 5, 4, 4, 5, 5]
+
+    from app.models.database import ScenarioRating
+
+    for i, rating_val in enumerate(rating_values):
+        user = User(
+            user_id=f"high_activity_user_{i}_{datetime.now().timestamp()}",
+            username=f"high_activity_{i}",
+            email=f"high_activity_{i}_{datetime.now().timestamp()}@test.com",
+            password_hash="test",
+        )
+        db_session.add(user)
+        db_session.flush()
+
+        rating = ScenarioRating(
+            user_id=user.id,
+            scenario_id=test_scenario.id,
+            rating=rating_val,
+            difficulty_rating=rating_val,
+            usefulness_rating=rating_val,
+            cultural_accuracy_rating=rating_val,
+        )
+        db_session.add(rating)
+
+    db_session.commit()
+
     # Create analytics with high activity
     analytics = ScenarioAnalytics(
         scenario_id=test_scenario.id,
         total_completions=500,
         last_7_days_completions=100,  # 100 in last week
         last_30_days_completions=300,  # 300 in last month
-        average_rating=4.8,
-        rating_count=50,
     )
     db_session.add(analytics)
     db_session.commit()
 
     # Expected: (100 * 3) + (300 * 1) + (4.8 * 10) = 300 + 300 + 48 = 648
+    expected_average = sum(rating_values) / len(rating_values)
+    assert expected_average == 4.8
     expected_trending_score = (100 * 3) + (300 * 1) + (4.8 * 10)
 
-    updated_analytics = await scenario_org_service.update_analytics(test_scenario.id)
+    updated_analytics = await scenario_org_service.update_analytics(
+        test_scenario.scenario_id
+    )
 
+    assert updated_analytics.average_rating == expected_average
     assert updated_analytics.trending_score == expected_trending_score
+
+    # Cleanup
+    db_session.query(User).filter(User.username.like("high_activity_%")).delete(
+        synchronize_session=False
+    )
+    db_session.commit()
 
 
 # ============================================================================
@@ -313,6 +359,18 @@ async def test_popularity_score_formula_validation(
     - 5 collections
     - Expected: 50 + (10 * 2) + (15 * 1.5) + (5 * 3) = 50 + 20 + 22.5 + 15 = 107.5
     """
+    # Cleanup any existing test data first
+    db_session.query(ScenarioBookmark).filter(
+        ScenarioBookmark.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.query(ScenarioRating).filter(
+        ScenarioRating.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.query(ScenarioCollectionItem).filter(
+        ScenarioCollectionItem.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.commit()
+
     # Create REAL bookmarks
     for i in range(10):
         bookmark_user = User(
@@ -353,7 +411,7 @@ async def test_popularity_score_formula_validation(
     for i in range(5):
         collection = ScenarioCollection(
             collection_id=f"test_collection_{i}_{datetime.now().timestamp()}",
-            user_id=test_user.id,
+            created_by=test_user.id,
             name=f"Test Collection {i}",
             is_public=True,
         )
@@ -363,19 +421,16 @@ async def test_popularity_score_formula_validation(
         collection_item = ScenarioCollectionItem(
             collection_id=collection.id,
             scenario_id=test_scenario.id,
-            order_index=1,
+            position=1,
         )
         db_session.add(collection_item)
 
     db_session.commit()
 
-    # Create analytics with completions
+    # Create analytics with completions (counts will be recalculated)
     analytics = ScenarioAnalytics(
         scenario_id=test_scenario.id,
         total_completions=50,
-        bookmark_count=10,
-        rating_count=15,
-        collection_count=5,
     )
     db_session.add(analytics)
     db_session.commit()
@@ -385,7 +440,9 @@ async def test_popularity_score_formula_validation(
     assert expected_popularity_score == 107.5
 
     # Trigger REAL analytics update
-    updated_analytics = await scenario_org_service.update_analytics(test_scenario.id)
+    updated_analytics = await scenario_org_service.update_analytics(
+        test_scenario.scenario_id
+    )
 
     # Validate actual matches expected
     assert updated_analytics.popularity_score == expected_popularity_score, (
@@ -417,12 +474,21 @@ async def test_popularity_score_zero_engagement(
 
     New scenario with no bookmarks, ratings, or collections.
     """
+    # Cleanup any existing test data first
+    db_session.query(ScenarioBookmark).filter(
+        ScenarioBookmark.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.query(ScenarioRating).filter(
+        ScenarioRating.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.query(ScenarioCollectionItem).filter(
+        ScenarioCollectionItem.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.commit()
+
     analytics = ScenarioAnalytics(
         scenario_id=test_scenario.id,
         total_completions=10,
-        bookmark_count=0,
-        rating_count=0,
-        collection_count=0,
     )
     db_session.add(analytics)
     db_session.commit()
@@ -430,7 +496,9 @@ async def test_popularity_score_zero_engagement(
     # Expected: 10 + (0 * 2) + (0 * 1.5) + (0 * 3) = 10
     expected_popularity_score = 10.0
 
-    updated_analytics = await scenario_org_service.update_analytics(test_scenario.id)
+    updated_analytics = await scenario_org_service.update_analytics(
+        test_scenario.scenario_id
+    )
 
     assert updated_analytics.popularity_score == expected_popularity_score
 
@@ -445,14 +513,28 @@ async def test_popularity_score_high_engagement(
     """
     Validate popularity score with high engagement metrics.
 
-    Popular scenario with lots of bookmarks and collections.
+    Popular scenario with lots of bookmarks, ratings, and collections.
     """
+    # Cleanup any existing test data first
+    db_session.query(ScenarioBookmark).filter(
+        ScenarioBookmark.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.query(ScenarioRating).filter(
+        ScenarioRating.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.query(ScenarioCollectionItem).filter(
+        ScenarioCollectionItem.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.commit()
+
+    timestamp = datetime.now().timestamp()
+
     # Create many REAL bookmarks (20)
     for i in range(20):
         user = User(
-            user_id=f"high_eng_user_{i}_{datetime.now().timestamp()}",
-            username=f"high_eng_user_{i}_{datetime.now().timestamp()}",
-            email=f"high_eng_{i}@test.com",
+            user_id=f"high_eng_bookmark_{i}_{timestamp}",
+            username=f"high_eng_bookmark_{i}_{timestamp}",
+            email=f"high_eng_bookmark_{i}_{timestamp}@test.com",
             password_hash="test",
         )
         db_session.add(user)
@@ -464,14 +546,48 @@ async def test_popularity_score_high_engagement(
         )
         db_session.add(bookmark)
 
+    # Create 30 REAL ratings
+    for i in range(30):
+        user = User(
+            user_id=f"high_eng_rating_{i}_{timestamp}",
+            username=f"high_eng_rating_{i}_{timestamp}",
+            email=f"high_eng_rating_{i}_{timestamp}@test.com",
+            password_hash="test",
+        )
+        db_session.add(user)
+        db_session.flush()
+
+        rating = ScenarioRating(
+            user_id=user.id,
+            scenario_id=test_scenario.id,
+            rating=4,
+            difficulty_rating=4,
+        )
+        db_session.add(rating)
+
+    # Create 10 REAL collections
+    for i in range(10):
+        collection = ScenarioCollection(
+            collection_id=f"high_eng_coll_{i}_{timestamp}",
+            created_by=test_user.id,
+            name=f"High Engagement Collection {i}",
+            is_public=True,
+        )
+        db_session.add(collection)
+        db_session.flush()
+
+        collection_item = ScenarioCollectionItem(
+            collection_id=collection.id,
+            scenario_id=test_scenario.id,
+            position=1,
+        )
+        db_session.add(collection_item)
+
     db_session.commit()
 
     analytics = ScenarioAnalytics(
         scenario_id=test_scenario.id,
         total_completions=200,
-        bookmark_count=20,
-        rating_count=30,
-        collection_count=10,
     )
     db_session.add(analytics)
     db_session.commit()
@@ -479,14 +595,25 @@ async def test_popularity_score_high_engagement(
     # Expected: 200 + (20 * 2) + (30 * 1.5) + (10 * 3) = 200 + 40 + 45 + 30 = 315
     expected_popularity_score = 315.0
 
-    updated_analytics = await scenario_org_service.update_analytics(test_scenario.id)
+    updated_analytics = await scenario_org_service.update_analytics(
+        test_scenario.scenario_id
+    )
 
-    assert updated_analytics.popularity_score == expected_popularity_score
+    assert updated_analytics.popularity_score == expected_popularity_score, (
+        f"Popularity score mismatch: expected {expected_popularity_score}, "
+        f"got {updated_analytics.popularity_score}"
+    )
 
     # Cleanup
-    db_session.query(User).filter(User.username.like("high_eng_user_%")).delete(
+    db_session.query(User).filter(User.username.like("high_eng_bookmark_%")).delete(
         synchronize_session=False
     )
+    db_session.query(User).filter(User.username.like("high_eng_rating_%")).delete(
+        synchronize_session=False
+    )
+    db_session.query(ScenarioCollection).filter(
+        ScenarioCollection.collection_id.like("high_eng_coll_%")
+    ).delete(synchronize_session=False)
     db_session.commit()
 
 
@@ -509,6 +636,12 @@ async def test_rating_average_calculation(
     - 5 ratings: [5, 4, 4, 3, 4]
     - Expected average: (5 + 4 + 4 + 3 + 4) / 5 = 20 / 5 = 4.0
     """
+    # Cleanup any existing test data first
+    db_session.query(ScenarioRating).filter(
+        ScenarioRating.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.commit()
+
     ratings_values = [5, 4, 4, 3, 4]
 
     # Create REAL ratings
@@ -516,7 +649,7 @@ async def test_rating_average_calculation(
         user = User(
             user_id=f"rating_avg_user_{i}_{datetime.now().timestamp()}",
             username=f"rating_avg_user_{i}_{datetime.now().timestamp()}",
-            email=f"rating_avg_{i}@test.com",
+            email=f"rating_avg_{i}_{datetime.now().timestamp()}@test.com",
             password_hash="test",
         )
         db_session.add(user)
@@ -527,8 +660,6 @@ async def test_rating_average_calculation(
             scenario_id=test_scenario.id,
             rating=rating_value,
             difficulty_rating=rating_value,
-            engagement_rating=rating_value,
-            learning_effectiveness=rating_value,
         )
         db_session.add(rating)
 
@@ -540,7 +671,7 @@ async def test_rating_average_calculation(
 
     # Get rating summary through REAL method
     rating_summary = await scenario_org_service.get_scenario_rating_summary(
-        test_scenario.id
+        test_scenario.scenario_id
     )
 
     # Validate
@@ -570,6 +701,12 @@ async def test_rating_distribution_calculation(
     - 0 two-star ratings
     - 1 one-star rating
     """
+    # Cleanup any existing test data first
+    db_session.query(ScenarioRating).filter(
+        ScenarioRating.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.commit()
+
     rating_distribution = {5: 2, 4: 3, 3: 1, 2: 0, 1: 1}
 
     # Create REAL ratings matching distribution
@@ -578,7 +715,7 @@ async def test_rating_distribution_calculation(
             user = User(
                 user_id=f"rating_dist_user_{rating_value}_{i}_{datetime.now().timestamp()}",
                 username=f"rating_dist_user_{rating_value}_{i}_{datetime.now().timestamp()}",
-                email=f"rating_dist_{rating_value}_{i}@test.com",
+                email=f"rating_dist_{rating_value}_{i}_{datetime.now().timestamp()}@test.com",
                 password_hash="test",
             )
             db_session.add(user)
@@ -589,8 +726,6 @@ async def test_rating_distribution_calculation(
                 scenario_id=test_scenario.id,
                 rating=rating_value,
                 difficulty_rating=rating_value,
-                engagement_rating=rating_value,
-                learning_effectiveness=rating_value,
             )
             db_session.add(rating)
 
@@ -598,16 +733,16 @@ async def test_rating_distribution_calculation(
 
     # Get rating summary
     rating_summary = await scenario_org_service.get_scenario_rating_summary(
-        test_scenario.id
+        test_scenario.scenario_id
     )
 
     # Validate distribution
     actual_distribution = rating_summary["rating_distribution"]
-    assert actual_distribution["5_stars"] == 2
-    assert actual_distribution["4_stars"] == 3
-    assert actual_distribution["3_stars"] == 1
-    assert actual_distribution["2_stars"] == 0
-    assert actual_distribution["1_star"] == 1
+    assert actual_distribution[5] == 2
+    assert actual_distribution[4] == 3
+    assert actual_distribution[3] == 1
+    assert actual_distribution[2] == 0
+    assert actual_distribution[1] == 1
 
     # Validate total count
     assert rating_summary["rating_count"] == 7
@@ -635,6 +770,12 @@ async def test_recommendation_excludes_bookmarked(
 
     Creates 5 scenarios, user bookmarks 3, should only get 2 in recommendations.
     """
+    # Cleanup any existing bookmarks for test user first
+    db_session.query(ScenarioBookmark).filter(
+        ScenarioBookmark.user_id == test_user.id
+    ).delete(synchronize_session=False)
+    db_session.commit()
+
     # Create 5 REAL scenarios
     scenarios = []
     for i in range(5):
@@ -650,10 +791,28 @@ async def test_recommendation_excludes_bookmarked(
         db_session.add(scenario)
         db_session.flush()
 
+        # Add a phase to make scenario valid
+        phase = ScenarioPhase(
+            scenario_id=scenario.id,
+            phase_number=1,
+            phase_id=f"phase_{i}",
+            name=f"Test Phase {i}",
+            description="Test phase",
+            key_vocabulary='["test"]',
+            essential_phrases='["test phrase"]',
+            learning_objectives='["test objective"]',
+            success_criteria='["complete"]',
+        )
+        db_session.add(phase)
+
         # Add analytics with popularity scores
+        # Use very high scores to ensure these are top-ranked
         analytics = ScenarioAnalytics(
             scenario_id=scenario.id,
-            popularity_score=100.0 - (i * 10),  # Descending popularity
+            popularity_score=10000.0
+            - (
+                i * 10
+            ),  # Descending popularity, but much higher than existing scenarios
         )
         db_session.add(analytics)
 
@@ -795,7 +954,7 @@ async def test_completion_triggers_analytics_update(
 
     # Record completion through REAL method
     await scenario_org_service.record_scenario_completion(
-        scenario_id=test_scenario.id, user_id=test_user.id
+        scenario_id=test_scenario.scenario_id, user_id=test_user.id
     )
 
     # Refresh analytics from database
@@ -820,10 +979,16 @@ async def test_rating_triggers_analytics_update(
     """
     Validate that adding a rating triggers analytics update.
     """
+    # Cleanup any existing test data first
+    db_session.query(ScenarioRating).filter(
+        ScenarioRating.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.commit()
+
     # Add rating through REAL method
     await scenario_org_service.add_rating(
         user_id=test_user.id,
-        scenario_id=test_scenario.id,
+        scenario_id=test_scenario.scenario_id,
         rating=5,
         difficulty_rating=4,
     )
@@ -858,8 +1023,20 @@ async def test_analytics_with_no_data(
     """
     Validate analytics calculation for brand new scenario with no data.
     """
+    # Cleanup any existing test data first
+    db_session.query(ScenarioBookmark).filter(
+        ScenarioBookmark.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.query(ScenarioRating).filter(
+        ScenarioRating.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.query(ScenarioCollectionItem).filter(
+        ScenarioCollectionItem.scenario_id == test_scenario.id
+    ).delete(synchronize_session=False)
+    db_session.commit()
+
     # Update analytics on scenario with no data
-    analytics = await scenario_org_service.update_analytics(test_scenario.id)
+    analytics = await scenario_org_service.update_analytics(test_scenario.scenario_id)
 
     # All scores should be zero or None
     assert analytics.total_completions == 0
@@ -887,7 +1064,9 @@ async def test_analytics_handles_null_values(
     db_session.commit()
 
     # Update should handle NULLs gracefully
-    updated_analytics = await scenario_org_service.update_analytics(test_scenario.id)
+    updated_analytics = await scenario_org_service.update_analytics(
+        test_scenario.scenario_id
+    )
 
     # Should not raise errors
     assert updated_analytics.trending_score is not None

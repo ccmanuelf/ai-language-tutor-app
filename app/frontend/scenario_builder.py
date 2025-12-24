@@ -973,7 +973,6 @@ def create_template_modal():
         cls="modal",
         id="template-modal",
         onclick="if (event.target === this) closeModal('template-modal')",
-        onclick="if (event.target === this) closeModal('template-modal')"
     )
 
 
@@ -982,9 +981,9 @@ def create_scenario_builder_route():
     """FastAPI/FastHTML route handler"""
     from fastapi import Depends
 
-    from app.core.security import require_auth_html
+    from app.core.security import require_auth
 
-    def scenario_builder_handler(current_user: SimpleUser = Depends(require_auth_html)):
+    def scenario_builder_handler(current_user: SimpleUser = Depends(require_auth)):
         return create_scenario_builder_page(current_user)
 
     return scenario_builder_handler

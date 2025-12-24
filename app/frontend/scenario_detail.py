@@ -14,6 +14,7 @@ Detailed view of individual scenarios with:
 import logging
 from typing import Optional
 
+from fastapi import Depends
 from fasthtml.common import *
 
 from app.core.security import require_auth

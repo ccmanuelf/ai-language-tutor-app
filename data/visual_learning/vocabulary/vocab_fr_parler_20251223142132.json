@@ -1,0 +1,24 @@
+{
+  "visual_id": "vocab_fr_parler_20251223142132",
+  "word": "parler",
+  "language": "fr",
+  "translation": "to speak",
+  "visualization_type": "context_examples",
+  "visual_data": {},
+  "phonetic": "par-LAY",
+  "audio_url": null,
+  "images": [],
+  "example_sentences": [
+    {
+      "french": "Je parle français",
+      "english": "I speak French"
+    }
+  ],
+  "related_words": [
+    "dire",
+    "discuter"
+  ],
+  "difficulty_level": 1,
+  "created_at": "2025-12-23T14:21:32.500742",
+  "metadata": {}
+}

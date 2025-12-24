@@ -1,0 +1,21 @@
+{
+  "visual_id": "vocab_es_libro_20251224120323",
+  "word": "libro",
+  "language": "es",
+  "translation": "book",
+  "visualization_type": "word_cloud",
+  "visual_data": {},
+  "phonetic": null,
+  "audio_url": null,
+  "images": [],
+  "example_sentences": [],
+  "related_words": [
+    "leer",
+    "página",
+    "capítulo",
+    "biblioteca"
+  ],
+  "difficulty_level": 1,
+  "created_at": "2025-12-24T12:03:23.553094",
+  "metadata": {}
+}

@@ -1,0 +1,785 @@
+"""
+Comprehensive Tests for ScenarioOrganizationService
+AI Language Tutor App - Session 133
+
+Tests cover:
+- Collections (create, read, update, delete, reorder)
+- Tags (user tags, AI tags, search)
+- Bookmarks (add, remove, folders)
+- Ratings (add, get, summaries, helpful marks)
+- Discovery (search, trending, popular, recommended)
+- Analytics (updates, completion tracking)
+"""
+
+from datetime import datetime, timedelta
+
+import pytest
+from sqlalchemy.orm import Session
+
+from app.models.database import User
+from app.models.scenario_db_models import (
+    Scenario,
+    ScenarioAnalytics,
+    ScenarioBookmark,
+    ScenarioCollection,
+    ScenarioCollectionItem,
+    ScenarioRating,
+    ScenarioTag,
+)
+from app.services.scenario_organization_service import ScenarioOrganizationService
+
+
+@pytest.fixture
+def service(db_session):
+    """ScenarioOrganizationService fixture"""
+    return ScenarioOrganizationService(db_session)
+
+
+@pytest.fixture
+def test_user(db_session):
+    """Create test user"""
+    user = User(
+        user_id="test_service_user",
+        username="testuser",
+        email="test@example.com",
+        password_hash="hashedpass",
+    )
+    db_session.add(user)
+    db_session.commit()
+    return user
+
+
+@pytest.fixture
+def test_scenario(db_session, test_user):
+    """Create test scenario"""
+    scenario = Scenario(
+        scenario_id="test_scenario_1",
+        title="Test Restaurant Scenario",
+        description="Practice ordering at a restaurant",
+        category="restaurant",
+        difficulty="beginner",
+        estimated_duration=15,
+        created_by=test_user.id,
+        is_system_scenario=False,
+        is_public=True,
+    )
+    db_session.add(scenario)
+    db_session.commit()
+    return scenario
+
+
+@pytest.fixture
+def test_scenarios(db_session, test_user):
+    """Create multiple test scenarios"""
+    scenarios = []
+    for i in range(5):
+        scenario = Scenario(
+            scenario_id=f"test_scenario_{i}",
+            title=f"Test Scenario {i}",
+            description=f"Description {i}",
+            category="travel" if i % 2 == 0 else "shopping",
+            difficulty="beginner" if i < 3 else "advanced",
+            estimated_duration=15 + i * 5,
+            created_by=test_user.id,
+            is_system_scenario=False,
+            is_public=True,
+        )
+        db_session.add(scenario)
+        scenarios.append(scenario)
+    db_session.commit()
+    return scenarios
+
+
+# ==================== COLLECTION TESTS ====================
+
+
+@pytest.mark.asyncio
+async def test_create_collection_success(service, test_user):
+    """Test creating a collection"""
+    collection = await service.create_collection(
+        user_id=test_user.id,
+        name="My Travel Scenarios",
+        description="Scenarios for travel practice",
+        is_public=False,
+    )
+
+    assert collection is not None
+    assert collection.name == "My Travel Scenarios"
+    assert collection.description == "Scenarios for travel practice"
+    assert collection.created_by == test_user.id
+    assert collection.is_public is False
+    assert collection.is_learning_path is False
+
+
+@pytest.mark.asyncio
+async def test_create_learning_path(service, test_user):
+    """Test creating a learning path collection"""
+    collection = await service.create_collection(
+        user_id=test_user.id,
+        name="Beginner's Path",
+        description="Step-by-step beginner scenarios",
+        is_learning_path=True,
+        difficulty_level="beginner",
+    )
+
+    assert collection.is_learning_path is True
+    assert collection.difficulty_level == "beginner"
+
+
+@pytest.mark.asyncio
+async def test_add_scenario_to_collection(service, test_user, test_scenario):
+    """Test adding a scenario to a collection"""
+    collection = await service.create_collection(
+        user_id=test_user.id,
+        name="Test Collection",
+    )
+
+    item = await service.add_scenario_to_collection(
+        collection_id=collection.collection_id,
+        scenario_id=test_scenario.scenario_id,
+        user_id=test_user.id,
+        notes="Great for beginners",
+    )
+
+    assert item is not None
+    assert item.collection_id == collection.id
+    assert item.scenario_id == test_scenario.id
+    assert item.notes == "Great for beginners"
+    assert item.position == 1
+
+
+@pytest.mark.asyncio
+async def test_add_multiple_scenarios_to_collection(service, test_user, test_scenarios):
+    """Test adding multiple scenarios maintains order"""
+    collection = await service.create_collection(
+        user_id=test_user.id,
+        name="Multi-Scenario Collection",
+    )
+
+    for idx, scenario in enumerate(test_scenarios):
+        item = await service.add_scenario_to_collection(
+            collection_id=collection.id,
+            scenario_id=scenario.scenario_id,
+            user_id=test_user.id,
+        )
+        assert item.position == idx
+
+
+@pytest.mark.asyncio
+async def test_remove_scenario_from_collection(service, test_user, test_scenario):
+    """Test removing a scenario from a collection"""
+    collection = await service.create_collection(
+        user_id=test_user.id,
+        name="Test Collection",
+    )
+
+    await service.add_scenario_to_collection(
+        collection_id=collection.id,
+        scenario_id=test_scenario.scenario_id,
+        user_id=test_user.id,
+    )
+
+    success = await service.remove_scenario_from_collection(
+        collection_id=collection.id,
+        scenario_id=test_scenario.scenario_id,
+        user_id=test_user.id,
+    )
+
+    assert success is True
+
+
+@pytest.mark.asyncio
+async def test_reorder_collection(service, test_user, test_scenarios):
+    """Test reordering scenarios in a collection"""
+    collection = await service.create_collection(
+        user_id=test_user.id,
+        name="Reorder Test",
+    )
+
+    # Add scenarios
+    for scenario in test_scenarios[:3]:
+        await service.add_scenario_to_collection(
+            collection_id=collection.id,
+            scenario_id=scenario.scenario_id,
+            user_id=test_user.id,
+        )
+
+    # Reorder: reverse the order
+    new_order = [s.scenario_id for s in reversed(test_scenarios[:3])]
+    success = await service.reorder_collection(
+        collection_id=collection.id,
+        scenario_order=new_order,
+        user_id=test_user.id,
+    )
+
+    assert success is True
+
+
+@pytest.mark.asyncio
+async def test_get_collection(service, test_user, test_scenario):
+    """Test retrieving a collection"""
+    created = await service.create_collection(
+        user_id=test_user.id,
+        name="Get Test",
+    )
+
+    await service.add_scenario_to_collection(
+        collection_id=created.id,
+        scenario_id=test_scenario.scenario_id,
+        user_id=test_user.id,
+    )
+
+    collection = await service.get_collection(
+        collection_id=created.id,
+        user_id=test_user.id,
+    )
+
+    assert collection is not None
+    assert collection.name == "Get Test"
+    assert len(collection.items) == 1
+
+
+@pytest.mark.asyncio
+async def test_get_user_collections(service, test_user):
+    """Test getting all user collections"""
+    # Create multiple collections
+    await service.create_collection(test_user.id, "Collection 1")
+    await service.create_collection(test_user.id, "Collection 2")
+    await service.create_collection(test_user.id, "Collection 3")
+
+    collections = await service.get_user_collections(test_user.id)
+
+    assert len(collections) == 3
+
+
+@pytest.mark.asyncio
+async def test_delete_collection(service, test_user):
+    """Test deleting a collection"""
+    collection = await service.create_collection(
+        user_id=test_user.id,
+        name="To Delete",
+    )
+
+    success = await service.delete_collection(
+        collection_id=collection.id,
+        user_id=test_user.id,
+    )
+
+    assert success is True
+
+    # Verify deletion
+    deleted = await service.get_collection(collection.id, test_user.id)
+    assert deleted is None
+
+
+# ==================== TAG TESTS ====================
+
+
+@pytest.mark.asyncio
+async def test_add_user_tag(service, test_user, test_scenario):
+    """Test adding a user tag to a scenario"""
+    tag = await service.add_user_tag(
+        scenario_id=test_scenario.scenario_id,
+        tag="conversational",
+        user_id=test_user.id,
+    )
+
+    assert tag is not None
+    assert tag.tag == "conversational"
+    assert tag.tag_type == "user"
+    assert tag.user_id == test_user.id
+
+
+@pytest.mark.asyncio
+async def test_add_duplicate_user_tag(service, test_user, test_scenario):
+    """Test adding the same tag twice (should not duplicate)"""
+    await service.add_user_tag(
+        scenario_id=test_scenario.scenario_id,
+        tag="beginner-friendly",
+        user_id=test_user.id,
+    )
+
+    # Try adding again
+    tag = await service.add_user_tag(
+        scenario_id=test_scenario.scenario_id,
+        tag="beginner-friendly",
+        user_id=test_user.id,
+    )
+
+    # Should return existing tag or handle gracefully
+    assert tag is not None
+
+
+@pytest.mark.asyncio
+async def test_add_ai_tags(service, test_scenario):
+    """Test adding AI-generated tags"""
+    tags = await service.add_ai_tags(
+        scenario_id=test_scenario.scenario_id,
+        tags=["food", "dining", "etiquette"],
+    )
+
+    assert len(tags) == 3
+    for tag in tags:
+        assert tag.tag_type == "ai"
+
+
+@pytest.mark.asyncio
+async def test_get_scenario_tags(service, test_user, test_scenario):
+    """Test retrieving all tags for a scenario"""
+    # Add user tags
+    await service.add_user_tag(test_scenario.scenario_id, "helpful", test_user.id)
+    await service.add_user_tag(test_scenario.scenario_id, "practical", test_user.id)
+
+    # Add AI tags
+    await service.add_ai_tags(test_scenario.scenario_id, ["restaurant", "conversation"])
+
+    tags = await service.get_scenario_tags(test_scenario.scenario_id)
+
+    assert len(tags) >= 4
+
+
+@pytest.mark.asyncio
+async def test_get_scenario_tags_filtered(service, test_user, test_scenario):
+    """Test retrieving tags filtered by type"""
+    await service.add_user_tag(test_scenario.scenario_id, "user-tag", test_user.id)
+    await service.add_ai_tags(test_scenario.scenario_id, ["ai-tag"])
+
+    user_tags = await service.get_scenario_tags(
+        test_scenario.scenario_id, tag_type="user"
+    )
+    ai_tags = await service.get_scenario_tags(test_scenario.scenario_id, tag_type="ai")
+
+    assert all(t.get("tag_type") == "user" for t in user_tags)
+    assert all(t.get("tag_type") == "ai" for t in ai_tags)
+
+
+@pytest.mark.asyncio
+async def test_search_by_tag(service, test_user, test_scenarios):
+    """Test searching scenarios by tag"""
+    # Add same tag to multiple scenarios
+    for scenario in test_scenarios[:3]:
+        await service.add_user_tag(scenario.scenario_id, "beginner", test_user.id)
+
+    results = await service.search_by_tag("beginner", limit=10)
+
+    assert len(results) >= 3
+
+
+# ==================== BOOKMARK TESTS ====================
+
+
+@pytest.mark.asyncio
+async def test_add_bookmark(service, test_user, test_scenario):
+    """Test adding a bookmark"""
+    bookmark = await service.add_bookmark(
+        user_id=test_user.id,
+        scenario_id=test_scenario.scenario_id,
+        folder="favorites",
+        notes="Great scenario",
+    )
+
+    assert bookmark is not None
+    assert bookmark.user_id == test_user.id
+    assert bookmark.folder == "favorites"
+    assert bookmark.notes == "Great scenario"
+
+
+@pytest.mark.asyncio
+async def test_add_bookmark_without_folder(service, test_user, test_scenario):
+    """Test adding bookmark without specifying folder"""
+    bookmark = await service.add_bookmark(
+        user_id=test_user.id,
+        scenario_id=test_scenario.scenario_id,
+    )
+
+    assert bookmark is not None
+    assert bookmark.folder is None
+
+
+@pytest.mark.asyncio
+async def test_remove_bookmark(service, test_user, test_scenario):
+    """Test removing a bookmark"""
+    await service.add_bookmark(
+        user_id=test_user.id,
+        scenario_id=test_scenario.scenario_id,
+    )
+
+    success = await service.remove_bookmark(
+        user_id=test_user.id,
+        scenario_id=test_scenario.scenario_id,
+    )
+
+    assert success is True
+
+
+@pytest.mark.asyncio
+async def test_get_user_bookmarks(service, test_user, test_scenarios):
+    """Test retrieving all user bookmarks"""
+    # Add multiple bookmarks
+    for scenario in test_scenarios[:3]:
+        await service.add_bookmark(
+            user_id=test_user.id,
+            scenario_id=scenario.scenario_id,
+        )
+
+    bookmarks = await service.get_user_bookmarks(test_user.id)
+
+    assert len(bookmarks) == 3
+
+
+@pytest.mark.asyncio
+async def test_get_user_bookmarks_by_folder(service, test_user, test_scenarios):
+    """Test retrieving bookmarks filtered by folder"""
+    # Add bookmarks to different folders
+    await service.add_bookmark(
+        test_user.id, test_scenarios[0].scenario_id, folder="work"
+    )
+    await service.add_bookmark(
+        test_user.id, test_scenarios[1].scenario_id, folder="work"
+    )
+    await service.add_bookmark(
+        test_user.id, test_scenarios[2].scenario_id, folder="personal"
+    )
+
+    work_bookmarks = await service.get_user_bookmarks(test_user.id, folder="work")
+
+    assert len(work_bookmarks) == 2
+
+
+@pytest.mark.asyncio
+async def test_get_user_folders(service, test_user, test_scenarios):
+    """Test retrieving all bookmark folders for a user"""
+    await service.add_bookmark(
+        test_user.id, test_scenarios[0].scenario_id, folder="favorites"
+    )
+    await service.add_bookmark(
+        test_user.id, test_scenarios[1].scenario_id, folder="to-practice"
+    )
+    await service.add_bookmark(
+        test_user.id, test_scenarios[2].scenario_id, folder="favorites"
+    )
+
+    folders = await service.get_user_folders(test_user.id)
+
+    assert len(folders) == 2
+    assert "favorites" in folders
+    assert "to-practice" in folders
+
+
+@pytest.mark.asyncio
+async def test_is_bookmarked(service, test_user, test_scenario):
+    """Test checking if scenario is bookmarked"""
+    # Not bookmarked initially
+    is_bookmarked = await service.is_bookmarked(test_user.id, test_scenario.scenario_id)
+    assert is_bookmarked is False
+
+    # Add bookmark
+    await service.add_bookmark(test_user.id, test_scenario.scenario_id)
+
+    # Should be bookmarked now
+    is_bookmarked = await service.is_bookmarked(test_user.id, test_scenario.scenario_id)
+    assert is_bookmarked is True
+
+
+# ==================== RATING TESTS ====================
+
+
+@pytest.mark.asyncio
+async def test_add_rating(service, test_user, test_scenario):
+    """Test adding a rating"""
+    rating = await service.add_rating(
+        user_id=test_user.id,
+        scenario_id=test_scenario.scenario_id,
+        rating=5,
+        review="Excellent scenario!",
+        difficulty_rating=4,
+        usefulness_rating=5,
+        cultural_accuracy_rating=5,
+    )
+
+    assert rating is not None
+    assert rating.rating == 5
+    assert rating.review == "Excellent scenario!"
+    assert rating.difficulty_rating == 4
+
+
+@pytest.mark.asyncio
+async def test_add_rating_without_review(service, test_user, test_scenario):
+    """Test adding rating without review text"""
+    rating = await service.add_rating(
+        user_id=test_user.id,
+        scenario_id=test_scenario.scenario_id,
+        rating=4,
+    )
+
+    assert rating is not None
+    assert rating.review is None
+
+
+@pytest.mark.asyncio
+async def test_get_scenario_ratings(service, db_session, test_user, test_scenario):
+    """Test retrieving ratings for a scenario"""
+    # Add multiple ratings from different users
+    user2 = User(
+        user_id="test_user2",
+        username="user2",
+        email="user2@test.com",
+        password_hash="hash",
+    )
+    db_session.add(user2)
+    db_session.commit()
+
+    await service.add_rating(test_user.id, test_scenario.scenario_id, 5, "Great!")
+    await service.add_rating(user2.id, test_scenario.scenario_id, 4, "Good")
+
+    ratings = await service.get_scenario_ratings(test_scenario.scenario_id)
+
+    assert len(ratings) >= 2
+
+
+@pytest.mark.asyncio
+async def test_get_user_rating(service, test_user, test_scenario):
+    """Test retrieving a specific user's rating"""
+    await service.add_rating(test_user.id, test_scenario.scenario_id, 5)
+
+    rating = await service.get_user_rating(test_user.id, test_scenario.scenario_id)
+
+    assert rating is not None
+    assert rating.rating == 5
+
+
+@pytest.mark.asyncio
+async def test_delete_rating(service, test_user, test_scenario):
+    """Test deleting a rating"""
+    await service.add_rating(test_user.id, test_scenario.scenario_id, 3)
+
+    success = await service.delete_rating(test_user.id, test_scenario.scenario_id)
+
+    assert success is True
+
+
+@pytest.mark.asyncio
+async def test_get_scenario_rating_summary(
+    service, db_session, test_user, test_scenario
+):
+    """Test getting rating summary statistics"""
+    # Create multiple users and ratings
+    users = [test_user]
+    for i in range(3):
+        user = User(
+            user_id=f"test_user_{i}",
+            username=f"user{i}",
+            email=f"user{i}@test.com",
+            password_hash="hash",
+        )
+        db_session.add(user)
+        users.append(user)
+    db_session.commit()
+
+    # Add ratings: 5, 4, 4, 3
+    ratings_values = [5, 4, 4, 3]
+    for user, rating_val in zip(users, ratings_values):
+        await service.add_rating(user.id, test_scenario.scenario_id, rating_val)
+
+    summary = await service.get_scenario_rating_summary(test_scenario.scenario_id)
+
+    assert summary["total_ratings"] == 4
+    assert summary["average_rating"] == 4.0  # (5+4+4+3)/4
+
+
+@pytest.mark.asyncio
+async def test_get_top_rated_scenarios(service, test_user, test_scenarios):
+    """Test retrieving top-rated scenarios"""
+    # Add ratings to scenarios
+    await service.add_rating(test_user.id, test_scenarios[0].scenario_id, 5)
+    await service.add_rating(test_user.id, test_scenarios[1].scenario_id, 4)
+    await service.add_rating(test_user.id, test_scenarios[2].scenario_id, 3)
+
+    top_rated = await service.get_top_rated_scenarios(limit=10, min_ratings=1)
+
+    assert len(top_rated) >= 3
+
+
+# ==================== DISCOVERY TESTS ====================
+
+
+@pytest.mark.asyncio
+async def test_search_scenarios(service, test_scenarios):
+    """Test searching scenarios by keyword"""
+    results = await service.search_scenarios(
+        query="Test",
+        limit=10,
+    )
+
+    assert len(results) > 0
+
+
+@pytest.mark.asyncio
+async def test_search_scenarios_with_filters(service, test_scenarios):
+    """Test searching with category and difficulty filters"""
+    results = await service.search_scenarios(
+        query="Scenario",
+        category="travel",
+        difficulty="beginner",
+        limit=10,
+    )
+
+    # All results should match filters
+    for scenario in results:
+        assert scenario.category == "travel"
+        assert scenario.difficulty == "beginner"
+
+
+@pytest.mark.asyncio
+async def test_get_trending_scenarios(service, test_scenarios):
+    """Test retrieving trending scenarios"""
+    # Create analytics for scenarios
+    for scenario in test_scenarios:
+        analytics = ScenarioAnalytics(
+            scenario_id=scenario.id,
+            trending_score=float(test_scenarios.index(scenario) + 1),
+        )
+        service.db.add(analytics)
+    service.db.commit()
+
+    trending = await service.get_trending_scenarios(limit=3)
+
+    assert len(trending) <= 3
+
+
+@pytest.mark.asyncio
+async def test_get_popular_scenarios(service, test_scenarios):
+    """Test retrieving popular scenarios"""
+    # Create analytics with completion counts
+    for scenario in test_scenarios:
+        analytics = ScenarioAnalytics(
+            scenario_id=scenario.id,
+            total_completions=10 + test_scenarios.index(scenario),
+        )
+        service.db.add(analytics)
+    service.db.commit()
+
+    popular = await service.get_popular_scenarios(limit=3)
+
+    assert len(popular) <= 3
+
+
+@pytest.mark.asyncio
+async def test_get_discovery_hub(service, test_user, test_scenarios):
+    """Test getting full discovery hub data"""
+    discovery = await service.get_discovery_hub(user_id=test_user.id)
+
+    assert "trending" in discovery
+    assert "popular" in discovery
+    assert "top_rated" in discovery
+
+
+# ==================== ANALYTICS TESTS ====================
+
+
+@pytest.mark.asyncio
+async def test_record_scenario_start(service, test_user, test_scenario):
+    """Test recording a scenario start"""
+    await service.record_scenario_start(test_scenario.scenario_id, test_user.id)
+
+    # Verify analytics updated
+    analytics = (
+        service.db.query(ScenarioAnalytics)
+        .filter_by(scenario_id=test_scenario.id)
+        .first()
+    )
+
+    assert analytics is not None
+    assert analytics.total_starts >= 1
+
+
+@pytest.mark.asyncio
+async def test_record_scenario_completion(service, test_user, test_scenario):
+    """Test recording a scenario completion"""
+    await service.record_scenario_completion(test_scenario.scenario_id, test_user.id)
+
+    # Verify analytics updated
+    analytics = (
+        service.db.query(ScenarioAnalytics)
+        .filter_by(scenario_id=test_scenario.id)
+        .first()
+    )
+
+    assert analytics is not None
+    assert analytics.total_completions >= 1
+
+
+@pytest.mark.asyncio
+async def test_update_analytics(service, test_scenario):
+    """Test updating scenario analytics"""
+    await service.update_analytics(test_scenario.scenario_id)
+
+    analytics = (
+        service.db.query(ScenarioAnalytics)
+        .filter_by(scenario_id=test_scenario.id)
+        .first()
+    )
+
+    assert analytics is not None
+
+
+# ==================== EDGE CASE TESTS ====================
+
+
+@pytest.mark.asyncio
+async def test_create_collection_unauthorized(service):
+    """Test creating collection with invalid user"""
+    with pytest.raises(Exception):
+        await service.create_collection(
+            user_id=99999,  # Non-existent user
+            name="Unauthorized Collection",
+        )
+
+
+@pytest.mark.asyncio
+async def test_add_scenario_to_non_owned_collection(
+    service, db_session, test_user, test_scenario
+):
+    """Test adding scenario to collection owned by another user"""
+    # Create another user
+    other_user = User(
+        user_id="test_other_service_user",
+        username="other",
+        email="other@test.com",
+        password_hash="hash",
+    )
+    db_session.add(other_user)
+    db_session.commit()
+
+    # Create collection as other user
+    collection = await service.create_collection(other_user.id, "Other's Collection")
+
+    # Try to add scenario as test_user (should fail)
+    with pytest.raises(Exception):
+        await service.add_scenario_to_collection(
+            collection_id=collection.id,
+            scenario_id=test_scenario.scenario_id,
+            user_id=test_user.id,  # Different user
+        )
+
+
+@pytest.mark.asyncio
+async def test_rating_bounds(service, test_user, test_scenario):
+    """Test rating validation (must be 1-5)"""
+    # Invalid ratings should be rejected
+    with pytest.raises(Exception):
+        await service.add_rating(test_user.id, test_scenario.scenario_id, 0)
+
+    with pytest.raises(Exception):
+        await service.add_rating(test_user.id, test_scenario.scenario_id, 6)
+
+
+@pytest.mark.asyncio
+async def test_duplicate_bookmark(service, test_user, test_scenario):
+    """Test adding duplicate bookmark (should not error)"""
+    await service.add_bookmark(test_user.id, test_scenario.scenario_id)
+
+    # Adding again should handle gracefully
+    bookmark = await service.add_bookmark(test_user.id, test_scenario.scenario_id)
+
+    assert bookmark is not None

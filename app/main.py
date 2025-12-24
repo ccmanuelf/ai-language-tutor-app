@@ -18,6 +18,7 @@ from app.api.content_collections import router as content_collections_router
 from app.api.content_study import router as content_study_router
 from app.api.conversations import router as conversations_router
 from app.api.feature_toggles import router as feature_toggles_router
+from app.api.gamification import router as gamification_router
 from app.api.ollama import router as ollama_router
 from app.api.personas import router as personas_router
 from app.api.realtime_analysis import router as realtime_router
@@ -83,6 +84,7 @@ def create_app() -> FastAPI:
     app.include_router(scenario_management_router, tags=["scenario-management"])
     app.include_router(visual_learning_router, tags=["visual-learning"])
     app.include_router(ollama_router, prefix="/api/v1/ollama", tags=["ollama"])
+    app.include_router(gamification_router, tags=["gamification"])
 
     # Frontend routes
     from app.frontend.scenario_builder import create_scenario_builder_route

@@ -14,7 +14,7 @@ Integrates with ScenarioBuilderService and ScenarioManager for unified
 scenario management across the platform.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from uuid import uuid4
 
@@ -119,7 +119,7 @@ class ScenarioOrganizationService:
     async def add_scenario_to_collection(
         self,
         collection_id: str,
-        scenario_id: int,
+        scenario_id: str,
         user_id: int,
         notes: Optional[str] = None,
     ) -> ScenarioCollectionItem:
@@ -127,8 +127,8 @@ class ScenarioOrganizationService:
         Add a scenario to a collection.
 
         Args:
-            collection_id: Collection identifier
-            scenario_id: Scenario database ID
+            collection_id: Collection identifier (string)
+            scenario_id: Scenario identifier (string, e.g., 'restaurant_ordering')
             user_id: User ID (must own the collection)
             notes: Optional notes about why scenario is included
 
@@ -153,7 +153,9 @@ class ScenarioOrganizationService:
             raise ValueError("You don't own this collection")
 
         # Check if scenario exists
-        scenario = self.db.query(Scenario).filter(Scenario.id == scenario_id).first()
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
         if not scenario:
             raise ValueError(f"Scenario {scenario_id} not found")
 
@@ -163,7 +165,7 @@ class ScenarioOrganizationService:
             .filter(
                 and_(
                     ScenarioCollectionItem.collection_id == collection.id,
-                    ScenarioCollectionItem.scenario_id == scenario_id,
+                    ScenarioCollectionItem.scenario_id == scenario.id,
                 )
             )
             .first()
@@ -183,7 +185,7 @@ class ScenarioOrganizationService:
         # Create collection item
         item = ScenarioCollectionItem(
             collection_id=collection.id,
-            scenario_id=scenario_id,
+            scenario_id=scenario.id,
             position=position,
             notes=notes,
         )
@@ -202,14 +204,14 @@ class ScenarioOrganizationService:
         return item
 
     async def remove_scenario_from_collection(
-        self, collection_id: str, scenario_id: int, user_id: int
+        self, collection_id: str, scenario_id: str, user_id: int
     ) -> bool:
         """
         Remove a scenario from a collection.
 
         Args:
-            collection_id: Collection identifier
-            scenario_id: Scenario database ID
+            collection_id: Collection identifier (string)
+            scenario_id: Scenario identifier (string)
             user_id: User ID (must own collection)
 
         Returns:
@@ -231,13 +233,21 @@ class ScenarioOrganizationService:
         if collection.created_by != user_id:
             raise ValueError("You don't own this collection")
 
+        # Get scenario first to obtain its integer ID
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
+
+        if not scenario:
+            raise ValueError(f"Scenario {scenario_id} not found")
+
         # Find and delete item
         item = (
             self.db.query(ScenarioCollectionItem)
             .filter(
                 and_(
                     ScenarioCollectionItem.collection_id == collection.id,
-                    ScenarioCollectionItem.scenario_id == scenario_id,
+                    ScenarioCollectionItem.scenario_id == scenario.id,
                 )
             )
             .first()
@@ -245,9 +255,6 @@ class ScenarioOrganizationService:
 
         if not item:
             raise ValueError("Scenario not in this collection")
-
-        # Get scenario for duration
-        scenario = self.db.query(Scenario).filter(Scenario.id == scenario_id).first()
 
         self.db.delete(item)
 
@@ -275,14 +282,14 @@ class ScenarioOrganizationService:
         return True
 
     async def reorder_collection(
-        self, collection_id: str, scenario_order: List[int], user_id: int
+        self, collection_id: str, scenario_order: List[str], user_id: int
     ) -> bool:
         """
         Reorder scenarios in a collection (for learning paths).
 
         Args:
             collection_id: Collection identifier
-            scenario_order: List of scenario IDs in desired order
+            scenario_order: List of scenario IDs (strings) in desired order
             user_id: User ID (must own collection)
 
         Returns:
@@ -304,6 +311,17 @@ class ScenarioOrganizationService:
         if collection.created_by != user_id:
             raise ValueError("You don't own this collection")
 
+        # Convert string scenario_ids to integer IDs
+        scenario_id_map = {}
+        for scenario_id_str in scenario_order:
+            scenario = (
+                self.db.query(Scenario)
+                .filter(Scenario.scenario_id == scenario_id_str)
+                .first()
+            )
+            if scenario:
+                scenario_id_map[scenario_id_str] = scenario.id
+
         # Get all items in collection
         items = (
             self.db.query(ScenarioCollectionItem)
@@ -311,16 +329,21 @@ class ScenarioOrganizationService:
             .all()
         )
 
-        # Create scenario_id to item mapping
+        # Create scenario_id (integer) to item mapping
         item_map = {item.scenario_id: item for item in items}
 
+        # Convert order to integer IDs for validation
+        integer_order = [
+            scenario_id_map[s] for s in scenario_order if s in scenario_id_map
+        ]
+
         # Validate that all scenario IDs in order exist in collection
-        if set(scenario_order) != set(item_map.keys()):
+        if set(integer_order) != set(item_map.keys()):
             raise ValueError("Scenario order doesn't match collection contents")
 
         # Update positions
-        for position, scenario_id in enumerate(scenario_order, start=1):
-            item_map[scenario_id].position = position
+        for position, scenario_id_int in enumerate(integer_order, start=1):
+            item_map[scenario_id_int].position = position
 
         self.db.commit()
         return True
@@ -418,7 +441,7 @@ class ScenarioOrganizationService:
     # ========================================================================
 
     async def add_user_tag(
-        self, scenario_id: int, tag: str, user_id: int
+        self, scenario_id: str, tag: str, user_id: int
     ) -> ScenarioTag:
         """
         Add a user-generated tag to a scenario.
@@ -435,7 +458,9 @@ class ScenarioOrganizationService:
             ValueError: If scenario not found or tag invalid
         """
         # Validate scenario exists
-        scenario = self.db.query(Scenario).filter(Scenario.id == scenario_id).first()
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
         if not scenario:
             raise ValueError(f"Scenario {scenario_id} not found")
 
@@ -451,7 +476,7 @@ class ScenarioOrganizationService:
             self.db.query(ScenarioTag)
             .filter(
                 and_(
-                    ScenarioTag.scenario_id == scenario_id,
+                    ScenarioTag.scenario_id == scenario.id,
                     ScenarioTag.tag == tag,
                     ScenarioTag.tag_type == "user",
                 )
@@ -468,7 +493,7 @@ class ScenarioOrganizationService:
 
         # Create new tag
         scenario_tag = ScenarioTag(
-            scenario_id=scenario_id,
+            scenario_id=scenario.id,
             tag=tag,
             tag_type="user",
             created_by=user_id,
@@ -484,7 +509,7 @@ class ScenarioOrganizationService:
 
         return scenario_tag
 
-    async def add_ai_tags(self, scenario_id: int, tags: List[str]) -> List[ScenarioTag]:
+    async def add_ai_tags(self, scenario_id: str, tags: List[str]) -> List[ScenarioTag]:
         """
         Add AI-generated tags to a scenario.
 
@@ -499,7 +524,9 @@ class ScenarioOrganizationService:
             ValueError: If scenario not found
         """
         # Validate scenario exists
-        scenario = self.db.query(Scenario).filter(Scenario.id == scenario_id).first()
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
         if not scenario:
             raise ValueError(f"Scenario {scenario_id} not found")
 
@@ -515,7 +542,7 @@ class ScenarioOrganizationService:
                 self.db.query(ScenarioTag)
                 .filter(
                     and_(
-                        ScenarioTag.scenario_id == scenario_id,
+                        ScenarioTag.scenario_id == scenario.id,
                         ScenarioTag.tag == tag,
                         ScenarioTag.tag_type == "ai",
                     )
@@ -525,7 +552,7 @@ class ScenarioOrganizationService:
 
             if not existing:
                 scenario_tag = ScenarioTag(
-                    scenario_id=scenario_id,
+                    scenario_id=scenario.id,
                     tag=tag,
                     tag_type="ai",
                     created_by=None,  # NULL for AI tags
@@ -545,20 +572,27 @@ class ScenarioOrganizationService:
         return created_tags
 
     async def get_scenario_tags(
-        self, scenario_id: int, tag_type: Optional[str] = None
+        self, scenario_id: str, tag_type: Optional[str] = None
     ) -> List[ScenarioTag]:
         """
         Get all tags for a scenario.
 
         Args:
-            scenario_id: Scenario database ID
+            scenario_id: Scenario database ID (string)
             tag_type: Optional filter for 'user' or 'ai' tags
 
         Returns:
             List of ScenarioTag instances
         """
+        # Get scenario to obtain integer ID
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
+        if not scenario:
+            return []
+
         query = self.db.query(ScenarioTag).filter(
-            ScenarioTag.scenario_id == scenario_id
+            ScenarioTag.scenario_id == scenario.id
         )
 
         if tag_type:
@@ -606,7 +640,7 @@ class ScenarioOrganizationService:
     async def add_bookmark(
         self,
         user_id: int,
-        scenario_id: int,
+        scenario_id: str,
         folder: Optional[str] = None,
         notes: Optional[str] = None,
     ) -> ScenarioBookmark:
@@ -626,7 +660,9 @@ class ScenarioOrganizationService:
             ValueError: If scenario not found
         """
         # Validate scenario exists
-        scenario = self.db.query(Scenario).filter(Scenario.id == scenario_id).first()
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
         if not scenario:
             raise ValueError(f"Scenario {scenario_id} not found")
 
@@ -636,7 +672,7 @@ class ScenarioOrganizationService:
             .filter(
                 and_(
                     ScenarioBookmark.user_id == user_id,
-                    ScenarioBookmark.scenario_id == scenario_id,
+                    ScenarioBookmark.scenario_id == scenario.id,
                 )
             )
             .first()
@@ -655,7 +691,7 @@ class ScenarioOrganizationService:
         # Create new bookmark
         bookmark = ScenarioBookmark(
             user_id=user_id,
-            scenario_id=scenario_id,
+            scenario_id=scenario.id,
             folder=folder,
             notes=notes,
             is_favorite=True,
@@ -670,23 +706,30 @@ class ScenarioOrganizationService:
 
         return bookmark
 
-    async def remove_bookmark(self, user_id: int, scenario_id: int) -> bool:
+    async def remove_bookmark(self, user_id: int, scenario_id: str) -> bool:
         """
         Remove a bookmark.
 
         Args:
             user_id: User ID
-            scenario_id: Scenario database ID
+            scenario_id: Scenario identifier (string)
 
         Returns:
             True if removed successfully
         """
+        # Get scenario first to obtain integer ID
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
+        if not scenario:
+            raise ValueError(f"Scenario {scenario_id} not found")
+
         bookmark = (
             self.db.query(ScenarioBookmark)
             .filter(
                 and_(
                     ScenarioBookmark.user_id == user_id,
-                    ScenarioBookmark.scenario_id == scenario_id,
+                    ScenarioBookmark.scenario_id == scenario.id,
                 )
             )
             .first()
@@ -751,23 +794,30 @@ class ScenarioOrganizationService:
 
         return [folder[0] for folder in folders if folder[0]]
 
-    async def is_bookmarked(self, user_id: int, scenario_id: int) -> bool:
+    async def is_bookmarked(self, user_id: int, scenario_id: str) -> bool:
         """
         Check if a scenario is bookmarked by a user.
 
         Args:
             user_id: User ID
-            scenario_id: Scenario database ID
+            scenario_id: Scenario database ID (string)
 
         Returns:
             True if bookmarked
         """
+        # Get scenario to obtain integer ID
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
+        if not scenario:
+            return False
+
         bookmark = (
             self.db.query(ScenarioBookmark)
             .filter(
                 and_(
                     ScenarioBookmark.user_id == user_id,
-                    ScenarioBookmark.scenario_id == scenario_id,
+                    ScenarioBookmark.scenario_id == scenario.id,
                 )
             )
             .first()
@@ -782,7 +832,7 @@ class ScenarioOrganizationService:
     async def add_rating(
         self,
         user_id: int,
-        scenario_id: int,
+        scenario_id: str,
         rating: int,
         review: Optional[str] = None,
         difficulty_rating: Optional[int] = None,
@@ -810,7 +860,9 @@ class ScenarioOrganizationService:
             ValueError: If validation fails
         """
         # Validate scenario exists
-        scenario = self.db.query(Scenario).filter(Scenario.id == scenario_id).first()
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
         if not scenario:
             raise ValueError(f"Scenario {scenario_id} not found")
 
@@ -835,7 +887,7 @@ class ScenarioOrganizationService:
             .filter(
                 and_(
                     ScenarioRating.user_id == user_id,
-                    ScenarioRating.scenario_id == scenario_id,
+                    ScenarioRating.scenario_id == scenario.id,
                 )
             )
             .first()
@@ -853,7 +905,7 @@ class ScenarioOrganizationService:
             if cultural_accuracy_rating is not None:
                 existing.cultural_accuracy_rating = cultural_accuracy_rating
             existing.is_public = is_public
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(UTC)
 
             self.db.commit()
             self.db.refresh(existing)
@@ -866,7 +918,7 @@ class ScenarioOrganizationService:
         # Create new rating
         scenario_rating = ScenarioRating(
             user_id=user_id,
-            scenario_id=scenario_id,
+            scenario_id=scenario.id,
             rating=rating,
             review=review,
             difficulty_rating=difficulty_rating,
@@ -886,21 +938,28 @@ class ScenarioOrganizationService:
         return scenario_rating
 
     async def get_scenario_ratings(
-        self, scenario_id: int, public_only: bool = True, limit: int = 50
+        self, scenario_id: str, public_only: bool = True, limit: int = 50
     ) -> List[ScenarioRating]:
         """
         Get all ratings/reviews for a scenario.
 
         Args:
-            scenario_id: Scenario database ID
+            scenario_id: Scenario database ID (string)
             public_only: If True, only return public reviews
             limit: Maximum number of reviews
 
         Returns:
             List of ScenarioRating instances
         """
+        # Get scenario to obtain integer ID
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
+        if not scenario:
+            return []
+
         query = self.db.query(ScenarioRating).filter(
-            ScenarioRating.scenario_id == scenario_id
+            ScenarioRating.scenario_id == scenario.id
         )
 
         if public_only:
@@ -916,24 +975,31 @@ class ScenarioOrganizationService:
         return ratings
 
     async def get_user_rating(
-        self, user_id: int, scenario_id: int
+        self, user_id: int, scenario_id: str
     ) -> Optional[ScenarioRating]:
         """
         Get a user's rating for a specific scenario.
 
         Args:
             user_id: User ID
-            scenario_id: Scenario database ID
+            scenario_id: Scenario database ID (string)
 
         Returns:
             ScenarioRating or None if not found
         """
+        # Get scenario to obtain integer ID
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
+        if not scenario:
+            return None
+
         rating = (
             self.db.query(ScenarioRating)
             .filter(
                 and_(
                     ScenarioRating.user_id == user_id,
-                    ScenarioRating.scenario_id == scenario_id,
+                    ScenarioRating.scenario_id == scenario.id,
                 )
             )
             .first()
@@ -941,23 +1007,30 @@ class ScenarioOrganizationService:
 
         return rating
 
-    async def delete_rating(self, user_id: int, scenario_id: int) -> bool:
+    async def delete_rating(self, user_id: int, scenario_id: str) -> bool:
         """
         Delete a user's rating.
 
         Args:
             user_id: User ID
-            scenario_id: Scenario database ID
+            scenario_id: Scenario identifier (string)
 
         Returns:
             True if deleted successfully
         """
+        # Get scenario first to obtain integer ID
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
+        if not scenario:
+            raise ValueError(f"Scenario {scenario_id} not found")
+
         rating = (
             self.db.query(ScenarioRating)
             .filter(
                 and_(
                     ScenarioRating.user_id == user_id,
-                    ScenarioRating.scenario_id == scenario_id,
+                    ScenarioRating.scenario_id == scenario.id,
                 )
             )
             .first()
@@ -998,12 +1071,12 @@ class ScenarioOrganizationService:
 
         return False
 
-    async def get_scenario_rating_summary(self, scenario_id: int) -> Dict:
+    async def get_scenario_rating_summary(self, scenario_id: str) -> Dict:
         """
         Get rating summary statistics for a scenario.
 
         Args:
-            scenario_id: Scenario database ID
+            scenario_id: Scenario identifier (string)
 
         Returns:
             Dictionary with rating statistics:
@@ -1014,9 +1087,24 @@ class ScenarioOrganizationService:
             - average_usefulness: Average usefulness rating
             - average_cultural_accuracy: Average cultural accuracy rating
         """
+        # Get scenario first to obtain integer ID
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
+        if not scenario:
+            return {
+                "average_rating": 0.0,
+                "rating_count": 0,
+                "rating_distribution": {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+                "average_difficulty": 0.0,
+                "average_usefulness": 0.0,
+                "average_cultural_accuracy": 0.0,
+                "total_ratings": 0,
+            }
+
         ratings = (
             self.db.query(ScenarioRating)
-            .filter(ScenarioRating.scenario_id == scenario_id)
+            .filter(ScenarioRating.scenario_id == scenario.id)
             .all()
         )
 
@@ -1316,7 +1404,7 @@ class ScenarioOrganizationService:
     # ANALYTICS (3 methods)
     # ========================================================================
 
-    async def update_analytics(self, scenario_id: int) -> ScenarioAnalytics:
+    async def update_analytics(self, scenario_id: str) -> ScenarioAnalytics:
         """
         Update all analytics for a scenario.
 
@@ -1327,20 +1415,27 @@ class ScenarioOrganizationService:
         - Trending and popularity scores
 
         Args:
-            scenario_id: Scenario database ID
+            scenario_id: Scenario identifier (string)
 
         Returns:
             Updated ScenarioAnalytics instance
         """
+        # Get scenario first to obtain integer ID
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
+        if not scenario:
+            raise ValueError(f"Scenario {scenario_id} not found")
+
         # Get or create analytics record
         analytics = (
             self.db.query(ScenarioAnalytics)
-            .filter(ScenarioAnalytics.scenario_id == scenario_id)
+            .filter(ScenarioAnalytics.scenario_id == scenario.id)
             .first()
         )
 
         if not analytics:
-            analytics = ScenarioAnalytics(scenario_id=scenario_id)
+            analytics = ScenarioAnalytics(scenario_id=scenario.id)
             self.db.add(analytics)
 
         # Update rating metrics
@@ -1352,27 +1447,27 @@ class ScenarioOrganizationService:
         # Update engagement metrics
         analytics.bookmark_count = (
             self.db.query(func.count(ScenarioBookmark.id))
-            .filter(ScenarioBookmark.scenario_id == scenario_id)
+            .filter(ScenarioBookmark.scenario_id == scenario.id)
             .scalar()
         )
 
         analytics.collection_count = (
             self.db.query(func.count(ScenarioCollectionItem.id))
-            .filter(ScenarioCollectionItem.scenario_id == scenario_id)
+            .filter(ScenarioCollectionItem.scenario_id == scenario.id)
             .scalar()
         )
 
         analytics.tag_count = (
             self.db.query(func.count(ScenarioTag.id))
-            .filter(ScenarioTag.scenario_id == scenario_id)
+            .filter(ScenarioTag.scenario_id == scenario.id)
             .scalar()
         )
 
         # Calculate trending score (weighted recent activity)
         # Formula: (7_day_completions * 3) + (30_day_completions * 1) + (rating * 10)
         trending_score = (
-            (analytics.last_7_days_completions * 3)
-            + (analytics.last_30_days_completions * 1)
+            ((analytics.last_7_days_completions or 0) * 3)
+            + ((analytics.last_30_days_completions or 0) * 1)
             + ((analytics.average_rating or 0) * 10)
         )
         analytics.trending_score = trending_score
@@ -1380,74 +1475,90 @@ class ScenarioOrganizationService:
         # Calculate popularity score
         # Formula: completions + (bookmarks * 2) + (rating_count * 1.5) + (collections * 3)
         popularity_score = (
-            analytics.total_completions
-            + (analytics.bookmark_count * 2)
-            + (analytics.rating_count * 1.5)
-            + (analytics.collection_count * 3)
+            (analytics.total_completions or 0)
+            + ((analytics.bookmark_count or 0) * 2)
+            + ((analytics.rating_count or 0) * 1.5)
+            + ((analytics.collection_count or 0) * 3)
         )
         analytics.popularity_score = popularity_score
 
-        analytics.last_updated = datetime.utcnow()
+        analytics.last_updated = datetime.now(UTC)
 
         self.db.commit()
         self.db.refresh(analytics)
 
         return analytics
 
-    async def record_scenario_start(self, scenario_id: int, user_id: int) -> None:
+    async def record_scenario_start(self, scenario_id: str, user_id: int) -> None:
         """
         Record that a user started a scenario.
 
         Args:
-            scenario_id: Scenario database ID
+            scenario_id: Scenario identifier (string)
             user_id: User ID
         """
+        # Get scenario first to obtain integer ID
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
+        if not scenario:
+            raise ValueError(f"Scenario {scenario_id} not found")
+
         analytics = (
             self.db.query(ScenarioAnalytics)
-            .filter(ScenarioAnalytics.scenario_id == scenario_id)
+            .filter(ScenarioAnalytics.scenario_id == scenario.id)
             .first()
         )
 
         if not analytics:
-            analytics = ScenarioAnalytics(scenario_id=scenario_id)
+            analytics = ScenarioAnalytics(scenario_id=scenario.id)
             self.db.add(analytics)
 
-        analytics.total_starts += 1
+        analytics.total_starts = (analytics.total_starts or 0) + 1
         self.db.commit()
 
         # Update completion rate
-        if analytics.total_starts > 0:
+        if (analytics.total_starts or 0) > 0:
             analytics.completion_rate = (
-                analytics.total_completions / analytics.total_starts
+                (analytics.total_completions or 0) / (analytics.total_starts or 0)
             ) * 100
             self.db.commit()
 
-    async def record_scenario_completion(self, scenario_id: int, user_id: int) -> None:
+    async def record_scenario_completion(self, scenario_id: str, user_id: int) -> None:
         """
         Record that a user completed a scenario.
 
         Args:
-            scenario_id: Scenario database ID
+            scenario_id: Scenario identifier (string)
             user_id: User ID
         """
+        # Get scenario first to obtain integer ID
+        scenario = (
+            self.db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
+        )
+        if not scenario:
+            raise ValueError(f"Scenario {scenario_id} not found")
+
         analytics = (
             self.db.query(ScenarioAnalytics)
-            .filter(ScenarioAnalytics.scenario_id == scenario_id)
+            .filter(ScenarioAnalytics.scenario_id == scenario.id)
             .first()
         )
 
         if not analytics:
-            analytics = ScenarioAnalytics(scenario_id=scenario_id)
+            analytics = ScenarioAnalytics(scenario_id=scenario.id)
             self.db.add(analytics)
 
-        analytics.total_completions += 1
-        analytics.last_7_days_completions += 1
-        analytics.last_30_days_completions += 1
+        analytics.total_completions = (analytics.total_completions or 0) + 1
+        analytics.last_7_days_completions = (analytics.last_7_days_completions or 0) + 1
+        analytics.last_30_days_completions = (
+            analytics.last_30_days_completions or 0
+        ) + 1
 
         # Update completion rate
-        if analytics.total_starts > 0:
+        if (analytics.total_starts or 0) > 0:
             analytics.completion_rate = (
-                analytics.total_completions / analytics.total_starts
+                (analytics.total_completions or 0) / (analytics.total_starts or 0)
             ) * 100
 
         self.db.commit()
@@ -1459,15 +1570,15 @@ class ScenarioOrganizationService:
     # PRIVATE HELPER METHODS
     # ========================================================================
 
-    async def _update_scenario_rating_stats(self, scenario_id: int) -> None:
+    async def _update_scenario_rating_stats(self, scenario_id: str) -> None:
         """Update rating statistics in analytics table."""
         await self.update_analytics(scenario_id)
 
-    async def _update_scenario_bookmark_count(self, scenario_id: int) -> None:
+    async def _update_scenario_bookmark_count(self, scenario_id: str) -> None:
         """Update bookmark count in analytics table."""
         await self.update_analytics(scenario_id)
 
-    async def _update_scenario_tag_count(self, scenario_id: int) -> None:
+    async def _update_scenario_tag_count(self, scenario_id: str) -> None:
         """Update tag count in analytics table."""
         await self.update_analytics(scenario_id)
 

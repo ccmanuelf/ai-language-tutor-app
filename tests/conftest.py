@@ -6,12 +6,19 @@ This conftest.py provides fixtures for testing, especially for audio processing 
 
 import wave
 from pathlib import Path
-from typing import Tuple
+from typing import Generator, Tuple
 
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.models.database import Base
 
 # Audio fixtures directory
 AUDIO_FIXTURES_DIR = Path(__file__).parent / "fixtures" / "audio"
+
+# Test database URL (in-memory SQLite for fast tests)
+TEST_DATABASE_URL = "sqlite:///:memory:"
 
 
 @pytest.fixture
@@ -100,3 +107,30 @@ def short_beep_audio_16khz(load_wav_file) -> bytes:
 def stereo_audio_16khz(load_wav_file) -> bytes:
     """Load 1-second stereo speech-like audio at 16kHz."""
     return load_wav_file("speech_like_1sec_16khz_stereo.wav")
+
+
+# Database fixtures for gamification tests
+@pytest.fixture(scope="function")
+def db_session() -> Generator[Session, None, None]:
+    """
+    Create a fresh database session for each test.
+
+    Uses an in-memory SQLite database for fast, isolated tests.
+    All tables are created before the test and dropped after.
+    """
+    # Create engine
+    engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+
+    # Create all tables
+    Base.metadata.create_all(bind=engine)
+
+    # Create session
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = TestingSessionLocal()
+
+    try:
+        yield session
+    finally:
+        session.close()
+        # Drop all tables after test
+        Base.metadata.drop_all(bind=engine)

@@ -154,9 +154,11 @@ class TestContentViewRoute:
         assert response.status_code == 200
         content = response.text
 
-        # Check for API endpoint reference
+        # Check for API endpoint reference in JavaScript
         assert "/api/content/content/" in content
-        assert f"/api/content/content/{content_id}" in content
+        # JavaScript should use variable concatenation, not hardcoded content_id
+        assert "const contentId = 'content-007'" in content
+        assert "'/api/content/content/' + contentId" in content
 
     def test_content_view_metadata_fields(self):
         """Test that content view includes all metadata fields"""

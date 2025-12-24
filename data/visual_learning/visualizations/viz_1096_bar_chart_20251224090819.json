@@ -1,0 +1,34 @@
+{
+  "visualization_id": "viz_1096_bar_chart_20251224090819",
+  "user_id": "1096",
+  "visualization_type": "bar_chart",
+  "title": "Weekly Progress",
+  "description": "Words learned per week",
+  "data_points": [
+    {
+      "week": "Week 1",
+      "words": 50
+    },
+    {
+      "week": "Week 2",
+      "words": 75
+    },
+    {
+      "week": "Week 3",
+      "words": 100
+    },
+    {
+      "week": "Week 4",
+      "words": 90
+    }
+  ],
+  "x_axis_label": "Week",
+  "y_axis_label": "Words Learned",
+  "color_scheme": [
+    "#6366f1",
+    "#0891b2",
+    "#f59e0b"
+  ],
+  "generated_at": "2025-12-24T09:08:19.552708",
+  "metadata": {}
+}

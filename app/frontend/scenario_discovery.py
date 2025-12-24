@@ -22,6 +22,7 @@ import logging
 from typing import Dict, List, Optional
 
 import httpx
+from fastapi import Depends
 from fasthtml.common import *
 
 from app.core.security import require_auth
@@ -662,8 +663,7 @@ def create_discovery_hub_route():
         Route handler function
     """
 
-    @require_auth
-    def discovery_hub_page(current_user: SimpleUser):
+    def discovery_hub_page(current_user: SimpleUser = Depends(require_auth)):
         """Discovery hub page handler"""
 
         # Create tabs

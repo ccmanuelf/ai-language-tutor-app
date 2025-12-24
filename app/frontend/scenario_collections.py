@@ -18,6 +18,7 @@ Features:
 import logging
 from typing import Dict, List, Optional
 
+from fastapi import Depends
 from fasthtml.common import *
 
 from app.core.security import require_auth
@@ -704,8 +705,7 @@ def create_collections_route():
         Route handler function
     """
 
-    @require_auth
-    def collections_page(current_user: SimpleUser):
+    def collections_page(current_user: SimpleUser = Depends(require_auth)):
         """Collections management page handler"""
 
         # Tabs

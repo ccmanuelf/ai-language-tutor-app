@@ -133,6 +133,22 @@ def create_youlearn_sidebar():
             ),
             style="margin-bottom: 2rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;",
         ),
+        # Gamification section (Session 135)
+        Div(
+            H3(
+                "Gamification",
+                style="color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem; padding: 0 1rem;",
+            ),
+            A(
+                Span(create_heroicon_svg("gift", "20"), style="margin-right: 0.75rem;"),
+                "Achievements & XP",
+                href="/gamification",
+                style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s; background: linear-gradient(90deg, rgba(139, 92, 246, 0.1), transparent);",
+                onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                onmouseout="this.style.background='linear-gradient(90deg, rgba(139, 92, 246, 0.1), transparent)'",
+            ),
+            style="margin-bottom: 2rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;",
+        ),
         # Spaces section
         Div(
             Div(
