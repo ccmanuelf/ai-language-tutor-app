@@ -11,49 +11,109 @@ Tests cover end-to-end workflows:
 """
 
 import pytest
-from app.models.user import User
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.models.database import User
 from app.models.scenario_db_models import Scenario, ScenarioAnalytics
 
 
 @pytest.fixture
-def client():
-    """FastAPI test client"""
+def db_session_api():
+    """
+    Database session specifically for API tests.
+    Uses a file-based SQLite database instead of in-memory to ensure
+    TestClient can share the same database across requests.
+    """
+    import os
+    import tempfile
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    from app.models.database import Base
+
+    # Create temporary file for database
+    db_fd, db_path = tempfile.mkstemp(suffix=".db")
+    database_url = f"sqlite:///{db_path}"
+
+    # Create engine and session
+    engine = create_engine(database_url, connect_args={"check_same_thread": False})
+    Base.metadata.create_all(bind=engine)
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = TestingSessionLocal()
+
+    try:
+        yield session
+    finally:
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
+        os.close(db_fd)
+        os.unlink(db_path)
+
+
+@pytest.fixture
+def client(db_session_api):
+    """FastAPI test client with database override"""
+    from app.database.config import (
+        get_db_session,  # CRITICAL: Must match the import used by API endpoints!
+    )
+
     app = create_app()
+
+    # Override database dependency to use test db_session_api
+    def override_get_db():
+        try:
+            yield db_session_api
+        finally:
+            pass
+
+    app.dependency_overrides[get_db_session] = override_get_db
+
     return TestClient(app)
 
 
 @pytest.fixture
-def test_user(test_db):
+def test_user(db_session_api):
     """Create test user"""
     user = User(
+        user_id="test_integration_user",
         username="integration_user",
         email="integration@test.com",
-        hashed_password="hashedpass",
+        password_hash="not_used_in_tests",
     )
-    test_db.session.add(user)
-    test_db.session.commit()
+    db_session_api.add(user)
+    db_session_api.commit()
     return user
 
 
 @pytest.fixture
 def auth_headers(client, test_user):
-    """Authentication headers"""
-    response = client.post(
-        "/api/v1/auth/login",
-        json={
-            "username": test_user.username,
-            "password": "testpass123",
-        },
-    )
-    token = response.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
+    """Authentication headers using dependency override"""
+    from app.core.security import require_auth
+
+    app = client.app
+
+    # Create mock user for auth
+    class MockUser:
+        def __init__(self):
+            self.id = test_user.id
+            self.user_id = test_user.user_id
+            self.username = test_user.username
+            self.email = test_user.email
+            self.role = "CHILD"
+
+    def override_auth():
+        return MockUser()
+
+    app.dependency_overrides[require_auth] = override_auth
+    yield {}
+    app.dependency_overrides.pop(require_auth, None)
 
 
 @pytest.fixture
-def multiple_scenarios(test_db, test_user):
+def multiple_scenarios(db_session_api, test_user):
     """Create multiple test scenarios"""
     scenarios = []
     categories = ["restaurant", "travel", "shopping", "business", "social"]
@@ -71,10 +131,10 @@ def multiple_scenarios(test_db, test_user):
             is_public=True,
             is_system_scenario=False,
         )
-        test_db.session.add(scenario)
+        db_session_api.add(scenario)
         scenarios.append(scenario)
 
-    test_db.session.commit()
+    db_session_api.commit()
     return scenarios
 
 
@@ -95,7 +155,7 @@ def test_complete_collection_workflow(client, auth_headers, multiple_scenarios):
     create_response = client.post(
         "/api/v1/scenario-organization/collections",
         headers=auth_headers,
-        json={
+        params={
             "name": "My Learning Path",
             "description": "Progressive learning scenarios",
             "is_learning_path": True,
@@ -103,7 +163,7 @@ def test_complete_collection_workflow(client, auth_headers, multiple_scenarios):
         },
     )
     assert create_response.status_code == 200
-    collection_id = create_response.json()["collection_id"]
+    collection_id = create_response.json()["collection"]["collection_id"]
 
     # Step 2: Add scenarios
     scenario_ids = [s.scenario_id for s in multiple_scenarios[:5]]
@@ -111,7 +171,7 @@ def test_complete_collection_workflow(client, auth_headers, multiple_scenarios):
         add_response = client.post(
             f"/api/v1/scenario-organization/collections/{collection_id}/scenarios",
             headers=auth_headers,
-            json={"scenario_id": scenario_id, "notes": f"Added {scenario_id}"},
+            params={"scenario_id": scenario_id, "notes": f"Added {scenario_id}"},
         )
         assert add_response.status_code == 200
 
@@ -163,14 +223,14 @@ def test_learning_path_progression(client, auth_headers, multiple_scenarios):
     create_response = client.post(
         "/api/v1/scenario-organization/collections",
         headers=auth_headers,
-        json={
+        params={
             "name": "Beginner to Advanced Restaurant",
             "is_learning_path": True,
             "category": "restaurant",
             "difficulty_level": "beginner",
         },
     )
-    collection_id = create_response.json()["collection_id"]
+    collection_id = create_response.json()["collection"]["collection_id"]
 
     # Add scenarios in difficulty order
     beginner_scenarios = [s for s in multiple_scenarios if s.difficulty == "beginner"][
@@ -180,7 +240,7 @@ def test_learning_path_progression(client, auth_headers, multiple_scenarios):
         client.post(
             f"/api/v1/scenario-organization/collections/{collection_id}/scenarios",
             headers=auth_headers,
-            json={"scenario_id": scenario.scenario_id},
+            params={"scenario_id": scenario.scenario_id},
         )
 
     # Verify order is maintained
@@ -208,7 +268,7 @@ def test_discovery_to_bookmark_flow(client, auth_headers, multiple_scenarios):
     search_response = client.get(
         "/api/v1/scenario-organization/search",
         headers=auth_headers,
-        params={"query": "Integration", "limit": 5},
+        params={"q": "Integration", "limit": 5},
     )
     assert search_response.status_code == 200
     scenarios_found = search_response.json()["scenarios"]
@@ -221,8 +281,11 @@ def test_discovery_to_bookmark_flow(client, auth_headers, multiple_scenarios):
     bookmark_response = client.post(
         "/api/v1/scenario-organization/bookmarks",
         headers=auth_headers,
-        params={"scenario_id": scenario_id},
-        json={"folder": "to-practice", "notes": "Found via search"},
+        params={
+            "scenario_id": scenario_id,
+            "folder": "to-practice",
+            "notes": "Found via search",
+        },
     )
     assert bookmark_response.status_code == 200
 
@@ -230,14 +293,14 @@ def test_discovery_to_bookmark_flow(client, auth_headers, multiple_scenarios):
     collection_response = client.post(
         "/api/v1/scenario-organization/collections",
         headers=auth_headers,
-        json={"name": "Discovered Scenarios"},
+        params={"name": "Discovered Scenarios"},
     )
-    collection_id = collection_response.json()["collection_id"]
+    collection_id = collection_response.json()["collection"]["collection_id"]
 
     add_response = client.post(
         f"/api/v1/scenario-organization/collections/{collection_id}/scenarios",
         headers=auth_headers,
-        json={"scenario_id": scenario_id},
+        params={"scenario_id": scenario_id},
     )
     assert add_response.status_code == 200
 
@@ -245,7 +308,7 @@ def test_discovery_to_bookmark_flow(client, auth_headers, multiple_scenarios):
     rating_response = client.post(
         "/api/v1/scenario-organization/ratings",
         headers=auth_headers,
-        json={
+        params={
             "scenario_id": scenario_id,
             "rating": 5,
             "review": "Great scenario found through discovery!",
@@ -267,7 +330,9 @@ def test_discovery_to_bookmark_flow(client, auth_headers, multiple_scenarios):
     assert my_rating.json()["rating"]["rating"] == 5
 
 
-def test_trending_scenarios_workflow(client, auth_headers, test_db, multiple_scenarios):
+def test_trending_scenarios_workflow(
+    client, auth_headers, db_session, multiple_scenarios
+):
     """
     Test trending scenarios discovery:
     1. Create analytics for scenarios
@@ -282,8 +347,8 @@ def test_trending_scenarios_workflow(client, auth_headers, test_db, multiple_sce
             total_starts=100 - (i * 10),
             total_completions=80 - (i * 10),
         )
-        test_db.session.add(analytics)
-    test_db.session.commit()
+        db_session.add(analytics)
+    db_session.commit()
 
     # Step 2: Get trending scenarios
     trending_response = client.get(
@@ -300,8 +365,7 @@ def test_trending_scenarios_workflow(client, auth_headers, test_db, multiple_sce
         bookmark_response = client.post(
             "/api/v1/scenario-organization/bookmarks",
             headers=auth_headers,
-            params={"scenario_id": top_trending["scenario_id"]},
-            json={"folder": "trending"},
+            params={"scenario_id": top_trending["scenario_id"], "folder": "trending"},
         )
         assert bookmark_response.status_code == 200
 
@@ -323,7 +387,7 @@ def test_complete_rating_workflow(client, auth_headers, multiple_scenarios):
     add_response = client.post(
         "/api/v1/scenario-organization/ratings",
         headers=auth_headers,
-        json={
+        params={
             "scenario_id": scenario.scenario_id,
             "rating": 4,
             "review": "Good scenario, helpful for beginners",
@@ -342,7 +406,7 @@ def test_complete_rating_workflow(client, auth_headers, multiple_scenarios):
     )
     assert summary_response.status_code == 200
     summary = summary_response.json()["summary"]
-    assert summary["total_ratings"] >= 1
+    assert summary["rating_count"] >= 1
 
     # Step 3: Update rating (delete and re-add)
     client.delete(
@@ -353,7 +417,7 @@ def test_complete_rating_workflow(client, auth_headers, multiple_scenarios):
     update_response = client.post(
         "/api/v1/scenario-organization/ratings",
         headers=auth_headers,
-        json={
+        params={
             "scenario_id": scenario.scenario_id,
             "rating": 5,
             "review": "Actually excellent! Changed my mind after more practice.",
@@ -371,7 +435,7 @@ def test_complete_rating_workflow(client, auth_headers, multiple_scenarios):
 
 
 def test_public_vs_private_ratings(
-    client, auth_headers, test_db, test_user, multiple_scenarios
+    client, auth_headers, db_session, test_user, multiple_scenarios
 ):
     """
     Test that private ratings are not visible to other users
@@ -380,18 +444,19 @@ def test_public_vs_private_ratings(
 
     # Create another user
     other_user = User(
+        user_id="test_other_user",
         username="other_user",
         email="other@test.com",
-        hashed_password="hash",
+        password_hash="hash",
     )
-    test_db.session.add(other_user)
-    test_db.session.commit()
+    db_session.add(other_user)
+    db_session.commit()
 
     # Add private rating
     client.post(
         "/api/v1/scenario-organization/ratings",
         headers=auth_headers,
-        json={
+        params={
             "scenario_id": scenario.scenario_id,
             "rating": 3,
             "review": "Private review",
@@ -427,7 +492,7 @@ def test_tag_based_discovery(client, auth_headers, multiple_scenarios):
         client.post(
             f"/api/v1/scenario-organization/scenarios/{scenario.scenario_id}/tags",
             headers=auth_headers,
-            json={"tag": "beginner-friendly"},
+            params={"tag": "beginner-friendly"},
         )
 
     # Step 2: Add AI tags
@@ -480,8 +545,10 @@ def test_bookmark_folder_organization(client, auth_headers, multiple_scenarios):
             client.post(
                 "/api/v1/scenario-organization/bookmarks",
                 headers=auth_headers,
-                params={"scenario_id": multiple_scenarios[idx].scenario_id},
-                json={"folder": folder},
+                params={
+                    "scenario_id": multiple_scenarios[idx].scenario_id,
+                    "folder": folder,
+                },
             )
 
     # Step 2: List all folders
@@ -510,8 +577,7 @@ def test_bookmark_folder_organization(client, auth_headers, multiple_scenarios):
     client.post(
         "/api/v1/scenario-organization/bookmarks",
         headers=auth_headers,
-        params={"scenario_id": scenario_to_move},
-        json={"folder": "favorites"},
+        params={"scenario_id": scenario_to_move, "folder": "favorites"},
     )
 
     # Verify move
@@ -527,7 +593,9 @@ def test_bookmark_folder_organization(client, auth_headers, multiple_scenarios):
 # ==================== FULL DISCOVERY HUB TEST ====================
 
 
-def test_discovery_hub_complete(client, auth_headers, test_db, multiple_scenarios):
+def test_discovery_hub_complete(
+    client, auth_headers, db_session_api, multiple_scenarios
+):
     """
     Test complete discovery hub functionality:
     1. Get discovery hub data
@@ -543,15 +611,15 @@ def test_discovery_hub_complete(client, auth_headers, test_db, multiple_scenario
             total_starts=50 + i,
             total_completions=40 + i,
         )
-        test_db.session.add(analytics)
-    test_db.session.commit()
+        db_session_api.add(analytics)
+    db_session_api.commit()
 
     # Add some ratings
     for scenario in multiple_scenarios[:5]:
         client.post(
             "/api/v1/scenario-organization/ratings",
             headers=auth_headers,
-            json={
+            params={
                 "scenario_id": scenario.scenario_id,
                 "rating": 4,
             },
@@ -563,7 +631,9 @@ def test_discovery_hub_complete(client, auth_headers, test_db, multiple_scenario
         headers=auth_headers,
     )
     assert hub_response.status_code == 200
-    hub_data = hub_response.json()
+    response_data = hub_response.json()
+    assert "hub" in response_data
+    hub_data = response_data["hub"]
 
     # Step 2: Verify sections
     assert "trending" in hub_data
@@ -573,7 +643,7 @@ def test_discovery_hub_complete(client, auth_headers, test_db, multiple_scenario
 
     # Step 3: Interact with trending scenario
     if len(hub_data["trending"]) > 0:
-        trending_scenario = hub_data["trending"][0]
+        trending_scenario = hub_data["trending"][0]["scenario"]
 
         # Bookmark it
         client.post(
@@ -586,21 +656,23 @@ def test_discovery_hub_complete(client, auth_headers, test_db, multiple_scenario
         collection_response = client.post(
             "/api/v1/scenario-organization/collections",
             headers=auth_headers,
-            json={"name": "From Discovery Hub"},
+            params={"name": "From Discovery Hub"},
         )
-        collection_id = collection_response.json()["collection_id"]
+        collection_id = collection_response.json()["collection"]["collection_id"]
 
         client.post(
             f"/api/v1/scenario-organization/collections/{collection_id}/scenarios",
             headers=auth_headers,
-            json={"scenario_id": trending_scenario["scenario_id"]},
+            params={"scenario_id": trending_scenario["scenario_id"]},
         )
 
 
 # ==================== ANALYTICS TRACKING ====================
 
 
-def test_scenario_usage_tracking(client, auth_headers, test_db, multiple_scenarios):
+def test_scenario_usage_tracking(
+    client, auth_headers, db_session_api, multiple_scenarios
+):
     """
     Test that scenario usage is properly tracked:
     1. Record starts and completions
@@ -622,27 +694,28 @@ def test_scenario_usage_tracking(client, auth_headers, test_db, multiple_scenari
 
 
 def test_collection_permissions(
-    client, auth_headers, test_db, test_user, multiple_scenarios
+    client, auth_headers, db_session_api, test_user, multiple_scenarios
 ):
     """
     Test that users can only modify their own collections
     """
     # Create another user
     other_user = User(
+        user_id="test_other_collection_user",
         username="other_collection_user",
         email="other_collection@test.com",
-        hashed_password="hash",
+        password_hash="hash",
     )
-    test_db.session.add(other_user)
-    test_db.session.commit()
+    db_session_api.add(other_user)
+    db_session_api.commit()
 
     # User 1 creates collection
     create_response = client.post(
         "/api/v1/scenario-organization/collections",
         headers=auth_headers,
-        json={"name": "User 1 Collection"},
+        params={"name": "User 1 Collection"},
     )
-    collection_id = create_response.json()["collection_id"]
+    collection_id = create_response.json()["collection"]["collection_id"]
 
     # User 2 tries to modify (should fail)
     # This would require getting auth headers for user 2
@@ -672,7 +745,7 @@ def test_empty_results_handling(client, auth_headers):
     response = client.get(
         "/api/v1/scenario-organization/search",
         headers=auth_headers,
-        params={"query": "xyzxyzxyznonexistent"},
+        params={"q": "xyzxyzxyznonexistent"},
     )
 
     assert response.status_code == 200
@@ -682,7 +755,7 @@ def test_empty_results_handling(client, auth_headers):
 # ==================== PERFORMANCE TESTS ====================
 
 
-def test_pagination_performance(client, auth_headers, test_db, test_user):
+def test_pagination_performance(client, auth_headers, db_session_api, test_user):
     """
     Test pagination works correctly with many items
     """
@@ -698,14 +771,14 @@ def test_pagination_performance(client, auth_headers, test_db, test_user):
             created_by=test_user.id,
             is_public=True,
         )
-        test_db.session.add(scenario)
-    test_db.session.commit()
+        db_session_api.add(scenario)
+    db_session_api.commit()
 
     # Test paginated search
     response = client.get(
         "/api/v1/scenario-organization/search",
         headers=auth_headers,
-        params={"query": "Performance", "limit": 10},
+        params={"q": "Performance", "limit": 10},
     )
 
     assert response.status_code == 200
