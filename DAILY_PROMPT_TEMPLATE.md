@@ -19,14 +19,44 @@
 
 ---
 
+## 🔧 ENVIRONMENT VERIFICATION (ALWAYS CHECK FIRST!)
+
+### Python Environment Check
+```bash
+# Verify Python version and location
+which python3
+python3 --version  # Should be: Python 3.12.3
+
+# Verify pip version and location
+which pip3
+pip3 --version     # Should be: pip 25.3 or later
+
+# Verify we're using system Python (NOT venv)
+echo $VIRTUAL_ENV  # Should be: empty (not in virtual environment)
+
+# Verify python-jose version
+pip3 show python-jose | grep Version  # Should be: 3.5.0 or later
+```
+
+**Expected Environment:**
+- **Python:** 3.12.3 at `/Library/Frameworks/Python.framework/Versions/3.12/bin/python3`
+- **pip:** 25.3 or later
+- **Virtual Environment:** NONE (using system Python)
+- **python-jose:** 3.5.0 or later
+- **App Import Test:** `python3 -c "import app.main; print('✓ OK')"` should succeed
+
+**⚠️ CRITICAL:** If any of these fail, STOP and fix environment before proceeding!
+
+---
+
 ## 📊 CURRENT STATE SNAPSHOT
 
 ### Test Suite Status
-- **Total Tests:** [FILL IN: e.g., 4,551]
-- **Collection Errors:** [FILL IN: e.g., 43 → target: 0]
-- **Passing:** [FILL IN: e.g., unknown until collection fixed]
-- **Failing:** [FILL IN: e.g., unknown until collection fixed]
-- **Pass Rate:** [FILL IN: e.g., N/A - cannot collect]
+- **Total Tests:** [FILL IN: e.g., 5,705]
+- **Collection Errors:** [FILL IN: e.g., 0 → target: 0]
+- **Passing:** [FILL IN: e.g., 5,705]
+- **Failing:** [FILL IN: e.g., 0]
+- **Pass Rate:** [FILL IN: e.g., 100%]
 
 ### Warning Status
 - **Deprecation Warnings:** [FILL IN: e.g., 8+ → target: 0]
