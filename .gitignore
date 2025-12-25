@@ -167,6 +167,12 @@ htmlcov/
 .pytest_cache/
 test_results/
 
+# Test artifacts (organized cleanup)
+test_artifacts/logs/
+test_artifacts/audio/
+test_artifacts/reports/
+test_artifacts/databases/
+
 # Local development
 .local/
 tmp/
