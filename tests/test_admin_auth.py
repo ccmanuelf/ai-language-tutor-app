@@ -896,18 +896,36 @@ class TestBlockGuestAccessDecorator:
 class TestUtilityFunctions:
     """Test utility functions"""
 
+    @patch.dict(
+        "os.environ",
+        {
+            "ADMIN_PASSWORD": "test_secure_password",
+            "ADMIN_EMAIL": "test@example.com",
+            "ADMIN_USERNAME": "Test Admin",
+        },
+    )
     @patch("app.services.admin_auth.admin_auth_service.create_admin_user_if_not_exists")
     def test_initialize_admin_system_success(self, mock_create_admin):
-        """Test initialize_admin_system succeeds"""
+        """Test initialize_admin_system succeeds with environment variables"""
         mock_create_admin.return_value = True
 
         result = initialize_admin_system()
 
         assert result is True
         mock_create_admin.assert_called_once_with(
-            "mcampos.cerda@tutanota.com", "Admin User", "admin123"
+            "test@example.com", "Test Admin", "test_secure_password"
         )
 
+    @patch.dict("os.environ", {}, clear=True)
+    @patch("app.services.admin_auth.admin_auth_service.create_admin_user_if_not_exists")
+    def test_initialize_admin_system_no_password(self, mock_create_admin):
+        """Test initialize_admin_system fails when ADMIN_PASSWORD not set"""
+        result = initialize_admin_system()
+
+        assert result is False
+        mock_create_admin.assert_not_called()
+
+    @patch.dict("os.environ", {"ADMIN_PASSWORD": "test_password"})
     @patch("app.services.admin_auth.admin_auth_service.create_admin_user_if_not_exists")
     def test_initialize_admin_system_failure(self, mock_create_admin):
         """Test initialize_admin_system handles failure"""

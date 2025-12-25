@@ -419,9 +419,17 @@ def block_guest_access(func):
 # Utility Functions
 def initialize_admin_system():
     """Initialize admin system with default admin user"""
-    admin_email = "mcampos.cerda@tutanota.com"
-    admin_username = "Admin User"
-    admin_password = "admin123"  # Should be changed on first login
+    import os
+
+    admin_email = os.getenv("ADMIN_EMAIL", "mcampos.cerda@tutanota.com")
+    admin_username = os.getenv("ADMIN_USERNAME", "Admin User")
+    admin_password = os.getenv("ADMIN_PASSWORD")
+
+    if not admin_password:
+        logger.error(
+            "ADMIN_PASSWORD environment variable not set - admin system initialization skipped for security"
+        )
+        return False
 
     success = admin_auth_service.create_admin_user_if_not_exists(
         admin_email, admin_username, admin_password
