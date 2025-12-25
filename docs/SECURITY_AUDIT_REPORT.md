@@ -64,7 +64,6 @@ All critical findings have been remediated. The repository is now secure for pub
 
 **What We Checked**:
 - Anthropic API keys
-- IBM Watson credentials
 - Mistral API keys
 - DeepSeek API keys
 - Database credentials
@@ -89,7 +88,8 @@ $ git log --all --full-history -- .env
 
 # Example from .env.example (safe placeholders)
 ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
-IBM_WATSON_STT_API_KEY=your-watson-stt-key
+MISTRAL_API_KEY=your-mistral-key-here
+DEEPSEEK_API_KEY=sk-your-deepseek-key-here
 ```
 
 ### 2. Personal Information
