@@ -421,13 +421,13 @@ def initialize_admin_system():
     """Initialize admin system with default admin user"""
     import os
 
-    admin_email = os.getenv("ADMIN_EMAIL", "mcampos.cerda@tutanota.com")
+    admin_email = os.getenv("ADMIN_EMAIL")
     admin_username = os.getenv("ADMIN_USERNAME", "Admin User")
     admin_password = os.getenv("ADMIN_PASSWORD")
 
-    if not admin_password:
+    if not admin_password or not admin_email:
         logger.error(
-            "ADMIN_PASSWORD environment variable not set - admin system initialization skipped for security"
+            "ADMIN_PASSWORD or ADMIN_EMAIL environment variable not set - admin system initialization skipped for security"
         )
         return False
 
@@ -445,13 +445,16 @@ def initialize_admin_system():
 
 def get_admin_user_info() -> Optional[Dict[str, Any]]:
     """Get admin user information"""
+    import os
+
     try:
+        admin_email = os.getenv("ADMIN_EMAIL")
+        if not admin_email:
+            logger.error("ADMIN_EMAIL environment variable not set")
+            return None
+
         with get_db_session_context() as session:
-            admin_user = (
-                session.query(User)
-                .filter(User.email == "mcampos.cerda@tutanota.com")
-                .first()
-            )
+            admin_user = session.query(User).filter(User.email == admin_email).first()
 
             if admin_user:
                 return {
