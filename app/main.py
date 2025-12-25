@@ -70,10 +70,16 @@ def create_app() -> FastAPI:
     # Add security headers middleware
     app.add_middleware(SecurityHeadersMiddleware)
 
-    # Add CORS middleware
+    # Add CORS middleware with environment-based origins
+    import os
+
+    cors_origins = os.getenv(
+        "CORS_ORIGINS", "http://localhost:3000,http://localhost:8000"
+    ).split(",")
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000", "http://localhost:8000"],
+        allow_origins=[origin.strip() for origin in cors_origins],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
