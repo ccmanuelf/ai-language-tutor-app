@@ -6,6 +6,10 @@
 
 **✅ Certified for Production Deployment | 4.9/5.0 Stars ⭐⭐⭐⭐⭐**
 
+### 📚 Quick Links
+
+**[👤 User Guide](docs/USER_GUIDE.md)** | **[⚙️ Admin Setup Guide](docs/ADMIN_SETUP_GUIDE.md)** | **[🔒 Security Audit](docs/SECURITY_AUDIT_REPORT.md)**
+
 </div>
 
 ---
@@ -155,10 +159,8 @@ Create a **comprehensive AI-powered learning platform** that functions as an int
 
 **AI Services**:
 - **Claude (Anthropic)**: Primary conversational AI and content analysis
-- **Mistral**: Specialized for French language optimization and speech-to-text
-- **Qwen**: Chinese language support and specialized tasks
-- **DeepSeek**: Cost-effective alternative for specific use cases
-- **Ollama**: Local AI model support (optional)
+- **Mistral**: European languages optimization and speech-to-text
+- **DeepSeek**: Chinese language specialist and cost-effective alternative
 
 **Speech Processing**:
 - **STT**: Mistral-based speech-to-text with enterprise-grade accuracy
@@ -206,15 +208,16 @@ Create a **comprehensive AI-powered learning platform** that functions as an int
                              │
 ┌────────────────────────────┴───────────────────────────────────────────────┐
 │                        🤖 External AI Services Layer                        │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
-│  │    Claude    │  │   Mistral    │  │     Qwen     │  │   DeepSeek   │ │
-│  │ (Anthropic)  │  │   (STT/AI)   │  │  (Chinese)   │  │(Alternative) │ │
-│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘ │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐        │
+│  │      Claude      │  │     Mistral      │  │     DeepSeek     │        │
+│  │   (Anthropic)    │  │   (STT/Chat)     │  │    (Chinese)     │        │
+│  │  Primary Chat    │  │ European + STT   │  │  Cost-Effective  │        │
+│  └──────────────────┘  └──────────────────┘  └──────────────────┘        │
 │                                                                             │
-│  ┌──────────────┐  ┌──────────────┐                                       │
-│  │  Piper TTS   │  │    Ollama    │                                       │
-│  │ (11 voices)  │  │  (Optional)  │                                       │
-│  └──────────────┘  └──────────────┘                                       │
+│  ┌──────────────────────────────────────────┐                             │
+│  │            Piper TTS (Local)             │                             │
+│  │   High-Quality Speech (11 voices/7 lang) │                             │
+│  └──────────────────────────────────────────┘                             │
 └────────────────────────────┬───────────────────────────────────────────────┘
                              │
 ┌────────────────────────────┴───────────────────────────────────────────────┐
@@ -254,9 +257,9 @@ Create a **comprehensive AI-powered learning platform** that functions as an int
 │  └─────────────────┘ │         │  └─────────────────────┘ │
 │                       │         │                           │
 │  ┌─────────────────┐ │         └───────────────────────────┘
-│  │  Qwen (Chinese) │ │
+│  │DeepSeek (Chinese)│ │
 │  │  - Chinese lang │ │
-│  │  - Specialized  │ │
+│  │  - Cost-effect. │ │
 │  └─────────────────┘ │
 └───────────────────────┘
 
@@ -302,11 +305,13 @@ pip install -r requirements.txt
 cp .env.example .env
 
 # Edit .env and add your API keys:
-# - ANTHROPIC_API_KEY (Claude)
-# - MISTRAL_API_KEY (Mistral)
-# - QWEN_API_KEY (Qwen)
-# - ADMIN_PASSWORD (secure password)
+# - ANTHROPIC_API_KEY (Claude) - Required
+# - MISTRAL_API_KEY (Mistral) - Required for speech + European languages
+# - DEEPSEEK_API_KEY (DeepSeek) - Optional for Chinese language
+# - ADMIN_EMAIL, ADMIN_PASSWORD - Required for admin access
 ```
+
+> 📖 **Need detailed setup instructions?** See the **[Admin Setup Guide](docs/ADMIN_SETUP_GUIDE.md)** for complete configuration and user management.
 
 ### 🎮 Running the Application
 
@@ -346,6 +351,22 @@ python run_frontend.py
 **🌐 Application Ready at: http://localhost:3000**
 
 </div>
+
+---
+
+### 📖 Next Steps
+
+**For Users & Families:**
+- 👉 Read the **[User Guide](docs/USER_GUIDE.md)** to start learning languages
+- 🎯 Create user accounts for family members
+- 🗣️ Start practicing with AI tutors in 7 languages
+
+**For Administrators:**
+- ⚙️ Follow the **[Admin Setup Guide](docs/ADMIN_SETUP_GUIDE.md)** for complete configuration
+- 👥 Set up user accounts and budgets
+- 📊 Monitor usage and progress
+
+---
 
 ## 🧪 Testing
 
@@ -597,10 +618,8 @@ Personalized learning paths powered by AI:
 The platform uses multiple AI providers to optimize for both cost and quality:
 
 - **Claude (Anthropic)**: Primary model for general conversations and content analysis
-- **Mistral**: Cost-effective for French optimization and speech-to-text
-- **Qwen**: Specialized for Chinese language support
-- **DeepSeek**: Ultra-low-cost alternative for specific use cases
-- **Ollama**: Optional local models for zero-cost operation
+- **Mistral**: European language optimization and speech-to-text services
+- **DeepSeek**: Chinese language specialist and cost-effective alternative
 
 ### Intelligent Routing
 - **Provider Selection**: Automatic selection based on language, task type, and cost
