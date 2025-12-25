@@ -15,7 +15,7 @@ from fasthtml.common import *
 
 
 def create_heroicon_svg(icon_name, size="20", stroke_width="1.5"):
-    """Create HeroIcons SVG elements"""
+    """Create HeroIcons SVG elements - returns NotStr to prevent HTML escaping"""
     icons = {
         "plus": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
         "search": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>',
@@ -39,7 +39,8 @@ def create_heroicon_svg(icon_name, size="20", stroke_width="1.5"):
         "record": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>',
         "arrow-up": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5,12 12,5 19,12"></polyline></svg>',
     }
-    return icons.get(icon_name, icons["help"])
+    # Return NotStr to prevent HTML escaping - allows SVG to render properly
+    return NotStr(icons.get(icon_name, icons["help"]))
 
 
 def create_youlearn_sidebar():
