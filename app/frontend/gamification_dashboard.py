@@ -319,7 +319,8 @@ def create_leaderboard_card(leaderboard, user_rank, current_user_id):
 
     # User's rank if not in top 10
     user_rank_display = None
-    if user_rank and user_rank.get("rank", 0) > 10:
+    rank_value = user_rank.get("rank") if user_rank else None
+    if rank_value and rank_value > 10:
         user_rank_display = Div(
             Div(
                 "...",
