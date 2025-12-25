@@ -132,10 +132,14 @@ def create_user_budget_routes(app):
                     "current_spent": total_spent,
                     "period_start": budget_settings.current_period_start.strftime(
                         "%Y-%m-%d"
-                    ),
+                    )
+                    if budget_settings.current_period_start
+                    else "N/A",
                     "period_end": budget_settings.current_period_end.strftime(
                         "%Y-%m-%d"
-                    ),
+                    )
+                    if budget_settings.current_period_end
+                    else "N/A",
                     "alert_level": alert_level,
                     "percentage_used": percentage_used,
                 }

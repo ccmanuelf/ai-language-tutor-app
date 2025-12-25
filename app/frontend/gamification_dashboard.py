@@ -387,24 +387,49 @@ def create_gamification_routes(app):
             xp_service = XPService(db)
             leaderboard_service = LeaderboardService(db)
 
-            # Fetch all gamification data
+            # Fetch all gamification data with fallback to demo data
             level_info = await xp_service.get_user_level(current_user.id)
+            if not level_info:
+                # Provide demo data for new users
+                level_info = {
+                    "current_level": 1,
+                    "total_xp": 0,
+                    "level_xp": 0,
+                    "xp_for_next_level": 100,
+                    "level_progress_percentage": 0,
+                }
 
             streak_status = await streak_service.get_streak_status(current_user.id)
+            if not streak_status:
+                streak_status = {
+                    "current_streak": 0,
+                    "longest_streak": 0,
+                    "last_activity": None,
+                }
 
             user_achievements = await achievement_service.get_user_achievements(
                 current_user.id
             )
+            if not user_achievements:
+                user_achievements = []
+
             all_achievements = await achievement_service.get_all_achievements()
+            if not all_achievements:
+                all_achievements = []
 
             leaderboard = await leaderboard_service.get_global_leaderboard(
                 metric=LeaderboardMetric.XP_ALL_TIME.value,
                 limit=10,
             )
+            if not leaderboard:
+                leaderboard = []
+
             user_rank = await leaderboard_service.get_user_rank(
                 current_user.id,
                 LeaderboardMetric.XP_ALL_TIME.value,
             )
+            if not user_rank:
+                user_rank = {"rank": None, "total_users": 0}
 
             # Build dashboard
             content = Div(
