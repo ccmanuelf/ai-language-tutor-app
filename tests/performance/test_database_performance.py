@@ -155,21 +155,19 @@ def test_conversation_query_performance(db_manager, query_profiler):
 
     # Query 1: Get conversations by user_id (should be indexed)
     start = time.time()
-    conversations = (
-        db.query(Conversation).filter_by(user_id="test_user_1").limit(50).all()
-    )
+    conversations = db.query(Conversation).filter_by(user_id=1).limit(50).all()
     duration = time.time() - start
     print(f"\n  Query by user_id (50 limit): {duration * 1000:.2f}ms")
 
-    # Query 2: Get conversation by ID
+    # Query 2: Get conversation by conversation_id
     start = time.time()
-    conv = db.query(Conversation).filter_by(conversation_id="test_conv_1").first()
+    conv = db.query(Conversation).filter(Conversation.conversation_id.like("%")).first()
     duration = time.time() - start
     print(f"  Query by conversation_id: {duration * 1000:.2f}ms")
 
     # Query 3: Get active conversations
     start = time.time()
-    active_convs = db.query(Conversation).filter_by(status="active").limit(100).all()
+    active_convs = db.query(Conversation).filter_by(is_active=True).limit(100).all()
     duration = time.time() - start
     print(f"  Query active conversations: {duration * 1000:.2f}ms")
 
@@ -193,26 +191,23 @@ def test_analytics_query_performance(db_manager, query_profiler):
 
     # Query 1: Get analytics by user_id (time-series data)
     start = time.time()
-    events = db.query(LearningProgress).filter_by(user_id="test_user_1").limit(100).all()
+    progress = db.query(LearningProgress).filter_by(user_id=1).limit(100).all()
     duration = time.time() - start
     print(f"\n  Query analytics by user_id (100 limit): {duration * 1000:.2f}ms")
 
-    # Query 2: Get analytics by event_type
+    # Query 2: Get analytics by skill_type
     start = time.time()
-    events = (
-        db.query(LearningProgress)
-        .filter_by(event_type="conversation_completed")
-        .limit(100)
-        .all()
+    progress = (
+        db.query(LearningProgress).filter_by(skill_type="conversation").limit(100).all()
     )
     duration = time.time() - start
-    print(f"  Query by event_type: {duration * 1000:.2f}ms")
+    print(f"  Query by skill_type: {duration * 1000:.2f}ms")
 
-    # Query 3: Count analytics events
+    # Query 3: Count analytics records
     start = time.time()
     count = db.query(LearningProgress).count()
     duration = time.time() - start
-    print(f"  Count all events: {duration * 1000:.2f}ms ({count} events)")
+    print(f"  Count all records: {duration * 1000:.2f}ms ({count} records)")
 
     # Get summary
     summary = query_profiler.get_summary()
@@ -243,7 +238,7 @@ def test_join_query_performance(db_manager, query_profiler):
     result = (
         db.query(Conversation)
         .join(User)
-        .filter(Conversation.user_id == "test_user_1")
+        .filter(Conversation.user_id == 1)
         .limit(50)
         .all()
     )
@@ -268,10 +263,14 @@ def test_index_effectiveness(db_manager):
     """Test: Verify database indexes are effective"""
     db = get_primary_db_session()
 
-    # Check if indexes exist on critical columns
-    inspector = db.bind.dialect.get_table_names(db.bind)
+    # Verify database schema exists
+    from sqlalchemy import inspect
+
+    inspector = inspect(db.bind)
+    tables = inspector.get_table_names()
 
     print("\n🔍 Database Index Analysis:")
+    print(f"\n  Found {len(tables)} tables in database")
 
     # Users table
     print("\n  Users table:")
@@ -281,13 +280,13 @@ def test_index_effectiveness(db_manager):
 
     # Conversations table
     print("\n  Conversations table:")
-    conv_indexed = ["id", "conversation_id", "user_id", "status"]
+    conv_indexed = ["id", "conversation_id", "user_id", "is_active"]
     for col in conv_indexed:
         print(f"    ✓ {col} (should be indexed)")
 
-    # Analytics table
-    print("\n  Analytics table:")
-    analytics_indexed = ["id", "user_id", "event_type", "created_at"]
+    # Learning Progress table
+    print("\n  Learning Progress table:")
+    analytics_indexed = ["id", "user_id", "skill_type", "language"]
     for col in analytics_indexed:
         print(f"    ✓ {col} (should be indexed)")
 
@@ -299,22 +298,37 @@ def test_bulk_insert_performance(db_manager, query_profiler):
     """Test: Bulk insert performance"""
     db = get_primary_db_session()
 
-    # Test 1: Insert 100 analytics events
+    # Test 1: Insert 100 learning progress records
+    # Note: LearningProgress has UNIQUE constraint on (user_id, language, skill_type)
     start = time.time()
-    events = []
-    for i in range(100):
-        event = LearningProgress(
-            user_id=f"bulk_test_user_{i}",
-            event_type="test_event",
-            event_data={"test": True, "index": i},
-        )
-        events.append(event)
+    records = []
+    skill_types = [
+        "vocabulary",
+        "pronunciation",
+        "conversation",
+        "grammar",
+        "reading",
+        "writing",
+        "listening",
+    ]
 
-    db.bulk_save_objects(events)
+    # Use high user_ids unlikely to exist (1000+)
+    for i in range(100):
+        record = LearningProgress(
+            user_id=1000 + (i // len(skill_types)),  # Use test user IDs 1000+
+            language="en",
+            skill_type=skill_types[i % len(skill_types)],
+            current_level=1,
+            target_level=10,
+            progress_percentage=float(i % 100),
+        )
+        records.append(record)
+
+    db.bulk_save_objects(records)
     db.commit()
 
     duration = time.time() - start
-    print(f"\n  Bulk insert 100 events: {duration * 1000:.2f}ms")
+    print(f"\n  Bulk insert 100 records: {duration * 1000:.2f}ms")
     print(f"  Rate: {100 / duration:.2f} inserts/sec")
 
     # Get summary
@@ -326,10 +340,10 @@ def test_bulk_insert_performance(db_manager, query_profiler):
     # Assertions
     assert duration < 1.0, "100 bulk inserts should complete in < 1s"
 
-    # Cleanup
+    # Cleanup - delete test records
     db.query(LearningProgress).filter(
-        LearningProgress.user_id.like("bulk_test_user_%")
-    ).delete()
+        LearningProgress.user_id >= 1000, LearningProgress.user_id < 1100
+    ).delete(synchronize_session=False)
     db.commit()
 
 
@@ -347,9 +361,10 @@ def test_query_complexity_performance(db_manager, query_profiler):
             u.id,
             u.username,
             COUNT(c.id) as conversation_count,
-            AVG(LENGTH(c.conversation_history)) as avg_history_length
+            AVG(c.message_count) as avg_message_count,
+            SUM(c.total_tokens) as total_tokens
         FROM users u
-        LEFT JOIN conversations c ON u.id = CAST(c.user_id AS INTEGER)
+        LEFT JOIN conversations c ON u.id = c.user_id
         GROUP BY u.id, u.username
         LIMIT 100
     """)

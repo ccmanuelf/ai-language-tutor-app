@@ -10,6 +10,9 @@ from typing import Any, Dict, List
 import psutil
 import pytest
 
+from app.models.database import LearningProgress
+from app.services.scenario_models import ScenarioCategory
+
 
 class ResourceMonitor:
     """Monitor system resource utilization"""
@@ -160,9 +163,8 @@ def resource_monitor():
 @pytest.mark.performance
 def test_database_operations_resource_usage(db_manager, resource_monitor):
     """Test: Resource usage during database operations"""
-    from app.models.database import User
-
     from app.database.config import get_primary_db_session
+    from app.models.database import User
 
     # Perform 100 database operations
     for i in range(100):
@@ -195,7 +197,7 @@ def test_scenario_loading_resource_usage(db_manager, resource_monitor):
     # Load scenarios 50 times
     manager = ScenarioManager()
     for i in range(50):
-        scenarios = manager.get_scenarios_by_category("restaurant")
+        scenarios = manager.get_scenarios_by_category(ScenarioCategory.RESTAURANT)
         time.sleep(0.01)
 
     resource_monitor.stop()
@@ -213,12 +215,14 @@ def test_scenario_loading_resource_usage(db_manager, resource_monitor):
 def test_conversation_initialization_resource_usage(db_manager, resource_monitor):
     """Test: Resource usage during conversation initialization"""
     from app.services.conversation_manager import ConversationManager
+    from app.services.scenario_manager import ScenarioManager
 
     # Initialize conversations
     manager = ConversationManager()
+    scenario_mgr = ScenarioManager()
     for i in range(20):
         # Simulate conversation setup
-        scenarios = manager.scenario_manager.get_scenarios_by_category("restaurant")
+        scenarios = scenario_mgr.get_scenarios_by_category(ScenarioCategory.RESTAURANT)
         time.sleep(0.05)
 
     resource_monitor.stop()
@@ -237,20 +241,23 @@ def test_conversation_initialization_resource_usage(db_manager, resource_monitor
 @pytest.mark.performance
 def test_analytics_processing_resource_usage(db_manager, resource_monitor):
     """Test: Resource usage during analytics processing"""
-    from app.models.database import LearningProgress
-
     from app.database.config import get_primary_db_session
+    from app.models.database import LearningProgress
 
     # Process analytics events
     db = get_primary_db_session()
 
-    # Insert batch of events
+    # Insert batch of events - ensure unique (user_id, language, skill_type) combinations
     events = []
+    skill_types = ["vocabulary", "grammar", "listening", "speaking", "reading"]
+    # Create 100 unique combinations: 20 users * 5 skill types = 100 records
     for i in range(100):
         event = LearningProgress(
-            user_id=f"test_user_{i % 10}",
-            event_type="test_event",
-            event_data={"index": i, "test": True},
+            user_id=2000 + (i // 5),  # 20 different users (2000-2019)
+            language="en",
+            skill_type=skill_types[i % 5],  # Cycle through 5 skill types
+            current_level=1,
+            target_level=10,
         )
         events.append(event)
 
@@ -260,12 +267,15 @@ def test_analytics_processing_resource_usage(db_manager, resource_monitor):
     # Query events
     for i in range(20):
         results = (
-            db.query(LearningProgress).filter_by(event_type="test_event").limit(50).all()
+            db.query(LearningProgress)
+            .filter_by(skill_type="vocabulary")
+            .limit(50)
+            .all()
         )
         time.sleep(0.01)
 
-    # Cleanup
-    db.query(LearningProgress).filter(LearningProgress.user_id.like("test_user_%")).delete()
+    # Cleanup - delete test records by user_id range
+    db.query(LearningProgress).filter(LearningProgress.user_id >= 2000).delete()
     db.commit()
     db.close()
 
