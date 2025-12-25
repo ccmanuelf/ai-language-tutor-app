@@ -94,15 +94,10 @@ ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
 # OPTIONAL BUT RECOMMENDED
 # ==========================================
 
-# IBM Watson Speech Services
-# Get yours at: https://cloud.ibm.com/watson
-# Provides high-quality speech recognition and synthesis
-
-IBM_WATSON_STT_API_KEY=your-watson-stt-key
-IBM_WATSON_STT_URL=https://api.us-south.speech-to-text.watson.cloud.ibm.com
-
-IBM_WATSON_TTS_API_KEY=your-watson-tts-key
-IBM_WATSON_TTS_URL=https://api.us-south.text-to-speech.watson.cloud.ibm.com
+# Speech Services (Built-in)
+# Mistral STT: Speech-to-text using your Mistral API key (already configured above)
+# Piper TTS: High-quality text-to-speech (runs locally, no API key needed)
+# No additional configuration required!
 
 # Additional AI Providers (for variety and redundancy)
 MISTRAL_API_KEY=your-mistral-key

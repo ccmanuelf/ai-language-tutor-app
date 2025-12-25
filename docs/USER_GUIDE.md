@@ -99,15 +99,12 @@ MISTRAL_API_KEY=your-mistral-key
 DEEPSEEK_API_KEY=sk-your-deepseek-key
 
 # ==========================================
-# SPEECH SERVICES (Optional but recommended)
+# SPEECH SERVICES (Built-in - No API keys needed!)
 # ==========================================
 
-# IBM Watson (for high-quality speech) - https://cloud.ibm.com/watson
-IBM_WATSON_STT_API_KEY=your-watson-stt-key
-IBM_WATSON_STT_URL=https://api.us-south.speech-to-text.watson.cloud.ibm.com
-
-IBM_WATSON_TTS_API_KEY=your-watson-tts-key
-IBM_WATSON_TTS_URL=https://api.us-south.text-to-speech.watson.cloud.ibm.com
+# Speech Recognition: Mistral STT (included)
+# Text-to-Speech: Piper TTS (included)
+# No additional configuration required!
 
 # ==========================================
 # OPTIONAL FEATURES
@@ -296,8 +293,9 @@ The tutor offers different conversation scenarios:
 **Problem: No speech recognition**
 - **Solution**: 
   - Check microphone permissions in browser
-  - Verify IBM Watson credentials in `.env`
+  - Verify Mistral API key in `.env`
   - Test microphone in browser settings
+  - Ensure microphone is not being used by another app
 
 **Problem: Slow AI responses**
 - **Solution**:
@@ -352,8 +350,9 @@ The tutor offers different conversation scenarios:
 
 **Free Tier Options:**
 - Many providers offer free tiers
-- IBM Watson: 500 free minutes/month
-- Anthropic: Free tier available
+- Mistral STT: Included with Mistral API
+- Piper TTS: Completely free (runs locally)
+- Anthropic: Free tier available for testing
 
 ---
 
