@@ -61,18 +61,16 @@ def create_youlearn_sidebar():
         # Main navigation
         Div(
             A(
-                Span(create_heroicon_svg("plus", "20"), style="margin-right: 0.75rem;"),
-                "Add content",
+                Span(create_heroicon_svg("chat", "20"), style="margin-right: 0.75rem;"),
+                "Conversation",
                 href="/chat",
                 style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
                 onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
                 onmouseout="this.style.backgroundColor='transparent'",
             ),
             A(
-                Span(
-                    create_heroicon_svg("search", "20"), style="margin-right: 0.75rem;"
-                ),
-                "Search",
+                Span(create_heroicon_svg("user", "20"), style="margin-right: 0.75rem;"),
+                "Profile",
                 href="/profile",
                 style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
                 onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
@@ -80,9 +78,9 @@ def create_youlearn_sidebar():
             ),
             A(
                 Span(
-                    create_heroicon_svg("history", "20"), style="margin-right: 0.75rem;"
+                    create_heroicon_svg("target", "20"), style="margin-right: 0.75rem;"
                 ),
-                "History",
+                "Progress",
                 href="/progress",
                 style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 2rem; transition: all 0.2s;",
                 onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
@@ -110,14 +108,6 @@ def create_youlearn_sidebar():
                 ),
                 "My Collections",
                 href="/collections",
-                style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
-                onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
-                onmouseout="this.style.backgroundColor='transparent'",
-            ),
-            A(
-                Span(create_heroicon_svg("star", "20"), style="margin-right: 0.75rem;"),
-                "Favorites",
-                href="/favorites",
                 style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
                 onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
                 onmouseout="this.style.backgroundColor='transparent'",
