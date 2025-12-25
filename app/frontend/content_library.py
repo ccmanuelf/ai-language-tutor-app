@@ -1296,3 +1296,8 @@ def create_content_library_routes(app):
                 """),
             ),
         )
+
+    @app.route("/discover")
+    def discover_redirect():
+        """Redirect /discover to /library (they serve the same purpose)"""
+        return RedirectResponse(url="/library", status_code=301)

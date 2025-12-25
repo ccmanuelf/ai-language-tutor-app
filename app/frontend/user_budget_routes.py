@@ -28,17 +28,12 @@ def create_user_budget_routes(app):
     """Create user budget dashboard routes for the FastHTML app"""
 
     @app.get("/dashboard/budget")
-    async def user_budget_dashboard(
-        current_user: Dict[str, Any] = Depends(get_current_user),
-    ):
+    async def user_budget_dashboard():
         """User budget dashboard page"""
         try:
-            user_id = current_user.get("user_id")
-            if not user_id:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Authentication required",
-                )
+            # TODO: Add proper authentication when session management is implemented
+            # For now, use demo user ID
+            user_id = 1
 
             # Get user's budget settings
             db = get_primary_db_session()

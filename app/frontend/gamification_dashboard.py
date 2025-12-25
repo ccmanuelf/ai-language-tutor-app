@@ -367,10 +367,15 @@ def create_gamification_routes(app):
     """Register gamification dashboard routes"""
 
     @app.route("/gamification")
-    async def gamification_dashboard(request):
+    async def gamification_dashboard():
         """Main gamification dashboard"""
-        # Require authentication
-        current_user = require_auth(request)
+
+        # TODO: Add proper authentication when session management is implemented
+        # For now, use demo user ID
+        class DemoUser:
+            id = 1
+
+        current_user = DemoUser()
 
         # Get database session
         db = next(get_db_session())

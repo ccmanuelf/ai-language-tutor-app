@@ -1028,3 +1028,8 @@ def create_collections_routes(app):
                 """),
             ),
         )
+
+    @app.route("/my-collections")
+    def my_collections_redirect():
+        """Redirect /my-collections to /collections"""
+        return RedirectResponse(url="/collections", status_code=301)
