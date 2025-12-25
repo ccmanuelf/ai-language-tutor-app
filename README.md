@@ -157,10 +157,11 @@ Create a **comprehensive AI-powered learning platform** that functions as an int
 - **Port**: 8000
 - **Services**: AI routing, speech processing, authentication, content analysis
 
-**AI Services**:
-- **Claude (Anthropic)**: Primary conversational AI and content analysis
-- **Mistral**: European languages optimization and speech-to-text
-- **DeepSeek**: Chinese language specialist and cost-effective alternative
+**AI Services** (Priority Order):
+- **Mistral**: PRIMARY provider (cost-effective for all languages + speech-to-text)
+- **Claude (Anthropic)**: SECONDARY provider (premium quality when needed)
+- **Ollama**: LOCAL fallback (budget exceeded, offline mode, privacy mode)
+- **DeepSeek**: Chinese language specialist
 
 **Speech Processing**:
 - **STT**: Mistral-based speech-to-text with enterprise-grade accuracy
@@ -207,17 +208,19 @@ Create a **comprehensive AI-powered learning platform** that functions as an int
 └────────────────────────────┬───────────────────────────────────────────────┘
                              │
 ┌────────────────────────────┴───────────────────────────────────────────────┐
-│                        🤖 External AI Services Layer                        │
+│                        🤖 AI Services Layer (Priority Order)                │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐        │
-│  │      Claude      │  │     Mistral      │  │     DeepSeek     │        │
-│  │   (Anthropic)    │  │   (STT/Chat)     │  │    (Chinese)     │        │
-│  │  Primary Chat    │  │ European + STT   │  │  Cost-Effective  │        │
+│  │     Mistral      │  │      Claude      │  │     DeepSeek     │        │
+│  │   (PRIMARY 1st)  │  │  (Secondary 2nd) │  │    (Chinese)     │        │
+│  │ Cost-Effective   │  │ Premium Quality  │  │   Specialist     │        │
+│  │  Chat + STT      │  │   Anthropic API  │  │  Low-Cost Alt    │        │
 │  └──────────────────┘  └──────────────────┘  └──────────────────┘        │
 │                                                                             │
-│  ┌──────────────────────────────────────────┐                             │
-│  │            Piper TTS (Local)             │                             │
-│  │   High-Quality Speech (11 voices/7 lang) │                             │
-│  └──────────────────────────────────────────┘                             │
+│  ┌──────────────────┐  ┌──────────────────────────────────────┐          │
+│  │     Ollama       │  │         Piper TTS (Local)            │          │
+│  │ (LOCAL Fallback) │  │  High-Quality Speech (11 voices)     │          │
+│  │ Budget/Offline   │  │        Zero API Cost                 │          │
+│  └──────────────────┘  └──────────────────────────────────────┘          │
 └────────────────────────────┬───────────────────────────────────────────────┘
                              │
 ┌────────────────────────────┴───────────────────────────────────────────────┐
@@ -253,15 +256,15 @@ Create a **comprehensive AI-powered learning platform** that functions as an int
 │  ┌─────────────────┐ │         │  ┌─────────────────────┐ │
 │  │ Mistral (French)│ │         │  │  Ollama (Local)     │ │
 │  │  - STT Service  │ │         │  │  - Offline mode     │ │
-│  │  - French optim │ │         │  │  - Privacy option   │ │
+│  │  - Cost-effect. │ │         │  │  - Privacy option   │ │
 │  └─────────────────┘ │         │  └─────────────────────┘ │
 │                       │         │                           │
-│  ┌─────────────────┐ │         └───────────────────────────┘
-│  │DeepSeek (Chinese)│ │
-│  │  - Chinese lang │ │
-│  │  - Cost-effect. │ │
-│  └─────────────────┘ │
-└───────────────────────┘
+│  ┌─────────────────┐ │         │  ┌─────────────────────┐ │
+│  │DeepSeek (Chinese)│ │         │  │   Ollama (Local)    │ │
+│  │  - Chinese spec │ │         │  │  - Budget fallback  │ │
+│  │  - Low cost     │ │         │  │  - Offline mode     │ │
+│  └─────────────────┘ │         │  └─────────────────────┘ │
+└───────────────────────┘         └───────────────────────────┘
 
 Features:
 ✅ Automatic failover on provider errors
@@ -305,13 +308,16 @@ pip install -r requirements.txt
 cp .env.example .env
 
 # Edit .env and add your API keys:
-# - ANTHROPIC_API_KEY (Claude) - Required
-# - MISTRAL_API_KEY (Mistral) - Required for speech + European languages
-# - DEEPSEEK_API_KEY (DeepSeek) - Optional for Chinese language
+# - MISTRAL_API_KEY (Mistral) - REQUIRED (primary AI + speech)
+# - ANTHROPIC_API_KEY (Claude) - Optional (premium quality)
+# - DEEPSEEK_API_KEY (DeepSeek) - Optional (Chinese language)
+# - OLLAMA_HOST - Recommended (local fallback, budget/offline)
 # - ADMIN_EMAIL, ADMIN_PASSWORD - Required for admin access
 ```
 
 > 📖 **Need detailed setup instructions?** See the **[Admin Setup Guide](docs/ADMIN_SETUP_GUIDE.md)** for complete configuration and user management.
+>
+> 💡 **Smart Architecture**: Mistral is primary (cost-effective), Claude is secondary (premium), Ollama is local fallback (free, offline-capable).
 
 ### 🎮 Running the Application
 
@@ -614,12 +620,14 @@ Personalized learning paths powered by AI:
 
 ## 💰 Cost Efficiency
 
-### Multi-LLM Strategy
-The platform uses multiple AI providers to optimize for both cost and quality:
+### Multi-LLM Strategy (Session 118: Cost-Conscious Architecture)
+The platform uses intelligent AI routing with cost optimization as the primary goal:
 
-- **Claude (Anthropic)**: Primary model for general conversations and content analysis
-- **Mistral**: European language optimization and speech-to-text services
-- **DeepSeek**: Chinese language specialist and cost-effective alternative
+**Priority Order (from `ai_router.py`):**
+1. **Mistral** (PRIMARY) - Cost-effective for all languages, includes STT
+2. **Claude** (SECONDARY) - Premium quality when budget allows or user preference
+3. **Ollama** (FALLBACK) - Local LLM when budget exceeded, offline mode, or privacy mode
+4. **DeepSeek** (SPECIALIST) - Optimized for Chinese language, ultra-low-cost
 
 ### Intelligent Routing
 - **Provider Selection**: Automatic selection based on language, task type, and cost

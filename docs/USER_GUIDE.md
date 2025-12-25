@@ -83,20 +83,27 @@ ADMIN_USERNAME=Mom
 ADMIN_PASSWORD=YourSecurePassword123!
 
 # ==========================================
-# AI SERVICE KEYS (Required)
+# AI SERVICE KEYS (Mistral Primary - Cost-Conscious)
 # ==========================================
 
 # Get your API keys from these providers:
 
-# Anthropic (for Claude AI) - https://console.anthropic.com
-ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
-
-# Optional: Additional AI providers (for variety)
-# Mistral AI - https://console.mistral.ai
+# Mistral AI (PRIMARY - REQUIRED for cost-effective AI + speech)
+# https://console.mistral.ai
 MISTRAL_API_KEY=your-mistral-key
 
-# DeepSeek - https://platform.deepseek.com
+# Anthropic Claude (SECONDARY - Optional for premium quality)
+# https://console.anthropic.com
+ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
+
+# DeepSeek (OPTIONAL - Chinese language specialist)
+# https://platform.deepseek.com
 DEEPSEEK_API_KEY=sk-your-deepseek-key
+
+# Ollama (LOCAL FALLBACK - Recommended for budget/offline/privacy)
+# Free local LLM, zero API costs, automatic fallback
+# Install: https://ollama.ai/ then run: ollama pull mistral
+OLLAMA_HOST=http://localhost:11434
 
 # ==========================================
 # SPEECH SERVICES (Built-in - No API keys needed!)
@@ -230,12 +237,13 @@ The tutor offers different conversation scenarios:
 
 ## 🎯 Features Guide
 
-### 1. AI Conversation Partners
+### 1. AI Conversation Partners (Smart Cost-Conscious Routing)
 
-**Multiple AI Models:**
-- **Claude (Anthropic)** - Natural, patient conversations
-- **Mistral** - European language specialist
-- **DeepSeek** - Chinese and Asian language expert
+**AI Models (Priority Order):**
+- **Mistral** (PRIMARY) - Cost-effective for all languages, natural conversations
+- **Claude (Anthropic)** (SECONDARY) - Premium quality when budget allows
+- **Ollama** (LOCAL FALLBACK) - Free, offline-capable, privacy-focused
+- **DeepSeek** (SPECIALIST) - Chinese language optimization, ultra-low-cost
 
 **Conversation Modes:**
 - **Beginner Mode** - Simple vocabulary, slow pace
@@ -348,10 +356,11 @@ The tutor offers different conversation scenarios:
 - Use text more than speech for budget control
 - Monitor usage weekly in admin dashboard
 
-**Free Tier Options:**
-- Many providers offer free tiers
-- Mistral STT: Included with Mistral API
-- Piper TTS: Completely free (runs locally)
+**Free & Low-Cost Options:**
+- **Ollama**: 100% free local LLM (runs on your computer)
+- **Piper TTS**: Completely free (runs locally)
+- **Mistral**: Cost-effective primary provider
+- **Mistral STT**: Included with Mistral API
 - Anthropic: Free tier available for testing
 
 ---

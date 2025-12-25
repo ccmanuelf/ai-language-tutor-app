@@ -82,26 +82,41 @@ ADMIN_USERNAME=Your Name
 ADMIN_PASSWORD=YourSecurePassword123!
 
 # ==========================================
-# AI SERVICE CONFIGURATION (Required)
+# AI SERVICE CONFIGURATION (Mistral Primary - Cost-Conscious)
 # ==========================================
 
-# Anthropic Claude API Key
+# Mistral AI - PRIMARY PROVIDER (REQUIRED)
+# Cost-effective for all languages + speech-to-text
+# Get yours at: https://console.mistral.ai
+MISTRAL_API_KEY=your-mistral-key
+
+# ==========================================
+# OPTIONAL AI PROVIDERS
+# ==========================================
+
+# Anthropic Claude - SECONDARY PROVIDER (Optional)
+# Premium quality when budget allows or user preference
 # Get yours at: https://console.anthropic.com
-# This is the MINIMUM required for the app to work
 ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
 
-# ==========================================
-# OPTIONAL BUT RECOMMENDED
-# ==========================================
-
-# Speech Services (Built-in)
-# Mistral STT: Speech-to-text using your Mistral API key (already configured above)
-# Piper TTS: High-quality text-to-speech (runs locally, no API key needed)
-# No additional configuration required!
-
-# Additional AI Providers (for variety and redundancy)
-MISTRAL_API_KEY=your-mistral-key
+# DeepSeek - CHINESE SPECIALIST (Optional)
+# Optimized for Chinese language, ultra-low-cost
+# Get yours at: https://platform.deepseek.com
 DEEPSEEK_API_KEY=sk-your-deepseek-key
+
+# Ollama - LOCAL FALLBACK (Recommended)
+# Free local LLM, automatic fallback when budget exceeded
+# Offline mode, privacy mode, zero API costs
+# Install: https://ollama.ai/ then run: ollama pull mistral
+OLLAMA_HOST=http://localhost:11434
+
+# ==========================================
+# SPEECH SERVICES (Built-in with Mistral)
+# ==========================================
+
+# Mistral STT: Speech-to-text (uses Mistral API key above)
+# Piper TTS: High-quality text-to-speech (runs locally, free)
+# No additional configuration required!
 
 # ==========================================
 # FEATURE FLAGS
