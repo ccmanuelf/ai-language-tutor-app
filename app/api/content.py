@@ -29,9 +29,7 @@ from fastapi import (
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_user
 from app.database.config import get_primary_db_session
-from app.models.simple_user import SimpleUser as User
 from app.services.content_persistence_service import ContentPersistenceService
 from app.services.content_processor import (
     LearningMaterialType,
@@ -130,13 +128,14 @@ class ProcessedContentResponse(BaseModel):
 
 
 @router.post("/process/url", response_model=Dict[str, str])
-async def process_content_from_url(
-    request: ProcessContentRequest, current_user: User = Depends(get_current_user)
-):
+async def process_content_from_url(request: ProcessContentRequest):
     """
     Process content from URL (YouTube, web articles, etc.)
 
     Returns content_id for tracking processing progress
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, content processing is available to all users.
     """
     try:
         # Convert material types to internal enum
@@ -170,12 +169,14 @@ async def process_uploaded_file(
         ["summary", "flashcards", "key_concepts"]
     ),
     language: str = Form("en"),
-    current_user: User = Depends(get_current_user),
 ):
     """
     Process uploaded file (PDF, DOCX, TXT, etc.)
 
     Returns content_id for tracking processing progress
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, file upload is available to all users.
     """
     try:
         # Validate file type
@@ -221,10 +222,13 @@ async def process_uploaded_file(
 
 
 @router.get("/status/{content_id}", response_model=ProcessingStatusResponse)
-async def get_processing_status(
-    content_id: str, current_user: User = Depends(get_current_user)
-):
-    """Get real-time processing status for content"""
+async def get_processing_status(content_id: str):
+    """
+    Get real-time processing status for content
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, status checks are available to all users.
+    """
     try:
         progress = await content_processor.get_processing_progress(content_id)
 
@@ -252,10 +256,13 @@ async def get_processing_status(
 
 
 @router.get("/content/{content_id}", response_model=ProcessedContentResponse)
-async def get_processed_content(
-    content_id: str, current_user: User = Depends(get_current_user)
-):
-    """Get processed content and learning materials"""
+async def get_processed_content(content_id: str):
+    """
+    Get processed content and learning materials
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, content access is available to all users.
+    """
     try:
         processed = await content_processor.get_processed_content(content_id)
 
@@ -309,7 +316,6 @@ async def get_processed_content(
         raise HTTPException(status_code=500, detail=f"Failed to get content: {str(e)}")
 
 
-@router.get("/library", response_model=List[ContentLibraryItem])
 def _apply_content_type_filter(
     library: List[Dict[str, Any]], content_type: Optional[ContentTypeEnum]
 ) -> List[Dict[str, Any]]:
@@ -364,15 +370,20 @@ def _convert_to_response_items(
     ]
 
 
+@router.get("/library", response_model=List[ContentLibraryItem])
 async def get_content_library(
     limit: int = 50,
     offset: int = 0,
     content_type: Optional[ContentTypeEnum] = None,
     difficulty: Optional[str] = None,
     language: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
 ):
-    """Get user's content library with filtering and pagination"""
+    """
+    Get user's content library with filtering and pagination
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, content library is available to all users.
+    """
     try:
         library = await content_processor.get_content_library()
 
@@ -394,9 +405,13 @@ async def search_content(
     difficulty: Optional[str] = None,
     language: Optional[str] = None,
     limit: int = 20,
-    current_user: User = Depends(get_current_user),
 ):
-    """Search content library"""
+    """
+    Search content library
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, content search is available to all users.
+    """
     try:
         # Prepare filters
         filters = {}
@@ -420,10 +435,13 @@ async def search_content(
 
 
 @router.get("/material/{material_id}")
-async def get_learning_material(
-    material_id: str, current_user: User = Depends(get_current_user)
-):
-    """Get specific learning material by ID"""
+async def get_learning_material(material_id: str):
+    """
+    Get specific learning material by ID
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, learning materials are available to all users.
+    """
     try:
         # Find material in content library
         for content_id, processed in content_processor.content_library.items():
@@ -452,10 +470,13 @@ async def get_learning_material(
 
 
 @router.delete("/content/{content_id}")
-async def delete_content(
-    content_id: str, current_user: User = Depends(get_current_user)
-):
-    """Delete processed content and its materials"""
+async def delete_content(content_id: str):
+    """
+    Delete processed content and its materials
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, content deletion is available to all users.
+    """
     try:
         if content_id not in content_processor.content_library:
             raise HTTPException(
@@ -480,8 +501,13 @@ async def delete_content(
 
 
 @router.get("/stats")
-async def get_content_stats(current_user: User = Depends(get_current_user)):
-    """Get content library statistics"""
+async def get_content_stats():
+    """
+    Get content library statistics
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, content statistics are available to all users.
+    """
     try:
         library = await content_processor.get_content_library()
 
@@ -540,7 +566,6 @@ class TagResponse(BaseModel):
 def add_tag_to_content(
     content_id: str,
     request: AddTagRequest,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_primary_db_session),
 ):
     """
@@ -549,7 +574,6 @@ def add_tag_to_content(
     Args:
         content_id: Content ID
         request: Tag to add
-        current_user: Authenticated user
         db: Database session
 
     Returns:
@@ -557,15 +581,19 @@ def add_tag_to_content(
 
     Raises:
         HTTPException: If content not found or error occurs
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, using demo user ID=1.
     """
     try:
+        demo_user_id = 1  # TODO: Replace with actual user ID from session
         service = ContentPersistenceService(db)
 
         added = service.add_tag(
-            content_id=content_id, user_id=current_user.id, tag=request.tag
+            content_id=content_id, user_id=demo_user_id, tag=request.tag
         )
 
-        tags = service.get_content_tags(content_id=content_id, user_id=current_user.id)
+        tags = service.get_content_tags(content_id=content_id, user_id=demo_user_id)
 
         return {
             "success": True,
@@ -583,7 +611,6 @@ def add_tag_to_content(
 def remove_tag_from_content(
     content_id: str,
     tag: str,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_primary_db_session),
 ):
     """
@@ -592,7 +619,6 @@ def remove_tag_from_content(
     Args:
         content_id: Content ID
         tag: Tag to remove
-        current_user: Authenticated user
         db: Database session
 
     Returns:
@@ -600,12 +626,16 @@ def remove_tag_from_content(
 
     Raises:
         HTTPException: If tag not found
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, using demo user ID=1.
     """
     try:
+        demo_user_id = 1  # TODO: Replace with actual user ID from session
         service = ContentPersistenceService(db)
 
         removed = service.remove_tag(
-            content_id=content_id, user_id=current_user.id, tag=tag
+            content_id=content_id, user_id=demo_user_id, tag=tag
         )
 
         if not removed:
@@ -621,14 +651,12 @@ def remove_tag_from_content(
 
 @router.get("/tags", response_model=List[TagResponse])
 def get_all_user_tags(
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_primary_db_session),
 ):
     """
     Get all tags for user with counts
 
     Args:
-        current_user: Authenticated user
         db: Database session
 
     Returns:
@@ -636,11 +664,15 @@ def get_all_user_tags(
 
     Raises:
         HTTPException: If error occurs
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, using demo user ID=1.
     """
     try:
+        demo_user_id = 1  # TODO: Replace with actual user ID from session
         service = ContentPersistenceService(db)
 
-        tags = service.get_all_user_tags(user_id=current_user.id)
+        tags = service.get_all_user_tags(user_id=demo_user_id)
 
         return tags
 
@@ -651,7 +683,6 @@ def get_all_user_tags(
 @router.get("/tags/{tag}/content")
 def get_content_by_tag(
     tag: str,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_primary_db_session),
 ):
     """
@@ -659,7 +690,6 @@ def get_content_by_tag(
 
     Args:
         tag: Tag to search for
-        current_user: Authenticated user
         db: Database session
 
     Returns:
@@ -667,11 +697,15 @@ def get_content_by_tag(
 
     Raises:
         HTTPException: If error occurs
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, using demo user ID=1.
     """
     try:
+        demo_user_id = 1  # TODO: Replace with actual user ID from session
         service = ContentPersistenceService(db)
 
-        content_list = service.search_by_tag(user_id=current_user.id, tag=tag)
+        content_list = service.search_by_tag(user_id=demo_user_id, tag=tag)
 
         return {
             "total": len(content_list),
@@ -688,7 +722,6 @@ def get_content_by_tag(
 @router.post("/{content_id}/favorite", status_code=201)
 def add_content_to_favorites(
     content_id: str,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_primary_db_session),
 ):
     """
@@ -696,7 +729,6 @@ def add_content_to_favorites(
 
     Args:
         content_id: Content ID
-        current_user: Authenticated user
         db: Database session
 
     Returns:
@@ -704,11 +736,15 @@ def add_content_to_favorites(
 
     Raises:
         HTTPException: If content not found
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, using demo user ID=1.
     """
     try:
+        demo_user_id = 1  # TODO: Replace with actual user ID from session
         service = ContentPersistenceService(db)
 
-        added = service.add_favorite(content_id=content_id, user_id=current_user.id)
+        added = service.add_favorite(content_id=content_id, user_id=demo_user_id)
 
         return {
             "success": True,
@@ -724,7 +760,6 @@ def add_content_to_favorites(
 @router.delete("/{content_id}/favorite", status_code=204)
 def remove_content_from_favorites(
     content_id: str,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_primary_db_session),
 ):
     """
@@ -732,7 +767,6 @@ def remove_content_from_favorites(
 
     Args:
         content_id: Content ID
-        current_user: Authenticated user
         db: Database session
 
     Returns:
@@ -740,13 +774,15 @@ def remove_content_from_favorites(
 
     Raises:
         HTTPException: If not favorited
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, using demo user ID=1.
     """
     try:
+        demo_user_id = 1  # TODO: Replace with actual user ID from session
         service = ContentPersistenceService(db)
 
-        removed = service.remove_favorite(
-            content_id=content_id, user_id=current_user.id
-        )
+        removed = service.remove_favorite(content_id=content_id, user_id=demo_user_id)
 
         if not removed:
             raise HTTPException(status_code=404, detail="Content not in favorites")
@@ -763,14 +799,12 @@ def remove_content_from_favorites(
 
 @router.get("/favorites")
 def get_favorited_content(
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_primary_db_session),
 ):
     """
     Get all favorited content for user
 
     Args:
-        current_user: Authenticated user
         db: Database session
 
     Returns:
@@ -778,11 +812,15 @@ def get_favorited_content(
 
     Raises:
         HTTPException: If error occurs
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, using demo user ID=1.
     """
     try:
+        demo_user_id = 1  # TODO: Replace with actual user ID from session
         service = ContentPersistenceService(db)
 
-        favorites = service.get_favorites(user_id=current_user.id)
+        favorites = service.get_favorites(user_id=demo_user_id)
 
         return {"total": len(favorites), "content": [c.to_dict() for c in favorites]}
 
