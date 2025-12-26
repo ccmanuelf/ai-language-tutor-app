@@ -477,6 +477,38 @@ def create_content_library_routes(app):
                         background: var(--bg-secondary);
                     }
 
+                    .tab-btn {
+                        background: none;
+                        border: none;
+                        padding: 0.75rem 1.5rem;
+                        font-size: 1rem;
+                        cursor: pointer;
+                        color: var(--text-secondary);
+                        border-bottom: 2px solid transparent;
+                        transition: all 0.2s;
+                    }
+
+                    .tab-btn:hover {
+                        color: var(--text-primary);
+                    }
+
+                    .tab-btn.active {
+                        color: var(--primary-color);
+                        border-bottom-color: var(--primary-color);
+                        font-weight: 600;
+                    }
+
+                    .form-label {
+                        font-weight: 600;
+                        color: var(--text-primary);
+                        font-size: 0.875rem;
+                    }
+
+                    .form-input, .form-select {
+                        font-family: inherit;
+                        font-size: 1rem;
+                    }
+
                     .checkbox-item input {
                         margin-right: 0.75rem;
                     }
@@ -521,6 +553,11 @@ def create_content_library_routes(app):
                                 "📊 Study Stats",
                                 href="/study-stats",
                                 cls="btn btn-secondary btn-sm",
+                            ),
+                            Button(
+                                "⬆️ Upload Content",
+                                onclick="showUploadModal()",
+                                cls="btn btn-primary btn-sm",
                             ),
                             cls="header-actions",
                         ),
@@ -634,6 +671,291 @@ def create_content_library_routes(app):
                         cls="modal-content",
                     ),
                     id="addToCollectionModal",
+                    cls="modal",
+                ),
+                # Upload Content Modal
+                Div(
+                    Div(
+                        Div(
+                            H2("⬆️ Upload Content"),
+                            Button(
+                                "✕",
+                                cls="close-btn",
+                                onclick="hideUploadModal()",
+                            ),
+                            cls="modal-header",
+                        ),
+                        # Tab Navigation
+                        Div(
+                            Button(
+                                "🔗 From URL",
+                                id="urlTabBtn",
+                                cls="tab-btn active",
+                                onclick="switchUploadTab('url')",
+                            ),
+                            Button(
+                                "📄 Upload File",
+                                id="fileTabBtn",
+                                cls="tab-btn",
+                                onclick="switchUploadTab('file')",
+                            ),
+                            cls="tab-navigation",
+                            style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;",
+                        ),
+                        # URL Tab Content
+                        Div(
+                            Div(
+                                Label(
+                                    "Content URL", cls="form-label", _for="contentUrl"
+                                ),
+                                Input(
+                                    type="url",
+                                    id="contentUrl",
+                                    cls="form-input",
+                                    placeholder="https://youtube.com/watch?v=... or https://example.com/article",
+                                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius); margin-top: 0.5rem;",
+                                ),
+                                P(
+                                    "Supports: YouTube videos, web articles, blog posts",
+                                    style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem;",
+                                ),
+                                cls="form-group",
+                                style="margin-bottom: 1.5rem;",
+                            ),
+                            Div(
+                                Label(
+                                    "Title (Optional)",
+                                    cls="form-label",
+                                    _for="contentTitle",
+                                ),
+                                Input(
+                                    type="text",
+                                    id="contentTitle",
+                                    cls="form-input",
+                                    placeholder="Custom title for this content",
+                                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius); margin-top: 0.5rem;",
+                                ),
+                                cls="form-group",
+                                style="margin-bottom: 1.5rem;",
+                            ),
+                            Div(
+                                Label("Material Types", cls="form-label"),
+                                Div(
+                                    Label(
+                                        Input(
+                                            type="checkbox",
+                                            value="summary",
+                                            checked=True,
+                                            cls="material-type-checkbox",
+                                        ),
+                                        " Summary",
+                                        style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;",
+                                    ),
+                                    Label(
+                                        Input(
+                                            type="checkbox",
+                                            value="flashcards",
+                                            checked=True,
+                                            cls="material-type-checkbox",
+                                        ),
+                                        " Flashcards",
+                                        style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;",
+                                    ),
+                                    Label(
+                                        Input(
+                                            type="checkbox",
+                                            value="key_concepts",
+                                            checked=True,
+                                            cls="material-type-checkbox",
+                                        ),
+                                        " Key Concepts",
+                                        style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;",
+                                    ),
+                                    Label(
+                                        Input(
+                                            type="checkbox",
+                                            value="quiz",
+                                            cls="material-type-checkbox",
+                                        ),
+                                        " Quiz",
+                                        style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;",
+                                    ),
+                                    Label(
+                                        Input(
+                                            type="checkbox",
+                                            value="notes",
+                                            cls="material-type-checkbox",
+                                        ),
+                                        " Notes",
+                                        style="display: flex; align-items: center; gap: 0.5rem;",
+                                    ),
+                                    style="margin-top: 0.5rem;",
+                                ),
+                                cls="form-group",
+                                style="margin-bottom: 1.5rem;",
+                            ),
+                            Div(
+                                Label(
+                                    "Language", cls="form-label", _for="contentLanguage"
+                                ),
+                                Select(
+                                    Option("English", value="en", selected=True),
+                                    Option("Spanish", value="es"),
+                                    Option("French", value="fr"),
+                                    Option("German", value="de"),
+                                    Option("Italian", value="it"),
+                                    Option("Portuguese", value="pt"),
+                                    Option("Chinese", value="zh"),
+                                    Option("Japanese", value="ja"),
+                                    Option("Korean", value="ko"),
+                                    id="contentLanguage",
+                                    cls="form-select",
+                                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius); margin-top: 0.5rem;",
+                                ),
+                                cls="form-group",
+                                style="margin-bottom: 1.5rem;",
+                            ),
+                            id="urlTabContent",
+                            style="display: block;",
+                        ),
+                        # File Tab Content
+                        Div(
+                            Div(
+                                Label(
+                                    "Select File", cls="form-label", _for="contentFile"
+                                ),
+                                Input(
+                                    type="file",
+                                    id="contentFile",
+                                    accept=".pdf,.docx,.doc,.txt,.md,.rtf",
+                                    cls="form-input",
+                                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius); margin-top: 0.5rem;",
+                                ),
+                                P(
+                                    "Supported formats: PDF, DOCX, DOC, TXT, MD, RTF",
+                                    style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem;",
+                                ),
+                                cls="form-group",
+                                style="margin-bottom: 1.5rem;",
+                            ),
+                            Div(
+                                Label("Material Types", cls="form-label"),
+                                Div(
+                                    Label(
+                                        Input(
+                                            type="checkbox",
+                                            value="summary",
+                                            checked=True,
+                                            cls="material-type-checkbox-file",
+                                        ),
+                                        " Summary",
+                                        style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;",
+                                    ),
+                                    Label(
+                                        Input(
+                                            type="checkbox",
+                                            value="flashcards",
+                                            checked=True,
+                                            cls="material-type-checkbox-file",
+                                        ),
+                                        " Flashcards",
+                                        style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;",
+                                    ),
+                                    Label(
+                                        Input(
+                                            type="checkbox",
+                                            value="key_concepts",
+                                            checked=True,
+                                            cls="material-type-checkbox-file",
+                                        ),
+                                        " Key Concepts",
+                                        style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;",
+                                    ),
+                                    Label(
+                                        Input(
+                                            type="checkbox",
+                                            value="quiz",
+                                            cls="material-type-checkbox-file",
+                                        ),
+                                        " Quiz",
+                                        style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;",
+                                    ),
+                                    Label(
+                                        Input(
+                                            type="checkbox",
+                                            value="notes",
+                                            cls="material-type-checkbox-file",
+                                        ),
+                                        " Notes",
+                                        style="display: flex; align-items: center; gap: 0.5rem;",
+                                    ),
+                                    style="margin-top: 0.5rem;",
+                                ),
+                                cls="form-group",
+                                style="margin-bottom: 1.5rem;",
+                            ),
+                            Div(
+                                Label(
+                                    "Language",
+                                    cls="form-label",
+                                    _for="fileContentLanguage",
+                                ),
+                                Select(
+                                    Option("English", value="en", selected=True),
+                                    Option("Spanish", value="es"),
+                                    Option("French", value="fr"),
+                                    Option("German", value="de"),
+                                    Option("Italian", value="it"),
+                                    Option("Portuguese", value="pt"),
+                                    Option("Chinese", value="zh"),
+                                    Option("Japanese", value="ja"),
+                                    Option("Korean", value="ko"),
+                                    id="fileContentLanguage",
+                                    cls="form-select",
+                                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius); margin-top: 0.5rem;",
+                                ),
+                                cls="form-group",
+                                style="margin-bottom: 1.5rem;",
+                            ),
+                            id="fileTabContent",
+                            style="display: none;",
+                        ),
+                        # Processing Status
+                        Div(
+                            Div(
+                                Div(
+                                    id="uploadProgressBar",
+                                    style="width: 0%; height: 8px; background: var(--primary-color); border-radius: 4px; transition: width 0.3s;",
+                                ),
+                                style="width: 100%; height: 8px; background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 0.5rem;",
+                            ),
+                            P(
+                                id="uploadStatusText",
+                                style="color: var(--text-secondary); font-size: 0.875rem; text-align: center;",
+                            ),
+                            id="uploadProgress",
+                            style="display: none; margin-bottom: 1.5rem;",
+                        ),
+                        # Action Buttons
+                        Div(
+                            Button(
+                                "Cancel",
+                                cls="btn btn-secondary",
+                                onclick="hideUploadModal()",
+                                id="uploadCancelBtn",
+                            ),
+                            Button(
+                                "Start Processing",
+                                cls="btn btn-primary",
+                                onclick="startContentProcessing()",
+                                id="uploadSubmitBtn",
+                            ),
+                            style="display: flex; gap: 1rem; justify-content: flex-end;",
+                        ),
+                        cls="modal-content",
+                        style="max-width: 600px;",
+                    ),
+                    id="uploadModal",
                     cls="modal",
                 ),
                 # Embed study session modal HTML from study_session.py
@@ -971,6 +1293,237 @@ def create_content_library_routes(app):
                             console.error('Error:', error);
                             alert('Failed to remove tag');
                         }
+                    }
+
+                    // ===== Upload Content Modal Functions =====
+                    let currentUploadContentId = null;
+                    let statusPollInterval = null;
+
+                    function showUploadModal() {
+                        document.getElementById('uploadModal').classList.add('active');
+                        resetUploadForm();
+                    }
+
+                    function hideUploadModal() {
+                        document.getElementById('uploadModal').classList.remove('active');
+                        if (statusPollInterval) {
+                            clearInterval(statusPollInterval);
+                            statusPollInterval = null;
+                        }
+                        currentUploadContentId = null;
+                        resetUploadForm();
+                    }
+
+                    function resetUploadForm() {
+                        // Reset URL form
+                        document.getElementById('contentUrl').value = '';
+                        document.getElementById('contentTitle').value = '';
+
+                        // Reset file form
+                        document.getElementById('contentFile').value = '';
+
+                        // Reset checkboxes to defaults
+                        document.querySelectorAll('.material-type-checkbox').forEach(cb => {
+                            cb.checked = ['summary', 'flashcards', 'key_concepts'].includes(cb.value);
+                        });
+                        document.querySelectorAll('.material-type-checkbox-file').forEach(cb => {
+                            cb.checked = ['summary', 'flashcards', 'key_concepts'].includes(cb.value);
+                        });
+
+                        // Reset language selects
+                        document.getElementById('contentLanguage').value = 'en';
+                        document.getElementById('fileContentLanguage').value = 'en';
+
+                        // Hide progress
+                        document.getElementById('uploadProgress').style.display = 'none';
+                        document.getElementById('uploadProgressBar').style.width = '0%';
+                        document.getElementById('uploadStatusText').textContent = '';
+
+                        // Enable buttons
+                        document.getElementById('uploadSubmitBtn').disabled = false;
+                        document.getElementById('uploadCancelBtn').disabled = false;
+                    }
+
+                    function switchUploadTab(tab) {
+                        // Update tab buttons
+                        document.getElementById('urlTabBtn').classList.toggle('active', tab === 'url');
+                        document.getElementById('fileTabBtn').classList.toggle('active', tab === 'file');
+
+                        // Update tab content
+                        document.getElementById('urlTabContent').style.display = tab === 'url' ? 'block' : 'none';
+                        document.getElementById('fileTabContent').style.display = tab === 'file' ? 'block' : 'none';
+                    }
+
+                    async function startContentProcessing() {
+                        const activeTab = document.getElementById('urlTabBtn').classList.contains('active') ? 'url' : 'file';
+
+                        if (activeTab === 'url') {
+                            await processUrlContent();
+                        } else {
+                            await processFileContent();
+                        }
+                    }
+
+                    async function processUrlContent() {
+                        const url = document.getElementById('contentUrl').value.trim();
+                        const title = document.getElementById('contentTitle').value.trim();
+                        const language = document.getElementById('contentLanguage').value;
+
+                        if (!url) {
+                            alert('Please enter a URL');
+                            return;
+                        }
+
+                        // Get selected material types
+                        const materialTypes = Array.from(
+                            document.querySelectorAll('.material-type-checkbox:checked')
+                        ).map(cb => cb.value);
+
+                        if (materialTypes.length === 0) {
+                            alert('Please select at least one material type');
+                            return;
+                        }
+
+                        // Show progress
+                        document.getElementById('uploadProgress').style.display = 'block';
+                        document.getElementById('uploadStatusText').textContent = 'Starting processing...';
+                        document.getElementById('uploadSubmitBtn').disabled = true;
+
+                        try {
+                            const response = await fetch('http://localhost:8000/api/content/process/url', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    url: url,
+                                    title: title || null,
+                                    material_types: materialTypes,
+                                    language: language
+                                })
+                            });
+
+                            if (!response.ok) {
+                                const error = await response.json();
+                                throw new Error(error.detail || 'Failed to start processing');
+                            }
+
+                            const data = await response.json();
+                            currentUploadContentId = data.content_id;
+
+                            // Start polling for status
+                            pollProcessingStatus(data.content_id);
+
+                        } catch (error) {
+                            console.error('Error processing URL:', error);
+                            alert('Error: ' + error.message);
+                            document.getElementById('uploadProgress').style.display = 'none';
+                            document.getElementById('uploadSubmitBtn').disabled = false;
+                        }
+                    }
+
+                    async function processFileContent() {
+                        const fileInput = document.getElementById('contentFile');
+                        const file = fileInput.files[0];
+                        const language = document.getElementById('fileContentLanguage').value;
+
+                        if (!file) {
+                            alert('Please select a file');
+                            return;
+                        }
+
+                        // Get selected material types
+                        const materialTypes = Array.from(
+                            document.querySelectorAll('.material-type-checkbox-file:checked')
+                        ).map(cb => cb.value);
+
+                        if (materialTypes.length === 0) {
+                            alert('Please select at least one material type');
+                            return;
+                        }
+
+                        // Show progress
+                        document.getElementById('uploadProgress').style.display = 'block';
+                        document.getElementById('uploadStatusText').textContent = 'Uploading file...';
+                        document.getElementById('uploadSubmitBtn').disabled = true;
+
+                        try {
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            formData.append('language', language);
+                            materialTypes.forEach(mt => formData.append('material_types', mt));
+
+                            const response = await fetch('http://localhost:8000/api/content/process/upload', {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            if (!response.ok) {
+                                const error = await response.json();
+                                throw new Error(error.detail || 'Failed to upload file');
+                            }
+
+                            const data = await response.json();
+                            currentUploadContentId = data.content_id;
+
+                            // Start polling for status
+                            pollProcessingStatus(data.content_id);
+
+                        } catch (error) {
+                            console.error('Error uploading file:', error);
+                            alert('Error: ' + error.message);
+                            document.getElementById('uploadProgress').style.display = 'none';
+                            document.getElementById('uploadSubmitBtn').disabled = false;
+                        }
+                    }
+
+                    async function pollProcessingStatus(contentId) {
+                        statusPollInterval = setInterval(async () => {
+                            try {
+                                const response = await fetch(`http://localhost:8000/api/content/status/${contentId}`);
+
+                                if (!response.ok) {
+                                    throw new Error('Failed to get status');
+                                }
+
+                                const status = await response.json();
+
+                                // Update progress bar
+                                document.getElementById('uploadProgressBar').style.width = status.progress_percentage + '%';
+                                document.getElementById('uploadStatusText').textContent =
+                                    `${status.current_step} (${status.progress_percentage}%)`;
+
+                                // Check if completed
+                                if (status.status === 'completed') {
+                                    clearInterval(statusPollInterval);
+                                    statusPollInterval = null;
+
+                                    document.getElementById('uploadStatusText').textContent = 'Processing complete!';
+                                    document.getElementById('uploadProgressBar').style.width = '100%';
+
+                                    // Wait a moment then close and refresh
+                                    setTimeout(() => {
+                                        hideUploadModal();
+                                        loadContent(); // Refresh the library
+                                    }, 1500);
+
+                                } else if (status.status === 'failed') {
+                                    clearInterval(statusPollInterval);
+                                    statusPollInterval = null;
+
+                                    document.getElementById('uploadStatusText').textContent =
+                                        'Processing failed: ' + (status.error_message || 'Unknown error');
+                                    document.getElementById('uploadSubmitBtn').disabled = false;
+                                }
+
+                            } catch (error) {
+                                console.error('Error polling status:', error);
+                                clearInterval(statusPollInterval);
+                                statusPollInterval = null;
+                                document.getElementById('uploadStatusText').textContent = 'Error checking status';
+                                document.getElementById('uploadSubmitBtn').disabled = false;
+                            }
+                        }, 2000); // Poll every 2 seconds
                     }
 
                     function showAddToCollectionModal(contentId) {
