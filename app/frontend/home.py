@@ -38,6 +38,7 @@ def create_heroicon_svg(icon_name, size="20", stroke_width="1.5"):
         "link": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>',
         "record": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>',
         "arrow-up": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5,12 12,5 19,12"></polyline></svg>',
+        "settings": f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{stroke_width}" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6m-9-7h6m6 0h6M4.22 4.22l4.24 4.24m7.08 0l4.24-4.24M4.22 19.78l4.24-4.24m7.08 0l4.24 4.24"></path></svg>',
     }
     # Return NotStr to prevent HTML escaping - allows SVG to render properly
     return NotStr(icons.get(icon_name, icons["help"]))
@@ -82,6 +83,17 @@ def create_youlearn_sidebar():
                 ),
                 "Progress",
                 href="/progress",
+                style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 0.5rem; transition: all 0.2s;",
+                onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
+                onmouseout="this.style.backgroundColor='transparent'",
+            ),
+            A(
+                Span(
+                    create_heroicon_svg("settings", "20"),
+                    style="margin-right: 0.75rem;",
+                ),
+                "Settings",
+                href="/settings",
                 style="display: flex; align-items: center; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-primary); border-radius: var(--radius); margin-bottom: 2rem; transition: all 0.2s;",
                 onmouseover="this.style.backgroundColor='var(--bg-tertiary)'",
                 onmouseout="this.style.backgroundColor='transparent'",

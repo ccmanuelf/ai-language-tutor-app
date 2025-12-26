@@ -32,6 +32,7 @@ from .home import create_home_routes
 from .persona_profile_routes import register_persona_profile_routes
 from .profile import create_profile_route
 from .progress import create_progress_route
+from .settings import create_settings_routes
 from .study_session import create_study_routes
 from .user_budget_routes import register_user_budget_routes
 from .visual_learning import create_visual_learning_routes
@@ -52,6 +53,7 @@ def create_frontend_app():
     create_diagnostic_route(app)
     create_home_routes(app)
     create_profile_route(app)
+    create_settings_routes(app)  # User settings (persona + language)
     create_chat_route(app)
     create_progress_route(app)
     app.get("/content/{content_id}")(create_content_view_route())
