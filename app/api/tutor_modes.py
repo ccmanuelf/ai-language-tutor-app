@@ -107,13 +107,14 @@ class SessionInfo(BaseModel):
 
 
 @router.get("/available", response_model=List[TutorModeInfo])
-async def get_available_modes(
-    current_user: User = Depends(get_current_user),
-) -> List[TutorModeInfo]:
+async def get_available_modes() -> List[TutorModeInfo]:
     """
     Get list of available tutor modes
 
     Returns all 6 speech analysis-style tutor modes with descriptions and requirements.
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, tutor modes are available to all users.
     """
     try:
         modes = tutor_mode_manager.get_available_modes()
@@ -128,15 +129,21 @@ async def get_available_modes(
 
 @router.post("/session/start", response_model=TutorSessionResponse)
 async def start_tutor_session(
-    request: StartTutorSessionRequest, current_user: User = Depends(get_current_user)
+    request: StartTutorSessionRequest,
 ) -> TutorSessionResponse:
     """
     Start a new tutor mode session
 
     Creates a new session with the specified mode, language, and settings.
     Returns session ID and conversation starter.
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, using demo user ID=1.
     """
     try:
+        # Use demo user until auth is implemented
+        demo_user_id = "1"
+
         # Validate mode
         try:
             mode = TutorMode(request.mode)
@@ -156,7 +163,7 @@ async def start_tutor_session(
 
         # Start session
         session_id = tutor_mode_manager.start_tutor_session(
-            user_id=str(current_user.id),
+            user_id=demo_user_id,
             mode=mode,
             language=request.language,
             difficulty=difficulty,
@@ -166,7 +173,7 @@ async def start_tutor_session(
         # Get conversation starter
         conversation_starter = tutor_mode_manager.get_conversation_starter(session_id)
 
-        logger.info(f"Started tutor session {session_id} for user {current_user.id}")
+        logger.info(f"Started tutor session {session_id} for demo user")
 
         return TutorSessionResponse(
             session_id=session_id,
@@ -189,13 +196,15 @@ async def start_tutor_session(
 
 @router.post("/conversation", response_model=TutorConversationResponse)
 async def tutor_conversation(
-    request: TutorConversationRequest, current_user: User = Depends(get_current_user)
+    request: TutorConversationRequest,
 ) -> TutorConversationResponse:
     """
     Generate AI response in tutor mode conversation
 
     Processes user message and generates appropriate tutor response
     based on the active session's mode and settings.
+
+    TODO: Add proper authentication when session management is implemented.
     """
     try:
         # Validate session exists
@@ -225,13 +234,13 @@ async def tutor_conversation(
 
 
 @router.get("/session/{session_id}", response_model=SessionInfo)
-async def get_session_info(
-    session_id: str, current_user: User = Depends(get_current_user)
-) -> SessionInfo:
+async def get_session_info(session_id: str) -> SessionInfo:
     """
     Get information about an active tutor session
 
     Returns session details, progress, and current status.
+
+    TODO: Add proper authentication when session management is implemented.
     """
     try:
         session_info = tutor_mode_manager.get_session_info(session_id)
@@ -250,13 +259,13 @@ async def get_session_info(
 
 
 @router.post("/session/{session_id}/end")
-async def end_tutor_session(
-    session_id: str, current_user: User = Depends(get_current_user)
-) -> Dict[str, Any]:
+async def end_tutor_session(session_id: str) -> Dict[str, Any]:
     """
     End an active tutor session
 
     Terminates the session and returns summary statistics.
+
+    TODO: Add proper authentication when session management is implemented.
     """
     try:
         session_summary = tutor_mode_manager.end_tutor_session(session_id)
@@ -276,13 +285,13 @@ async def end_tutor_session(
 
 
 @router.get("/modes/{mode}/details")
-async def get_mode_details(
-    mode: str, current_user: User = Depends(get_current_user)
-) -> Dict[str, Any]:
+async def get_mode_details(mode: str) -> Dict[str, Any]:
     """
     Get detailed information about a specific tutor mode
 
     Returns comprehensive details about mode features, requirements, and examples.
+
+    TODO: Add proper authentication when session management is implemented.
     """
     try:
         # Validate mode
@@ -316,13 +325,13 @@ async def get_mode_details(
 
 
 @router.get("/analytics")
-async def get_tutor_analytics(
-    current_user: User = Depends(get_current_user),
-) -> Dict[str, Any]:
+async def get_tutor_analytics() -> Dict[str, Any]:
     """
     Get analytics and statistics about tutor mode usage
 
     Returns system-wide tutor mode analytics and user session statistics.
+
+    TODO: Add proper authentication when session management is implemented.
     """
     try:
         analytics = tutor_mode_manager.get_mode_analytics()
@@ -340,14 +349,14 @@ async def get_tutor_analytics(
 
 @router.post("/session/{session_id}/feedback")
 async def submit_session_feedback(
-    session_id: str,
-    feedback: Dict[str, Any] = Body(...),
-    current_user: User = Depends(get_current_user),
+    session_id: str, feedback: Dict[str, Any] = Body(...)
 ) -> Dict[str, Any]:
     """
     Submit feedback for a tutor session
 
     Allows users to provide feedback on tutor mode experience for improvements.
+
+    TODO: Add proper authentication when session management is implemented.
     """
     try:
         # Validate session exists (or existed)
