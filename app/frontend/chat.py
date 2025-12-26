@@ -849,19 +849,12 @@ def _create_chat_scripts():
 
             async startRealTimeAnalysis() {
                 try {
-                    const token = localStorage.getItem('auth_token');
-                    if (!token) {
-                        this.showFeedback('Please log in to use real-time analysis', 'error');
-                        return;
-                    }
-
                     const language = this.currentLanguage.split('-')[0]; // Extract language code
 
                     const response = await fetch('http://localhost:8000/api/realtime/start', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
+                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
                             language: language,
@@ -899,12 +892,8 @@ def _create_chat_scripts():
                 try {
                     if (!this.analysisSession) return;
 
-                    const token = localStorage.getItem('auth_token');
                     const response = await fetch(`http://localhost:8000/api/realtime/end/${this.analysisSession.session_id}`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
+                        method: 'POST'
                     });
 
                     if (response.ok) {
