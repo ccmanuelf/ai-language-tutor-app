@@ -145,33 +145,127 @@ def create_settings_routes(app):
                     ),
                     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;",
                 ),
-                # JavaScript for saving
+                # Feedback message area
+                Div(
+                    id="settings_feedback",
+                    style="margin-top: 1rem; padding: 1rem; border-radius: var(--radius); display: none;",
+                ),
+                # JavaScript for saving and loading
                 Script("""
+                    // Load user settings from backend on page load
+                    async function loadLanguageSettings() {
+                        try {
+                            // Get current user profile from backend
+                            const response = await fetch('http://localhost:8000/api/v1/auth/me', {
+                                method: 'GET',
+                                credentials: 'include',
+                                headers: {
+                                    'Accept': 'application/json'
+                                }
+                            });
+
+                            if (!response.ok) {
+                                console.warn('Could not load user profile, using defaults');
+                                return;
+                            }
+
+                            const user = await response.json();
+                            const preferences = user.preferences || {};
+
+                            // Set dropdowns to saved preferences
+                            if (preferences.base_language) {
+                                document.getElementById('base_language').value = preferences.base_language;
+                            }
+                            if (preferences.target_language) {
+                                document.getElementById('target_language').value = preferences.target_language;
+                            }
+                        } catch (error) {
+                            console.error('Failed to load language settings:', error);
+                        }
+                    }
+
                     async function saveLanguageSettings() {
                         const baseLanguage = document.getElementById('base_language').value;
                         const targetLanguage = document.getElementById('target_language').value;
+                        const feedback = document.getElementById('settings_feedback');
+                        const saveButton = event.target;
 
-                        // TODO: Call backend API to save language preferences
-                        // For now, just show confirmation
-                        alert(`Settings saved!\\nNative: ${baseLanguage}\\nLearning: ${targetLanguage}`);
+                        // Disable button and show loading
+                        saveButton.disabled = true;
+                        saveButton.textContent = 'Saving...';
+                        feedback.style.display = 'none';
 
-                        // Store in localStorage temporarily
-                        localStorage.setItem('base_language', baseLanguage);
-                        localStorage.setItem('target_language', targetLanguage);
+                        try {
+                            // Get current user to merge preferences
+                            const userResponse = await fetch('http://localhost:8000/api/v1/auth/me', {
+                                method: 'GET',
+                                credentials: 'include',
+                                headers: {
+                                    'Accept': 'application/json'
+                                }
+                            });
+
+                            if (!userResponse.ok) {
+                                throw new Error('Could not fetch current user profile');
+                            }
+
+                            const user = await userResponse.json();
+                            const currentPreferences = user.preferences || {};
+
+                            // Merge language settings with existing preferences
+                            const updatedPreferences = {
+                                ...currentPreferences,
+                                base_language: baseLanguage,
+                                target_language: targetLanguage
+                            };
+
+                            // Save to backend via profile update endpoint
+                            const formData = new FormData();
+                            formData.append('preferences', JSON.stringify(updatedPreferences));
+
+                            const response = await fetch('http://localhost:8000/api/v1/auth/profile', {
+                                method: 'PUT',
+                                credentials: 'include',
+                                body: formData
+                            });
+
+                            if (!response.ok) {
+                                const error = await response.json();
+                                throw new Error(error.detail || 'Failed to save settings');
+                            }
+
+                            // Show success message
+                            feedback.textContent = '✓ Language settings saved successfully!';
+                            feedback.style.background = 'var(--success)';
+                            feedback.style.color = 'white';
+                            feedback.style.display = 'block';
+
+                            // Also update localStorage as fallback for non-authenticated scenarios
+                            localStorage.setItem('base_language', baseLanguage);
+                            localStorage.setItem('target_language', targetLanguage);
+
+                        } catch (error) {
+                            console.error('Failed to save settings:', error);
+
+                            // Show error message
+                            feedback.textContent = '✗ Failed to save settings: ' + error.message;
+                            feedback.style.background = 'var(--error, #dc2626)';
+                            feedback.style.color = 'white';
+                            feedback.style.display = 'block';
+                        } finally {
+                            // Re-enable button
+                            saveButton.disabled = false;
+                            saveButton.textContent = 'Save Language Settings';
+
+                            // Hide feedback after 5 seconds
+                            setTimeout(() => {
+                                feedback.style.display = 'none';
+                            }, 5000);
+                        }
                     }
 
-                    // Load saved settings on page load
-                    window.addEventListener('DOMContentLoaded', () => {
-                        const savedBase = localStorage.getItem('base_language');
-                        const savedTarget = localStorage.getItem('target_language');
-
-                        if (savedBase) {
-                            document.getElementById('base_language').value = savedBase;
-                        }
-                        if (savedTarget) {
-                            document.getElementById('target_language').value = savedTarget;
-                        }
-                    });
+                    // Load settings when page loads
+                    window.addEventListener('DOMContentLoaded', loadLanguageSettings);
                 """),
                 style="max-width: 1200px; margin: 0 auto; padding: 2rem;",
             ),

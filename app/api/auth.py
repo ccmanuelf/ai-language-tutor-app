@@ -179,6 +179,7 @@ async def update_profile(
     first_name: Optional[str] = Form(None),
     last_name: Optional[str] = Form(None),
     ui_language: Optional[str] = Form(None),
+    preferences: Optional[str] = Form(None),
     current_user: SimpleUser = Depends(require_auth),
     db: Session = Depends(get_primary_db_session),
 ):
@@ -193,6 +194,18 @@ async def update_profile(
         current_user.last_name = last_name
     if ui_language:
         current_user.ui_language = ui_language
+    if preferences:
+        # Parse JSON string and update preferences
+        import json
+
+        try:
+            preferences_dict = json.loads(preferences)
+            current_user.preferences = preferences_dict
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid preferences JSON format",
+            )
 
     current_user.updated_at = datetime.now(timezone.utc)
     db.commit()
