@@ -22,11 +22,9 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
-from app.models.database import User
-from app.services.auth import get_current_user
 from app.services.realtime_analyzer import (
     AnalysisType,
     analyze_speech_realtime,
@@ -170,12 +168,16 @@ websocket_manager = WebSocketManager()
 
 
 @router.post("/start", response_model=StartAnalysisResponse)
-async def start_analysis_session(
-    request: StartAnalysisRequest, current_user: User = Depends(get_current_user)
-):
-    """Start a new real-time analysis session"""
+async def start_analysis_session(request: StartAnalysisRequest):
+    """
+    Start a new real-time analysis session
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, using demo user ID=1.
+    """
 
     try:
+        demo_user_id = "1"  # TODO: Replace with actual user ID from session
         # Convert analysis type strings to enums
         analysis_types = []
         for analysis_type in request.analysis_types:
@@ -188,20 +190,20 @@ async def start_analysis_session(
 
         # Start analysis session
         session_id = await start_realtime_analysis(
-            user_id=str(current_user.id),
+            user_id=demo_user_id,
             language=request.language,
             analysis_types=analysis_types,
         )
 
         response = StartAnalysisResponse(
             session_id=session_id,
-            user_id=str(current_user.id),
+            user_id=demo_user_id,
             language=request.language,
             analysis_types=request.analysis_types,
             started_at=datetime.now(),
         )
 
-        logger.info(f"Started analysis session {session_id} for user {current_user.id}")
+        logger.info(f"Started analysis session {session_id} for user {demo_user_id}")
         return response
 
     except HTTPException:
@@ -292,10 +294,13 @@ async def _send_websocket_feedback(
         await websocket_manager.send_feedback(session_id, websocket_data)
 
 
-async def analyze_audio_segment(
-    request: AnalyzeAudioRequest, current_user: User = Depends(get_current_user)
-):
-    """Analyze an audio segment and return real-time feedback"""
+async def analyze_audio_segment(request: AnalyzeAudioRequest):
+    """
+    Analyze an audio segment and return real-time feedback
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, analysis is available to all users.
+    """
     try:
         audio_data = _decode_audio_data(request.audio_data)
         session_data = _get_session_data(request.session_id)
@@ -324,17 +329,18 @@ async def analyze_audio_segment(
 
 
 @router.get("/analytics/{session_id}", response_model=AnalyticsResponse)
-async def get_session_analytics(
-    session_id: str, current_user: User = Depends(get_current_user)
-):
-    """Get comprehensive analytics for an analysis session"""
+async def get_session_analytics(session_id: str):
+    """
+    Get comprehensive analytics for an analysis session
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, analytics are available to all users.
+    """
 
     try:
         analytics = await get_realtime_analytics(session_id)
 
-        # Verify user owns this session
-        if analytics["session_info"]["user_id"] != str(current_user.id):
-            raise HTTPException(status_code=403, detail="Access denied to this session")
+        # TODO: Verify user owns this session when auth is implemented
 
         response = AnalyticsResponse(
             session_info=analytics["session_info"],
@@ -354,17 +360,18 @@ async def get_session_analytics(
 
 
 @router.post("/end/{session_id}")
-async def end_analysis_session(
-    session_id: str, current_user: User = Depends(get_current_user)
-):
-    """End a real-time analysis session"""
+async def end_analysis_session(session_id: str):
+    """
+    End a real-time analysis session
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, session ending is available to all users.
+    """
 
     try:
         final_analytics = await end_realtime_session(session_id)
 
-        # Verify user owns this session
-        if final_analytics["session_info"]["user_id"] != str(current_user.id):
-            raise HTTPException(status_code=403, detail="Access denied to this session")
+        # TODO: Verify user owns this session when auth is implemented
 
         # Notify WebSocket clients
         websocket_data = {
@@ -390,19 +397,21 @@ async def end_analysis_session(
 
 
 @router.get("/feedback/{session_id}")
-async def get_recent_feedback(
-    session_id: str, limit: int = 10, current_user: User = Depends(get_current_user)
-):
-    """Get recent feedback for a session"""
+async def get_recent_feedback(session_id: str, limit: int = 10):
+    """
+    Get recent feedback for a session
+
+    TODO: Add proper authentication when session management is implemented.
+    For now, feedback is available to all users.
+    """
 
     try:
-        # Verify session exists and user has access
+        # Verify session exists
         session_data = realtime_analyzer.active_sessions.get(session_id)
         if not session_data:
             raise HTTPException(status_code=404, detail="Analysis session not found")
 
-        if session_data.user_id != str(current_user.id):
-            raise HTTPException(status_code=403, detail="Access denied to this session")
+        # TODO: Verify user has access to this session when auth is implemented
 
         feedback_list = await realtime_analyzer.get_live_feedback(session_id, limit)
 
