@@ -71,7 +71,7 @@ def create_persona_profile_routes(app):
                     # Use default persona
                     default_type = persona_service.get_default_persona()
                     current_persona_metadata = persona_service.get_persona_metadata(
-                        default_type.value
+                        default_type
                     )
                     persona_type_str = default_type.value
 
